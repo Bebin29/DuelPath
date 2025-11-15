@@ -3,13 +3,23 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/hooks";
-import { getDeckById, addCardToDeck, updateCardQuantity, removeCardFromDeck } from "@/server/actions/deck.actions";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { getDeckById, addCardToDeck, updateCardQuantity, removeCardFromDeck, moveCardBetweenSections } from "@/server/actions/deck.actions";
 import { CardSearch } from "./CardSearch";
 import { DeckListSection } from "./DeckListSection";
 import { validateDeckSizes } from "@/lib/validations/deck.schema";
 import type { DeckSection } from "@/lib/validations/deck.schema";
 import type { Deck, DeckCard, Card } from "@prisma/client";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
 
 interface DeckWithCards extends Deck {
   deckCards: Array<DeckCard & { card: Card }>;
@@ -28,6 +38,15 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
   const [deck, setDeck] = useState<DeckWithCards | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeCard, setActiveCard] = useState<Card | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   async function loadDeck() {
     setIsLoading(true);
@@ -144,6 +163,91 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
     }
   }
 
+  async function handleMoveCard(cardId: string, fromSection: DeckSection, toSection: DeckSection) {
+    if (!deck || fromSection === toSection) return;
+
+    try {
+      const result = await moveCardBetweenSections(deckId, {
+        cardId,
+        fromSection,
+        toSection,
+      });
+
+      if (result.error) {
+        alert(result.error);
+      } else {
+        await loadDeck();
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t("deck.errors.updateFailed"));
+    }
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    const { active } = event;
+    const data = active.data.current;
+    
+    if (data?.type === "card" && data.card) {
+      setActiveCard(data.card);
+    } else if (data?.type === "deckCard" && deck) {
+      // Finde Karte im Deck
+      const cardId = data.cardId as string;
+      const deckCard = deck.deckCards.find((dc) => dc.cardId === cardId);
+      if (deckCard) {
+        setActiveCard(deckCard.card);
+      }
+    }
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setActiveCard(null);
+
+    if (!over || !deck) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
+
+    // Prüfe ob es eine Deck-Sektion ist
+    if (overData?.type === "deckSection") {
+      const targetSection = overData.section as DeckSection;
+      
+      if (activeData?.type === "card") {
+        // Neue Karte aus Suchergebnissen
+        const cardId = active.id as string;
+        handleAddCardToSection(cardId, targetSection);
+      } else if (activeData?.type === "deckCard") {
+        // Karte bereits im Deck - verschiebe zwischen Sektionen
+        const cardId = activeData.cardId as string;
+        const fromSection = activeData.section as DeckSection;
+        
+        if (fromSection !== targetSection) {
+          handleMoveCard(cardId, fromSection, targetSection);
+        }
+      }
+    }
+  }
+
+  async function handleAddCardToSection(cardId: string, section: DeckSection) {
+    if (!deck) return;
+
+    try {
+      const result = await addCardToDeck(deckId, {
+        cardId,
+        quantity: 1,
+        deckSection: section,
+      });
+
+      if (result.error) {
+        alert(result.error);
+      } else {
+        await loadDeck();
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t("deck.errors.addCardFailed"));
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="text-center py-8">
@@ -201,46 +305,82 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
       )}
 
       {/* Zwei-Spalten-Layout */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Linke Spalte: Kartensuche */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">{t("deck.searchCards")}</h3>
-          <CardSearch onCardSelect={handleAddCard} />
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Linke Spalte: Kartensuche */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">{t("deck.searchCards")}</h3>
+            <CardSearch onCardSelect={handleAddCard} />
+          </div>
+
+          {/* Rechte Spalte: Deckliste */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t("deck.deckEditor")}</h3>
+
+            <DeckListSection
+              title={t("deck.mainDeck")}
+              section="MAIN"
+              cards={mainDeckCards}
+              onIncreaseQuantity={handleIncreaseQuantity}
+              onDecreaseQuantity={handleDecreaseQuantity}
+              onRemove={handleRemove}
+              onMove={handleMoveCard}
+              showMoveButtons={true}
+            />
+
+            <DeckListSection
+              title={t("deck.extraDeck")}
+              section="EXTRA"
+              cards={extraDeckCards}
+              onIncreaseQuantity={handleIncreaseQuantity}
+              onDecreaseQuantity={handleDecreaseQuantity}
+              onRemove={handleRemove}
+              onMove={handleMoveCard}
+              showMoveButtons={true}
+            />
+
+            <DeckListSection
+              title={t("deck.sideDeck")}
+              section="SIDE"
+              cards={sideDeckCards}
+              onIncreaseQuantity={handleIncreaseQuantity}
+              onDecreaseQuantity={handleDecreaseQuantity}
+              onRemove={handleRemove}
+              onMove={handleMoveCard}
+              showMoveButtons={true}
+            />
+          </div>
         </div>
-
-        {/* Rechte Spalte: Deckliste */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">{t("deck.deckEditor")}</h3>
-
-          <DeckListSection
-            title={t("deck.mainDeck")}
-            section="MAIN"
-            cards={mainDeckCards}
-            onIncreaseQuantity={handleIncreaseQuantity}
-            onDecreaseQuantity={handleDecreaseQuantity}
-            onRemove={handleRemove}
-          />
-
-          <DeckListSection
-            title={t("deck.extraDeck")}
-            section="EXTRA"
-            cards={extraDeckCards}
-            onIncreaseQuantity={handleIncreaseQuantity}
-            onDecreaseQuantity={handleDecreaseQuantity}
-            onRemove={handleRemove}
-          />
-
-          <DeckListSection
-            title={t("deck.sideDeck")}
-            section="SIDE"
-            cards={sideDeckCards}
-            onIncreaseQuantity={handleIncreaseQuantity}
-            onDecreaseQuantity={handleDecreaseQuantity}
-            onRemove={handleRemove}
-          />
-        </div>
-      </div>
+        <DragOverlay>
+          {activeCard ? (
+            <div className="rounded-lg border bg-card p-3 shadow-lg opacity-90">
+              <div className="flex gap-3">
+                {activeCard.imageSmall && (
+                  <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded border">
+                    <Image
+                      src={activeCard.imageSmall}
+                      alt={activeCard.name}
+                      fill
+                      className="object-cover"
+                      sizes="56px"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm truncate">{activeCard.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{activeCard.type}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }
+
 

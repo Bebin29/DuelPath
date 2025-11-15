@@ -122,6 +122,64 @@ describe("Deck Validation Schemas", () => {
       expect(result.errors.length).toBeGreaterThan(0);
       expect(result.errors[0]).toContain("Side Deck");
     });
+
+    it("should validate deck with exactly 60 main deck cards", () => {
+      const result = validateDeckSizes(60, 15, 15);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it("should validate deck with exactly 40 main deck cards", () => {
+      const result = validateDeckSizes(40, 0, 0);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it("should reject deck with 0 main deck cards", () => {
+      const result = validateDeckSizes(0, 0, 0);
+      expect(result.isValid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors[0]).toContain("Mindestens");
+    });
+
+    it("should reject deck with 61 main deck cards", () => {
+      const result = validateDeckSizes(61, 0, 0);
+      expect(result.isValid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors[0]).toContain("Maximal");
+    });
+
+    it("should reject deck with 16 extra deck cards", () => {
+      const result = validateDeckSizes(40, 16, 0);
+      expect(result.isValid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors[0]).toContain("Extra Deck");
+    });
+
+    it("should validate deck with 15 extra deck cards", () => {
+      const result = validateDeckSizes(40, 15, 0);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it("should validate deck with 15 side deck cards", () => {
+      const result = validateDeckSizes(40, 0, 15);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it("should handle multiple validation errors", () => {
+      const result = validateDeckSizes(35, 16, 16);
+      expect(result.isValid).toBe(false);
+      expect(result.errors.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("should validate deck with all sections at maximum", () => {
+      const result = validateDeckSizes(60, 15, 15);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
   });
 });
+
 

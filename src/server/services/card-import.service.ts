@@ -14,7 +14,7 @@ interface YGOPRODeckCard {
   def?: number;
   desc?: string;
   archetype?: string;
-  banlist_info?: string;
+  banlist_info?: string | Record<string, string>;
   card_images?: Array<{
     id: number;
     image_url: string;
@@ -104,6 +104,16 @@ export class CardImportService {
     const imageSmall = apiCard.card_images?.[0]?.image_url_small || null;
     const passcode = apiCard.id.toString();
 
+    // Serialisiere banlistInfo als JSON-String, falls es ein Objekt ist
+    let banlistInfo: string | null = null;
+    if (apiCard.banlist_info) {
+      if (typeof apiCard.banlist_info === "string") {
+        banlistInfo = apiCard.banlist_info;
+      } else if (typeof apiCard.banlist_info === "object") {
+        banlistInfo = JSON.stringify(apiCard.banlist_info);
+      }
+    }
+
     return {
       id: passcode, // Verwende Passcode als ID
       name: apiCard.name,
@@ -115,7 +125,7 @@ export class CardImportService {
       def: apiCard.def ?? null,
       desc: apiCard.desc || null,
       archetype: apiCard.archetype || null,
-      banlistInfo: apiCard.banlist_info || null,
+      banlistInfo,
       imageUrl,
       imageSmall,
       passcode,
@@ -292,4 +302,5 @@ export class CardImportService {
     }
   }
 }
+
 

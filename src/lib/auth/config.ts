@@ -58,7 +58,6 @@ export const authConfig: NextAuthConfig = {
   },
   pages: {
     signIn: "/auth/signin",
-    signOut: "/auth/signout",
     error: "/auth/error",
   },
   callbacks: {
@@ -75,5 +74,6 @@ export const authConfig: NextAuthConfig = {
       return session;
     },
   },
+  trustHost: true,
 };
 

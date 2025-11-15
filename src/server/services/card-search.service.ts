@@ -35,10 +35,28 @@ export class CardSearchService {
     const where: any = {};
 
     if (filter.name) {
-      where.name = {
-        contains: filter.name,
-        mode: "insensitive" as const,
-      };
+      // Für SQLite: Verwende contains mit case-insensitive Suche
+      // Für PostgreSQL könnte hier FTS verwendet werden
+      const searchTerm = filter.name.trim();
+      
+      // Verbesserte Suche: Unterstützt mehrere Wörter
+      const searchTerms = searchTerm.split(/\s+/).filter((term) => term.length > 0);
+      
+      if (searchTerms.length > 1) {
+        // Mehrere Suchbegriffe: Alle müssen vorkommen
+        where.AND = searchTerms.map((term) => ({
+          name: {
+            contains: term,
+            mode: "insensitive" as const,
+          },
+        }));
+      } else {
+        // Einzelner Suchbegriff
+        where.name = {
+          contains: searchTerm,
+          mode: "insensitive" as const,
+        };
+      }
     }
 
     if (filter.type) {
@@ -172,4 +190,5 @@ export class CardSearchService {
     });
   }
 }
+
 

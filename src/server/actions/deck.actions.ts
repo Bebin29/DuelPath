@@ -13,7 +13,38 @@ import {
   type AddCardToDeckInput,
   type UpdateCardQuantityInput,
   type RemoveCardFromDeckInput,
+  type DeckSection,
 } from "@/lib/validations/deck.schema";
+import type { Card } from "@prisma/client";
+
+/**
+ * Bestimmt die passende Deck-Sektion für eine Karte basierend auf ihrem Typ
+ * 
+ * @param card - Karte
+ * @returns Deck-Sektion (MAIN, EXTRA oder SIDE)
+ */
+function determineDeckSection(card: Card): DeckSection {
+  const extraDeckTypes = [
+    "Fusion Monster",
+    "Synchro Monster",
+    "XYZ Monster",
+    "Link Monster",
+    "Pendulum Effect Fusion Monster",
+    "Pendulum Effect Synchro Monster",
+    "Pendulum Effect XYZ Monster",
+    "Pendulum Effect Link Monster",
+    "Ritual Effect Monster",
+    "Ritual Monster",
+  ];
+
+  // Prüfe ob der Kartentyp Extra Deck Karten enthält
+  if (extraDeckTypes.some((type) => card.type.includes(type))) {
+    return "EXTRA";
+  }
+
+  // Standard: Main Deck
+  return "MAIN";
+}
 
 /**
  * Server Action: Erstellt ein neues Deck
@@ -258,13 +289,23 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
     // Validierung
     const validatedData = addCardToDeckSchema.parse(data);
 
+    // Automatische Deck-Sektion-Zuordnung, falls MAIN angegeben oder nicht explizit gesetzt
+    let deckSection = validatedData.deckSection;
+    if (deckSection === "MAIN") {
+      // Prüfe ob die Karte automatisch ins Extra Deck gehört
+      const suggestedSection = determineDeckSection(card);
+      if (suggestedSection === "EXTRA") {
+        deckSection = "EXTRA";
+      }
+    }
+
     // Prüfe ob Karte bereits im Deck ist
     const existingDeckCard = await prisma.deckCard.findUnique({
       where: {
         deckId_cardId_deckSection: {
           deckId,
           cardId: validatedData.cardId,
-          deckSection: validatedData.deckSection,
+          deckSection: deckSection,
         },
       },
     });
@@ -289,7 +330,7 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
           deckId,
           cardId: validatedData.cardId,
           quantity: validatedData.quantity,
-          deckSection: validatedData.deckSection,
+          deckSection: deckSection,
         },
         include: {
           card: true,
@@ -367,6 +408,96 @@ export async function updateCardQuantity(deckId: string, data: UpdateCardQuantit
       return { error: error.message };
     }
     return { error: "Failed to update card quantity" };
+  }
+}
+
+/**
+ * Server Action: Verschiebt eine Karte zwischen Deck-Sektionen
+ * 
+ * @param deckId - Deck-ID
+ * @param data - Karten-Daten mit neuer Sektion
+ * @returns Erfolg oder Fehler
+ */
+export async function moveCardBetweenSections(
+  deckId: string,
+  data: { cardId: string; fromSection: DeckSection; toSection: DeckSection }
+) {
+  try {
+    // Authentifizierung prüfen
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    // Prüfe ob Deck existiert und User berechtigt ist
+    const deck = await prisma.deck.findUnique({
+      where: { id: deckId },
+    });
+
+    if (!deck) {
+      return { error: "Deck not found" };
+    }
+
+    if (deck.userId !== session.user.id) {
+      return { error: "Forbidden" };
+    }
+
+    // Finde DeckCard in der Quell-Sektion
+    const sourceDeckCard = await prisma.deckCard.findUnique({
+      where: {
+        deckId_cardId_deckSection: {
+          deckId,
+          cardId: data.cardId,
+          deckSection: data.fromSection,
+        },
+      },
+    });
+
+    if (!sourceDeckCard) {
+      return { error: "Card not found in source section" };
+    }
+
+    // Prüfe ob Karte bereits in Ziel-Sektion existiert
+    const targetDeckCard = await prisma.deckCard.findUnique({
+      where: {
+        deckId_cardId_deckSection: {
+          deckId,
+          cardId: data.cardId,
+          deckSection: data.toSection,
+        },
+      },
+    });
+
+    if (targetDeckCard) {
+      // Karte existiert bereits in Ziel-Sektion: Aktualisiere Anzahl
+      const newQuantity = Math.min(
+        targetDeckCard.quantity + sourceDeckCard.quantity,
+        3
+      );
+
+      await prisma.deckCard.update({
+        where: { id: targetDeckCard.id },
+        data: { quantity: newQuantity },
+      });
+
+      // Lösche Quell-Eintrag
+      await prisma.deckCard.delete({
+        where: { id: sourceDeckCard.id },
+      });
+    } else {
+      // Verschiebe Karte zur neuen Sektion
+      await prisma.deckCard.update({
+        where: { id: sourceDeckCard.id },
+        data: { deckSection: data.toSection },
+      });
+    }
+
+    return { success: true };
+  } catch (error) {
+    if (error instanceof Error) {
+      return { error: error.message };
+    }
+    return { error: "Failed to move card between sections" };
   }
 }
 

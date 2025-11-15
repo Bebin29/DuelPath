@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "@/lib/i18n/hooks";
 import { Input } from "@/components/components/ui/input";
 import { Button } from "@/components/components/ui/button";
@@ -34,9 +34,11 @@ export function CardSearch({ onCardSelect, showAddButton = true }: CardSearchPro
   const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState<CardSearchFilter>({});
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([]);
+  const [archetypeSuggestions, setArchetypeSuggestions] = useState<string[]>([]);
+  const [raceSuggestions, setRaceSuggestions] = useState<string[]>([]);
 
-  // Debounced Search
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  // Debounced Search - useRef statt useState um Endlosschleife zu vermeiden
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const performSearch = useCallback(async (query: string, filterData: CardSearchFilter, pageNum: number) => {
     setIsLoading(true);
@@ -47,6 +49,7 @@ export function CardSearch({ onCardSelect, showAddButton = true }: CardSearchPro
       if (filterData.attribute) params.set("attribute", filterData.attribute);
       if (filterData.level !== undefined) params.set("level", filterData.level.toString());
       if (filterData.archetype) params.set("archetype", filterData.archetype);
+      if (filterData.race) params.set("race", filterData.race);
       params.set("page", pageNum.toString());
       params.set("limit", "20");
 
@@ -82,10 +85,58 @@ export function CardSearch({ onCardSelect, showAddButton = true }: CardSearchPro
     }
   }, []);
 
+  const performArchetypeAutocomplete = useCallback(async (query: string) => {
+    if (!query || query.length < 2) {
+      setArchetypeSuggestions([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/cards?archetype=${encodeURIComponent(query)}&limit=10`);
+      if (!response.ok) return;
+
+      const data = await response.json();
+      // Extrahiere eindeutige Archetypes aus den Ergebnissen
+      const archetypes = new Set<string>();
+      data.cards?.forEach((card: { archetype?: string | null }) => {
+        if (card.archetype) {
+          archetypes.add(card.archetype);
+        }
+      });
+      setArchetypeSuggestions(Array.from(archetypes).slice(0, 5));
+    } catch (error) {
+      console.error("Archetype autocomplete error:", error);
+    }
+  }, []);
+
+  const performRaceAutocomplete = useCallback(async (query: string) => {
+    if (!query || query.length < 1) {
+      setRaceSuggestions([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/cards?race=${encodeURIComponent(query)}&limit=10`);
+      if (!response.ok) return;
+
+      const data = await response.json();
+      // Extrahiere eindeutige Races aus den Ergebnissen
+      const races = new Set<string>();
+      data.cards?.forEach((card: { race?: string | null }) => {
+        if (card.race) {
+          races.add(card.race);
+        }
+      });
+      setRaceSuggestions(Array.from(races).slice(0, 5));
+    } catch (error) {
+      console.error("Race autocomplete error:", error);
+    }
+  }, []);
+
   // Debounced search
   useEffect(() => {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
 
     const timer = setTimeout(() => {
@@ -97,12 +148,12 @@ export function CardSearch({ onCardSelect, showAddButton = true }: CardSearchPro
       performAutocomplete(searchQuery);
     }, 300);
 
-    setDebounceTimer(timer);
+    debounceTimerRef.current = timer;
 
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [searchQuery, filters, performSearch, performAutocomplete, debounceTimer]);
+  }, [searchQuery, filters, performSearch, performAutocomplete]);
 
   function handleFilterChange(key: keyof CardSearchFilter, value: string | number | undefined) {
     setFilters((prev) => ({
@@ -190,7 +241,6 @@ export function CardSearch({ onCardSelect, showAddButton = true }: CardSearchPro
                 <SelectValue placeholder={t("deck.filterByType")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Alle</SelectItem>
                 <SelectItem value="Normal Monster">Normal Monster</SelectItem>
                 <SelectItem value="Effect Monster">Effect Monster</SelectItem>
                 <SelectItem value="Spell Card">Spell Card</SelectItem>
@@ -209,7 +259,6 @@ export function CardSearch({ onCardSelect, showAddButton = true }: CardSearchPro
                 <SelectValue placeholder={t("deck.filterByAttribute")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Alle</SelectItem>
                 <SelectItem value="LIGHT">LIGHT</SelectItem>
                 <SelectItem value="DARK">DARK</SelectItem>
                 <SelectItem value="EARTH">EARTH</SelectItem>
@@ -219,6 +268,93 @@ export function CardSearch({ onCardSelect, showAddButton = true }: CardSearchPro
                 <SelectItem value="DIVINE">DIVINE</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs">{t("deck.level")}</Label>
+            <Select
+              value={filters.level?.toString() || ""}
+              onValueChange={(value) =>
+                handleFilterChange("level", value ? parseInt(value, 10) : undefined)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t("deck.filterByLevel")} />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 13 }, (_, i) => i).map((level) => (
+                  <SelectItem key={level} value={level.toString()}>
+                    Level {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs">{t("deck.race")}</Label>
+            <div className="relative">
+              <Input
+                value={filters.race || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  handleFilterChange("race", value || undefined);
+                  performRaceAutocomplete(value);
+                }}
+                placeholder={t("deck.filterByRace")}
+                className="pr-8"
+              />
+              {raceSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 border rounded-md bg-card shadow-lg max-h-40 overflow-y-auto">
+                  {raceSuggestions.map((race) => (
+                    <button
+                      key={race}
+                      type="button"
+                      onClick={() => {
+                        handleFilterChange("race", race);
+                        setRaceSuggestions([]);
+                      }}
+                      className="w-full text-left text-sm px-3 py-2 hover:bg-accent rounded"
+                    >
+                      {race}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2 col-span-2">
+            <Label className="text-xs">{t("deck.archetype")}</Label>
+            <div className="relative">
+              <Input
+                value={filters.archetype || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  handleFilterChange("archetype", value || undefined);
+                  performArchetypeAutocomplete(value);
+                }}
+                placeholder={t("deck.filterByArchetype")}
+                className="pr-8"
+              />
+              {archetypeSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 border rounded-md bg-card shadow-lg max-h-40 overflow-y-auto">
+                  {archetypeSuggestions.map((archetype) => (
+                    <button
+                      key={archetype}
+                      type="button"
+                      onClick={() => {
+                        handleFilterChange("archetype", archetype);
+                        setArchetypeSuggestions([]);
+                      }}
+                      className="w-full text-left text-sm px-3 py-2 hover:bg-accent rounded"
+                    >
+                      {archetype}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -276,4 +412,5 @@ export function CardSearch({ onCardSelect, showAddButton = true }: CardSearchPro
     </div>
   );
 }
+
 

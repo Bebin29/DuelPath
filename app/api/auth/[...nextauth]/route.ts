@@ -1,13 +1,12 @@
-import NextAuth from "next-auth";
-import { authConfig } from "@/lib/auth/config";
+import { handlers } from "@/lib/auth/auth";
 
 /**
  * NextAuth API Route Handler
  * 
  * Handles all authentication requests (sign in, sign out, etc.)
  */
-const handler = NextAuth(authConfig);
+export const { GET, POST } = handlers;
 
-export { handler as GET, handler as POST };
+
 
 
