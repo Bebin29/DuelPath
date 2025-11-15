@@ -51,7 +51,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  password      String?   // Gehasht, falls E-Mail/Passwort-Auth verwendet wird
+  password      String? // Gehasht, falls E-Mail/Passwort-Auth verwendet wird
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -75,82 +75,96 @@ model VerificationToken {
 
 // Yu-Gi-Oh! Card Model
 model Card {
-  id          String    @id @default(cuid())
-  name        String
-  type        String    // z.B. "Normal Monster", "Effect Monster", "Spell Card", etc.
-  race        String?   // Monster-Typ oder Spell/Trap-Kategorie
-  attribute   String?   // LIGHT, DARK, EARTH, etc. (nur bei Monstern)
-  level       Int?      // Level/Rang/Linkzahl
-  atk         Int?      // Angriffspunkte
-  def         Int?      // Verteidigungspunkte
-  desc        String?   // Kartentext/Effektbeschreibung
-  archetype   String?   // Archetype, falls vorhanden
-  banlistInfo String?   // Verboten/Limitiert-Status
-  imageUrl    String?   // URL zum Kartenbild
-  imageSmall  String?   // URL zum kleinen Thumbnail
-  passcode    String?   @unique // YGOPRODeck Passcode-ID
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  nameLower      String? // Normalisierter Name für case-insensitive Suche
+  type           String // z.B. "Normal Monster", "Effect Monster", "Spell Card", etc.
+  typeLower      String? // Normalisierter Typ für case-insensitive Suche
+  race           String? // Monster-Typ oder Spell/Trap-Kategorie
+  raceLower      String? // Normalisierter Race für case-insensitive Suche
+  attribute      String? // LIGHT, DARK, EARTH, etc. (nur bei Monstern)
+  level          Int? // Level/Rang/Linkzahl
+  atk            Int? // Angriffspunkte
+  def            Int? // Verteidigungspunkte
+  desc           String? // Kartentext/Effektbeschreibung
+  archetype      String? // Archetype, falls vorhanden
+  archetypeLower String? // Normalisierter Archetype für case-insensitive Suche
+  banlistInfo    String? // Verboten/Limitiert-Status
+  imageUrl       String? // URL zum Kartenbild
+  imageSmall     String? // URL zum kleinen Thumbnail
+  passcode       String?  @unique // YGOPRODeck Passcode-ID
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  deckCards   DeckCard[]
-  comboSteps  ComboStep[]
+  deckCards  DeckCard[]
+  comboSteps ComboStep[]
 
   @@index([name])
+  @@index([nameLower])
   @@index([type])
+  @@index([typeLower])
   @@index([race])
+  @@index([raceLower])
   @@index([archetype])
+  @@index([archetypeLower])
   @@index([passcode])
+  // Composite-Indizes für häufig verwendete Query-Patterns
+  @@index([nameLower, type, attribute]) // Für kombinierte Suchen
+  @@index([archetypeLower, type]) // Für Archetype-Filter
+  @@index([level, atk, def]) // Für numerische Filter
 }
 
 // Deck Model
 model Deck {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
-  format      String    @default("TCG") // TCG, OCG, Casual
+  format      String   @default("TCG") // TCG, OCG, Casual
   userId      String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deckCards   DeckCard[]
-  combos      Combo[]
-  duels       Duel[]    @relation("PlayerDeckDuels")
-  opponentDuels Duel[]  @relation("OpponentDeckDuels")
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deckCards     DeckCard[]
+  combos        Combo[]
+  duels         Duel[]     @relation("PlayerDeckDuels")
+  opponentDuels Duel[]     @relation("OpponentDeckDuels")
 
   @@index([userId])
 }
 
 // Many-to-Many zwischen Deck und Card
 model DeckCard {
-  id          String     @id @default(cuid())
+  id          String @id @default(cuid())
   deckId      String
   cardId      String
-  quantity    Int        @default(1) // Anzahl (1-3)
+  quantity    Int    @default(1) // Anzahl (1-3)
   deckSection String @default("MAIN") // "MAIN", "EXTRA" oder "SIDE"
 
-  deck        Deck       @relation(fields: [deckId], references: [id], onDelete: Cascade)
-  card        Card       @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@unique([deckId, cardId, deckSection])
   @@index([deckId])
   @@index([cardId])
   @@index([deckId, deckSection])
+  @@index([deckId, deckSection, cardId]) // Composite-Index für schnellere Lookups
 }
 
 // Combo Model
 model Combo {
-  id          String     @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String?
   userId      String
-  deckId      String?    // Optional: Zuordnung zu einem Deck
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  deckId      String? // Optional: Zuordnung zu einem Deck
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deck        Deck?      @relation(fields: [deckId], references: [id], onDelete: SetNull)
-  steps       ComboStep[]
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck     Deck?          @relation(fields: [deckId], references: [id], onDelete: SetNull)
+  steps    ComboStep[]
+  versions ComboVersion[]
 
   @@index([userId])
   @@index([deckId])
@@ -158,40 +172,59 @@ model Combo {
 
 // Combo Step Model
 model ComboStep {
-  id          String     @id @default(cuid())
-  comboId     String
-  order       Int        // Reihenfolge (1, 2, 3, ...)
-  cardId      String
-  actionType  String // "SUMMON", "ACTIVATE", "SET", "ATTACK", etc.
-  description String? // Freitext-Beschreibung des Schritts
-  targetCardId String?   // Optional: Zielkarte, falls vorhanden
+  id           String  @id @default(cuid())
+  comboId      String
+  order        Int // Reihenfolge (1, 2, 3, ...)
+  cardId       String
+  actionType   String // "SUMMON", "ACTIVATE", "SET", "ATTACK", etc.
+  description  String? // Freitext-Beschreibung des Schritts
+  targetCardId String? // Optional: Zielkarte, falls vorhanden
 
-  combo       Combo      @relation(fields: [comboId], references: [id], onDelete: Cascade)
-  card        Card       @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  combo Combo @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  card  Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
+  @@unique([comboId, order])
   @@index([comboId])
   @@index([cardId])
-  @@unique([comboId, order])
+}
+
+// Combo Version Model - Speichert Snapshots von Combos für Versionshistorie
+model ComboVersion {
+  id          String   @id @default(cuid())
+  comboId     String
+  title       String
+  description String?
+  deckId      String?
+  snapshot    String // JSON-Snapshot der Combo mit allen Steps
+  version     Int // Versionsnummer (1, 2, 3, ...)
+  createdBy   String // User-ID, der die Version erstellt hat
+  createdAt   DateTime @default(now())
+  note        String? // Optional: Notiz zur Version
+
+  combo Combo @relation(fields: [comboId], references: [id], onDelete: Cascade)
+
+  @@unique([comboId, version])
+  @@index([comboId])
+  @@index([comboId, version])
 }
 
 // Duel Model (optional, für zukünftige Duell-Persistierung)
 model Duel {
-  id            String    @id @default(cuid())
-  userId        String    // Initiator/Spieler
-  opponentId    String?   // Optional: Gegner (bei KI null)
-  deckId        String    // Eigenes Deck
-  opponentDeckId String?  // Deck des Gegners
-  result        String?   // "WIN", "LOSS", "DRAW", "ABANDONED"
-  log           String?   // Zugfolge als JSON oder Textprotokoll
-  createdAt     DateTime  @default(now())
-  finishedAt    DateTime?
+  id             String    @id @default(cuid())
+  userId         String // Initiator/Spieler
+  opponentId     String? // Optional: Gegner (bei KI null)
+  deckId         String // Eigenes Deck
+  opponentDeckId String? // Deck des Gegners
+  result         String? // "WIN", "LOSS", "DRAW", "ABANDONED"
+  log            String? // Zugfolge als JSON oder Textprotokoll
+  createdAt      DateTime  @default(now())
+  finishedAt     DateTime?
 
-  player        User      @relation("PlayerDuels", fields: [userId], references: [id], onDelete: Cascade)
-  opponent      User?     @relation("OpponentDuels", fields: [opponentId], references: [id], onDelete: SetNull)
-  deck          Deck      @relation("PlayerDeckDuels", fields: [deckId], references: [id], onDelete: Cascade)
-  opponentDeck  Deck?     @relation("OpponentDeckDuels", fields: [opponentDeckId], references: [id], onDelete: SetNull)
+  player       User  @relation("PlayerDuels", fields: [userId], references: [id], onDelete: Cascade)
+  opponent     User? @relation("OpponentDuels", fields: [opponentId], references: [id], onDelete: SetNull)
+  deck         Deck  @relation("PlayerDeckDuels", fields: [deckId], references: [id], onDelete: Cascade)
+  opponentDeck Deck? @relation("OpponentDeckDuels", fields: [opponentDeckId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([deckId])
 }
-

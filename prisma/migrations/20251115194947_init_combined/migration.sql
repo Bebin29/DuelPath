@@ -47,14 +47,18 @@ CREATE TABLE "VerificationToken" (
 CREATE TABLE "Card" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
+    "nameLower" TEXT,
     "type" TEXT NOT NULL,
+    "typeLower" TEXT,
     "race" TEXT,
+    "raceLower" TEXT,
     "attribute" TEXT,
     "level" INTEGER,
     "atk" INTEGER,
     "def" INTEGER,
     "desc" TEXT,
     "archetype" TEXT,
+    "archetypeLower" TEXT,
     "banlistInfo" TEXT,
     "imageUrl" TEXT,
     "imageSmall" TEXT,
@@ -160,13 +164,37 @@ CREATE UNIQUE INDEX "Card_passcode_key" ON "Card"("passcode");
 CREATE INDEX "Card_name_idx" ON "Card"("name");
 
 -- CreateIndex
+CREATE INDEX "Card_nameLower_idx" ON "Card"("nameLower");
+
+-- CreateIndex
 CREATE INDEX "Card_type_idx" ON "Card"("type");
+
+-- CreateIndex
+CREATE INDEX "Card_typeLower_idx" ON "Card"("typeLower");
+
+-- CreateIndex
+CREATE INDEX "Card_race_idx" ON "Card"("race");
+
+-- CreateIndex
+CREATE INDEX "Card_raceLower_idx" ON "Card"("raceLower");
 
 -- CreateIndex
 CREATE INDEX "Card_archetype_idx" ON "Card"("archetype");
 
 -- CreateIndex
+CREATE INDEX "Card_archetypeLower_idx" ON "Card"("archetypeLower");
+
+-- CreateIndex
 CREATE INDEX "Card_passcode_idx" ON "Card"("passcode");
+
+-- CreateIndex
+CREATE INDEX "Card_nameLower_type_attribute_idx" ON "Card"("nameLower", "type", "attribute");
+
+-- CreateIndex
+CREATE INDEX "Card_archetypeLower_type_idx" ON "Card"("archetypeLower", "type");
+
+-- CreateIndex
+CREATE INDEX "Card_level_atk_def_idx" ON "Card"("level", "atk", "def");
 
 -- CreateIndex
 CREATE INDEX "Deck_userId_idx" ON "Deck"("userId");
@@ -176,6 +204,12 @@ CREATE INDEX "DeckCard_deckId_idx" ON "DeckCard"("deckId");
 
 -- CreateIndex
 CREATE INDEX "DeckCard_cardId_idx" ON "DeckCard"("cardId");
+
+-- CreateIndex
+CREATE INDEX "DeckCard_deckId_deckSection_idx" ON "DeckCard"("deckId", "deckSection");
+
+-- CreateIndex
+CREATE INDEX "DeckCard_deckId_deckSection_cardId_idx" ON "DeckCard"("deckId", "deckSection", "cardId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "DeckCard_deckId_cardId_deckSection_key" ON "DeckCard"("deckId", "cardId", "deckSection");
@@ -200,3 +234,5 @@ CREATE INDEX "Duel_userId_idx" ON "Duel"("userId");
 
 -- CreateIndex
 CREATE INDEX "Duel_deckId_idx" ON "Duel"("deckId");
+
+

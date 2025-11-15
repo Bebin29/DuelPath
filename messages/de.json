@@ -30,6 +30,19 @@
     "deckEditor": "Deck-Editor",
     "searchCards": "Karten suchen",
     "searchPlaceholder": "Kartennamen suchen...",
+    "searchInDeck": "Im Deck suchen...",
+    "searchResultsCount": "{{count}} Ergebnisse gefunden",
+    "searchEmptyState": "Beginne mit der Suche...",
+    "searchEmptyStateHint": "Tipp: Suche nach Kartennamen, Typen oder Archetypes",
+    "searchNoResultsHint": "Versuche andere Suchbegriffe oder entferne Filter",
+    "searchError": "Fehler bei der Suche",
+    "searchRetry": "Erneut versuchen",
+    "sortBy": "Sortieren nach",
+    "sortByName": "Name",
+    "sortByLevel": "Level",
+    "sortByAtk": "ATK",
+    "sortByDef": "DEF",
+    "sortByType": "Typ",
     "filters": "Filter",
     "filterByType": "Nach Typ filtern",
     "filterByAttribute": "Nach Attribut filtern",
@@ -43,6 +56,8 @@
     "race": "Kategorie",
     "atk": "ATK",
     "def": "DEF",
+    "enableRegex": "Regex-Suche aktivieren",
+    "regexEnabled": "Regex-Suche aktiviert",
     "quantity": "Anzahl",
     "increase": "Erhöhen",
     "decrease": "Verringern",
@@ -54,6 +69,7 @@
     "mainDeckCount": "Main Deck",
     "extraDeckCount": "Extra Deck",
     "sideDeckCount": "Side Deck",
+    "noCards": "Keine Karten",
     "validation": {
       "valid": "Deck ist gültig",
       "invalid": "Deck ist ungültig",
@@ -79,8 +95,44 @@
       "removeCardFailed": "Fehler beim Entfernen der Karte",
       "updateQuantityFailed": "Fehler beim Aktualisieren der Anzahl",
       "cardNotFound": "Karte nicht gefunden",
-      "cardNotInDeck": "Karte ist nicht im Deck"
+      "cardNotInDeck": "Karte ist nicht im Deck",
+      "loadFailed": "Fehler beim Laden des Decks",
+      "operationFailed": "Fehler bei der Operation"
     },
+    "history": {
+      "timeline": "Verlauf",
+      "empty": "Keine Verlaufseinträge",
+      "initialState": "Ausgangszustand",
+      "addCard": "Karte hinzugefügt ({section})",
+      "removeCard": "Karte entfernt ({section})",
+      "updateQuantity": "Anzahl geändert ({old} → {new})",
+      "moveCard": "Karte verschoben ({from} → {to})",
+      "limit": "Limit"
+    },
+    "bulk": {
+      "remove": "Ausgewählte entfernen",
+      "move": "Verschieben nach"
+    },
+    "export": {
+      "ydk": "YDK exportieren",
+      "success": "Deck exportiert",
+      "successDescription": "Deck wurde erfolgreich als YDK-Datei exportiert"
+    },
+    "import": {
+      "ydk": "YDK importieren",
+      "success": "Deck importiert",
+      "successDescription": "{{count}} Karten wurden erfolgreich importiert",
+      "warning": "Import-Warnung",
+      "error": "Import-Fehler",
+      "errorDescription": "Fehler beim Importieren der YDK-Datei"
+    },
+    "cardAdded": "Karte hinzugefügt",
+    "cardAddedDescription": "{{name}} wurde zum Deck hinzugefügt",
+    "cardRemoved": "Karte entfernt",
+    "cardRemovedDescription": "Karte wurde aus dem Deck entfernt",
+    "deckDeleted": "Deck gelöscht",
+    "deckDeletedDescription": "Das Deck wurde erfolgreich gelöscht",
+    "confirmDelete": "Möchtest du dieses Deck wirklich löschen?",
     "success": {
       "created": "Deck erfolgreich erstellt",
       "updated": "Deck erfolgreich aktualisiert",
@@ -95,10 +147,130 @@
     "createCombo": "Kombo erstellen",
     "editCombo": "Kombo bearbeiten",
     "comboTitle": "Titel",
+    "description": "Beschreibung",
+    "deck": "Deck",
+    "selectDeck": "Deck auswählen",
+    "noDeck": "Kein Deck",
     "steps": "Schritte",
     "addStep": "Schritt hinzufügen",
     "playCombo": "Kombo abspielen",
-    "step": "Schritt"
+    "step": "Schritt",
+    "step": {
+      "add": "Schritt hinzufügen",
+      "edit": "Schritt bearbeiten",
+      "delete": "Schritt löschen",
+      "card": "Karte",
+      "actionType": "Aktionstyp",
+      "description": "Beschreibung",
+      "targetCard": "Zielkarte (Optional)",
+      "confirmDelete": "Möchtest du diesen Schritt wirklich löschen?",
+      "number": "Schritt {{number}}"
+    },
+    "actionTypes": {
+      "SUMMON": "Beschwören",
+      "ACTIVATE": "Aktivieren",
+      "SET": "Setzen",
+      "ATTACK": "Angreifen",
+      "DRAW": "Ziehen",
+      "DISCARD": "Abwerfen",
+      "SPECIAL_SUMMON": "Spezialbeschwörung",
+      "TRIBUTE_SUMMON": "Tributbeschwörung",
+      "NORMAL_SUMMON": "Normalbeschwörung",
+      "FLIP_SUMMON": "Flippbeschwörung",
+      "OTHER": "Sonstiges"
+    },
+    "playMode": {
+      "title": "Kombo abspielen",
+      "currentStep": "Aktueller Schritt",
+      "nextStep": "Nächster Schritt",
+      "previousStep": "Vorheriger Schritt",
+      "restart": "Neu starten",
+      "close": "Schließen",
+      "stepOf": "Schritt {{current}} von {{total}}",
+      "completed": "Kombo abgeschlossen!"
+    },
+    "validation": {
+      "valid": "Kombo ist gültig",
+      "invalid": "Kombo ist ungültig",
+      "noSteps": "Kombo muss mindestens einen Schritt enthalten",
+      "duplicateOrder": "Doppelte Schritt-Reihenfolge gefunden",
+      "cardNotInDeck": "Karte ist nicht im zugeordneten Deck",
+      "missingCard": "Karte fehlt"
+    },
+    "errors": {
+      "notFound": "Kombo nicht gefunden",
+      "unauthorized": "Nicht autorisiert",
+      "forbidden": "Zugriff verweigert",
+      "createFailed": "Fehler beim Erstellen der Kombo",
+      "updateFailed": "Fehler beim Aktualisieren der Kombo",
+      "deleteFailed": "Fehler beim Löschen der Kombo",
+      "loadFailed": "Fehler beim Laden der Kombo",
+      "operationFailed": "Fehler bei der Operation",
+      "addStepFailed": "Fehler beim Hinzufügen des Schritts",
+      "updateStepFailed": "Fehler beim Aktualisieren des Schritts",
+      "deleteStepFailed": "Fehler beim Löschen des Schritts"
+    },
+    "comboSaved": "Kombo gespeichert",
+    "comboSavedDescription": "Die Änderungen wurden erfolgreich gespeichert",
+    "comboDeleted": "Kombo gelöscht",
+    "comboDeletedDescription": "Die Kombo wurde erfolgreich gelöscht",
+    "confirmDelete": "Möchtest du diese Kombo wirklich löschen?",
+    "myCombos": "Meine Kombos",
+    "noCombos": "Du hast noch keine Kombos erstellt.",
+    "createFirstCombo": "Erstelle deine erste Kombo",
+    "filterByDeck": "Nach Deck filtern",
+    "sortBy": "Sortieren nach",
+    "sortByTitle": "Titel",
+    "sortByDate": "Datum",
+    "sortBySteps": "Anzahl Schritte",
+    "noSteps": "Keine Schritte vorhanden. Füge den ersten Schritt hinzu.",
+    "createDescription": "Erstelle eine neue Kombo-Sequenz",
+    "titlePlaceholder": "z.B. Dark Magician OTK",
+    "descriptionPlaceholder": "Optionale Beschreibung",
+    "comboDescriptionPlaceholder": "Optionale Beschreibung der Kombo...",
+    "stepDescriptionPlaceholder": "Optionale Beschreibung des Schritts...",
+    "stepCreateDescription": "Wähle eine Karte und definiere die Aktion für diesen Schritt",
+    "stepEditDescription": "Bearbeite die Aktion für diesen Schritt",
+    "targetCardLabel": "Zielkarte: {{cardId}}",
+    "characters": "Zeichen",
+    "charactersCount": "{{count}}/1000 Zeichen",
+    "validationErrors": "Validierungsfehler",
+    "validationWarnings": "Hinweise",
+    "noStepsInPlayMode": "Diese Kombo hat keine Schritte.",
+    "goToStep": "Gehe zu Schritt {{number}}",
+    "loadCombosFailed": "Fehler beim Laden der Kombos",
+    "versionHistory": {
+      "title": "Versionshistorie",
+      "description": "Verwalte und stelle frühere Versionen deiner Kombo wieder her",
+      "version": "Version",
+      "create": "Aktuelle Version speichern",
+      "creating": "Erstelle...",
+      "createFailed": "Fehler beim Erstellen der Version",
+      "created": "Version erstellt",
+      "createdDescription": "Die Version wurde erfolgreich erstellt",
+      "loadFailed": "Fehler beim Laden der Versionen",
+      "noVersions": "Noch keine Versionen vorhanden",
+      "restoreConfirm": "Möchtest du diese Version wirklich wiederherstellen? Die aktuelle Version wird als Backup gespeichert.",
+      "restoreFailed": "Fehler beim Wiederherstellen der Version",
+      "restored": "Version wiederhergestellt",
+      "restoredDescription": "Die Version wurde erfolgreich wiederhergestellt",
+      "deleteConfirm": "Möchtest du diese Version wirklich löschen?",
+      "deleteFailed": "Fehler beim Löschen der Version",
+      "deleted": "Version gelöscht",
+      "deletedDescription": "Die Version wurde erfolgreich gelöscht"
+    },
+    "selectMultiple": "Mehrere auswählen",
+    "cancelSelection": "Auswahl abbrechen",
+    "deleteSelected": "Löschen ({{count}})",
+    "batchDeleteConfirm": "Möchtest du {{count}} Schritte wirklich löschen?",
+    "export": "Exportieren",
+    "exported": "Kombo exportiert",
+    "exportedDescription": "Die Kombo wurde erfolgreich exportiert",
+    "import": "Importieren",
+    "imported": "Kombo importiert",
+    "importedDescription": "Die Kombo wurde erfolgreich importiert",
+    "allDecks": "Alle Decks",
+    "sortByDate": "Neueste zuerst"
   },
   "duel": {
     "title": "Duell",
@@ -139,9 +311,42 @@
       "invalidEmail": "Ungültige E-Mail-Adresse"
     }
   },
+  "error": {
+    "title": "Ein Fehler ist aufgetreten",
+    "retry": "Erneut versuchen",
+    "reload": "Seite neu laden",
+    "home": "Zur Startseite",
+    "maxRetries": "Maximale Anzahl von Versuchen erreicht. Bitte lade die Seite neu.",
+    "deck": {
+      "description": "Beim Laden des Decks ist ein Fehler aufgetreten. Bitte versuche es erneut."
+    },
+    "cardSearch": {
+      "title": "Fehler bei der Kartensuche",
+      "description": "Die Kartensuche konnte nicht geladen werden. Bitte lade die Seite neu."
+    },
+    "global": {
+      "description": "Ein kritischer Fehler ist aufgetreten. Bitte lade die Seite neu oder kehre zur Startseite zurück."
+    },
+    "backToDecks": "Zurück zu Decks",
+    "combo": {
+      "description": "Beim Laden der Kombo ist ein Fehler aufgetreten. Bitte versuche es erneut."
+    },
+    "backToCombos": "Zurück zu Kombos"
+  },
+  "offline": {
+    "status": "Offline",
+    "syncing": "Synchronisiere...",
+    "pending": "{{count}} Änderung(en) ausstehend",
+    "syncSuccess": "Synchronisation erfolgreich",
+    "syncError": "Synchronisation fehlgeschlagen"
+  },
   "common": {
+    "justNow": "Gerade eben",
+    "minutesAgo": "vor {{count}} Minute(n)",
+    "hoursAgo": "vor {{count}} Stunde(n)",
     "appName": "DuelPath",
     "loading": "Laden...",
+    "saving": "Speichern",
     "error": "Fehler",
     "success": "Erfolg",
     "save": "Speichern",
@@ -160,7 +365,16 @@
     "results": "Ergebnisse",
     "noResults": "Keine Ergebnisse gefunden",
     "clear": "Zurücksetzen",
-    "apply": "Anwenden"
+    "apply": "Anwenden",
+    "undo": "Rückgängig",
+    "redo": "Wiederholen",
+    "back": "Zurück",
+    "selected": "ausgewählt",
+    "offline": "Offline",
+    "syncing": "Synchronisiere...",
+    "toast": {
+      "close": "Schließen"
+    }
   }
 }
 

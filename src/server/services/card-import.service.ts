@@ -117,14 +117,18 @@ export class CardImportService {
     return {
       id: passcode, // Verwende Passcode als ID
       name: apiCard.name,
+      nameLower: apiCard.name.toLowerCase(), // Normalisierter Name für optimierte Suche
       type: apiCard.type,
+      typeLower: apiCard.type.toLowerCase(), // Normalisierter Typ für optimierte Suche
       race: apiCard.race || null,
+      raceLower: apiCard.race ? apiCard.race.toLowerCase() : null, // Normalisierter Race für optimierte Suche
       attribute: apiCard.attribute || null,
       level: apiCard.level ?? null,
       atk: apiCard.atk ?? null,
       def: apiCard.def ?? null,
       desc: apiCard.desc || null,
       archetype: apiCard.archetype || null,
+      archetypeLower: apiCard.archetype ? apiCard.archetype.toLowerCase() : null, // Normalisierter Archetype für optimierte Suche
       banlistInfo,
       imageUrl,
       imageSmall,

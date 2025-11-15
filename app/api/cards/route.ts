@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CardSearchService } from "@/server/services/card-search.service";
 import type { CardSearchFilter, CardSortOptions } from "@/types/card.types";
+import { createHash } from "crypto";
 
 /**
  * GET /api/cards
@@ -27,15 +28,91 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     
-    // Autocomplete-Modus
+    // Einzelne Karte nach ID holen
+    const cardId = searchParams.get("id");
+    if (cardId) {
+      const searchService = new CardSearchService();
+      const card = await searchService.getCardById(cardId);
+      if (!card) {
+        return NextResponse.json(
+          { error: "Card not found" },
+          { status: 404 }
+        );
+      }
+      
+      // ETag für Caching generieren
+      const etag = createHash("md5").update(JSON.stringify(card)).digest("hex");
+      const ifNoneMatch = request.headers.get("if-none-match");
+      
+      if (ifNoneMatch === `"${etag}"`) {
+        return new NextResponse(null, { status: 304 });
+      }
+      
+      const response = NextResponse.json({ card });
+      response.headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+      response.headers.set("ETag", `"${etag}"`);
+      return response;
+    }
+
+    // Mehrere Karten nach IDs holen (Batch-Request)
+    const cardIds = searchParams.get("ids");
+    if (cardIds) {
+      const ids = cardIds.split(",").filter((id) => id.trim().length > 0);
+      if (ids.length > 0) {
+        const searchService = new CardSearchService();
+        const cards = await searchService.getCardsByIds(ids);
+        
+        // ETag für Caching generieren
+        const etag = createHash("md5").update(JSON.stringify(cards)).digest("hex");
+        const ifNoneMatch = request.headers.get("if-none-match");
+        
+        if (ifNoneMatch === `"${etag}"`) {
+          return new NextResponse(null, { status: 304 });
+        }
+        
+        const response = NextResponse.json({ cards });
+        response.headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+        response.headers.set("ETag", `"${etag}"`);
+        return response;
+      }
+      return NextResponse.json({ cards: [] });
+    }
+    
+    // Autocomplete-Modus für Kartennamen
     if (searchParams.get("autocomplete") === "true") {
       const query = searchParams.get("query") || "";
-      const limit = parseInt(searchParams.get("limit") || "10", 10);
+      const limit = Math.min(parseInt(searchParams.get("limit") || "5", 10), 10); // Max 10, default 5
       
       const searchService = new CardSearchService();
       const names = await searchService.autocompleteCardNames(query, limit);
       
-      return NextResponse.json({ names });
+      // ETag für Caching generieren
+      const etag = createHash("md5").update(JSON.stringify(names)).digest("hex");
+      const ifNoneMatch = request.headers.get("if-none-match");
+      
+      if (ifNoneMatch === `"${etag}"`) {
+        return new NextResponse(null, { status: 304 });
+      }
+      
+      const response = NextResponse.json({ names });
+      response.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600"); // 5 Minuten Cache
+      response.headers.set("ETag", `"${etag}"`);
+      return response;
+    }
+
+    // Kombinierter Autocomplete-Modus für Race und Archetype
+    if (searchParams.get("autocompleteFilter") === "true") {
+      const raceQuery = searchParams.get("race") || "";
+      const archetypeQuery = searchParams.get("archetype") || "";
+      const limit = parseInt(searchParams.get("limit") || "10", 10);
+      
+      const searchService = new CardSearchService();
+      const [races, archetypes] = await Promise.all([
+        raceQuery ? searchService.autocompleteRaces(raceQuery, limit) : Promise.resolve([]),
+        archetypeQuery ? searchService.autocompleteArchetypes(archetypeQuery, limit) : Promise.resolve([]),
+      ]);
+      
+      return NextResponse.json({ races, archetypes });
     }
 
     // Normale Suche
@@ -65,14 +142,46 @@ export async function GET(request: NextRequest) {
       if (!isNaN(atkNum)) filter.atk = atkNum;
     }
 
+    const atkMin = searchParams.get("atkMin");
+    if (atkMin) {
+      const atkMinNum = parseInt(atkMin, 10);
+      if (!isNaN(atkMinNum)) filter.atkMin = atkMinNum;
+    }
+
+    const atkMax = searchParams.get("atkMax");
+    if (atkMax) {
+      const atkMaxNum = parseInt(atkMax, 10);
+      if (!isNaN(atkMaxNum)) filter.atkMax = atkMaxNum;
+    }
+
     const def = searchParams.get("def");
     if (def) {
       const defNum = parseInt(def, 10);
       if (!isNaN(defNum)) filter.def = defNum;
     }
 
-    const archetype = searchParams.get("archetype");
-    if (archetype) filter.archetype = archetype;
+    const defMin = searchParams.get("defMin");
+    if (defMin) {
+      const defMinNum = parseInt(defMin, 10);
+      if (!isNaN(defMinNum)) filter.defMin = defMinNum;
+    }
+
+    const defMax = searchParams.get("defMax");
+    if (defMax) {
+      const defMaxNum = parseInt(defMax, 10);
+      if (!isNaN(defMaxNum)) filter.defMax = defMaxNum;
+    }
+
+    const useRegex = searchParams.get("useRegex");
+    if (useRegex === "true") {
+      filter.useRegex = true;
+    }
+
+    // Unterstützt mehrere Archetypes (z.B. ?archetype=hero&archetype=blue-eyes)
+    const archetypeParams = searchParams.getAll("archetype");
+    if (archetypeParams.length > 0) {
+      filter.archetype = archetypeParams.length === 1 ? archetypeParams[0] : archetypeParams;
+    }
 
     const banlistInfo = searchParams.get("banlistInfo");
     if (banlistInfo) filter.banlistInfo = banlistInfo;
@@ -97,7 +206,20 @@ export async function GET(request: NextRequest) {
     const searchService = new CardSearchService();
     const result = await searchService.searchCards(filter, page, limit, sortOptions);
 
-    return NextResponse.json(result);
+    // ETag für Caching generieren (basierend auf Query-Params und Ergebnis)
+    const cacheKey = JSON.stringify({ filter, page, limit, sortOptions, total: result.total });
+    const etag = createHash("md5").update(cacheKey).digest("hex");
+    const ifNoneMatch = request.headers.get("if-none-match");
+    
+    if (ifNoneMatch === `"${etag}"`) {
+      return new NextResponse(null, { status: 304 });
+    }
+    
+    const response = NextResponse.json(result);
+    // Kürzere Cache-Zeit für Suchen (5 Minuten), da sich Daten ändern können
+    response.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+    response.headers.set("ETag", `"${etag}"`);
+    return response;
   } catch (error) {
     console.error("Card search error:", error);
     

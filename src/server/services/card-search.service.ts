@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma/client";
 import type { CardSearchFilter, CardListResult, CardSortOptions } from "@/types/card.types";
+import type { Prisma } from "@prisma/client";
+import { cardNameCache, archetypeCache, raceCache } from "./autocomplete-cache.service";
 
 /**
  * Service für die Kartensuche
@@ -31,46 +33,71 @@ export class CardSearchService {
     const validPageSize = Math.min(100, Math.max(1, pageSize)); // Max 100 pro Seite
     const skip = (validPage - 1) * validPageSize;
 
-    // Baue Prisma-Filter auf
-    const where: any = {};
+    // Baue typisierte Prisma-Filter auf
+    const where: Prisma.CardWhereInput = {};
+    const andConditions: Prisma.CardWhereInput[] = [];
 
     if (filter.name) {
-      // Für SQLite: Verwende contains mit case-insensitive Suche
-      // Für PostgreSQL könnte hier FTS verwendet werden
       const searchTerm = filter.name.trim();
       
-      // Verbesserte Suche: Unterstützt mehrere Wörter
-      const searchTerms = searchTerm.split(/\s+/).filter((term) => term.length > 0);
-      
-      if (searchTerms.length > 1) {
-        // Mehrere Suchbegriffe: Alle müssen vorkommen
-        where.AND = searchTerms.map((term) => ({
-          name: {
-            contains: term,
-            mode: "insensitive" as const,
-          },
-        }));
+      if (filter.useRegex) {
+        // Regex-Suche (nur für SQLite, begrenzte Unterstützung)
+        // SQLite unterstützt REGEXP nur wenn sqlite3 mit Regex-Erweiterung kompiliert wurde
+        // Fallback: Case-insensitive contains
+        try {
+          // Versuche Regex zu validieren
+          new RegExp(searchTerm);
+          // Wenn gültig, verwende contains als Fallback (SQLite REGEXP ist nicht zuverlässig)
+          where.nameLower = {
+            contains: searchTerm.toLowerCase(),
+          };
+        } catch {
+          // Ungültiger Regex, verwende normale Suche
+          where.nameLower = {
+            contains: searchTerm.toLowerCase(),
+          };
+        }
       } else {
-        // Einzelner Suchbegriff
-        where.name = {
-          contains: searchTerm,
-          mode: "insensitive" as const,
-        };
+        // Case-insensitive Suche: Verwende nameLower für optimierte Suche
+        const normalizedSearchTerm = searchTerm.toLowerCase();
+        
+        // Verbesserte Suche: Unterstützt mehrere Wörter
+        const searchTerms = normalizedSearchTerm.split(/\s+/).filter((term) => term.length > 0);
+        
+        if (searchTerms.length > 1) {
+          // Mehrere Suchbegriffe: Alle müssen vorkommen
+          andConditions.push({
+            AND: searchTerms.map((term) => ({
+              nameLower: {
+                contains: term,
+              },
+            })),
+          });
+        } else {
+          // Einzelner Suchbegriff
+          where.nameLower = {
+            contains: normalizedSearchTerm,
+          };
+        }
       }
     }
 
     if (filter.type) {
+      // Case-insensitive Suche für Typ
+      const searchTerm = filter.type.trim();
       where.type = {
-        contains: filter.type,
-        mode: "insensitive" as const,
+        contains: searchTerm,
       };
     }
 
     if (filter.race) {
-      where.race = {
-        contains: filter.race,
-        mode: "insensitive" as const,
-      };
+      // Case-insensitive Suche für Race
+      // SQLite ist standardmäßig case-insensitive für String-Vergleiche
+      andConditions.push({
+        race: {
+          contains: filter.race.trim(),
+        },
+      });
     }
 
     if (filter.attribute) {
@@ -81,29 +108,80 @@ export class CardSearchService {
       where.level = filter.level;
     }
 
+    // ATK Filter: Exakter Wert oder Range
     if (filter.atk !== undefined) {
       where.atk = filter.atk;
+    } else if (filter.atkMin !== undefined || filter.atkMax !== undefined) {
+      const atkCondition: Prisma.IntFilter = {};
+      if (filter.atkMin !== undefined) {
+        atkCondition.gte = filter.atkMin;
+      }
+      if (filter.atkMax !== undefined) {
+        atkCondition.lte = filter.atkMax;
+      }
+      where.atk = atkCondition;
     }
 
+    // DEF Filter: Exakter Wert oder Range
     if (filter.def !== undefined) {
       where.def = filter.def;
+    } else if (filter.defMin !== undefined || filter.defMax !== undefined) {
+      const defCondition: Prisma.IntFilter = {};
+      if (filter.defMin !== undefined) {
+        defCondition.gte = filter.defMin;
+      }
+      if (filter.defMax !== undefined) {
+        defCondition.lte = filter.defMax;
+      }
+      where.def = defCondition;
     }
 
     if (filter.archetype) {
-      where.archetype = {
-        contains: filter.archetype,
-        mode: "insensitive" as const,
-      };
+      // Unterstützt einzelne oder mehrere Archetypes
+      if (Array.isArray(filter.archetype)) {
+        // Mehrere Archetypes: OR-Bedingung
+        if (filter.archetype.length > 0) {
+          andConditions.push({
+            OR: filter.archetype
+              .filter((arch) => arch && arch.trim().length > 0)
+              .map((arch) => ({
+                archetype: {
+                  contains: arch.trim(),
+                },
+              })),
+          });
+        }
+      } else {
+        // Einzelner Archetype
+        andConditions.push({
+          archetype: {
+            contains: filter.archetype.trim(),
+          },
+        });
+      }
+    }
+
+    // Kombiniere alle AND-Bedingungen
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
 
     if (filter.banlistInfo) {
       where.banlistInfo = filter.banlistInfo;
     }
 
-    // Sortierung
-    const orderBy: any = {};
+    // Typisierte Sortierung
+    const orderBy: Prisma.CardOrderByWithRelationInput = {};
     if (sortOptions) {
-      orderBy[sortOptions.sortBy] = sortOptions.order;
+      const sortField = sortOptions.sortBy;
+      const sortOrder = sortOptions.order;
+      
+      // Type-safe mapping der Sortierfelder
+      if (sortField === "name" || sortField === "type" || sortField === "archetype") {
+        orderBy[sortField] = sortOrder;
+      } else if (sortField === "level" || sortField === "atk" || sortField === "def") {
+        orderBy[sortField] = sortOrder;
+      }
     } else {
       // Default: Sortierung nach Name
       orderBy.name = "asc";
@@ -135,19 +213,28 @@ export class CardSearchService {
    * Autocomplete für Kartennamen
    * 
    * @param query - Suchbegriff
-   * @param limit - Maximale Anzahl Ergebnisse (default: 10)
+   * @param limit - Maximale Anzahl Ergebnisse (default: 5)
    * @returns Array von Kartennamen
    */
-  async autocompleteCardNames(query: string, limit: number = 10): Promise<string[]> {
+  async autocompleteCardNames(query: string, limit: number = 5): Promise<string[]> {
     if (!query || query.trim().length === 0) {
       return [];
     }
 
+    // Case-insensitive Suche für Autocomplete mit nameLower
+    const normalizedQuery = query.trim().toLowerCase();
+    const cacheKey = `${normalizedQuery}:${limit}`;
+
+    // Prüfe Cache
+    const cached = cardNameCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const cards = await prisma.card.findMany({
       where: {
-        name: {
-          contains: query,
-          mode: "insensitive",
+        nameLower: {
+          contains: normalizedQuery,
         },
       },
       select: {
@@ -159,7 +246,12 @@ export class CardSearchService {
       },
     });
 
-    return cards.map((card) => card.name);
+    const names = cards.map((card) => card.name);
+    
+    // Speichere im Cache
+    cardNameCache.set(cacheKey, names);
+    
+    return names;
   }
 
   /**
@@ -188,6 +280,118 @@ export class CardSearchService {
         },
       },
     });
+  }
+
+  /**
+   * Autocomplete für Race-Werte
+   * 
+   * @param query - Suchbegriff
+   * @param limit - Maximale Anzahl Ergebnisse (default: 5)
+   * @returns Array von eindeutigen Race-Werten
+   */
+  async autocompleteRaces(query: string, limit: number = 5): Promise<string[]> {
+    if (!query || query.trim().length === 0) {
+      return [];
+    }
+
+    const normalizedQuery = query.trim().toLowerCase();
+    const cacheKey = `${normalizedQuery}:${limit}`;
+
+    // Prüfe Cache
+    const cached = raceCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Case-insensitive Suche für Race
+    // SQLite ist standardmäßig case-insensitive für String-Vergleiche
+    const cards = await prisma.card.findMany({
+      where: {
+        race: {
+          contains: query.trim(),
+          not: null,
+        },
+      },
+      select: {
+        race: true,
+      },
+      take: limit * 2, // Mehr holen, da wir deduplizieren
+      distinct: ["race"],
+      orderBy: {
+        race: "asc",
+      },
+    });
+
+    // Dedupliziere und normalisiere
+    const races = new Set<string>();
+    cards.forEach((card) => {
+      if (card.race) {
+        races.add(card.race);
+      }
+    });
+
+    const results = Array.from(races).slice(0, limit);
+    
+    // Speichere im Cache
+    raceCache.set(cacheKey, results);
+    
+    return results;
+  }
+
+  /**
+   * Autocomplete für Archetype-Werte
+   * 
+   * @param query - Suchbegriff
+   * @param limit - Maximale Anzahl Ergebnisse (default: 5)
+   * @returns Array von eindeutigen Archetype-Werten
+   */
+  async autocompleteArchetypes(query: string, limit: number = 5): Promise<string[]> {
+    if (!query || query.trim().length === 0) {
+      return [];
+    }
+
+    const normalizedQuery = query.trim().toLowerCase();
+    const cacheKey = `${normalizedQuery}:${limit}`;
+
+    // Prüfe Cache
+    const cached = archetypeCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Case-insensitive Suche für Archetype
+    // SQLite ist standardmäßig case-insensitive für String-Vergleiche
+    const cards = await prisma.card.findMany({
+      where: {
+        archetype: {
+          contains: query.trim(),
+          not: null,
+        },
+      },
+      select: {
+        archetype: true,
+      },
+      take: limit * 2, // Mehr holen, da wir deduplizieren
+      distinct: ["archetype"],
+      orderBy: {
+        archetype: "asc",
+      },
+    });
+
+    // Dedupliziere und normalisiere
+    const archetypes = new Set<string>();
+    cards.forEach((card) => {
+      if (card.archetype) {
+        archetypes.add(card.archetype);
+      }
+    });
+
+    const results = Array.from(archetypes).slice(0, limit);
+    
+    // Speichere im Cache
+    archetypeCache.set(cacheKey, results);
+    
+    return results;
   }
 }
 

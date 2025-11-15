@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
-import { Navigation } from "@/components/common/Navigation";
-import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
 
 /**
- * Dashboard-Layout mit Sidebar/Navigation
+ * Dashboard-Layout
  * Geschützte Route: Nur für eingeloggte Nutzer
+ * 
+ * Navigation wird im Root-Layout gerendert, daher hier nicht mehr nötig
  */
 export default async function DashboardLayout({
   children,
@@ -20,15 +20,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header>
-        <Navigation />
-        <div className="container mx-auto px-4 py-2 flex justify-end">
-          <LanguageSwitcher />
-        </div>
-      </header>
-      <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
-    </div>
+    <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
   );
 }
 

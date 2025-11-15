@@ -74,6 +74,51 @@ Performance-Optimierungen für Kartendaten: Da potenziell über 10.000 Karten ve
 
 DuelPath wird mit einem modernen, skalierbaren Tech-Stack entwickelt, der auf dem Next.js Enterprise Boilerplate von Vercel basiert. Dadurch profitieren wir von bewährten Enterprise-Patterns und vielen integrierten Tools out-of-the-box. Im Folgenden die Haupttechnologien und Architekturprinzipien:
 
+3.1 Verfügbare Services und Infrastruktur-Komponenten
+
+Nach Abschluss von Phase 2 (Deck-Verwaltung) stehen folgende Services und Infrastruktur-Komponenten zur Verfügung, die in den nachfolgenden Phasen (Kombo-Editor, Duellmodus) genutzt werden können:
+
+**Caching-Services:**
+- **Card-Cache Service** (`useCardCache`): Client-seitiger Cache für Kartendaten mit TTL-basiertem Caching und Batch-Loading. Ermöglicht schnellen Zugriff auf bereits geladene Karten ohne erneute API-Aufrufe.
+- **Backend In-Memory Cache**: Server-seitiger Cache für Autocomplete-Ergebnisse, reduziert Datenbankabfragen bei häufigen Suchanfragen.
+- **Service Worker Cache**: Mehrschichtiges Caching-System mit verschiedenen Strategien (Cache First, Network First, Stale-While-Revalidate) für statische Assets, Bilder und API-Responses.
+
+**Storage-Services:**
+- **Offline Storage** (`offline-storage.ts`): LocalStorage-basierte Offline-Speicherung für Deck-Daten und Synchronisations-Warteschlange. Ermöglicht Offline-Nutzung und automatische Synchronisation bei Wiederverbindung.
+- **Sync Queue**: Warteschlange für ausstehende Operationen, die bei Offline-Nutzung gesammelt und bei Wiederverbindung automatisch synchronisiert werden.
+
+**Performance-Services:**
+- **Card Prefetch Service** (`useCardPrefetch`): Prefetching von Kartendaten beim Hover, reduziert Latenz bei Kartenauswahl.
+- **Virtualisierung** (`@tanstack/react-virtual`): Effiziente Darstellung großer Listen durch Rendering nur sichtbarer Elemente. Bereits implementiert für Deck-Listen und kann für Kombo-Timelines und Duell-Logs genutzt werden.
+
+**Error-Handling Services:**
+- **Error Boundary System**: Granulare Error Boundaries (Global, Deck, CardSearch) mit Retry-Mechanismus und kontextbasierter Fehlerprotokollierung.
+- **Error Logger** (`error-logger.ts`): Zentrale Fehlerprotokollierung mit Kontext-Informationen, bereit für Integration mit externen Monitoring-Diensten (z.B. Sentry).
+
+**State Management Services:**
+- **Deck Operations Service** (`useDeckOperations`): Zentrale Service für Deck-Operationen mit Request-Deduplizierung, Debouncing und AbortController-Support. Kann als Vorlage für Combo- und Duel-Operationen dienen.
+- **History Service** (`useDeckHistory`): Undo/Redo-Funktionalität mit History-Timeline. Kann für Kombo-Editor und Duellmodus adaptiert werden.
+
+**Card Search Service:**
+- **CardSearchService** (`card-search.service.ts`): Server-seitiger Service für Kartensuche mit Filterung, Pagination, Sortierung und Backend-Caching. Bereits optimiert für Performance mit Indizes und Batch-Queries.
+
+**Utility Services:**
+- **Deck Utils** (`deck.utils.ts`): Wiederverwendbare Utility-Funktionen für Deck-Operationen (YDK Import/Export, Deck-Validierung, etc.).
+- **Validation Services** (`deck.schema.ts`): Zod-basierte Validierungsschemas, erweiterbar für Kombo- und Duel-Validierung.
+
+**Provider Services:**
+- **OfflineProvider**: Context Provider für Offline-Status und Synchronisation.
+- **PerformanceProvider**: Context Provider für Performance-Monitoring (Web Vitals, React Profiler).
+- **SWRProvider**: Konfigurierter SWR Provider für Data Fetching mit optimierten Cache-Einstellungen.
+
+**Custom Hooks:**
+- `useKeyboardShortcuts`: Globale Keyboard-Shortcuts, erweiterbar für Kombo-Editor und Duellmodus.
+- `useDebounce`: Debouncing für Suchfelder und Filter.
+- `useRetry`: Retry-Mechanismus mit exponential backoff für fehlgeschlagene Operationen.
+- `useClickOutside`: Click-Outside-Detection für Modals und Dropdowns.
+
+Diese Services bilden eine solide Grundlage für die Implementierung der nachfolgenden Phasen und können direkt genutzt oder für spezifische Anforderungen adaptiert werden.
+
 Next.js (App Router) – Die Anwendung nutzt Next.js (aktuelle Version, App-Directory Router) als Fullstack-Framework. Der App Router ermöglicht Server-seitiges Rendering und React Server Components, was initiale Ladezeiten optimiert und die Entwicklung von klar strukturierten Routen vereinfacht. Next.js dient sowohl für die Frontend-Auslieferung (React-Komponenten) als auch für serverseitige Funktionen (API-Routen, Server Actions für Form-Handhabung, Authentifizierung etc.). Die Entscheidung für Next.js garantiert hohe Performance durch automatische Optimierungen (Code-Splitting, Bildoptimierung, Caching) und einfache Bereitstellung auf Vercel, was horizontale Skalierung ohne Infrastruktur-Aufwand erlaubt.
 
 TypeScript – Sämtlicher Code (Frontend und Backend) wird in TypeScript geschrieben. Dies erhöht die Entwicklerproduktivität und Codequalität dank statischer Typprüfung. Mit Strict Mode werden potenzielle Fehler früh erkannt. Gerade bei komplexen Datenstrukturen (z.B. dem Karten- und Kombodatenmodell) hilft TypeScript, Konsistenz zu bewahren. Der Boilerplate bringt bereits eine optimierte TS-Konfiguration mit, sodass wir von Anfang an mit best practices (z.B. ts-reset für verbesserte Typdefinitionen) arbeiten können.
@@ -347,67 +392,112 @@ Ergebnis von Phase 2: Nutzer können sich einloggen und Decks erstellen. Die kom
 Phase 3: Kombo-Editor (Monat 5-6)
 Ziel: Nutzer in der Lage versetzen, Kombos einzugeben und darzustellen.
 
-Kombo-Model & CRUD: Prisma-Models für Combo und ComboStep implementieren. API-Routen für Kombos erstellen (Erstellen, Speichern, Laden, Liste der eigenen Kombos).
+**Nutzung verfügbarer Services:**
+- **Card-Cache Service**: Nutzung des bestehenden `useCardCache` Hooks für schnellen Zugriff auf Kartendaten beim Erstellen von Kombo-Steps. Reduziert API-Aufrufe und verbessert Performance.
+- **CardSearchService**: Wiederverwendung des optimierten Card-Search-Services für die Kartenauswahl im Step-Editor. Nutzung des Backend-Caches für Autocomplete.
+- **Card Prefetch**: Integration von `useCardPrefetch` für bessere UX beim Hover über Karten in der Kombo-Timeline.
+- **Virtualisierung**: Nutzung von `@tanstack/react-virtual` für die Kombo-Timeline, falls viele Steps vorhanden sind (ab ~50 Steps).
+- **History Service**: Adaptierung von `useDeckHistory` zu `useComboHistory` für Undo/Redo-Funktionalität im Kombo-Editor.
+- **Error Boundaries**: Nutzung des bestehenden Error-Boundary-Systems für granulare Fehlerbehandlung (z.B. `ComboEditorErrorBoundary`).
+- **Offline Support**: Integration der Offline-Storage für Offline-Erstellung von Kombos mit automatischer Synchronisation.
+- **Keyboard Shortcuts**: Erweiterung von `useKeyboardShortcuts` um Kombo-spezifische Shortcuts (z.B. `Ctrl+N` für neuen Step, `Ctrl+S` für Speichern).
 
-Kombo-Editor UI: Neue Sektion „Kombos“. Startseite zeigt Liste eigener Kombos mit „Neue Kombo“-Button. Kombo-Editor-Seite: linke Seite optional Deckwahl (Dropdown der eigenen Decks zur Zuordnung) und „Schritt hinzufügen“-Button. Umsetzung der Timeline als Column, wo Steps gerendert werden. Der Step-Editor als Modal/Dialog, in dem man Karte wählen (Autocomplete auf Karten, gefiltert nach gewähltem Deck oder alle Karten) und Aktionstyp wählen kann. Speicherung eines Steps direkt in DB oder lokal erst und bei Save in DB – hier evtl. vorerst lokal sammeln und beim Abschluss alles schicken, um viele API-Calls zu vermeiden.
+Kombo-Model & CRUD: Prisma-Models für Combo und ComboStep implementieren. Server Actions für Kombos erstellen (Erstellen, Speichern, Laden, Liste der eigenen Kombos) – analog zu Deck-Actions, mit Nutzung der bestehenden Patterns für Request-Deduplizierung und Optimistic Updates.
 
-Kombo Ausführen („Play Mode“): Ein „Abspielen“-Button wechselt die Ansicht in den Play-Modus. Hier kann man Step für Step durchklicken (oder Autoplay animiert). Implementation: entweder in React State die aktuelle Step-Index verfolgen und entsprechend highlighten, oder ganz neue Seite/Component, die den Ablauf illustriert. Für MVP reicht auch, die Steps nacheinander einzublenden o.ä. (Animation später).
+Kombo-Editor UI: Neue Sektion „Kombos". Startseite zeigt Liste eigener Kombos mit „Neue Kombo"-Button. Kombo-Editor-Seite: linke Seite optional Deckwahl (Dropdown der eigenen Decks zur Zuordnung) und „Schritt hinzufügen"-Button. Umsetzung der Timeline als Column, wo Steps gerendert werden. **Nutze Virtualisierung für lange Kombos.** Der Step-Editor als Modal/Dialog, in dem man Karte wählen (Autocomplete auf Karten via CardSearchService, gefiltert nach gewähltem Deck oder alle Karten) und Aktionstyp wählen kann. **Nutze Card-Cache für schnelle Kartenauswahl.** Speicherung eines Steps mit Optimistic Updates (analog zu Deck-Operationen) – lokale State-Verwaltung mit automatischer Synchronisation.
 
-Einfache Zustandsdarstellung: Wenn möglich, in Play Mode eine vereinfachte Feldvisualisierung: z.B. unter der Step-Liste ein Bereich „Field“ mit Text: „Monster Zone: X, Graveyard: Y“ etc. Kann auch weggelassen werden, falls es Phase 3 sprengt.
+Kombo Ausführen („Play Mode"): Ein „Abspielen"-Button wechselt die Ansicht in den Play-Modus. Hier kann man Step für Step durchklicken (oder Autoplay animiert). Implementation: entweder in React State die aktuelle Step-Index verfolgen und entsprechend highlighten, oder ganz neue Seite/Component, die den Ablauf illustriert. **Nutze Card Prefetch für nahtlose Animation.** Für MVP reicht auch, die Steps nacheinander einzublenden o.ä. (Animation später).
 
-Validierung & Hinweise: Im Editor optional: Ein „Validiere Kombo“-Button, der eine Routine anstößt, die versucht, offensichtliche Widersprüche zu finden (z.B. verwendet Karte, die nicht im Deck war). Diese Routine kann trivial starten (alle verwendeten Karten sind im zugeordneten Deck vorhanden? Wenn Deck gewählt ist) und später ausgebaut werden. Hinweise als UI-Icons an Steps ausgeben.
+Einfache Zustandsdarstellung: Wenn möglich, in Play Mode eine vereinfachte Feldvisualisierung: z.B. unter der Step-Liste ein Bereich „Field" mit Text: „Monster Zone: X, Graveyard: Y" etc. **Nutze OptimizedImage für Kartenbilder in der Feldvisualisierung.** Kann auch weggelassen werden, falls es Phase 3 sprengt.
 
-UX-Verfeinerung: Schritte umsortieren per Drag & Drop implementieren (wenn Zeit in Phase 3, sonst Phase 4). Internationalisierung der Aktionstypen (z.B. „Normal Summon“ vs „Normalbeschwörung“ je nach Sprache).
+Validierung & Hinweise: Im Editor optional: Ein „Validiere Kombo"-Button, der eine Routine anstößt, die versucht, offensichtliche Widersprüche zu finden (z.B. verwendet Karte, die nicht im Deck war). **Nutze bestehende Validierungs-Utilities als Basis.** Diese Routine kann trivial starten (alle verwendeten Karten sind im zugeordneten Deck vorhanden? Wenn Deck gewählt ist) und später ausgebaut werden. Hinweise als UI-Icons an Steps ausgeben. **Nutze Error-Boundary-System für Validierungsfehler.**
 
-Testen: Usability-Test mit ein paar Spielern durchführen – Feedback sammeln, ob der Editor verständlich ist. Technisch: Tests für Kombospeicherung, reihenfolgerichtige Rückgabe der Steps etc.
-Ergebnis von Phase 3: Die Plattform erlaubt jetzt das Dokumentieren von Kombos. Ein Nutzer kann ein Deck erstellen (Phase 2), dann Kombos dazu eingeben und sie Schritt für Schritt visualisieren. Damit ist ein Hauptnutzen erfüllt: Deckbau und Komboplanung. Die Anwendung kann in einer Closed Beta erprobt werden.
+UX-Verfeinerung: Schritte umsortieren per Drag & Drop implementieren (wenn Zeit in Phase 3, sonst Phase 4) – **nutze @dnd-kit wie im Deck-Editor.** Internationalisierung der Aktionstypen (z.B. „Normal Summon" vs „Normalbeschwörung" je nach Sprache).
+
+Performance-Optimierungen: **Nutze SWR für Caching von Kombo-Daten.** Implementiere Request-Deduplizierung für Kombo-Operationen (analog zu Deck-Operationen). **Nutze Service Worker für Offline-Zugriff auf bereits geladene Kombos.**
+
+Testen: Usability-Test mit ein paar Spielern durchführen – Feedback sammeln, ob der Editor verständlich ist. Technisch: Tests für Kombospeicherung, reihenfolgerichtige Rückgabe der Steps etc. **Nutze bestehende Test-Patterns aus Deck-Tests.**
+Ergebnis von Phase 3: Die Plattform erlaubt jetzt das Dokumentieren von Kombos. Ein Nutzer kann ein Deck erstellen (Phase 2), dann Kombos dazu eingeben und sie Schritt für Schritt visualisieren. Damit ist ein Hauptnutzen erfüllt: Deckbau und Komboplanung. Die Anwendung kann in einer Closed Beta erprobt werden. **Alle Performance- und Offline-Features aus Phase 2 sind auch im Kombo-Editor verfügbar.**
 
 Phase 4: Duellmodus (Monat 7-9)
 Ziel: Einfache Duellsimulation (Solitärmodus) implementieren.
 
-Duell-Engine Grundlage: Entwickeln einer internen repräsentation des Spielzustands (Klassen/Strukturen für Field, Hand, Graveyard, etc.). Implementieren der Turn-Phasen und Aktionen, zumindest soweit nötig um typische Aktionen zu erlauben. Z.B. Funktionen normalSummon(card), moveToGrave(card) etc., die den State ändern. Kein vollständiger Regelcheck, aber es soll möglich sein, Karten von Hand aufs Feld zu legen etc.
+**Nutzung verfügbarer Services:**
+- **Card-Cache Service**: Essentiell für schnellen Zugriff auf Kartendaten während des Duells. Alle Karten im Deck sollten beim Start gecacht werden.
+- **Card Prefetch**: Prefetching von Kartenbildern für nahtlose Animationen beim Ausspielen von Karten.
+- **OptimizedImage**: Nutzung für alle Kartenbilder im Duellmodus (Hand, Feld, Friedhof) mit Lazy Loading.
+- **Virtualisierung**: Für Handkarten-Liste und Duell-Log, falls viele Einträge vorhanden sind.
+- **History Service**: Adaptierung zu `useDuelHistory` für Undo/Redo von Zügen im Duellmodus.
+- **Offline Support**: Integration der Offline-Storage für Offline-Duelle mit automatischer Synchronisation des Duell-Status.
+- **Error Boundaries**: Spezifische `DuelErrorBoundary` für Fehlerbehandlung im Duellmodus.
+- **Performance Monitoring**: Nutzung des PerformanceProviders für Monitoring der Duell-Performance (z.B. Frame-Rate bei Animationen).
+- **Service Worker**: Caching von Duell-Assets (Kartenbilder, Sounds) für schnelleres Laden.
 
-Duell UI Implementierung: Neue Seite „Duellmodus“. Erstes UI: der Nutzer wählt eines seiner Decks und klickt „Start Duel“. Das System gibt ihm 5 Handkarten (zufällig aus Deck, Deck wird gemischt). Darstellung des Feldes mit leeren Slots. Handkarten als Icons unten.
+Duell-Engine Grundlage: Entwickeln einer internen repräsentation des Spielzustands (Klassen/Strukturen für Field, Hand, Graveyard, etc.). **Nutze bestehende Deck-Utilities als Basis.** Implementieren der Turn-Phasen und Aktionen, zumindest soweit nötig um typische Aktionen zu erlauben. Z.B. Funktionen normalSummon(card), moveToGrave(card) etc., die den State ändern. **Nutze Optimistic Updates für sofortiges UI-Feedback.** Kein vollständiger Regelcheck, aber es soll möglich sein, Karten von Hand aufs Feld zu legen etc. **Nutze bestehende Validierungs-Schemas als Basis für einfache Regelprüfungen.**
 
-Aktionen im UI: Klick auf Handkarte -> Optionen: wenn Monster und noch normalSummon verfügbar, Option „Beschwören“, wenn Zauber, Option „Aktivieren“ etc. Diese rufen unsere Engine-Funktionen auf, die den Zustand modifizieren und dann UI re-render (z.B. Handkarte entfernen, Monsterzone Slot füllen mit Kartenname).
+Duell UI Implementierung: Neue Seite „Duellmodus". Erstes UI: der Nutzer wählt eines seiner Decks und klickt „Start Duel". **Nutze Card-Cache für schnelles Laden des Decks.** Das System gibt ihm 5 Handkarten (zufällig aus Deck, Deck wird gemischt). **Nutze SWR für Caching des Deck-Zustands.** Darstellung des Feldes mit leeren Slots. Handkarten als Icons unten. **Nutze Drag & Drop (@dnd-kit) für intuitive Karteninteraktion.**
 
-Phasen-Flow: Button „Nächste Phase“ implementieren, der intern Phase weiterschaltet. Am Ende der End Phase wechselt es wieder zur Draw Phase des Spielers und zieht automatisch eine Karte.
+Aktionen im UI: Klick auf Handkarte -> Optionen: wenn Monster und noch normalSummon verfügbar, Option „Beschwören", wenn Zauber, Option „Aktivieren" etc. Diese rufen unsere Engine-Funktionen auf, die den Zustand modifizieren und dann UI re-render (z.B. Handkarte entfernen, Monsterzone Slot füllen mit Kartenname). **Nutze Request-Deduplizierung für Duell-Aktionen.** **Nutze Keyboard-Shortcuts für häufige Aktionen (z.B. `Space` für nächste Phase).**
 
-Lebenspunkte & Kampf: Implementieren eines einfachen Attacken-Mechanismus: Klick auf eigenes Monster in Battle Phase -> es markiert, dann Klick auf Gegner (Life Points oder Monster falls wir welches droppen) -> berechne Schaden (z.B. direkt 2500 abziehen vom Gegner-LP). Da Gegner nur Dummy, kann man immer direkt angreifen. LP-Anzeige updaten, Siegbedingung checken (LP <=0 -> Duell endet).
+Phasen-Flow: Button „Nächste Phase" implementieren, der intern Phase weiterschaltet. Am Ende der End Phase wechselt es wieder zur Draw Phase des Spielers und zieht automatisch eine Karte. **Nutze Optimistic Updates für sofortiges Feedback bei Phasenwechsel.**
 
-Engine Limitierung: Wir beschränken bewusst komplexe Effekte. In Phase 4 wird vmtl. kein Support für Chain-Effekte etc. sein. Aber wir legen evtl. Grundsteine: ein Stack für Ketten, wo Effekte rein könnten, aber initial ungenutzt. Wichtig ist, dass das System robust keine Abstürze verursacht, egal was der Nutzer klickt. Bei illegalen Moves (z.B. 6. Monster beschwören) entweder verhindern (grauer Button) oder handlen (ersetzen? aber besser verhindern).
+Lebenspunkte & Kampf: Implementieren eines einfachen Attacken-Mechanismus: Klick auf eigenes Monster in Battle Phase -> es markiert, dann Klick auf Gegner (Life Points oder Monster falls wir welches droppen) -> berechne Schaden (z.B. direkt 2500 abziehen vom Gegner-LP). Da Gegner nur Dummy, kann man immer direkt angreifen. LP-Anzeige updaten, Siegbedingung checken (LP <=0 -> Duell endet). **Nutze Error Boundaries für Fehlerbehandlung bei ungültigen Aktionen.**
 
-Speichern/Wiederholen: In Phase 4 muss nicht zwingend ein Duell gespeichert werden, aber wir könnten einen „Replay als Kombo speichern“-Button anbieten: Das Duell-Log wird ins Combo-Format umgewandelt und in die Kombodatenbank gespeichert. So kann der Nutzer seine gespielte Sequenz gleich als Kombo übernehmen.
+Engine Limitierung: Wir beschränken bewusst komplexe Effekte. In Phase 4 wird vmtl. kein Support für Chain-Effekte etc. sein. Aber wir legen evtl. Grundsteine: ein Stack für Ketten, wo Effekte rein könnten, aber initial ungenutzt. Wichtig ist, dass das System robust keine Abstürze verursacht, egal was der Nutzer klickt. Bei illegalen Moves (z.B. 6. Monster beschwören) entweder verhindern (grauer Button) oder handlen (ersetzen? aber besser verhindern). **Nutze bestehende Validierungs-Utilities für Move-Validierung.**
 
-Testing: Viele manuelle Tests mit verschiedenen Decks (auch extremen, z.B. 60-Karten-Deck, oder Decks nur mit Zaubern etc.). Sicherstellen, dass die UI nicht einfriert und alle Aktionen wie gedacht funktionieren. Performance-Test: der State-Update pro Aktion sollte flott sein (vermutlich kein Problem).
-Ergebnis von Phase 4: DuelPath hat nun einen rudimentären Solo-Duellmodus. Spieler können ihre Decks nicht nur trocken analysieren, sondern tatsächliche Duellzüge nachstellen. Das Tool ist damit ein eigenständiges Testfeld für Deckideen geworden.
+Speichern/Wiederholen: In Phase 4 muss nicht zwingend ein Duell gespeichert werden, aber wir könnten einen „Replay als Kombo speichern"-Button anbieten: Das Duell-Log wird ins Combo-Format umgewandelt und in die Kombodatenbank gespeichert. **Nutze bestehende Combo-Services für die Konvertierung.** So kann der Nutzer seine gespielte Sequenz gleich als Kombo übernehmen. **Nutze Offline-Storage für lokale Duell-Speicherung.**
+
+Duell-Log: Implementierung eines Duell-Logs für alle Aktionen. **Nutze Virtualisierung für effiziente Darstellung langer Logs.** **Nutze Service Worker für Caching von Log-Daten.**
+
+Performance-Optimierungen: **Nutze React.memo für Duell-Komponenten.** **Nutze useMemo/useCallback für teure Berechnungen.** **Nutze Service Worker für Prefetching von Duell-Assets.** **Implementiere Request-Deduplizierung für Duell-Operationen.**
+
+Testing: Viele manuelle Tests mit verschiedenen Decks (auch extremen, z.B. 60-Karten-Deck, oder Decks nur mit Zaubern etc.). Sicherstellen, dass die UI nicht einfriert und alle Aktionen wie gedacht funktionieren. Performance-Test: der State-Update pro Aktion sollte flott sein. **Nutze PerformanceProvider für automatisches Performance-Monitoring.** **Nutze bestehende Test-Patterns.**
+Ergebnis von Phase 4: DuelPath hat nun einen rudimentären Solo-Duellmodus. Spieler können ihre Decks nicht nur trocken analysieren, sondern tatsächliche Duellzüge nachstellen. Das Tool ist damit ein eigenständiges Testfeld für Deckideen geworden. **Alle Performance-, Offline- und Error-Handling-Features aus Phase 2 sind auch im Duellmodus verfügbar.**
 
 Phase 5: Feinschliff und Performance, Launch-Vorbereitung (Monat 10)
 Ziel: Vor dem öffentlichen Launch alle wichtigen Verbesserungen einpflegen, Bugs fixen und das System stabil skalierbar machen.
 
-UI/UX Polish: Basierend auf Beta-Feedback UI optimieren: z.B. bessere Highlights, Hilfe-Tutorial implementieren, Ladeindikatoren wo nötig (z.B. bei API-Calls), evtl. Soundeffekte für Duellaktionen (optional, low-priority aber nice).
+**Nutzung und Erweiterung verfügbarer Services:**
+- **Performance Monitoring**: Vollständige Integration des PerformanceProviders mit Web Vitals Tracking, React Profiler und Slow Query Detection für alle Features.
+- **Error Monitoring**: Integration des Error-Loggers mit externen Services (z.B. Sentry) für Production-Monitoring.
+- **Service Worker**: Finalisierung des Service Workers mit vollständigem Caching aller Assets und Offline-Funktionalität.
+- **Caching-Strategien**: Optimierung aller Caching-Layer (Client, Server, Service Worker) basierend auf Production-Metriken.
+- **Offline Support**: Vollständige Offline-Unterstützung für alle Features (Decks, Kombos, Duelle) mit automatischer Synchronisation.
 
-Internationalisierung fertigstellen: Alle noch hartcodierten Texte ins Übersetzungssystem überführen, finale Übersetzungsdurchläufe (ggf. professionelle Übersetzer für Englische Texte gegenchecken).
+UI/UX Polish: Basierend auf Beta-Feedback UI optimieren: z.B. bessere Highlights, Hilfe-Tutorial implementieren, Ladeindikatoren wo nötig (z.B. bei API-Calls), evtl. Soundeffekte für Duellaktionen (optional, low-priority aber nice). **Nutze bestehende Loading-State-Patterns aus Deck-Editor.** **Nutze Error Boundaries für graceful Error-Handling.**
 
-Sicherheit Audit: Penetrationstest light – versuch SQL-Injection (sollte nicht gehen), XSS (gesondert prüfen: Kombo-Beschreibung als Script injection?), CSRF (NextAuth schützt API, aber wir aktivieren SameSite Cookies etc.). Falls Lücken gefunden, fixen.
+Internationalisierung fertigstellen: Alle noch hartcodierten Texte ins Übersetzungssystem überführen, finale Übersetzungsdurchläufe (ggf. professionelle Übersetzer für Englische Texte gegenchecken). **Nutze bestehende i18n-Infrastruktur.**
 
-Performance Tuning: Setup Monitoring (z.B. Vercel Analytics, Sentry Performance) in Produktion. Konfigurieren von DB Connection Pooling (falls nötig Prisma Data Proxy einbinden). Lasttest durchführen. Karten-Suchfunktion ggf. anpassen, falls zu langsam (z.B. Implementierung ElasticSearch o.ä. vertagt bis es wirklich benötigt wird).
+Sicherheit Audit: Penetrationstest light – versuch SQL-Injection (sollte nicht gehen dank Prisma), XSS (gesondert prüfen: Kombo-Beschreibung als Script injection?), CSRF (NextAuth schützt API, aber wir aktivieren SameSite Cookies etc.). Falls Lücken gefunden, fixen. **Nutze bestehende Input-Validierung als Basis.** **Nutze Error-Logger für Security-Event-Logging.**
 
-SEO & Marketing Ready: Falls öffentliche Inhalte existieren, sorgen wir dafür, dass z.B. geteilte Decks/Combos SEO-freundliche Seiten haben (mit Meta Tags, OpenGraph für Social Media Previews). Auch erstellen wir eine kleine Landing Page, die das Projekt erklärt (Screenshots, Features) – kann Startseite sein, wenn nicht eingeloggt.
+Performance Tuning: Setup Monitoring (z.B. Vercel Analytics, Sentry Performance) in Produktion. **Nutze PerformanceProvider für automatisches Monitoring.** Konfigurieren von DB Connection Pooling (falls nötig Prisma Data Proxy einbinden). Lasttest durchführen. **Nutze bestehende Performance-Optimierungen (Virtualisierung, Caching, Request-Deduplizierung) als Basis.** Karten-Suchfunktion ggf. anpassen, falls zu langsam (z.B. Implementierung ElasticSearch o.ä. vertagt bis es wirklich benötigt wird). **Nutze bestehenden CardSearchService mit Backend-Cache.**
 
-Launch Deployment: Auf Vercel produktiv stellen mit eigener Domain (duelpath.com o.ä.). Testnutzer migrieren (falls Beta auf separater DB war, Daten übertragen oder Beta-Reset kommunizieren).
+Service Worker Optimierung: Finalisierung des Service Workers mit vollständigem Caching aller Assets. **Nutze bestehende Cache-Strategien (Cache First, Network First, Stale-While-Revalidate).** Implementierung von Cache-Invalidierung und Versionierung.
 
-Ergebnis von Phase 5: Die Anwendung ist launchbereit – stabil, getestet, polished. Wir können offiziell live gehen und Nutzer einladen.
+Offline-Funktionalität: Vollständige Offline-Unterstützung für alle Features testen und optimieren. **Nutze bestehende Offline-Storage und Sync-Queue.** Sicherstellen, dass alle Operationen korrekt synchronisiert werden.
+
+SEO & Marketing Ready: Falls öffentliche Inhalte existieren, sorgen wir dafür, dass z.B. geteilte Decks/Combos SEO-freundliche Seiten haben (mit Meta Tags, OpenGraph für Social Media Previews). Auch erstellen wir eine kleine Landing Page, die das Projekt erklärt (Screenshots, Features) – kann Startseite sein, wenn nicht eingeloggt. **Nutze Next.js Metadata API für SEO.**
+
+Launch Deployment: Auf Vercel produktiv stellen mit eigener Domain (duelpath.com o.ä.). Testnutzer migrieren (falls Beta auf separater DB war, Daten übertragen oder Beta-Reset kommunizieren). **Nutze bestehende Migration-Infrastruktur.**
+
+Ergebnis von Phase 5: Die Anwendung ist launchbereit – stabil, getestet, polished. Wir können offiziell live gehen und Nutzer einladen. **Alle Services und Infrastruktur-Komponenten sind produktionsreif und vollständig integriert.**
 
 Phase 6+: Post-Launch Erweiterungen
 Nach dem MVP-Launch stehen die in Abschnitt 8 beschriebenen Erweiterungen an. Je nach Nutzerfeedback priorisieren wir:
 
-Wahrscheinlich als erstes Community-Funktionen (öffentliche Bibliotheken, Teilen von Inhalten), um Benutzerwachstum zu fördern.
+**Nutzung verfügbarer Services für Erweiterungen:**
+- **Caching-Services**: Alle neuen Features können die bestehenden Caching-Services nutzen (Card-Cache, Backend-Cache, Service Worker).
+- **Offline Support**: Community-Features können Offline-Funktionalität nutzen (z.B. Offline-Erstellung von Kommentaren mit späterer Synchronisation).
+- **Performance Monitoring**: Alle neuen Features werden automatisch durch den PerformanceProvider überwacht.
+- **Error Handling**: Bestehende Error Boundaries können für neue Features erweitert werden.
+- **State Management**: Bestehende Patterns (Optimistic Updates, Request-Deduplizierung) können für neue Features übernommen werden.
 
-Dann Statistik-Features für die Power-User.
+Wahrscheinlich als erstes Community-Funktionen (öffentliche Bibliotheken, Teilen von Inhalten), um Benutzerwachstum zu fördern. **Nutze bestehende Deck/Kombo-Services als Basis.** **Nutze Offline-Storage für Offline-Erstellung von Kommentaren.**
 
-KI-Funktionen implementieren wir iterativ und sorgfältig, da sie komplex und kostenintensiv sind – evtl. in Partnerschaft mit einem AI-Dienst oder als Premium-Addon.
+Dann Statistik-Features für die Power-User. **Nutze PerformanceProvider für automatische Datensammlung.** **Nutze bestehende Datenbank-Indizes für schnelle Statistiken.**
 
-Ebenfalls denkbar nach Launch: Zwei-Spieler-Modus online (das aber erst, wenn genug Nachfrage und Regelwerk robust).
+KI-Funktionen implementieren wir iterativ und sorgfältig, da sie komplex und kostenintensiv sind – evtl. in Partnerschaft mit einem AI-Dienst oder als Premium-Addon. **Nutze bestehende Card-Cache für schnellen Zugriff auf Kartendaten für KI-Analysen.** **Nutze Error Boundaries für robuste Fehlerbehandlung bei KI-Fehlern.**
 
-Die Roadmap bleibt agil – wir werden Nutzer-Feedback sammeln und ggf. neue Phasen definieren. Wichtig ist, dass Phase 1–5 die Kernziele abdecken und eine solide, skalierbare Grundlage schaffen. Darauf kann DuelPath organisch wachsen zu der visionären All-in-One-Plattform für Yu-Gi-Oh!-Enthusiasten.
+Ebenfalls denkbar nach Launch: Zwei-Spieler-Modus online (das aber erst, wenn genug Nachfrage und Regelwerk robust). **Nutze bestehende Duell-Engine als Basis.** **Nutze Offline-Storage für lokale Duell-Speicherung mit späterer Synchronisation.** **Nutze Performance Monitoring für WebSocket-Performance.**
+
+Die Roadmap bleibt agil – wir werden Nutzer-Feedback sammeln und ggf. neue Phasen definieren. Wichtig ist, dass Phase 1–5 die Kernziele abdecken und eine solide, skalierbare Grundlage schaffen. Darauf kann DuelPath organisch wachsen zu der visionären All-in-One-Plattform für Yu-Gi-Oh!-Enthusiasten. **Alle in Phase 2 implementierten Services und Infrastruktur-Komponenten bilden eine solide Basis für zukünftige Erweiterungen und können direkt genutzt oder adaptiert werden.**

@@ -8,6 +8,7 @@ import { Button } from "@/components/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/components/ui/card";
 import { Library, Edit, Trash2 } from "lucide-react";
 import type { Deck } from "@prisma/client";
+import { useToast } from "@/components/components/ui/toast";
 
 type DeckWithCount = Deck & {
   _count?: {
@@ -20,6 +21,7 @@ type DeckWithCount = Deck & {
  */
 export function DeckList() {
   const { t } = useTranslation();
+  const { addToast } = useToast();
   const router = useRouter();
   const [decks, setDecks] = useState<DeckWithCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,20 +46,33 @@ export function DeckList() {
   }
 
   async function handleDelete(deckId: string) {
-    if (!confirm("Möchtest du dieses Deck wirklich löschen?")) {
+    if (!confirm(t("deck.confirmDelete"))) {
       return;
     }
 
     try {
       const result = await deleteDeck(deckId);
       if (result.error) {
-        alert(result.error);
+        addToast({
+          variant: "error",
+          title: t("deck.errors.deleteFailed"),
+          description: result.error,
+        });
       } else {
         // Deck aus Liste entfernen
         setDecks(decks.filter((deck) => deck.id !== deckId));
+        addToast({
+          variant: "success",
+          title: t("deck.deckDeleted"),
+          description: t("deck.deckDeletedDescription"),
+        });
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : t("deck.errors.deleteFailed"));
+      addToast({
+        variant: "error",
+        title: t("deck.errors.deleteFailed"),
+        description: err instanceof Error ? err.message : t("deck.errors.deleteFailed"),
+      });
     }
   }
 

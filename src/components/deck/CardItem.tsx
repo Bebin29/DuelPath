@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { Card } from "@prisma/client";
@@ -8,6 +8,7 @@ import { Button } from "@/components/components/ui/button";
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import { CardDetailDialog } from "./CardDetailDialog";
+import { useCardPrefetch } from "@/lib/hooks/use-card-prefetch";
 
 interface CardItemProps {
   card: Card;
@@ -18,8 +19,9 @@ interface CardItemProps {
 /**
  * Einzelne Karte in der Suchergebnis-Liste
  */
-export function CardItem({ card, onAdd, showAddButton = true }: CardItemProps) {
+function CardItemComponent({ card, onAdd, showAddButton = true }: CardItemProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { prefetchCard, cancelPrefetch } = useCardPrefetch({ delay: 200 });
 
   const {
     attributes,
@@ -49,17 +51,20 @@ export function CardItem({ card, onAdd, showAddButton = true }: CardItemProps) {
         {...attributes}
         className="group relative rounded-lg border bg-card p-3 hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
         onClick={() => setDialogOpen(true)}
+        onMouseEnter={() => prefetchCard(card.id)}
+        onMouseLeave={() => cancelPrefetch(card.id)}
       >
         <div className="flex gap-3">
           {/* Kartenbild */}
           {card.imageSmall && (
-            <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded border">
+            <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded border">
               <Image
                 src={card.imageSmall}
                 alt={card.name}
                 fill
                 className="object-cover"
                 sizes="56px"
+                loading="lazy"
               />
             </div>
           )}
@@ -108,5 +113,14 @@ export function CardItem({ card, onAdd, showAddButton = true }: CardItemProps) {
     </>
   );
 }
+
+// Memoized Component für Performance
+export const CardItem = memo(CardItemComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.card.id === nextProps.card.id &&
+    prevProps.showAddButton === nextProps.showAddButton &&
+    prevProps.onAdd === nextProps.onAdd
+  );
+});
 
 

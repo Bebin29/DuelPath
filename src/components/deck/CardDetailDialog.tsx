@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n/hooks";
 import {
   Dialog,
@@ -13,10 +14,11 @@ import { Badge } from "@/components/components/ui/badge";
 import { Separator } from "@/components/components/ui/separator";
 import { ScrollArea } from "@/components/components/ui/scroll-area";
 import type { Card } from "@prisma/client";
+import type { CardForDeck } from "@/lib/hooks/use-deck-history";
 import Image from "next/image";
 
 interface CardDetailDialogProps {
-  card: Card | null;
+  card: CardForDeck | Card | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddToDeck?: (cardId: string) => void;
@@ -32,8 +34,38 @@ export function CardDetailDialog({
   onAddToDeck,
 }: CardDetailDialogProps) {
   const { t } = useTranslation();
+  const [fullCard, setFullCard] = useState<Card | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  if (!card) {
+  // Lade vollständige Card-Daten wenn Dialog geöffnet wird und Card nur CardForDeck ist
+  useEffect(() => {
+    if (open && card) {
+      // Prüfe ob Card vollständig ist (hat desc-Feld)
+      if ("desc" in card) {
+        setFullCard(card as Card);
+        setIsLoading(false);
+      } else {
+        // Card ist nicht vollständig, lade von API (Cache hat nur CardForDeck ohne desc)
+        setIsLoading(true);
+        fetch(`/api/cards?id=${card.id}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.card) {
+              setFullCard(data.card);
+            }
+          })
+          .catch(console.error)
+          .finally(() => setIsLoading(false));
+      }
+    } else {
+      setFullCard(null);
+      setIsLoading(false);
+    }
+  }, [open, card]);
+
+  const displayCard = fullCard || card;
+
+  if (!displayCard) {
     return null;
   }
 

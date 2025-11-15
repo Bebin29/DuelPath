@@ -30,6 +30,19 @@
     "deckEditor": "Deck Editor",
     "searchCards": "Search Cards",
     "searchPlaceholder": "Search card names...",
+    "searchInDeck": "Search in deck...",
+    "searchResultsCount": "{{count}} results found",
+    "searchEmptyState": "Start searching...",
+    "searchEmptyStateHint": "Tip: Search for card names, types, or archetypes",
+    "searchNoResultsHint": "Try different search terms or remove filters",
+    "searchError": "Search error",
+    "searchRetry": "Retry",
+    "sortBy": "Sort by",
+    "sortByName": "Name",
+    "sortByLevel": "Level",
+    "sortByAtk": "ATK",
+    "sortByDef": "DEF",
+    "sortByType": "Type",
     "filters": "Filters",
     "filterByType": "Filter by Type",
     "filterByAttribute": "Filter by Attribute",
@@ -54,6 +67,7 @@
     "mainDeckCount": "Main Deck",
     "extraDeckCount": "Extra Deck",
     "sideDeckCount": "Side Deck",
+    "noCards": "No cards",
     "validation": {
       "valid": "Deck is valid",
       "invalid": "Deck is invalid",
@@ -79,8 +93,17 @@
       "removeCardFailed": "Failed to remove card",
       "updateQuantityFailed": "Failed to update quantity",
       "cardNotFound": "Card not found",
-      "cardNotInDeck": "Card is not in deck"
+      "cardNotInDeck": "Card is not in deck",
+      "loadFailed": "Failed to load deck",
+      "operationFailed": "Operation failed"
     },
+    "cardAdded": "Card added",
+    "cardAddedDescription": "{{name}} has been added to the deck",
+    "cardRemoved": "Card removed",
+    "cardRemovedDescription": "Card has been removed from the deck",
+    "deckDeleted": "Deck deleted",
+    "deckDeletedDescription": "The deck has been successfully deleted",
+    "confirmDelete": "Do you really want to delete this deck?",
     "success": {
       "created": "Deck created successfully",
       "updated": "Deck updated successfully",
@@ -95,10 +118,130 @@
     "createCombo": "Create Combo",
     "editCombo": "Edit Combo",
     "comboTitle": "Title",
+    "description": "Description",
+    "deck": "Deck",
+    "selectDeck": "Select Deck",
+    "noDeck": "No Deck",
     "steps": "Steps",
     "addStep": "Add Step",
     "playCombo": "Play Combo",
-    "step": "Step"
+    "step": "Step",
+    "step": {
+      "add": "Add Step",
+      "edit": "Edit Step",
+      "delete": "Delete Step",
+      "card": "Card",
+      "actionType": "Action Type",
+      "description": "Description",
+      "targetCard": "Target Card (Optional)",
+      "confirmDelete": "Do you really want to delete this step?",
+      "number": "Step {{number}}"
+    },
+    "actionTypes": {
+      "SUMMON": "Summon",
+      "ACTIVATE": "Activate",
+      "SET": "Set",
+      "ATTACK": "Attack",
+      "DRAW": "Draw",
+      "DISCARD": "Discard",
+      "SPECIAL_SUMMON": "Special Summon",
+      "TRIBUTE_SUMMON": "Tribute Summon",
+      "NORMAL_SUMMON": "Normal Summon",
+      "FLIP_SUMMON": "Flip Summon",
+      "OTHER": "Other"
+    },
+    "playMode": {
+      "title": "Play Combo",
+      "currentStep": "Current Step",
+      "nextStep": "Next Step",
+      "previousStep": "Previous Step",
+      "restart": "Restart",
+      "close": "Close",
+      "stepOf": "Step {{current}} of {{total}}",
+      "completed": "Combo completed!"
+    },
+    "validation": {
+      "valid": "Combo is valid",
+      "invalid": "Combo is invalid",
+      "noSteps": "Combo must contain at least one step",
+      "duplicateOrder": "Duplicate step order found",
+      "cardNotInDeck": "Card is not in the assigned deck",
+      "missingCard": "Card missing"
+    },
+    "errors": {
+      "notFound": "Combo not found",
+      "unauthorized": "Unauthorized",
+      "forbidden": "Forbidden",
+      "createFailed": "Failed to create combo",
+      "updateFailed": "Failed to update combo",
+      "deleteFailed": "Failed to delete combo",
+      "loadFailed": "Failed to load combo",
+      "operationFailed": "Operation failed",
+      "addStepFailed": "Failed to add step",
+      "updateStepFailed": "Failed to update step",
+      "deleteStepFailed": "Failed to delete step"
+    },
+    "comboSaved": "Combo saved",
+    "comboSavedDescription": "Changes have been saved successfully",
+    "comboDeleted": "Combo deleted",
+    "comboDeletedDescription": "The combo has been successfully deleted",
+    "confirmDelete": "Do you really want to delete this combo?",
+    "myCombos": "My Combos",
+    "noCombos": "You haven't created any combos yet.",
+    "createFirstCombo": "Create your first combo",
+    "filterByDeck": "Filter by Deck",
+    "sortBy": "Sort by",
+    "sortByTitle": "Title",
+    "sortByDate": "Date",
+    "sortBySteps": "Number of Steps",
+    "noSteps": "No steps available. Add the first step.",
+    "createDescription": "Create a new combo sequence",
+    "titlePlaceholder": "e.g. Dark Magician OTK",
+    "descriptionPlaceholder": "Optional description",
+    "comboDescriptionPlaceholder": "Optional description of the combo...",
+    "stepDescriptionPlaceholder": "Optional description of the step...",
+    "stepCreateDescription": "Select a card and define the action for this step",
+    "stepEditDescription": "Edit the action for this step",
+    "targetCardLabel": "Target card: {{cardId}}",
+    "characters": "Characters",
+    "charactersCount": "{{count}}/1000 characters",
+    "validationErrors": "Validation Errors",
+    "validationWarnings": "Warnings",
+    "noStepsInPlayMode": "This combo has no steps.",
+    "goToStep": "Go to step {{number}}",
+    "loadCombosFailed": "Failed to load combos",
+    "versionHistory": {
+      "title": "Version History",
+      "description": "Manage and restore previous versions of your combo",
+      "version": "Version",
+      "create": "Save current version",
+      "creating": "Creating...",
+      "createFailed": "Failed to create version",
+      "created": "Version created",
+      "createdDescription": "The version has been successfully created",
+      "loadFailed": "Failed to load versions",
+      "noVersions": "No versions available yet",
+      "restoreConfirm": "Do you really want to restore this version? The current version will be saved as a backup.",
+      "restoreFailed": "Failed to restore version",
+      "restored": "Version restored",
+      "restoredDescription": "The version has been successfully restored",
+      "deleteConfirm": "Do you really want to delete this version?",
+      "deleteFailed": "Failed to delete version",
+      "deleted": "Version deleted",
+      "deletedDescription": "The version has been successfully deleted"
+    },
+    "selectMultiple": "Select Multiple",
+    "cancelSelection": "Cancel Selection",
+    "deleteSelected": "Delete ({{count}})",
+    "batchDeleteConfirm": "Do you really want to delete {{count}} steps?",
+    "export": "Export",
+    "exported": "Combo exported",
+    "exportedDescription": "The combo has been successfully exported",
+    "import": "Import",
+    "imported": "Combo imported",
+    "importedDescription": "The combo has been successfully imported",
+    "allDecks": "All Decks",
+    "sortByDate": "Newest first"
   },
   "duel": {
     "title": "Duel",
@@ -139,9 +282,32 @@
       "invalidEmail": "Invalid email address"
     }
   },
+  "error": {
+    "title": "An error occurred",
+    "retry": "Retry",
+    "reload": "Reload page",
+    "home": "Go to home",
+    "maxRetries": "Maximum number of retries reached. Please reload the page.",
+    "deck": {
+      "description": "An error occurred while loading the deck. Please try again."
+    },
+    "cardSearch": {
+      "title": "Card search error",
+      "description": "The card search could not be loaded. Please reload the page."
+    },
+    "global": {
+      "description": "A critical error occurred. Please reload the page or return to the home page."
+    },
+    "backToDecks": "Back to Decks",
+    "combo": {
+      "description": "An error occurred while loading the combo. Please try again."
+    },
+    "backToCombos": "Back to Combos"
+  },
   "common": {
     "appName": "DuelPath",
     "loading": "Loading...",
+    "saving": "Saving",
     "error": "Error",
     "success": "Success",
     "save": "Save",
@@ -160,7 +326,15 @@
     "results": "Results",
     "noResults": "No results found",
     "clear": "Clear",
-    "apply": "Apply"
+    "apply": "Apply",
+    "undo": "Undo",
+    "redo": "Redo",
+    "back": "Back",
+    "offline": "Offline",
+    "syncing": "Syncing...",
+    "toast": {
+      "close": "Close"
+    }
   }
 }
 

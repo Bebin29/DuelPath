@@ -9,10 +9,15 @@ export interface CardSearchFilter {
   race?: string;
   attribute?: string;
   level?: number;
-  atk?: number;
-  def?: number;
-  archetype?: string;
+  atk?: number; // Exakter ATK-Wert
+  def?: number; // Exakter DEF-Wert
+  atkMin?: number; // Minimum ATK für Range
+  atkMax?: number; // Maximum ATK für Range
+  defMin?: number; // Minimum DEF für Range
+  defMax?: number; // Maximum DEF für Range
+  archetype?: string | string[]; // Unterstützt einzelne oder mehrere Archetypes
   banlistInfo?: string;
+  useRegex?: boolean; // Regex-Support für Name-Suche
 }
 
 /**

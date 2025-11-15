@@ -1,54 +1,191 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useOptimistic, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/hooks";
+import { useDeckHistory } from "@/lib/hooks/use-deck-history";
+import { useDeckOperations } from "@/lib/hooks/use-deck-operations";
 import {
   DndContext,
   DragEndEvent,
+  DragOverEvent,
   DragOverlay,
   DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
+  closestCenter,
 } from "@dnd-kit/core";
-import { getDeckById, addCardToDeck, updateCardQuantity, removeCardFromDeck, moveCardBetweenSections } from "@/server/actions/deck.actions";
+import { getDeckById } from "@/server/actions/deck.actions";
 import { CardSearch } from "./CardSearch";
+import { CardSearchErrorBoundary } from "@/components/error/CardSearchErrorBoundary";
 import { DeckListSection } from "./DeckListSection";
 import { validateDeckSizes } from "@/lib/validations/deck.schema";
 import type { DeckSection } from "@/lib/validations/deck.schema";
-import type { Deck, DeckCard, Card } from "@prisma/client";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import type { Card } from "@prisma/client";
+import { AlertCircle, CheckCircle2, X, Loader2, History, Download, Upload, Trash2, Move } from "lucide-react";
+import { HistoryTimeline } from "./HistoryTimeline";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/components/ui/popover";
 import Image from "next/image";
-
-interface DeckWithCards extends Deck {
-  deckCards: Array<DeckCard & { card: Card }>;
-}
+import { useToast } from "@/components/components/ui/toast";
+import { Button } from "@/components/components/ui/button";
+import { Input } from "@/components/components/ui/input";
+import { Skeleton } from "@/components/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/components/ui/select";
+import type { DeckWithCards, CardForDeck } from "@/lib/hooks/use-deck-history";
+import { useCardCache } from "@/lib/hooks/use-card-cache";
+import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
+import { useDeckCardHandlers } from "@/lib/hooks/use-deck-card-handlers";
+import { MAX_CARD_COPIES, DRAG_ACTIVATION_DISTANCE } from "@/lib/constants/deck.constants";
+import { createYDKContent, parseYDKFile, downloadFile, findDeckCard } from "@/lib/utils/deck.utils";
 
 interface DeckEditorProps {
   deckId: string;
 }
+
+type OptimisticAction =
+  | { type: "addCard"; cardId: string; section: DeckSection; card: CardForDeck }
+  | { type: "updateQuantity"; cardId: string; section: DeckSection; quantity: number }
+  | { type: "removeCard"; cardId: string; section: DeckSection }
+  | { type: "moveCard"; cardId: string; fromSection: DeckSection; toSection: DeckSection };
 
 /**
  * Deck-Editor mit Kartensuche und Deckliste
  */
 export function DeckEditor({ deckId }: DeckEditorProps) {
   const { t } = useTranslation();
+  const { addToast } = useToast();
   const router = useRouter();
   const [deck, setDeck] = useState<DeckWithCards | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeCard, setActiveCard] = useState<Card | null>(null);
+  const [activeCard, setActiveCard] = useState<CardForDeck | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
+  
+  // Deck-Suche und Sortierung (muss vor allen bedingten Returns sein)
+  const [deckSearchQuery, setDeckSearchQuery] = useState("");
+  const [deckSortBy, setDeckSortBy] = useState<"name" | "type" | "level" | "atk" | "def">("name");
+  const [deckSortOrder, setDeckSortOrder] = useState<"asc" | "desc">("asc");
+
+  // Undo/Redo History (anpassbares Limit)
+  const [historyLimit, setHistoryLimit] = useState(50);
+  const {
+    currentDeck: historyDeck,
+    history,
+    historyIndex,
+    maxHistorySize,
+    addHistoryEntry,
+    undo: undoHistory,
+    redo: redoHistory,
+    jumpToHistory,
+    canUndo,
+    canRedo,
+    resetHistory,
+  } = useDeckHistory(deck, historyLimit);
+
+  // Sync history when deck changes from server
+  useEffect(() => {
+    if (deck && deck !== historyDeck) {
+      resetHistory(deck);
+    }
+  }, [deck, historyDeck, resetHistory]);
+
+  // Optimistic updates für Deck-Karten
+  const [optimisticDeck, updateOptimisticDeck] = useOptimistic(
+    historyDeck,
+    (currentDeck: DeckWithCards | null, action: OptimisticAction): DeckWithCards | null => {
+      if (!currentDeck) return currentDeck;
+
+      switch (action.type) {
+        case "addCard": {
+          const { cardId, section, card } = action;
+          const existingDeckCard = currentDeck.deckCards.find(
+            (dc) => dc.cardId === cardId && dc.deckSection === section
+          );
+
+          if (existingDeckCard) {
+            // Erhöhe Anzahl
+            return {
+              ...currentDeck,
+              deckCards: currentDeck.deckCards.map((dc) =>
+                dc.cardId === cardId && dc.deckSection === section
+                  ? { ...dc, quantity: Math.min(dc.quantity + 1, 3) }
+                  : dc
+              ),
+            };
+          } else {
+            // Neue Karte hinzufügen
+            const newDeckCard = {
+              id: `temp-${Date.now()}`,
+              deckId: currentDeck.id,
+              cardId,
+              quantity: 1,
+              deckSection: section,
+              card,
+            };
+            return {
+              ...currentDeck,
+              deckCards: [...currentDeck.deckCards, newDeckCard],
+            };
+          }
+        }
+        case "updateQuantity": {
+          const { cardId, section, quantity } = action;
+          return {
+            ...currentDeck,
+            deckCards: currentDeck.deckCards.map((dc) =>
+              dc.cardId === cardId && dc.deckSection === section
+                ? { ...dc, quantity }
+                : dc
+            ),
+          };
+        }
+        case "removeCard": {
+          const { cardId, section } = action;
+          return {
+            ...currentDeck,
+            deckCards: currentDeck.deckCards.filter(
+              (dc) => !(dc.cardId === cardId && dc.deckSection === section)
+            ),
+          };
+        }
+        case "moveCard": {
+          const { cardId, fromSection, toSection } = action;
+          return {
+            ...currentDeck,
+            deckCards: currentDeck.deckCards.map((dc) =>
+              dc.cardId === cardId && dc.deckSection === fromSection
+                ? { ...dc, deckSection: toSection }
+                : dc
+            ),
+          };
+        }
+        default:
+          return currentDeck;
+      }
+    }
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: DRAG_ACTIVATION_DISTANCE,
       },
     })
   );
 
-  async function loadDeck() {
+  const loadDeck = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -56,154 +193,476 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
       const result = await getDeckById(deckId);
       if (result.error) {
         setError(result.error);
+        addToast({
+          variant: "error",
+          title: t("deck.errors.loadFailed"),
+          description: result.error,
+        });
       } else if (result.deck) {
-        setDeck(result.deck as DeckWithCards);
+        const deckData = result.deck as DeckWithCards;
+        setDeck(deckData);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load deck");
+      const errorMessage = err instanceof Error ? err.message : "Failed to load deck";
+      setError(errorMessage);
+      addToast({
+        variant: "error",
+        title: t("deck.errors.loadFailed"),
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [deckId, t, addToast]);
 
   useEffect(() => {
     loadDeck();
-  }, [deckId]);
+  }, [loadDeck]);
 
-  async function handleAddCard(cardId: string) {
-    if (!deck) return;
+  // Gruppiere und filtere Karten nach Sektion (mit useMemo für Performance)
+  // MUSS vor bedingten Returns sein!
+  const filteredAndSortedCards = useMemo(() => {
+    if (!optimisticDeck) return { main: [], extra: [], side: [] };
 
-    try {
-      const result = await addCardToDeck(deckId, {
-        cardId,
-        quantity: 1,
-        deckSection: "MAIN", // Default: Main Deck
+    const filterCards = (cards: DeckWithCards["deckCards"]) => {
+      let filtered = cards;
+
+      // Filter nach Suchbegriff
+      if (deckSearchQuery.trim().length > 0) {
+        const query = deckSearchQuery.toLowerCase();
+        filtered = filtered.filter(
+          (dc) =>
+            dc.card.name.toLowerCase().includes(query) ||
+            dc.card.type.toLowerCase().includes(query) ||
+            (dc.card.archetype && dc.card.archetype.toLowerCase().includes(query))
+        );
+      }
+
+      // Sortierung
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: string | number | null = null;
+        let bValue: string | number | null = null;
+
+        switch (deckSortBy) {
+          case "name":
+            aValue = a.card.name;
+            bValue = b.card.name;
+            break;
+          case "type":
+            aValue = a.card.type;
+            bValue = b.card.type;
+            break;
+          case "level":
+            aValue = a.card.level ?? 0;
+            bValue = b.card.level ?? 0;
+            break;
+          case "atk":
+            aValue = a.card.atk ?? 0;
+            bValue = b.card.atk ?? 0;
+            break;
+          case "def":
+            aValue = a.card.def ?? 0;
+            bValue = b.card.def ?? 0;
+            break;
+        }
+
+        if (aValue === null && bValue === null) return 0;
+        if (aValue === null) return 1;
+        if (bValue === null) return -1;
+
+        const comparison =
+          typeof aValue === "string"
+            ? aValue.localeCompare(bValue as string)
+            : (aValue as number) - (bValue as number);
+
+        return deckSortOrder === "asc" ? comparison : -comparison;
       });
 
-      if (result.error) {
-        alert(result.error);
-      } else {
-        await loadDeck(); // Reload deck
-      }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : t("deck.errors.addCardFailed"));
+      return filtered;
+    };
+
+    return {
+      main: filterCards(optimisticDeck.deckCards.filter((dc) => dc.deckSection === "MAIN")),
+      extra: filterCards(optimisticDeck.deckCards.filter((dc) => dc.deckSection === "EXTRA")),
+      side: filterCards(optimisticDeck.deckCards.filter((dc) => dc.deckSection === "SIDE")),
+    };
+  }, [optimisticDeck, deckSearchQuery, deckSortBy, deckSortOrder]);
+
+  // Berechne Karten pro Sektion (muss vor bedingten Returns sein)
+  const mainDeckCards = filteredAndSortedCards.main;
+  const extraDeckCards = filteredAndSortedCards.extra;
+  const sideDeckCards = filteredAndSortedCards.side;
+
+  // Debug-Logging (kann später entfernt werden)
+  useEffect(() => {
+    if (optimisticDeck) {
+      console.log("DeckEditor: Card counts", {
+        main: mainDeckCards.length,
+        extra: extraDeckCards.length,
+        side: sideDeckCards.length,
+        total: optimisticDeck.deckCards.length,
+        searchQuery: deckSearchQuery,
+      });
     }
-  }
+  }, [optimisticDeck, mainDeckCards.length, extraDeckCards.length, sideDeckCards.length, deckSearchQuery]);
 
-  async function handleIncreaseQuantity(cardId: string, section: DeckSection) {
-    if (!deck) return;
-
-    const deckCard = deck.deckCards.find(
-      (dc) => dc.cardId === cardId && dc.deckSection === section
+  // Validierung (mit detaillierter Karten-Validierung) - MUSS vor bedingten Returns sein!
+  const validation = useMemo(() => {
+    return validateDeckSizes(
+      mainDeckCards.reduce((sum, dc) => sum + dc.quantity, 0),
+      extraDeckCards.reduce((sum, dc) => sum + dc.quantity, 0),
+      sideDeckCards.reduce((sum, dc) => sum + dc.quantity, 0),
+      optimisticDeck?.deckCards.map((dc) => ({
+        cardId: dc.cardId,
+        quantity: dc.quantity,
+        deckSection: dc.deckSection,
+      }))
     );
-    if (!deckCard) return;
+  }, [mainDeckCards, extraDeckCards, sideDeckCards, optimisticDeck]);
 
-    const newQuantity = Math.min(deckCard.quantity + 1, 3);
+  // Card-Cache für bessere Performance
+  const { getCardData, addMultipleToCache } = useCardCache();
 
-    try {
-      const result = await updateCardQuantity(deckId, {
-        cardId,
-        quantity: newQuantity,
-        deckSection: section,
+  // Deck-Operationen Hook
+  const {
+    addCard: addCardOperation,
+    updateQuantity: updateQuantityOperation,
+    removeCard: removeCardOperation,
+    moveCard: moveCardOperation,
+    isPending,
+    pendingOperations,
+  } = useDeckOperations({
+    deckId,
+    deck,
+    setDeck,
+    addHistoryEntry,
+    onError: (error) => {
+      addToast({
+        variant: "error",
+        title: t("deck.errors.operationFailed"),
+        description: error,
       });
+    },
+    onSuccess: () => {
+      // Success wird durch optimistic updates angezeigt
+    },
+    loadDeck,
+    updateOptimisticDeck,
+  });
 
-      if (result.error) {
-        alert(result.error);
+  // Deck-Card-Handler Hook (reduziert Code-Duplikation)
+  const {
+    handleAddCardToSection,
+    handleIncreaseQuantity,
+    handleRemove,
+    handleDecreaseQuantity,
+    handleMoveCard,
+    handleDuplicateCard,
+  } = useDeckCardHandlers({
+    optimisticDeck,
+    addCardOperation,
+    updateQuantityOperation,
+    removeCardOperation,
+    moveCardOperation,
+    getCardData,
+    onError: (title, description) => {
+      addToast({
+        variant: "error",
+        title,
+        description,
+      });
+    },
+    t,
+  });
+
+  // Wrapper für handleAddCard, der handleAddCardToSection mit MAIN aufruft
+  const handleAddCard = useCallback(async (cardId: string) => {
+    await handleAddCardToSection(cardId, "MAIN");
+  }, [handleAddCardToSection]);
+
+  // Keyboard-Shortcuts (nach allen Handler-Funktionen)
+  useKeyboardShortcuts({
+    shortcuts: [
+      {
+        key: "z",
+        ctrl: true,
+        handler: () => {
+          if (canUndo) {
+            const undoneDeck = undoHistory();
+            if (undoneDeck) {
+              setDeck(undoneDeck);
+            }
+          }
+        },
+        description: "Undo",
+      },
+      {
+        key: "z",
+        ctrl: true,
+        shift: true,
+        handler: () => {
+          if (canRedo) {
+            const redoneDeck = redoHistory();
+            if (redoneDeck) {
+              setDeck(redoneDeck);
+            }
+          }
+        },
+        description: "Redo",
+      },
+      {
+        key: "Delete",
+        handler: () => {
+          if (selectedCardId && optimisticDeck) {
+            const deckCard = findDeckCard(optimisticDeck, selectedCardId, "MAIN") ||
+              findDeckCard(optimisticDeck, selectedCardId, "EXTRA") ||
+              findDeckCard(optimisticDeck, selectedCardId, "SIDE");
+            if (deckCard) {
+              handleRemove(deckCard.cardId, deckCard.deckSection as DeckSection);
+              setSelectedCardId(null);
+            }
+          }
+          // Entferne alle ausgewählten Karten bei Multi-Select
+          if (selectedCardIds.size > 0 && optimisticDeck) {
+            selectedCardIds.forEach((cardId) => {
+              const deckCard = optimisticDeck.deckCards.find((dc) => dc.cardId === cardId);
+              if (deckCard) {
+                handleRemove(deckCard.cardId, deckCard.deckSection as DeckSection);
+              }
+            });
+            setSelectedCardIds(new Set());
+          }
+        },
+        description: "Remove selected card(s)",
+      },
+      {
+        key: "Backspace",
+        handler: () => {
+          if (selectedCardId && optimisticDeck) {
+            const deckCard = findDeckCard(optimisticDeck, selectedCardId, "MAIN") ||
+              findDeckCard(optimisticDeck, selectedCardId, "EXTRA") ||
+              findDeckCard(optimisticDeck, selectedCardId, "SIDE");
+            if (deckCard) {
+              handleRemove(deckCard.cardId, deckCard.deckSection as DeckSection);
+              setSelectedCardId(null);
+            }
+          }
+        },
+        description: "Remove selected card",
+      },
+      {
+        key: "d",
+        ctrl: true,
+        handler: () => {
+          if (selectedCardId && optimisticDeck) {
+            const deckCard = findDeckCard(optimisticDeck, selectedCardId, "MAIN") ||
+              findDeckCard(optimisticDeck, selectedCardId, "EXTRA") ||
+              findDeckCard(optimisticDeck, selectedCardId, "SIDE");
+            if (deckCard) {
+              handleDuplicateCard(deckCard.cardId, deckCard.deckSection as DeckSection);
+            }
+          }
+        },
+        description: "Duplicate card",
+      },
+      {
+        key: "a",
+        ctrl: true,
+        handler: () => {
+          if (optimisticDeck) {
+            const allIds = new Set(optimisticDeck.deckCards.map((dc) => dc.cardId));
+            setSelectedCardIds(allIds);
+          }
+        },
+        description: "Select all cards",
+      },
+      {
+        key: "Escape",
+        handler: () => {
+          setSelectedCardId(null);
+          setSelectedCardIds(new Set());
+        },
+        description: "Clear selection",
+      },
+      {
+        key: "+",
+        handler: () => {
+          if (selectedCardId && optimisticDeck) {
+            const deckCard = findDeckCard(optimisticDeck, selectedCardId, "MAIN") ||
+              findDeckCard(optimisticDeck, selectedCardId, "EXTRA") ||
+              findDeckCard(optimisticDeck, selectedCardId, "SIDE");
+            if (deckCard) {
+              handleIncreaseQuantity(deckCard.cardId, deckCard.deckSection as DeckSection);
+            }
+          }
+        },
+        description: "Increase quantity",
+      },
+      {
+        key: "-",
+        handler: () => {
+          if (selectedCardId && optimisticDeck) {
+            const deckCard = findDeckCard(optimisticDeck, selectedCardId, "MAIN") ||
+              findDeckCard(optimisticDeck, selectedCardId, "EXTRA") ||
+              findDeckCard(optimisticDeck, selectedCardId, "SIDE");
+            if (deckCard) {
+              handleDecreaseQuantity(deckCard.cardId, deckCard.deckSection as DeckSection);
+            }
+          }
+        },
+        description: "Decrease quantity",
+      },
+    ],
+    enabled: !isLoading && !!optimisticDeck,
+  });
+
+  const handleCardClick = useCallback((card: CardForDeck) => {
+    // Öffne CardDetailDialog - wird in DeckListSection gehandhabt
+  }, []);
+
+  // Multi-Select Handler
+  const handleToggleCardSelection = useCallback((cardId: string) => {
+    setSelectedCardIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(cardId)) {
+        next.delete(cardId);
       } else {
-        await loadDeck();
+        next.add(cardId);
       }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : t("deck.errors.updateQuantityFailed"));
+      return next;
+    });
+  }, []);
+
+  // Bulk-Actions
+  const handleBulkRemove = useCallback(async () => {
+    if (selectedCardIds.size === 0 || !optimisticDeck) return;
+
+    const operations = Array.from(selectedCardIds).map((cardId) => {
+      const deckCard = optimisticDeck.deckCards.find((dc) => dc.cardId === cardId);
+      return deckCard ? { cardId, section: deckCard.deckSection as DeckSection } : null;
+    }).filter((op): op is { cardId: string; section: DeckSection } => op !== null);
+
+    for (const op of operations) {
+      await handleRemove(op.cardId, op.section);
     }
-  }
 
-  async function handleDecreaseQuantity(cardId: string, section: DeckSection) {
-    if (!deck) return;
+    setSelectedCardIds(new Set());
+  }, [selectedCardIds, optimisticDeck, handleRemove]);
 
-    const deckCard = deck.deckCards.find(
-      (dc) => dc.cardId === cardId && dc.deckSection === section
+  const handleBulkMove = useCallback(async (toSection: DeckSection) => {
+    if (selectedCardIds.size === 0 || !optimisticDeck) return;
+
+    const operations = Array.from(selectedCardIds).map((cardId) => {
+      const deckCard = optimisticDeck.deckCards.find((dc) => dc.cardId === cardId);
+      return deckCard ? { cardId, fromSection: deckCard.deckSection as DeckSection, toSection } : null;
+    }).filter((op): op is { cardId: string; fromSection: DeckSection; toSection: DeckSection } => 
+      op !== null && op.fromSection !== op.toSection
     );
-    if (!deckCard || deckCard.quantity <= 1) return;
 
-    const newQuantity = deckCard.quantity - 1;
+    for (const op of operations) {
+      await handleMoveCard(op.cardId, op.fromSection, op.toSection);
+    }
+
+    setSelectedCardIds(new Set());
+  }, [selectedCardIds, optimisticDeck, handleMoveCard]);
+
+  // YDK Export
+  const handleExportYDK = useCallback(() => {
+    if (!optimisticDeck) return;
+
+    const ydkContent = createYDKContent(optimisticDeck);
+    const filename = `${optimisticDeck.name.replace(/[^a-z0-9]/gi, "_")}.ydk`;
+    downloadFile(ydkContent, filename);
+
+    addToast({
+      variant: "success",
+      title: t("deck.export.success"),
+      description: t("deck.export.successDescription"),
+    });
+  }, [optimisticDeck, t, addToast]);
+
+  // YDK Import
+  const handleImportYDK = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !optimisticDeck) return;
 
     try {
-      const result = await updateCardQuantity(deckId, {
-        cardId,
-        quantity: newQuantity,
-        deckSection: section,
-      });
+      const text = await file.text();
+      const { main: mainSection, extra: extraSection, side: sideSection } = parseYDKFile(text);
 
-      if (result.error) {
-        alert(result.error);
-      } else {
-        await loadDeck();
+      // Finde Karten anhand Passcode
+      const cardMap = new Map<string, string>(); // passcode -> cardId
+      // TODO: Lade alle Karten einmalig für bessere Performance
+      
+      let importedCount = 0;
+      const errors: string[] = [];
+
+      // Import Main Deck
+      for (const passcode of mainSection) {
+        if (!passcode) continue;
+        // TODO: Finde Karte anhand Passcode und füge hinzu
+        // Für jetzt: Skip (benötigt Card-Lookup)
       }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : t("deck.errors.updateQuantityFailed"));
-    }
-  }
 
-  async function handleRemove(cardId: string, section: DeckSection) {
-    if (!deck) return;
-
-    try {
-      const result = await removeCardFromDeck(deckId, {
-        cardId,
-        deckSection: section,
-      });
-
-      if (result.error) {
-        alert(result.error);
-      } else {
-        await loadDeck();
+      if (importedCount > 0) {
+        addToast({
+          variant: "success",
+          title: t("deck.import.success"),
+          description: t("deck.import.successDescription", { count: importedCount }),
+        });
       }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : t("deck.errors.removeCardFailed"));
-    }
-  }
 
-  async function handleMoveCard(cardId: string, fromSection: DeckSection, toSection: DeckSection) {
-    if (!deck || fromSection === toSection) return;
-
-    try {
-      const result = await moveCardBetweenSections(deckId, {
-        cardId,
-        fromSection,
-        toSection,
-      });
-
-      if (result.error) {
-        alert(result.error);
-      } else {
-        await loadDeck();
+      if (errors.length > 0) {
+        addToast({
+          variant: "warning",
+          title: t("deck.import.warning"),
+          description: errors.slice(0, 5).join(", "),
+        });
       }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : t("deck.errors.updateFailed"));
+    } catch (error) {
+      addToast({
+        variant: "error",
+        title: t("deck.import.error"),
+        description: error instanceof Error ? error.message : t("deck.import.errorDescription"),
+      });
     }
-  }
 
-  function handleDragStart(event: DragStartEvent) {
+    // Reset file input
+    event.target.value = "";
+  }, [optimisticDeck, t, addToast]);
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
     const data = active.data.current;
     
     if (data?.type === "card" && data.card) {
       setActiveCard(data.card);
-    } else if (data?.type === "deckCard" && deck) {
+    } else if (data?.type === "deckCard" && optimisticDeck) {
       // Finde Karte im Deck
       const cardId = data.cardId as string;
-      const deckCard = deck.deckCards.find((dc) => dc.cardId === cardId);
+      const deckCard = optimisticDeck.deckCards.find((dc) => dc.cardId === cardId);
       if (deckCard) {
         setActiveCard(deckCard.card);
       }
     }
-  }
+  }, [optimisticDeck]);
 
-  function handleDragEnd(event: DragEndEvent) {
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    // Haptic Feedback für mobile Geräte (wenn unterstützt)
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      const { active, over } = event;
+      if (over && active.id !== over.id) {
+        // Kurze Vibration beim Überfahren einer Drop-Zone
+        navigator.vibrate(10);
+      }
+    }
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     setActiveCard(null);
 
-    if (!over || !deck) return;
+    if (!over || !optimisticDeck) return;
 
     const activeData = active.data.current;
     const overData = over.data.current;
@@ -215,7 +674,8 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
       if (activeData?.type === "card") {
         // Neue Karte aus Suchergebnissen
         const cardId = active.id as string;
-        handleAddCardToSection(cardId, targetSection);
+        const card = activeData.card as Card;
+        handleAddCardToSection(cardId, targetSection, card);
       } else if (activeData?.type === "deckCard") {
         // Karte bereits im Deck - verschiebe zwischen Sektionen
         const cardId = activeData.cardId as string;
@@ -226,32 +686,34 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
         }
       }
     }
-  }
-
-  async function handleAddCardToSection(cardId: string, section: DeckSection) {
-    if (!deck) return;
-
-    try {
-      const result = await addCardToDeck(deckId, {
-        cardId,
-        quantity: 1,
-        deckSection: section,
-      });
-
-      if (result.error) {
-        alert(result.error);
-      } else {
-        await loadDeck();
-      }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : t("deck.errors.addCardFailed"));
-    }
-  }
+  }, [optimisticDeck, handleAddCardToSection, handleMoveCard]);
 
   if (isLoading) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">{t("common.loading")}</p>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-10 w-full" />
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-20 w-full" />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -264,103 +726,318 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
     );
   }
 
-  // Gruppiere Karten nach Sektion
-  const mainDeckCards = deck.deckCards.filter((dc) => dc.deckSection === "MAIN");
-  const extraDeckCards = deck.deckCards.filter((dc) => dc.deckSection === "EXTRA");
-  const sideDeckCards = deck.deckCards.filter((dc) => dc.deckSection === "SIDE");
-
-  // Validierung
-  const validation = validateDeckSizes(
-    mainDeckCards.reduce((sum, dc) => sum + dc.quantity, 0),
-    extraDeckCards.reduce((sum, dc) => sum + dc.quantity, 0),
-    sideDeckCards.reduce((sum, dc) => sum + dc.quantity, 0)
-  );
+  // Verwende optimisticDeck für UI, fallback zu deck
+  const displayDeck = optimisticDeck || deck;
 
   return (
     <div className="space-y-6">
       {/* Deck-Header */}
       <div>
-        <h2 className="text-2xl font-bold">{deck.name}</h2>
-        {deck.description && (
-          <p className="text-muted-foreground mt-1">{deck.description}</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold">{displayDeck.name}</h2>
+            {isPending && (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {t("common.saving")}...
+                </span>
+              </div>
+            )}
+          </div>
+                 {/* Undo/Redo Buttons */}
+                 <div className="flex items-center gap-2">
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => {
+                       const undoneDeck = undoHistory();
+                       if (undoneDeck) {
+                         setDeck(undoneDeck);
+                       }
+                     }}
+                     disabled={!canUndo}
+                     title={t("common.undo")}
+                   >
+                     {t("common.undo")}
+                   </Button>
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => {
+                       const redoneDeck = redoHistory();
+                       if (redoneDeck) {
+                         setDeck(redoneDeck);
+                       }
+                     }}
+                     disabled={!canRedo}
+                     title={t("common.redo")}
+                   >
+                     {t("common.redo")}
+                   </Button>
+                   <Popover>
+                     <PopoverTrigger asChild>
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         title={t("deck.history.timeline")}
+                       >
+                         <History className="h-4 w-4" />
+                       </Button>
+                     </PopoverTrigger>
+                     <PopoverContent className="w-80" align="end">
+                       <div className="space-y-2">
+                         <div className="flex items-center justify-between">
+                           <h4 className="font-semibold text-sm">{t("deck.history.timeline")}</h4>
+                           <span className="text-xs text-muted-foreground">
+                             {history.length}/{maxHistorySize}
+                           </span>
+                         </div>
+                         <HistoryTimeline
+                           history={history}
+                           currentIndex={historyIndex}
+                           onJumpToHistory={(index) => {
+                             const deck = jumpToHistory(index);
+                             if (deck) {
+                               setDeck(deck);
+                             }
+                           }}
+                           maxHistorySize={maxHistorySize}
+                         />
+                         <div className="flex items-center gap-2 pt-2 border-t">
+                           <label className="text-xs text-muted-foreground">
+                             {t("deck.history.limit")}:
+                           </label>
+                           <input
+                             type="number"
+                             min="10"
+                             max="200"
+                             value={historyLimit}
+                             onChange={(e) => {
+                               const newLimit = parseInt(e.target.value, 10);
+                               if (!isNaN(newLimit) && newLimit >= 10 && newLimit <= 200) {
+                                 setHistoryLimit(newLimit);
+                               }
+                             }}
+                             className="w-16 px-2 py-1 text-xs border rounded"
+                           />
+                         </div>
+                       </div>
+                     </PopoverContent>
+                   </Popover>
+                 </div>
+        </div>
+        {displayDeck.description && (
+          <p className="text-muted-foreground mt-1">{displayDeck.description}</p>
         )}
-        <p className="text-sm text-muted-foreground mt-1">Format: {deck.format}</p>
+        <p className="text-sm text-muted-foreground mt-1">Format: {displayDeck.format}</p>
       </div>
 
       {/* Validierungs-Status */}
-      {validation.isValid ? (
-        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-          <CheckCircle2 className="h-5 w-5" />
-          <span className="text-sm font-medium">{t("deck.validation.valid")}</span>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          {validation.errors.map((err, idx) => (
-            <div key={idx} className="flex items-center gap-2 text-destructive">
+      <div className="rounded-lg border p-4 bg-card">
+        {validation.isValid ? (
+          <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="text-sm font-medium">{t("deck.validation.valid")}</span>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-destructive font-medium">
               <AlertCircle className="h-5 w-5" />
-              <span className="text-sm">{err}</span>
+              <span>{t("deck.validation.invalid")}</span>
             </div>
-          ))}
-        </div>
-      )}
+            <div className="space-y-1 pl-7">
+              {validation.errors.map((err, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-destructive text-sm">
+                  <span className="mt-0.5">•</span>
+                  <span>{err}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {validation.warnings.length > 0 && (
+          <div className="mt-3 space-y-1 pl-7">
+            {validation.warnings.map((warn, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-yellow-600 dark:text-yellow-400 text-sm">
+                <span className="mt-0.5">⚠</span>
+                <span>{warn}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Zwei-Spalten-Layout */}
       <DndContext
         sensors={sensors}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Linke Spalte: Kartensuche */}
           <div>
             <h3 className="text-lg font-semibold mb-4">{t("deck.searchCards")}</h3>
-            <CardSearch onCardSelect={handleAddCard} />
+            <CardSearchErrorBoundary>
+              <CardSearch onCardSelect={handleAddCard} />
+            </CardSearchErrorBoundary>
           </div>
 
           {/* Rechte Spalte: Deckliste */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">{t("deck.deckEditor")}</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">{t("deck.deckEditor")}</h3>
+              <div className="flex items-center gap-2">
+                {/* Bulk-Actions */}
+                {selectedCardIds.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {selectedCardIds.size} {t("common.selected")}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkRemove}
+                      title={t("deck.bulk.remove")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Select
+                      onValueChange={(value) => handleBulkMove(value as DeckSection)}
+                    >
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder={t("deck.bulk.move")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MAIN">{t("deck.mainDeck")}</SelectItem>
+                        <SelectItem value="EXTRA">{t("deck.extraDeck")}</SelectItem>
+                        <SelectItem value="SIDE">{t("deck.sideDeck")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedCardIds(new Set())}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                {/* YDK Import/Export */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept=".ydk"
+                    onChange={handleImportYDK}
+                    className="hidden"
+                    id="ydk-import"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById("ydk-import")?.click()}
+                    title={t("deck.import.ydk")}
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportYDK}
+                    title={t("deck.export.ydk")}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
 
-            <DeckListSection
-              title={t("deck.mainDeck")}
-              section="MAIN"
-              cards={mainDeckCards}
-              onIncreaseQuantity={handleIncreaseQuantity}
-              onDecreaseQuantity={handleDecreaseQuantity}
-              onRemove={handleRemove}
-              onMove={handleMoveCard}
-              showMoveButtons={true}
-            />
+            {/* Deck-Suche und Sortierung */}
+            <div className="space-y-2">
+              <Input
+                placeholder={t("deck.searchInDeck")}
+                value={deckSearchQuery}
+                onChange={(e) => setDeckSearchQuery(e.target.value)}
+                className="w-full"
+              />
+              <div className="flex items-center gap-2">
+                <Select
+                  value={deckSortBy}
+                  onValueChange={(value) => setDeckSortBy(value as typeof deckSortBy)}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">{t("deck.sortByName")}</SelectItem>
+                    <SelectItem value="type">{t("deck.sortByType")}</SelectItem>
+                    <SelectItem value="level">{t("deck.sortByLevel")}</SelectItem>
+                    <SelectItem value="atk">{t("deck.sortByAtk")}</SelectItem>
+                    <SelectItem value="def">{t("deck.sortByDef")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDeckSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
+                >
+                  {deckSortOrder === "asc" ? "↑" : "↓"}
+                </Button>
+                {deckSearchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDeckSearchQuery("")}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
 
-            <DeckListSection
-              title={t("deck.extraDeck")}
-              section="EXTRA"
-              cards={extraDeckCards}
-              onIncreaseQuantity={handleIncreaseQuantity}
-              onDecreaseQuantity={handleDecreaseQuantity}
-              onRemove={handleRemove}
-              onMove={handleMoveCard}
-              showMoveButtons={true}
-            />
-
-            <DeckListSection
-              title={t("deck.sideDeck")}
-              section="SIDE"
-              cards={sideDeckCards}
-              onIncreaseQuantity={handleIncreaseQuantity}
-              onDecreaseQuantity={handleDecreaseQuantity}
-              onRemove={handleRemove}
-              onMove={handleMoveCard}
-              showMoveButtons={true}
-            />
+            {([
+              { section: "MAIN" as DeckSection, title: t("deck.mainDeck"), cards: mainDeckCards },
+              { section: "EXTRA" as DeckSection, title: t("deck.extraDeck"), cards: extraDeckCards },
+              { section: "SIDE" as DeckSection, title: t("deck.sideDeck"), cards: sideDeckCards },
+            ] as const).map(({ section, title, cards }) => (
+              <DeckListSection
+                key={section}
+                title={title}
+                section={section}
+                cards={cards}
+                onIncreaseQuantity={handleIncreaseQuantity}
+                onDecreaseQuantity={handleDecreaseQuantity}
+                onRemove={handleRemove}
+                onMove={handleMoveCard}
+                showMoveButtons={true}
+                onCardClick={handleCardClick}
+                pendingOperations={pendingOperations}
+                allDeckCards={optimisticDeck?.deckCards.map((dc) => ({
+                  ...dc,
+                  card: dc.card,
+                }))}
+                selectedCardIds={selectedCardIds}
+                onToggleCardSelection={handleToggleCardSelection}
+              />
+            ))}
           </div>
         </div>
-        <DragOverlay>
+        <DragOverlay
+          dropAnimation={{
+            duration: 200,
+            easing: "ease-out",
+          }}
+          style={{
+            cursor: "grabbing",
+          }}
+        >
           {activeCard ? (
-            <div className="rounded-lg border bg-card p-3 shadow-lg opacity-90">
+            <div className="rounded-lg border-2 border-primary bg-card p-3 shadow-2xl opacity-95 rotate-2 scale-105">
               <div className="flex gap-3">
                 {activeCard.imageSmall && (
-                  <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded border">
+                  <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded border">
                     <Image
                       src={activeCard.imageSmall}
                       alt={activeCard.name}

@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import { DeckEditor } from "@/components/deck/DeckEditor";
+import { DeckErrorBoundary } from "@/components/deck/DeckErrorBoundary";
 
 interface DeckEditorPageProps {
   params: Promise<{ id: string }>;
@@ -15,7 +16,9 @@ export default function DeckEditorPage({ params }: DeckEditorPageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <DeckEditor deckId={id} />
+      <DeckErrorBoundary deckId={id}>
+        <DeckEditor deckId={id} />
+      </DeckErrorBoundary>
     </div>
   );
 }
