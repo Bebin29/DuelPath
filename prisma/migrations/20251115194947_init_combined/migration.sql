@@ -236,3 +236,4 @@ CREATE INDEX "Duel_userId_idx" ON "Duel"("userId");
 CREATE INDEX "Duel_deckId_idx" ON "Duel"("deckId");
 
 
+

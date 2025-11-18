@@ -10,7 +10,7 @@ import Link from "next/link";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-  fallback?: ReactNode;
+  fallback?: ReactNode | ((error: Error, resetError: () => void) => ReactNode);
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
   context?: Record<string, unknown>;
   showDetails?: boolean;
@@ -98,6 +98,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   render(): ReactNode {
     if (this.state.hasError) {
       if (this.props.fallback) {
+        if (typeof this.props.fallback === 'function') {
+          const error = this.state.error || new Error('An unknown error occurred');
+          return this.props.fallback({ error, resetError: this.resetErrorBoundary });
+        }
         return this.props.fallback;
       }
 

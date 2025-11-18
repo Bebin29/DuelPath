@@ -211,9 +211,22 @@ export async function getUserDecks() {
       where: { userId: session.user.id },
       orderBy: { updatedAt: "desc" },
       include: {
-        _count: {
-          select: {
-            deckCards: true,
+        deckCards: {
+          include: {
+            card: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+                race: true,
+                attribute: true,
+                level: true,
+                atk: true,
+                def: true,
+                archetype: true,
+                imageSmall: true,
+              },
+            },
           },
         },
       },

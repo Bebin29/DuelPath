@@ -304,6 +304,56 @@
     },
     "backToCombos": "Back to Combos"
   },
+  "duel": {
+    "startNewDuel": "Start New Duel",
+    "startDuel": "Start Duel",
+    "selectDeck": "Select Deck",
+    "selectDeckDescription": "Choose a deck to begin the duel",
+    "noDecksAvailable": "No decks available. Create a deck first.",
+    "duelBoard": "Duel Board",
+    "yourTurn": "Your Turn",
+    "opponentTurn": "Opponent's Turn",
+    "lifePoints": "Life Points",
+    "you": "You",
+    "opponent": "Opponent",
+    "victory": "Victory!",
+    "defeat": "Defeat!",
+    "log": "Duel Log",
+    "logEmpty": "No actions yet",
+    "availableActions": "Available Actions",
+    "noActionsAvailable": "No actions available",
+    "nextPhase": "Next Phase",
+    "phase": {
+      "DRAW": "Draw Phase",
+      "STANDBY": "Standby Phase",
+      "MAIN1": "Main Phase 1",
+      "BATTLE": "Battle Phase",
+      "MAIN2": "Main Phase 2",
+      "END": "End Phase"
+    },
+    "action": {
+      "draw": "Draw",
+      "normalSummon": "Normal Summon",
+      "setMonster": "Set Monster",
+      "activateSpell": "Activate Spell",
+      "setSpell": "Set Spell",
+      "attackLp": "Direct Attack",
+      "attack": "Attack",
+      "changePhase": "Change Phase",
+      "endDuel": "End Duel",
+      "unknown": "Unknown Action"
+    },
+    "error": {
+      "title": "Duel Error",
+      "description": "An error occurred during the duel. The game could not continue.",
+      "retry": "Reload Duel",
+      "backToDuel": "Back to Duel",
+      "help": "If the problem persists, try reloading the page or starting a new duel."
+    },
+    "saveAsCombo": "Save as Combo",
+    "saveAsComboDescription": "Convert your duel into a reusable combo",
+    "saveAsComboInfo": "Only relevant actions (Normal Summons, Attacks, etc.) will be included in the combo. Phase changes and draws will be filtered out."
+  },
   "common": {
     "appName": "DuelPath",
     "loading": "Loading...",
@@ -330,8 +380,10 @@
     "undo": "Undo",
     "redo": "Redo",
     "back": "Back",
+    "selected": "selected",
     "offline": "Offline",
     "syncing": "Syncing...",
+    "cards": "cards",
     "toast": {
       "close": "Close"
     }

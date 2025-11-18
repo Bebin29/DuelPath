@@ -340,6 +340,56 @@
     "syncSuccess": "Synchronisation erfolgreich",
     "syncError": "Synchronisation fehlgeschlagen"
   },
+  "duel": {
+    "startNewDuel": "Neues Duell starten",
+    "startDuel": "Duell starten",
+    "selectDeck": "Deck auswählen",
+    "selectDeckDescription": "Wähle ein Deck aus, um das Duell zu beginnen",
+    "noDecksAvailable": "Keine Decks verfügbar. Erstelle zuerst ein Deck.",
+    "duelBoard": "Duell-Brett",
+    "yourTurn": "Dein Zug",
+    "opponentTurn": "Gegner-Zug",
+    "lifePoints": "Lebenspunkte",
+    "you": "Du",
+    "opponent": "Gegner",
+    "victory": "Sieg!",
+    "defeat": "Niederlage!",
+    "log": "Duell-Log",
+    "logEmpty": "Noch keine Aktionen",
+    "availableActions": "Verfügbare Aktionen",
+    "noActionsAvailable": "Keine Aktionen verfügbar",
+    "nextPhase": "Nächste Phase",
+    "phase": {
+      "DRAW": "Zieh-Phase",
+      "STANDBY": "Standby-Phase",
+      "MAIN1": "Hauptphase 1",
+      "BATTLE": "Kampfphase",
+      "MAIN2": "Hauptphase 2",
+      "END": "Endphase"
+    },
+    "action": {
+      "draw": "Ziehen",
+      "normalSummon": "Normal beschwören",
+      "setMonster": "Monster setzen",
+      "activateSpell": "Zauber aktivieren",
+      "setSpell": "Zauber setzen",
+      "attackLp": "Direkter Angriff",
+      "attack": "Angreifen",
+      "changePhase": "Phase wechseln",
+      "endDuel": "Duell beenden",
+      "unknown": "Unbekannte Aktion"
+    },
+    "error": {
+      "title": "Duell-Fehler",
+      "description": "Beim Duell ist ein Fehler aufgetreten. Das Spiel konnte nicht fortgesetzt werden.",
+      "retry": "Duell neu laden",
+      "backToDuel": "Zurück zum Duell",
+      "help": "Wenn das Problem weiterhin besteht, versuche die Seite neu zu laden oder starte ein neues Duell."
+    },
+    "saveAsCombo": "Als Combo speichern",
+    "saveAsComboDescription": "Konvertiere dein Duell in eine wiederverwendbare Combo",
+    "saveAsComboInfo": "Nur relevante Aktionen (Normal Summons, Attacks, etc.) werden in die Combo übernommen. Phase-Wechsel und Draws werden ausgefiltert."
+  },
   "common": {
     "justNow": "Gerade eben",
     "minutesAgo": "vor {{count}} Minute(n)",
@@ -372,6 +422,7 @@
     "selected": "ausgewählt",
     "offline": "Offline",
     "syncing": "Synchronisiere...",
+    "cards": "Karten",
     "toast": {
       "close": "Schließen"
     }
