@@ -58,10 +58,17 @@ function ToastComponent({
   const [isRetrying, setIsRetrying] = React.useState(false);
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
+  const closeToast = React.useCallback(() => {
+    setIsVisible(false);
+    setTimeout(() => {
+      onClose(id);
+    }, 200);
+  }, [onClose, id]);
+
   React.useEffect(() => {
     if (duration > 0 && !isRetrying) {
       timeoutRef.current = setTimeout(() => {
-        handleClose();
+        closeToast();
       }, duration);
     }
 
@@ -70,14 +77,9 @@ function ToastComponent({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [duration, isRetrying]);
+  }, [duration, isRetrying, closeToast]);
 
-  function handleClose() {
-    setIsVisible(false);
-    setTimeout(() => {
-      onClose(id);
-    }, 200);
-  }
+  // handleClose is now closeToast
 
   async function handleRetry() {
     if (!onRetry) return;
@@ -91,7 +93,7 @@ function ToastComponent({
     try {
       await onRetry();
       // Schließe Toast nach erfolgreichem Retry
-      handleClose();
+      closeToast();
     } catch (error) {
       // Toast bleibt offen bei Fehler
       setIsRetrying(false);

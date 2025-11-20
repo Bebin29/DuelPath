@@ -45,8 +45,8 @@ export function useOffline(): UseOfflineReturn {
     setIsOnline(navigator.onLine);
 
     // Prüfe Sync-Queue-Länge
-    const checkSyncQueue = () => {
-      const { getSyncQueue } = require('@/lib/storage/offline-storage');
+    const checkSyncQueue = async () => {
+      const { getSyncQueue } = await import('@/lib/storage/offline-storage');
       const queue = getSyncQueue();
       setSyncQueueLength(queue.length);
     };
@@ -66,11 +66,11 @@ export function useOffline(): UseOfflineReturn {
 
     setSyncPending(true);
     try {
-      const {
-        getSyncQueue,
-        removeFromSyncQueue,
-        setLastSyncTime,
-      } = require('@/lib/storage/offline-storage');
+    const {
+      getSyncQueue,
+      removeFromSyncQueue,
+      setLastSyncTime,
+    } = await import('@/lib/storage/offline-storage');
       const queue = getSyncQueue();
 
       // TODO: Implementiere tatsächliche Synchronisation mit Backend

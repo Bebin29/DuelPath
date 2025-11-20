@@ -52,28 +52,17 @@ export function useOfflineDuelStorage() {
   }, []);
 
   /**
-   * Auto-Save Hook: Speichert den Duel-Zustand periodisch
+   * Auto-Save Funktion: Speichert den Duel-Zustand sofort
    */
-  const useAutoSave = useCallback(
-    (duelState: DuelState | null) => {
-      useEffect(() => {
-        if (!duelState) {
-          clearDuelLocally();
-          return;
-        }
+  const saveDuelState = useCallback((duelState: DuelState | null) => {
+    if (!duelState) {
+      clearDuelLocally();
+      return;
+    }
 
-        const saveInterval = setInterval(() => {
-          saveDuelLocally(duelState);
-        }, DUEL_AUTO_SAVE_INTERVAL);
-
-        // Speichere auch sofort bei Änderungen
-        saveDuelLocally(duelState);
-
-        return () => clearInterval(saveInterval);
-      }, [duelState]);
-    },
-    [saveDuelLocally, clearDuelLocally]
-  );
+    // Speichere sofort bei Änderungen
+    saveDuelLocally(duelState);
+  }, [saveDuelLocally, clearDuelLocally]);
 
   /**
    * Prüft ob ein Duel lokal gespeichert ist
@@ -101,7 +90,7 @@ export function useOfflineDuelStorage() {
     loadDuelLocally,
     saveDuelLocally,
     clearDuelLocally,
-    useAutoSave,
+    saveDuelState,
     hasStoredDuel,
     resumeDuel,
   };

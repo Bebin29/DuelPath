@@ -37,7 +37,7 @@ describe('CardSearchService', () => {
         },
       ];
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as any);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
       mockPrisma.card.count.mockResolvedValue(1);
 
       const filter: CardSearchFilter = { name: 'Blue-Eyes' };
@@ -59,7 +59,7 @@ describe('CardSearchService', () => {
         },
       ];
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as any);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
       mockPrisma.card.count.mockResolvedValue(1);
 
       const filter: CardSearchFilter = { type: 'Normal Monster' };
@@ -78,7 +78,7 @@ describe('CardSearchService', () => {
         },
       ];
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as any);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
       mockPrisma.card.count.mockResolvedValue(1);
 
       const filter: CardSearchFilter = { attribute: 'LIGHT' };
@@ -96,7 +96,7 @@ describe('CardSearchService', () => {
         },
       ];
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as any);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
       mockPrisma.card.count.mockResolvedValue(1);
 
       const filter: CardSearchFilter = { level: 8 };
@@ -202,7 +202,7 @@ describe('CardSearchService', () => {
         { name: 'Blue-Eyes Alternative White Dragon' },
       ];
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as any);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
 
       const result = await service.autocompleteCardNames('Blue-Eyes', 10);
 
@@ -242,7 +242,7 @@ describe('CardSearchService', () => {
         name: `Card ${i}`,
       }));
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as any);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
 
       const result = await service.autocompleteCardNames('Card', 5);
 
@@ -263,7 +263,7 @@ describe('CardSearchService', () => {
         type: 'Effect Monster',
       };
 
-      mockPrisma.card.findUnique = vi.fn().mockResolvedValue(mockCard as any);
+      mockPrisma.card.findUnique = vi.fn().mockResolvedValue(mockCard as Prisma.Card);
 
       const result = await service.getCardById('12345');
 
@@ -289,7 +289,7 @@ describe('CardSearchService', () => {
         { id: '2', name: 'Card 2' },
       ];
 
-      mockPrisma.card.findMany = vi.fn().mockResolvedValue(mockCards as any);
+      mockPrisma.card.findMany = vi.fn().mockResolvedValue(mockCards as Prisma.Card[]);
 
       const result = await service.getCardsByIds(['1', '2']);
 

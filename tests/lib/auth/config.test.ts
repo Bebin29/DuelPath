@@ -30,7 +30,7 @@ describe('Auth Config', () => {
   it('validiert fehlende Credentials', async () => {
     const credentialsProvider = authConfig.providers[0];
     if (credentialsProvider && 'authorize' in credentialsProvider) {
-      const result = await (credentialsProvider as any).authorize({
+      const result = await (credentialsProvider as { authorize: (credentials: Record<string, unknown>) => Promise<unknown> }).authorize({
         email: undefined,
         password: undefined,
       });
@@ -44,7 +44,7 @@ describe('Auth Config', () => {
 
     const credentialsProvider = authConfig.providers[0];
     if (credentialsProvider && 'authorize' in credentialsProvider) {
-      const result = await (credentialsProvider as any).authorize({
+      const result = await (credentialsProvider as { authorize: (credentials: Record<string, unknown>) => Promise<unknown> }).authorize({
         email: 'nonexistent@test.com',
         password: 'password123',
       });
@@ -60,11 +60,11 @@ describe('Auth Config', () => {
       email: 'test@test.com',
       password: hashedPassword,
       name: 'Test User',
-    } as any);
+    } as Record<string, unknown>);
 
     const credentialsProvider = authConfig.providers[0];
     if (credentialsProvider && 'authorize' in credentialsProvider) {
-      const result = await (credentialsProvider as any).authorize({
+      const result = await (credentialsProvider as { authorize: (credentials: Record<string, unknown>) => Promise<unknown> }).authorize({
         email: 'test@test.com',
         password: 'wrongPassword',
       });
@@ -81,11 +81,11 @@ describe('Auth Config', () => {
       password: hashedPassword,
       name: 'Test User',
       image: null,
-    } as any);
+    } as Record<string, unknown>);
 
     const credentialsProvider = authConfig.providers[0];
     if (credentialsProvider && 'authorize' in credentialsProvider) {
-      const result = await (credentialsProvider as any).authorize({
+      const result = await (credentialsProvider as { authorize: (credentials: Record<string, unknown>) => Promise<unknown> }).authorize({
         email: 'test@test.com',
         password: 'correctPassword',
       });

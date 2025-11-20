@@ -173,6 +173,14 @@ export function DuelBoard({
     ],
   });
 
+  // Touch-Gesten an das Board-Element anhängen
+  React.useEffect(() => {
+    if (duelBoardRef.current) {
+      const cleanup = attachListeners(duelBoardRef.current);
+      return cleanup;
+    }
+  }, [duelState, attachListeners]); // Re-run when duelState changes
+
   if (!duelState) {
     return (
       <div className="text-center py-8">
@@ -180,12 +188,6 @@ export function DuelBoard({
       </div>
     );
   }
-
-  // Touch-Gesten an das Board-Element anhängen
-  const cleanup = attachListeners(duelBoardRef.current);
-
-  // Cleanup beim Unmount
-  React.useEffect(() => cleanup, [cleanup]);
 
   const mainContent = (
     <div className="space-y-4">

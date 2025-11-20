@@ -25,7 +25,7 @@ interface UseDeckCardHandlersOptions {
   ) => Promise<void>;
   getCardData: (cardId: string) => Promise<CardForDeck | null>;
   onError: (title: string, description: string) => void;
-  t: (key: string, params?: Record<string, any>) => string;
+  t: (key: string, params?: Record<string, unknown>) => string;
 }
 
 /**

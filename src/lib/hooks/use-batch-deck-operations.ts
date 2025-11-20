@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useTransition } from 'react';
 import type { DeckSection } from '@/lib/validations/deck.schema';
-import type { DeckWithCards, CardForDeck } from './use-deck-history';
+import type { DeckWithCards, CardForDeck, HistoryAction } from './use-deck-history';
 import { batchDeckOperations } from '@/server/actions/deck.actions';
 
 interface BatchOperation {
@@ -18,7 +18,7 @@ interface UseBatchDeckOperationsOptions {
   deckId: string;
   deck: DeckWithCards | null;
   setDeck: (updater: (prev: DeckWithCards | null) => DeckWithCards | null) => void;
-  addHistoryEntry: (action: any, deckState: DeckWithCards) => void;
+  addHistoryEntry: (action: HistoryAction, deckState: DeckWithCards) => void;
   onError?: (error: string) => void;
   onSuccess?: () => void;
   loadDeck: () => Promise<void>;

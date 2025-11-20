@@ -18,7 +18,6 @@ import Link from 'next/link';
  * Zeigt Fehlermeldungen von NextAuth an
  */
 export default function AuthErrorPage() {
-  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
 

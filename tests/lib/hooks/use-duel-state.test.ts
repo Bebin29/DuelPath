@@ -432,7 +432,7 @@ describe('useDuelState', () => {
     });
 
     // Ungültige Aktion dispatchen
-    const invalidAction = { type: 'INVALID' } as any;
+    const invalidAction = { type: 'INVALID' } as DuelAction;
 
     expect(() => {
       act(() => {

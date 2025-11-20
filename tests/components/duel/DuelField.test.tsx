@@ -25,7 +25,7 @@ vi.mock('@/lib/hooks/use-responsive-layout', () => ({
 }));
 
 vi.mock('@/components/duel/DuelCard', () => ({
-  DuelCard: ({ cardInstance }: { cardInstance: any }) => (
+  DuelCard: ({ cardInstance }: { cardInstance: { instanceId: string } }) => (
     <div data-testid={`card-${cardInstance.instanceId}`}>Card {cardInstance.instanceId}</div>
   ),
 }));

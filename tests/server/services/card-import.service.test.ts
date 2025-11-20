@@ -34,7 +34,7 @@ describe('CardImportService', () => {
       };
 
       // Access private method via type assertion (for testing)
-      const mapped = (service as any).mapApiCardToPrisma(apiCard);
+      const mapped = (service as { mapApiCardToPrisma: (card: unknown) => unknown }).mapApiCardToPrisma(apiCard);
 
       expect(mapped.id).toBe('12345');
       expect(mapped.name).toBe('Blue-Eyes White Dragon');
@@ -54,7 +54,7 @@ describe('CardImportService', () => {
         card_images: [],
       };
 
-      const mapped = (service as any).mapApiCardToPrisma(apiCard);
+      const mapped = (service as { mapApiCardToPrisma: (card: unknown) => unknown }).mapApiCardToPrisma(apiCard);
 
       expect(mapped.race).toBeNull();
       expect(mapped.attribute).toBeNull();
@@ -77,13 +77,13 @@ describe('CardImportService', () => {
         ],
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse,
       });
 
       const service = new CardImportService();
-      const cards = await (service as any).fetchAllCards();
+      const cards = await (service as { fetchAllCards: () => Promise<unknown[]> }).fetchAllCards();
 
       expect(cards).toHaveLength(1);
       expect(cards[0].name).toBe('Test Card');
@@ -93,7 +93,7 @@ describe('CardImportService', () => {
     });
 
     it('should retry on failure', async () => {
-      (global.fetch as any)
+      (global.fetch as jest.MockedFunction<typeof fetch>)
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValueOnce({
           ok: true,
@@ -101,7 +101,7 @@ describe('CardImportService', () => {
         });
 
       const service = new CardImportService();
-      const cards = await (service as any).fetchAllCards();
+      const cards = await (service as { fetchAllCards: () => Promise<unknown[]> }).fetchAllCards();
 
       expect(cards).toEqual([]);
       expect(global.fetch).toHaveBeenCalledTimes(2);

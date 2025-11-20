@@ -4,7 +4,7 @@
  * Erfasst Performance-Daten von React-Komponenten
  */
 
-import { ProfilerOnRenderCallback } from "react";
+import React, { ProfilerOnRenderCallback, Profiler, type ReactNode } from "react";
 
 export interface ProfilerData {
   id: string;
@@ -64,7 +64,6 @@ export const onRenderCallback: ProfilerOnRenderCallback = (
  *   <DeckEditor />
  * </ProfilerWrapper>
  */
-import { Profiler, type ReactNode } from "react";
 
 interface ProfilerWrapperProps {
   id: string;

@@ -9,7 +9,7 @@ import { CardImportService } from '@/server/services/card-import.service';
  *
  * Erfordert Authentifizierung (Admin-Berechtigung könnte später hinzugefügt werden)
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Prüfe Authentifizierung
     const session = await auth();

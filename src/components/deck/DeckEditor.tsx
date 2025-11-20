@@ -52,7 +52,7 @@ import type { DeckWithCards, CardForDeck } from '@/lib/hooks/use-deck-history';
 import { useCardCache } from '@/lib/hooks/use-card-cache';
 import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
 import { useDeckCardHandlers } from '@/lib/hooks/use-deck-card-handlers';
-import { MAX_CARD_COPIES, DRAG_ACTIVATION_DISTANCE } from '@/lib/constants/deck.constants';
+import { DRAG_ACTIVATION_DISTANCE } from '@/lib/constants/deck.constants';
 import { createYDKContent, parseYDKFile, downloadFile, findDeckCard } from '@/lib/utils/deck.utils';
 
 interface DeckEditorProps {
@@ -623,7 +623,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
         const cardMap = new Map<string, string>(); // passcode -> cardId
         // TODO: Lade alle Karten einmalig für bessere Performance
 
-        let importedCount = 0;
+        const importedCount = 0;
         const errors: string[] = [];
 
         // Import Main Deck

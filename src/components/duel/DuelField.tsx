@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Card } from '@/components/components/ui/card';
 import { DuelCard } from './DuelCard';
 import { useResponsiveLayout } from '@/lib/hooks/use-responsive-layout';

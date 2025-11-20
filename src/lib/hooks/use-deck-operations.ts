@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useTransition } from 'react';
 import type { DeckSection } from '@/lib/validations/deck.schema';
-import type { DeckWithCards, CardForDeck } from './use-deck-history';
+import type { DeckWithCards, CardForDeck, HistoryAction } from './use-deck-history';
 import { useRetry } from './use-retry';
 import {
   addCardToDeck,
@@ -14,7 +14,7 @@ interface UseDeckOperationsOptions {
   deckId: string;
   deck: DeckWithCards | null;
   setDeck: (updater: (prev: DeckWithCards | null) => DeckWithCards | null) => void;
-  addHistoryEntry: (action: any, deckState: DeckWithCards) => void;
+  addHistoryEntry: (action: HistoryAction, deckState: DeckWithCards) => void;
   onError?: (error: string, retryFn?: () => Promise<void>) => void;
   onSuccess?: (message?: string) => void;
   loadDeck: () => Promise<void>;

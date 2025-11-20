@@ -63,7 +63,7 @@ export function HistoryTimeline({
     };
   }, [t]);
 
-  const formatTime = (timestamp: number): string => {
+  const formatTime = useCallback((timestamp: number): string => {
     const date = new Date(timestamp);
     const now = Date.now();
     const diff = now - timestamp;
@@ -82,7 +82,7 @@ export function HistoryTimeline({
     } else {
       return date.toLocaleTimeString();
     }
-  };
+  }, [t]);
 
   if (history.length === 0) {
     return (

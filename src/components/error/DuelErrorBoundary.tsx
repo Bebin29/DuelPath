@@ -67,7 +67,7 @@ function DuelErrorRecovery({
         variant: 'error',
       });
     }
-  }, [exportErrors]);
+  }, [exportErrors, addToast]);
 
   const handleRetry = useCallback(() => {
     resetError();
@@ -76,11 +76,11 @@ function DuelErrorRecovery({
       description: 'Attempting to recover...',
       variant: 'info',
     });
-  }, [resetError]);
+  }, [resetError, addToast]);
 
   const handleReload = useCallback(() => {
     window.location.reload();
-  }, []);
+  }, [addToast]);
 
   const handleBackToDashboard = useCallback(() => {
     window.location.href = '/';

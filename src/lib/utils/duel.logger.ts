@@ -94,7 +94,7 @@ export class DuelLogger {
     try {
       const data = JSON.parse(jsonString);
       if (data.version && Array.isArray(data.logs)) {
-        this.logs = data.logs.map((log: any) => ({
+        this.logs = data.logs.map((log: { timestamp: string; [key: string]: unknown }) => ({
           ...log,
           timestamp: new Date(log.timestamp).getTime(),
         }));
@@ -202,7 +202,7 @@ export function useDuelLogger() {
     logger: duelLogger,
     addLogEntry: (state: DuelState, action: DuelAction) => duelLogger.addLogEntry(state, action),
     getLogs: () => duelLogger.getLogs(),
-    filterLogs: (filters: any) => duelLogger.filterLogs(filters),
+    filterLogs: (filters: Record<string, unknown>) => duelLogger.filterLogs(filters),
     exportLogs: () => duelLogger.exportAsJSON(),
     importLogs: (json: string) => duelLogger.importFromJSON(json),
     clearLogs: () => duelLogger.clearLogs(),

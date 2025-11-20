@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { useTransition } from 'react';
-import type { DuelState, DuelAction } from '@/types/duel.types';
+import type { DuelState } from '@/types/duel.types';
 import { useRetry } from './use-retry';
 import type { HistoryAction } from './use-duel-history';
 
@@ -86,7 +86,7 @@ export function useDuelOperations({
    */
   const markOperationPending = useCallback((key: string, type: PendingOperation['type']) => {
     pendingOperationsRef.current.set(key, { type, timestamp: Date.now() });
-    setPendingOperations((prev) => new Map(prev.set(key, type)));
+    setPendingOperations((prev) => new Map(prev).set(key, type));
   }, []);
 
   /**

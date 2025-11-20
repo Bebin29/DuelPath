@@ -30,7 +30,7 @@ export function useOfflineComboStorage() {
   /**
    * Synchronisiert eine einzelne Operation
    */
-  const syncOperation = useCallback(async (operation: any): Promise<boolean> => {
+  const syncOperation = useCallback(async (operation: { resource: string; type: string; data: unknown }): Promise<boolean> => {
     try {
       if (operation.resource === 'combo') {
         if (operation.type === 'create') {

@@ -10,10 +10,10 @@ import { DuelPhase } from '@/types/duel.types';
 
 describe('useDuelOperations', () => {
   let mockDuelState: DuelState;
-  let mockSetDuelState: vi.MockedFunction<any>;
-  let mockAddHistoryEntry: vi.MockedFunction<any>;
-  let mockOnError: vi.MockedFunction<any>;
-  let mockOnSuccess: vi.MockedFunction<any>;
+  let mockSetDuelState: vi.MockedFunction<(state: DuelState | null) => void>;
+  let mockAddHistoryEntry: vi.MockedFunction<(entry: unknown) => void>;
+  let mockOnError: vi.MockedFunction<(title: string, description: string) => void>;
+  let mockOnSuccess: vi.MockedFunction<(message: string) => void>;
 
   beforeEach(() => {
     mockDuelState = {
@@ -72,7 +72,7 @@ describe('useDuelOperations', () => {
         ok: true,
         json: () => Promise.resolve({ success: true }),
       })
-    ) as any;
+    ) as jest.MockedFunction<typeof fetch>;
 
     const { result } = renderHook(() =>
       useDuelOperations({
@@ -99,7 +99,7 @@ describe('useDuelOperations', () => {
 
   it('should handle saveDuel error', async () => {
     // Mock fehlgeschlagenen Server-Call
-    global.fetch = vi.fn(() => Promise.reject(new Error('Network error'))) as any;
+    global.fetch = vi.fn(() => Promise.reject(new Error('Network error'))) as jest.MockedFunction<typeof fetch>;
 
     const { result } = renderHook(() =>
       useDuelOperations({
@@ -129,7 +129,7 @@ describe('useDuelOperations', () => {
         ok: true,
         json: () => Promise.resolve({ success: true }),
       })
-    ) as any;
+    ) as jest.MockedFunction<typeof fetch>;
 
     const { result } = renderHook(() =>
       useDuelOperations({

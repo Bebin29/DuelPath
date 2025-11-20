@@ -35,9 +35,10 @@ export function ComboPlayMode({ open, onOpenChange, combo }: ComboPlayModeProps)
 
   // Reset auf ersten Step wenn Dialog geöffnet wird
   useEffect(() => {
-    if (open) {
+    if (open && currentStepIndex !== 0) {
       setCurrentStepIndex(0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const currentStep = sortedSteps[currentStepIndex];

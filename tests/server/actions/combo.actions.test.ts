@@ -59,7 +59,7 @@ describe('Combo Actions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.mockResolvedValue(mockSession as any);
+    mockAuth.mockResolvedValue(mockSession as { user: { id: string; email: string; name: string } });
   });
 
   describe('createCombo', () => {
@@ -98,11 +98,11 @@ describe('Combo Actions', () => {
         targetCardId: null,
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue({ id: mockUserId } as any);
+      mockPrisma.user.findUnique.mockResolvedValue({ id: mockUserId } as Prisma.User);
       mockPrisma.deck.findUnique.mockResolvedValue({
         id: 'deck-123',
         userId: mockUserId,
-      } as any);
+      } as Prisma.Deck);
       mockPrisma.combo.$transaction.mockImplementation(async (callback) => {
         return callback({
           combo: {
@@ -111,7 +111,7 @@ describe('Combo Actions', () => {
           comboStep: {
             create: vi.fn().mockResolvedValue(mockStep),
           },
-        } as any);
+        } as Prisma.Deck);
       });
 
       const result = await createCombo(comboData);
@@ -138,7 +138,7 @@ describe('Combo Actions', () => {
     });
 
     it('should return error if deck not found', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: mockUserId } as any);
+      mockPrisma.user.findUnique.mockResolvedValue({ id: mockUserId } as Prisma.User);
       mockPrisma.deck.findUnique.mockResolvedValue(null);
 
       const result = await createCombo({
@@ -165,11 +165,11 @@ describe('Combo Actions', () => {
         userId: mockUserId,
       };
 
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as any);
+      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
       mockPrisma.combo.update.mockResolvedValue({
         ...mockCombo,
         title: 'New Title',
-      } as any);
+      } as Prisma.Deck);
 
       const result = await updateCombo('combo-123', { title: 'New Title' });
 
@@ -189,7 +189,7 @@ describe('Combo Actions', () => {
       mockPrisma.combo.findUnique.mockResolvedValue({
         id: 'combo-123',
         userId: 'other-user',
-      } as any);
+      } as Prisma.Deck);
 
       const result = await updateCombo('combo-123', { title: 'New Title' });
 
@@ -204,8 +204,8 @@ describe('Combo Actions', () => {
         userId: mockUserId,
       };
 
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as any);
-      mockPrisma.combo.delete.mockResolvedValue(mockCombo as any);
+      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
+      mockPrisma.combo.delete.mockResolvedValue(mockCombo as Prisma.Combo);
 
       const result = await deleteCombo('combo-123');
 
@@ -239,7 +239,7 @@ describe('Combo Actions', () => {
         ],
       };
 
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as any);
+      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
 
       const result = await getCombo('combo-123');
 
@@ -273,7 +273,7 @@ describe('Combo Actions', () => {
         },
       ];
 
-      mockPrisma.combo.findMany.mockResolvedValue(mockCombos as any);
+      mockPrisma.combo.findMany.mockResolvedValue(mockCombos as Prisma.Combo[]);
 
       const result = await getCombosByUser();
 
@@ -315,10 +315,10 @@ describe('Combo Actions', () => {
         card: { id: 'card-1', name: 'Test Card' },
       };
 
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as any);
+      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
       mockPrisma.comboStep.findUnique.mockResolvedValue(null);
-      mockPrisma.card.findUnique.mockResolvedValue({ id: 'card-1' } as any);
-      mockPrisma.comboStep.create.mockResolvedValue(mockStep as any);
+      mockPrisma.card.findUnique.mockResolvedValue({ id: 'card-1' } as Prisma.Card);
+      mockPrisma.comboStep.create.mockResolvedValue(mockStep as Prisma.ComboStep);
 
       const result = await addComboStep('combo-123', {
         cardId: 'card-1',
@@ -336,10 +336,10 @@ describe('Combo Actions', () => {
         userId: mockUserId,
       };
 
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as any);
+      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
       mockPrisma.comboStep.findUnique.mockResolvedValue({
         id: 'existing-step',
-      } as any);
+      } as Prisma.Deck);
 
       const result = await addComboStep('combo-123', {
         cardId: 'card-1',
@@ -367,11 +367,11 @@ describe('Combo Actions', () => {
         card: { id: 'card-1', name: 'Test Card' },
       };
 
-      mockPrisma.comboStep.findUnique.mockResolvedValue(mockStep as any);
+      mockPrisma.comboStep.findUnique.mockResolvedValue(mockStep as Prisma.ComboStep);
       mockPrisma.comboStep.findUnique
-        .mockResolvedValueOnce(mockStep as any)
+        .mockResolvedValueOnce(mockStep as Prisma.ComboStep)
         .mockResolvedValueOnce(null);
-      mockPrisma.comboStep.update.mockResolvedValue(updatedStep as any);
+      mockPrisma.comboStep.update.mockResolvedValue(updatedStep as Prisma.ComboStep);
 
       const result = await updateComboStep('step-1', {
         description: 'Updated description',
@@ -392,8 +392,8 @@ describe('Combo Actions', () => {
         },
       };
 
-      mockPrisma.comboStep.findUnique.mockResolvedValue(mockStep as any);
-      mockPrisma.comboStep.delete.mockResolvedValue(mockStep as any);
+      mockPrisma.comboStep.findUnique.mockResolvedValue(mockStep as Prisma.ComboStep);
+      mockPrisma.comboStep.delete.mockResolvedValue(mockStep as Prisma.ComboStep);
 
       const result = await deleteComboStep('step-1');
 
@@ -416,15 +416,15 @@ describe('Combo Actions', () => {
         { id: 'step-2', comboId: 'combo-123' },
       ];
 
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as any);
-      mockPrisma.comboStep.findMany.mockResolvedValue(mockSteps as any);
-      mockPrisma.comboStep.update.mockResolvedValue({} as any);
+      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
+      mockPrisma.comboStep.findMany.mockResolvedValue(mockSteps as Prisma.ComboStep[]);
+      mockPrisma.comboStep.update.mockResolvedValue({} as Partial<Prisma.ComboStep>);
       mockPrisma.$transaction.mockImplementation(async (callback) => {
         return callback({
           comboStep: {
             update: vi.fn().mockResolvedValue({}),
           },
-        } as any);
+        } as Prisma.Deck);
       });
 
       const result = await reorderComboSteps('combo-123', ['step-2', 'step-1']);
@@ -438,10 +438,10 @@ describe('Combo Actions', () => {
         userId: mockUserId,
       };
 
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as any);
+      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
       mockPrisma.comboStep.findMany.mockResolvedValue([
         { id: 'step-1', comboId: 'combo-123' },
-      ] as any);
+      ] as Prisma.ComboStep[]);
 
       const result = await reorderComboSteps('combo-123', ['step-1', 'step-2']);
 

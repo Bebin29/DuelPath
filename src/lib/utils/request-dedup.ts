@@ -6,12 +6,12 @@
  * für alle wartenden Requests verwendet.
  */
 
-interface PendingRequest<T> {
+interface PendingRequest<T = unknown> {
   promise: Promise<T>;
   timestamp: number;
 }
 
-const pendingRequests = new Map<string, PendingRequest<any>>();
+const pendingRequests = new Map<string, PendingRequest<unknown>>();
 const DEDUP_WINDOW_MS = 100; // 100ms Fenster für Deduplizierung
 
 /**

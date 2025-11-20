@@ -413,7 +413,7 @@ describe('duel.utils', () => {
     });
 
     it('should handle extreme LP values', () => {
-      let state = createInitialDuelState(mockDeck);
+      const state = createInitialDuelState(mockDeck);
 
       // Setze sehr hohe LP
       state.player.lp = 99999;

@@ -10,12 +10,12 @@ const API_CACHE_NAME = 'duelpath-api-v1';
 const STATIC_ASSETS = ['/', '/decks', '/offline.html'];
 
 // Cache-Strategien
-const CACHE_STRATEGIES = {
-  STATIC: 'cache-first', // Statische Assets: Cache First
-  IMAGES: 'cache-first', // Bilder: Cache First mit Revalidation
-  API: 'network-first', // API: Network First
-  HTML: 'network-first', // HTML: Network First
-};
+// const CACHE_STRATEGIES = {
+//   STATIC: 'cache-first', // Statische Assets: Cache First
+//   IMAGES: 'cache-first', // Bilder: Cache First mit Revalidation
+//   API: 'network-first', // API: Network First
+//   HTML: 'network-first', // HTML: Network First
+// };
 
 // Install Event - Cache static assets
 self.addEventListener('install', (event) => {
@@ -28,7 +28,7 @@ self.addEventListener('install', (event) => {
         });
       }),
       // Cache CSS/JS von Next.js
-      caches.open(STATIC_CACHE_NAME).then((cache) => {
+      caches.open(STATIC_CACHE_NAME).then(() => {
         // Diese werden beim ersten Request gecacht
         return Promise.resolve();
       }),
@@ -125,7 +125,7 @@ async function cacheFirstStrategy(request, cacheName) {
       cache.put(request, response.clone());
     }
     return response;
-  } catch (error) {
+  } catch {
     // Return 503 if network fails and no cache
     return new Response('Service Unavailable', {
       status: 503,
@@ -146,7 +146,7 @@ async function networkFirstStrategy(request, cacheName, fallbackUrl) {
       cache.put(request, response.clone());
     }
     return response;
-  } catch (error) {
+  } catch {
     // Fallback to cache
     const cachedResponse = await cache.match(request);
     if (cachedResponse) {

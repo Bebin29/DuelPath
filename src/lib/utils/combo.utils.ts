@@ -308,7 +308,7 @@ export function importComboFromJSON(jsonString: string): {
       title: data.title,
       description: data.description || null,
       deckId: data.deckId || null,
-      steps: data.steps.map((step: any, index: number) => ({
+      steps: data.steps.map((step: { cardId: string; actionType: string; description?: string; targetCardId?: string }, index: number) => ({
         cardId: step.cardId,
         actionType: step.actionType,
         description: step.description || null,
@@ -317,6 +317,7 @@ export function importComboFromJSON(jsonString: string): {
       })),
     };
   } catch (error) {
+    console.error('Failed to import combo:', error);
     return null;
   }
 }

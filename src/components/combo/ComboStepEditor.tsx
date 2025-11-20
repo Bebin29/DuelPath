@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { CardSearch } from '@/components/deck/CardSearch';
 import { Button } from '@/components/components/ui/button';
@@ -78,25 +78,43 @@ export function ComboStepEditor({
   const [selectedCardName, setSelectedCardName] = useState<string>('');
 
   // Lade Kartenname wenn cardId gesetzt ist
-  useEffect(() => {
+  const loadCardData = useCallback(async () => {
     if (selectedCardId && selectedCardId !== '00000000') {
-      setIsLoadingCard(true);
-      getCardData(selectedCardId)
-        .then((card) => {
-          if (card) {
-            setSelectedCardName(card.name);
-          }
-        })
-        .catch(console.error)
-        .finally(() => setIsLoadingCard(false));
+      try {
+        const card = await getCardData(selectedCardId);
+        if (card) {
+          setSelectedCardName(card.name);
+        }
+      } catch (error) {
+        console.error(error);
+      }
     } else {
       setSelectedCardName('');
     }
   }, [selectedCardId, getCardData]);
 
-  // Reset form when dialog opens/closes or initialStep changes
   useEffect(() => {
-    if (open) {
+    const loadData = async () => {
+      setIsLoadingCard(true);
+      try {
+        await loadCardData();
+      } finally {
+        setIsLoadingCard(false);
+      }
+    };
+
+    if (selectedCardId && selectedCardId !== '00000000') {
+      loadData();
+    } else {
+      setSelectedCardName('');
+      setIsLoadingCard(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCardId, getCardData]);
+
+  // Reset form when dialog opens/closes or initialStep changes
+  const resetForm = useCallback(() => {
+    startTransition(() => {
       if (initialStep) {
         setSelectedCardId(initialStep.cardId || '');
         setActionType((initialStep.actionType as ActionType) || 'OTHER');
@@ -108,8 +126,14 @@ export function ComboStepEditor({
         setDescription('');
         setTargetCardId('');
       }
+    });
+  }, [initialStep]);
+
+  useEffect(() => {
+    if (open) {
+      resetForm();
     }
-  }, [open, initialStep]);
+  }, [open, resetForm]);
 
   function handleCardSelect(cardId: string) {
     setSelectedCardId(cardId);
@@ -177,7 +201,7 @@ export function ComboStepEditor({
               <SelectContent>
                 {ACTION_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
-                    {t(`combo.actionTypes.${type}` as any)}
+                    {t(`combo.actionTypes.${type}`)}
                   </SelectItem>
                 ))}
               </SelectContent>

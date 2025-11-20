@@ -2,6 +2,7 @@
 
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
+import type { Prisma } from '@prisma/client';
 import {
   createDeckSchema,
   updateDeckSchema,
@@ -821,7 +822,7 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
       success: boolean;
       operation: BatchOperation;
       error?: string;
-      deckCard?: any;
+      deckCard?: Prisma.DeckCardGetPayload<Record<string, never>>;
     }> = [];
 
     // Führe alle Operationen in einer Transaktion aus

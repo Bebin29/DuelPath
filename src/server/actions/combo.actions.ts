@@ -2,6 +2,7 @@
 
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
+import type { Prisma } from '@prisma/client';
 import {
   createComboSchema,
   updateComboSchema,
@@ -801,7 +802,7 @@ export async function batchComboStepOperations(
       return { error: "Some steps don't belong to this combo" };
     }
 
-    const results: Array<{ success: boolean; stepId: string; error?: string; step?: any }> = [];
+    const results: Array<{ success: boolean; stepId: string; error?: string; step?: Prisma.ComboStepGetPayload<Record<string, never>> }> = [];
 
     // Führe alle Operationen in einer Transaction aus
     await prisma.$transaction(async (tx) => {

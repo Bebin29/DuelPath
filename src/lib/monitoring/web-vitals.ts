@@ -86,7 +86,7 @@ export function reportWebVitals(onPerfEntry?: (metric: WebVitalsMetric) => void)
   // Dynamisch importieren um Bundle-Größe zu reduzieren
   import('web-vitals')
     .then(({ onCLS, onFID, onFCP, onLCP, onTTFB, onINP }) => {
-      const reportMetric = (metric: any) => {
+      const reportMetric = (metric: { id: string; name: string; value: number }) => {
         const webVitalsMetric: WebVitalsMetric = {
           id: metric.id,
           name: metric.name,

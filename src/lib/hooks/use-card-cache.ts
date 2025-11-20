@@ -17,6 +17,7 @@ const CACHE_TTL = 60 * 60 * 1000; // 1 Stunde in Millisekunden
  */
 export function useCardCache() {
   const cacheRef = useRef<Map<string, CachedCard>>(new Map());
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   /**
    * Prüft ob ein Cache-Eintrag noch gültig ist
@@ -124,8 +125,16 @@ export function useCardCache() {
       }
 
       // Lade von API
+      // Breche vorherigen Request ab
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
+
       try {
-        const response = await fetch(`/api/cards?id=${cardId}`);
+        const response = await fetch(`/api/cards?id=${cardId}`, {
+          signal: abortControllerRef.current.signal,
+        });
         if (response.ok) {
           const data = await response.json();
           if (data.card) {
@@ -205,6 +214,16 @@ export function useCardCache() {
     cacheRef.current.clear();
   }, []);
 
+  /**
+   * Bricht laufende Requests ab
+   */
+  const abortRequests = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, []);
+
   return {
     addToCache,
     addMultipleToCache,
@@ -213,5 +232,6 @@ export function useCardCache() {
     getCardData,
     getMultipleCardData,
     clearCache,
+    abortRequests,
   };
 }

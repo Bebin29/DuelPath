@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition } from 'react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import {
   Dialog,
@@ -33,30 +33,39 @@ export function CardDetailDialog({ card, open, onOpenChange, onAddToDeck }: Card
   const [isLoading, setIsLoading] = useState(false);
 
   // Lade vollständige Card-Daten wenn Dialog geöffnet wird und Card nur CardForDeck ist
-  useEffect(() => {
-    if (open && card) {
-      // Prüfe ob Card vollständig ist (hat desc-Feld)
-      if ('desc' in card) {
-        setFullCard(card as Card);
-        setIsLoading(false);
-      } else {
-        // Card ist nicht vollständig, lade von API (Cache hat nur CardForDeck ohne desc)
-        setIsLoading(true);
-        fetch(`/api/cards?id=${card.id}`)
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.card) {
-              setFullCard(data.card);
-            }
-          })
-          .catch(console.error)
-          .finally(() => setIsLoading(false));
-      }
-    } else {
+  const loadCardDetails = useCallback(async () => {
+    if (!card) {
       setFullCard(null);
       setIsLoading(false);
+      return;
     }
-  }, [open, card]);
+
+    // Prüfe ob Card vollständig ist (hat desc-Feld)
+    if ('desc' in card) {
+      startTransition(() => setFullCard(card as Card));
+      setIsLoading(false);
+    } else {
+      // Card ist nicht vollständig, lade von API (Cache hat nur CardForDeck ohne desc)
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/cards?id=${card.id}`);
+        const data = await res.json();
+        if (data.card) {
+          setFullCard(data.card);
+        }
+      } catch (error) {
+        console.error('Failed to load card details:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [card]);
+
+  useEffect(() => {
+    if (open) {
+      loadCardDetails();
+    }
+  }, [open, loadCardDetails]);
 
   const displayCard = fullCard || card;
 

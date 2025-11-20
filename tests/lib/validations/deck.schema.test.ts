@@ -45,7 +45,7 @@ describe('Deck Validation Schemas', () => {
     it('should reject invalid format', () => {
       const invalidData = {
         name: 'Test Deck',
-        format: 'INVALID' as any,
+        format: 'INVALID' as string,
       };
 
       const result = createDeckSchema.safeParse(invalidData);

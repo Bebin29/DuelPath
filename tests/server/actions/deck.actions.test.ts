@@ -50,7 +50,7 @@ describe('Deck Actions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.mockResolvedValue(mockSession as any);
+    mockAuth.mockResolvedValue(mockSession as { user: { id: string; email: string; name: string } });
   });
 
   describe('createDeck', () => {
@@ -69,7 +69,7 @@ describe('Deck Actions', () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.deck.create.mockResolvedValue(mockDeck as any);
+      mockPrisma.deck.create.mockResolvedValue(mockDeck as Prisma.Deck);
 
       const result = await createDeck(deckData);
 
@@ -117,8 +117,8 @@ describe('Deck Actions', () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.deck.findUnique.mockResolvedValue(existingDeck as any);
-      mockPrisma.deck.update.mockResolvedValue(updatedDeck as any);
+      mockPrisma.deck.findUnique.mockResolvedValue(existingDeck as Prisma.Deck);
+      mockPrisma.deck.update.mockResolvedValue(updatedDeck as Prisma.Deck);
 
       const result = await updateDeck('deck-123', updateData);
 
@@ -144,7 +144,7 @@ describe('Deck Actions', () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.deck.findUnique.mockResolvedValue(existingDeck as any);
+      mockPrisma.deck.findUnique.mockResolvedValue(existingDeck as Prisma.Deck);
 
       const result = await updateDeck('deck-123', { name: 'New Name' });
 
@@ -163,8 +163,8 @@ describe('Deck Actions', () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.deck.findUnique.mockResolvedValue(existingDeck as any);
-      mockPrisma.deck.delete.mockResolvedValue(existingDeck as any);
+      mockPrisma.deck.findUnique.mockResolvedValue(existingDeck as Prisma.Deck);
+      mockPrisma.deck.delete.mockResolvedValue(existingDeck as Prisma.Deck);
 
       const result = await deleteDeck('deck-123');
 
@@ -198,7 +198,7 @@ describe('Deck Actions', () => {
         },
       ];
 
-      mockPrisma.deck.findMany.mockResolvedValue(mockDecks as any);
+      mockPrisma.deck.findMany.mockResolvedValue(mockDecks as Prisma.Deck[]);
 
       const result = await getUserDecks();
 
@@ -243,7 +243,7 @@ describe('Deck Actions', () => {
         ],
       };
 
-      mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as any);
+      mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as Prisma.Deck);
 
       const result = await getDeckById('deck-123');
 
@@ -277,10 +277,10 @@ describe('Deck Actions', () => {
         card: mockCard,
       };
 
-      mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as any);
-      mockPrisma.card.findUnique.mockResolvedValue(mockCard as any);
+      mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as Prisma.Deck);
+      mockPrisma.card.findUnique.mockResolvedValue(mockCard as Prisma.Card);
       mockPrisma.deckCard.findUnique.mockResolvedValue(null);
-      mockPrisma.deckCard.create.mockResolvedValue(mockDeckCard as any);
+      mockPrisma.deckCard.create.mockResolvedValue(mockDeckCard as Prisma.DeckCard);
 
       const result = await addCardToDeck('deck-123', {
         cardId: 'card-1',
@@ -320,10 +320,10 @@ describe('Deck Actions', () => {
         quantity: 2,
       };
 
-      mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as any);
-      mockPrisma.card.findUnique.mockResolvedValue(mockCard as any);
-      mockPrisma.deckCard.findUnique.mockResolvedValue(existingDeckCard as any);
-      mockPrisma.deckCard.update.mockResolvedValue(updatedDeckCard as any);
+      mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as Prisma.Deck);
+      mockPrisma.card.findUnique.mockResolvedValue(mockCard as Prisma.Card);
+      mockPrisma.deckCard.findUnique.mockResolvedValue(existingDeckCard as Prisma.DeckCard);
+      mockPrisma.deckCard.update.mockResolvedValue(updatedDeckCard as Prisma.DeckCard);
 
       const result = await addCardToDeck('deck-123', {
         cardId: 'card-1',
@@ -363,9 +363,9 @@ describe('Deck Actions', () => {
         },
       };
 
-      mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as any);
-      mockPrisma.deckCard.findUnique.mockResolvedValue(existingDeckCard as any);
-      mockPrisma.deckCard.update.mockResolvedValue(updatedDeckCard as any);
+      mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as Prisma.Deck);
+      mockPrisma.deckCard.findUnique.mockResolvedValue(existingDeckCard as Prisma.DeckCard);
+      mockPrisma.deckCard.update.mockResolvedValue(updatedDeckCard as Prisma.DeckCard);
 
       const result = await updateCardQuantity('deck-123', {
         cardId: 'card-1',
@@ -396,9 +396,9 @@ describe('Deck Actions', () => {
         deckSection: 'MAIN',
       };
 
-      mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as any);
-      mockPrisma.deckCard.findUnique.mockResolvedValue(existingDeckCard as any);
-      mockPrisma.deckCard.delete.mockResolvedValue(existingDeckCard as any);
+      mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as Prisma.Deck);
+      mockPrisma.deckCard.findUnique.mockResolvedValue(existingDeckCard as Prisma.DeckCard);
+      mockPrisma.deckCard.delete.mockResolvedValue(existingDeckCard as Prisma.DeckCard);
 
       const result = await removeCardFromDeck('deck-123', {
         cardId: 'card-1',

@@ -9,7 +9,6 @@ import { Edit, Trash2, GripVertical, Copy } from 'lucide-react';
 import { Checkbox } from '@/components/components/ui/checkbox';
 import Image from 'next/image';
 import type { ComboStepWithCard } from '@/lib/utils/combo.utils';
-import type { ActionType } from '@/types/combo.types';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useIntersectionObserver } from '@/lib/hooks/use-intersection-observer';
 
@@ -77,7 +76,7 @@ function ComboStepItemComponent({
   // Kombiniere refs für Sortable und Intersection Observer
   const combinedRef = (node: HTMLDivElement | null) => {
     setNodeRef(node);
-    if (node && step.card.imageSmall) {
+    if (node && step.card.imageSmall && imageRef.current !== node) {
       (imageRef as React.MutableRefObject<HTMLElement | null>).current = node;
     }
   };
@@ -148,7 +147,7 @@ function ComboStepItemComponent({
               <h3 className="font-semibold text-sm truncate">{step.card.name}</h3>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant="secondary" className="text-xs">
-                  {t(`combo.actionTypes.${step.actionType}` as any) || step.actionType}
+                  {t(`combo.actionTypes.${step.actionType}`) || step.actionType}
                 </Badge>
                 {step.card.type && (
                   <span className="text-xs text-muted-foreground truncate">{step.card.type}</span>

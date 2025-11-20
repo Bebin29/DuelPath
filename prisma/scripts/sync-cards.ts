@@ -40,7 +40,7 @@ async function main() {
 
     // Schritt 2: Hole alle Karten von der API
     console.log('Step 2: Fetching all cards from YGOPRODeck API...');
-    const importService = new CardImportService();
+    // const importService = new CardImportService(); // TODO: Implement card sync
 
     // Verwende die private Methode über einen Workaround
     // Da fetchAllCards private ist, müssen wir die API direkt aufrufen
@@ -71,7 +71,7 @@ async function main() {
     console.log(`Skipping ${apiCards.length - missingCards.length} existing cards\n`);
 
     // Schritt 4: Importiere nur fehlende Karten
-    let importStats = {
+    const importStats = {
       total: missingCards.length,
       created: 0,
       updated: 0,

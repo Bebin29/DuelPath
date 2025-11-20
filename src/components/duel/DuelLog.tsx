@@ -42,7 +42,13 @@ export function DuelLog({ duelState }: DuelLogProps) {
 
   // Gefilterte Logs basierend auf aktuellen Filtern
   const filteredLogs = useMemo(() => {
-    const filters: any = {};
+    const filters: {
+      searchTerm?: string;
+      phase?: string;
+      turn?: number;
+      player?: string;
+      actionType?: string;
+    } = {};
 
     if (searchTerm) filters.searchTerm = searchTerm;
     if (phaseFilter !== 'all') filters.phase = phaseFilter;
@@ -68,6 +74,29 @@ export function DuelLog({ duelState }: DuelLogProps) {
     const actions = new Set(allLogs.map((log) => log.action.type));
     return Array.from(actions);
   }, [allLogs]);
+
+  const formatActionType = (actionType: string): string => {
+    switch (actionType) {
+      case 'DRAW':
+        return t('duel.action.draw');
+      case 'NORMAL_SUMMON':
+        return t('duel.action.normalSummon');
+      case 'SET_MONSTER':
+        return t('duel.action.setMonster');
+      case 'ACTIVATE_SPELL':
+        return t('duel.action.activateSpell');
+      case 'SET_SPELL':
+        return t('duel.action.setSpell');
+      case 'ATTACK':
+        return t('duel.action.attack');
+      case 'CHANGE_PHASE':
+        return t('duel.action.changePhase');
+      case 'END_DUEL':
+        return t('duel.action.endDuel');
+      default:
+        return t('duel.action.unknown');
+    }
+  };
 
   const formatAction = (action: DuelAction): string => {
     switch (action.type) {
@@ -182,7 +211,7 @@ export function DuelLog({ duelState }: DuelLogProps) {
                 <SelectItem value="all">All Actions</SelectItem>
                 {availableActions.map((action) => (
                   <SelectItem key={action} value={action}>
-                    {formatAction({ type: action } as any)}
+                    {formatActionType(action)}
                   </SelectItem>
                 ))}
               </SelectContent>

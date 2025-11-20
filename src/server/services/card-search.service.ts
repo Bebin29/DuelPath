@@ -41,22 +41,11 @@ export class CardSearchService {
       const searchTerm = filter.name.trim();
 
       if (filter.useRegex) {
-        // Regex-Suche (nur für SQLite, begrenzte Unterstützung)
-        // SQLite unterstützt REGEXP nur wenn sqlite3 mit Regex-Erweiterung kompiliert wurde
-        // Fallback: Case-insensitive contains
-        try {
-          // Versuche Regex zu validieren
-          new RegExp(searchTerm);
-          // Wenn gültig, verwende contains als Fallback (SQLite REGEXP ist nicht zuverlässig)
-          where.nameLower = {
-            contains: searchTerm.toLowerCase(),
-          };
-        } catch {
-          // Ungültiger Regex, verwende normale Suche
-          where.nameLower = {
-            contains: searchTerm.toLowerCase(),
-          };
-        }
+        // Für Regex-Suche verwende case-insensitive contains als Fallback
+        // Echte Regex-Unterstützung könnte in Zukunft mit PostgreSQL hinzugefügt werden
+        where.nameLower = {
+          contains: searchTerm.toLowerCase(),
+        };
       } else {
         // Case-insensitive Suche: Verwende nameLower für optimierte Suche
         const normalizedSearchTerm = searchTerm.toLowerCase();

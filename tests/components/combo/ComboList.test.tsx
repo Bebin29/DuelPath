@@ -79,7 +79,7 @@ describe('ComboList', () => {
       error: null,
       isLoading: false,
       mutate: vi.fn(),
-    } as any);
+    } as ReturnType<typeof useSWR>);
 
     render(<ComboList />);
 
@@ -93,7 +93,7 @@ describe('ComboList', () => {
       error: null,
       isLoading: true,
       mutate: vi.fn(),
-    } as any);
+    } as ReturnType<typeof useSWR>);
 
     render(<ComboList />);
 

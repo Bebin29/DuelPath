@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 
 interface UseAutoSaveOptions<T> {
   /**
@@ -51,6 +51,7 @@ export function useAutoSave<T>({
 }: UseAutoSaveOptions<T>) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedRef = useRef<T | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const isSavingRef = useRef(false);
   const onSaveRef = useRef(onSave);
 
@@ -98,6 +99,7 @@ export function useAutoSave<T>({
       }
 
       isSavingRef.current = true;
+      setIsSaving(true);
       try {
         await onSaveRef.current(data);
         lastSavedRef.current = data;
@@ -105,6 +107,7 @@ export function useAutoSave<T>({
         console.error('Auto-save failed:', error);
       } finally {
         isSavingRef.current = false;
+        setIsSaving(false);
       }
     }, debounceMs);
 
@@ -117,16 +120,7 @@ export function useAutoSave<T>({
     };
   }, [data, debounceMs, enabled, hasChanged]);
 
-  // Cleanup beim Unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
   return {
-    isSaving: isSavingRef.current,
+    isSaving,
   };
 }

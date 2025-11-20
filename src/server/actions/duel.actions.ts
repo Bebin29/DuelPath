@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma/client';
 import { createCombo } from './combo.actions';
 import type { DuelState, DuelLogEntry } from '@/types/duel.types';
 import type { CreateComboInput } from '@/lib/validations/combo.schema';
+import type { ActionType } from '@/types/combo.types';
 
 /**
  * Konvertiert einen Duel-Log in Combo-Schritte
@@ -67,7 +68,7 @@ function convertDuelLogToComboInput(
 
     relevantSteps.push({
       cardId: entry.action.cardInstanceId, // Hier bräuchte es eigentlich die cardId, nicht instanceId
-      actionType: entry.action.type as any, // Type assertion - eigentlich müsste das in combo.types erweitert werden
+      actionType: entry.action.type as ActionType, // Type assertion - eigentlich müsste das in combo.types erweitert werden
       description,
       targetCardId,
       order: index + 1,

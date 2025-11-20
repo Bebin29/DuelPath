@@ -12,7 +12,7 @@ import bcrypt from 'bcryptjs';
  * - OAuth Provider können später hinzugefügt werden
  */
 export const authConfig: NextAuthConfig = {
-  adapter: PrismaAdapter(prisma) as any,
+  adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     Credentials({
       name: 'credentials',

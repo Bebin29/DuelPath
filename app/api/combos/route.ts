@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCombosByUser } from '@/server/actions/combo.actions';
 import { createCombo } from '@/server/actions/combo.actions';
-import type { CreateComboInput } from '@/lib/validations/combo.schema';
+import { createComboSchema, type CreateComboInput } from '@/lib/validations/combo.schema';
 import { deduplicateRequest, createRequestKey } from '@/lib/utils/request-dedup';
 
 /**
@@ -17,11 +17,17 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const deckId = searchParams.get('deckId') || undefined;
     const skip = searchParams.get('skip') ? parseInt(searchParams.get('skip')!, 10) : undefined;
+    if (skip !== undefined && isNaN(skip)) {
+      return NextResponse.json({ error: 'Invalid skip parameter' }, { status: 400 });
+    }
     const take = searchParams.get('take') ? parseInt(searchParams.get('take')!, 10) : undefined;
+    if (take !== undefined && isNaN(take)) {
+      return NextResponse.json({ error: 'Invalid take parameter' }, { status: 400 });
+    }
 
     // Request-Deduplizierung
     const requestKey = createRequestKey('GET', request.url);
-    const result = await deduplicateRequest(requestKey, () =>
+      const result = await deduplicateRequest(requestKey, () =>
       getCombosByUser(deckId, { skip, take })
     );
 
@@ -58,7 +64,13 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as CreateComboInput;
+    let body: CreateComboInput;
+    try {
+      const rawBody = await request.json();
+      body = createComboSchema.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
 
     const result = await createCombo(body);
 

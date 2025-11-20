@@ -3,6 +3,7 @@
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
 import type { ComboWithSteps } from '@/types/combo.types';
+import type { Prisma } from '@prisma/client';
 
 /**
  * Erstellt eine neue Version einer Combo
@@ -10,7 +11,7 @@ import type { ComboWithSteps } from '@/types/combo.types';
 export async function createComboVersion(
   comboId: string,
   note?: string
-): Promise<{ success: boolean; version?: any; error?: string }> {
+): Promise<{ success: boolean; version?: Prisma.ComboVersionGetPayload<{ select: { id: true; title: true; description: true; createdAt: true; updatedAt: true; steps: true } }>; error?: string }> {
   try {
     const session = await auth();
     if (!session?.user?.id) {

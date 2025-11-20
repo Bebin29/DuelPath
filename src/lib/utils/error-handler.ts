@@ -5,7 +5,7 @@
 export interface DuelError {
   code: string;
   message: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   recoverable: boolean;
   timestamp: number;
 }
@@ -25,7 +25,7 @@ export class DuelErrorHandler {
   createError(
     code: string,
     message: string,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     recoverable: boolean = true
   ): DuelError {
     // Stelle sicher, dass die Parameter gültig sind
@@ -64,7 +64,7 @@ export class DuelErrorHandler {
   /**
    * Loggt einen Fehler für Debugging
    */
-  logError(error: DuelError, additionalContext?: Record<string, any>): void {
+  logError(error: DuelError, additionalContext?: Record<string, unknown>): void {
     // Stelle sicher, dass der Fehler gültig ist
     if (!error || !error.code || !error.message) {
       console.error('[DuelError] Invalid error object:', error);
@@ -74,8 +74,8 @@ export class DuelErrorHandler {
     const logData = {
       ...error,
       additionalContext,
-      userAgent: navigator.userAgent,
-      url: window.location.href,
+      userAgent: typeof window !== "undefined" ? window.navigator.userAgent : undefined,
+      url: typeof window !== "undefined" ? window.location.href : undefined,
       timestamp: new Date().toISOString(),
     };
 
@@ -142,18 +142,18 @@ export const duelErrorHandler = new DuelErrorHandler();
 export function useDuelErrorHandler() {
   return {
     createError: (
-      code?: string,
-      message?: string,
-      context?: Record<string, any>,
+      code: string,
+      message: string,
+      context?: Record<string, unknown>,
       recoverable = true
     ) =>
       duelErrorHandler.createError(
-        code || 'UNKNOWN_ERROR',
-        message || 'An unknown error occurred',
+        code,
+        message,
         context,
         recoverable
       ),
-    logError: (error: DuelError, context?: Record<string, any>) =>
+    logError: (error: DuelError, context?: Record<string, unknown>) =>
       duelErrorHandler.logError(error, context),
     getErrors: () => duelErrorHandler.getErrors(),
     getRecentErrors: (count = 5) => duelErrorHandler.getRecentErrors(count),

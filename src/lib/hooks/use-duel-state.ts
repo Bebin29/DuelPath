@@ -1,9 +1,10 @@
-import { useReducer, useCallback, useMemo } from 'react';
+import { useReducer, useCallback } from 'react';
 import { duelReducer } from '@/lib/utils/duel.reducer';
 import { createInitialDuelState, getAvailableActions } from '@/lib/utils/duel.utils';
 import { useDuelHistory } from './use-duel-history';
 import { useDuelLogger } from '@/lib/utils/duel.logger';
-import { useDuelErrorHandler, DuelErrors } from '@/lib/utils/error-handler';
+import { useDuelErrorHandler, DuelErrors, type DuelError } from '@/lib/utils/error-handler';
+import { useToast } from '@/components/components/ui/toast';
 import type {
   DuelState,
   DuelAction,
@@ -13,7 +14,6 @@ import type {
   HistoryAction,
 } from '@/types/duel.types';
 
-// Toast wird über React Context verwendet, nicht direkt importiert
 
 /**
  * Options für useDuelState
@@ -44,7 +44,7 @@ interface UseDuelStateReturn {
   canUndo: boolean;
   canRedo: boolean;
   // Error Handling
-  getRecentErrors: () => any[];
+  getRecentErrors: () => DuelError[];
   clearErrors: () => void;
 }
 
@@ -53,6 +53,7 @@ interface UseDuelStateReturn {
  */
 export function useDuelState(options: UseDuelStateOptions = {}): UseDuelStateReturn {
   const { onError } = options;
+  const { toast } = useToast();
 
   const [state, dispatch] = useReducer(duelReducer, null, () => {
     // Initialer State ist null, wird durch startDuel gesetzt
@@ -173,7 +174,7 @@ export function useDuelState(options: UseDuelStateOptions = {}): UseDuelStateRet
   const startDuel = useCallback(
     (deck: DuelDeck) => {
       try {
-        if (!deck || !deck.cards || deck.cards.length === 0) {
+        if (!deck || !Array.isArray(deck.cards) || deck.cards.length === 0) {
           const error = createError(
             DuelErrors.DECK_LOAD_FAILED,
             'Invalid deck provided for duel',
@@ -186,7 +187,7 @@ export function useDuelState(options: UseDuelStateOptions = {}): UseDuelStateRet
         }
 
         // Zusätzliche Validierung: Stelle sicher, dass alle Karten gültig sind
-        const validCards = deck.cards.filter((card) => card && card.id);
+        const validCards = deck.cards.filter((card) => card && typeof card.id === 'string' && card.id.trim().length > 0);
         if (validCards.length !== deck.cards.length) {
           const error = createError(
             DuelErrors.DECK_LOAD_FAILED,
@@ -219,8 +220,8 @@ export function useDuelState(options: UseDuelStateOptions = {}): UseDuelStateRet
           return;
         }
 
-        // Direkt den State setzen statt über Reducer
-        dispatch(initialState as any); // Type assertion wegen Reducer-Type
+      // Direkt den State setzen statt über Reducer
+      dispatch(initialState);
         // History wird durch den neuen State automatisch resettet
 
         onError?.('Duel started successfully!', 'success');
@@ -236,7 +237,10 @@ export function useDuelState(options: UseDuelStateOptions = {}): UseDuelStateRet
           console.error('[DuelError] Failed to start duel - error message:', error.message);
           console.error('[DuelError] Failed to start duel - error stack:', error.stack);
         }
-        onError?.('Failed to start duel. Please check your deck and try again.', 'error');
+        const errorMessage = error instanceof Error
+          ? `Failed to start duel: ${error.message}. Please check your deck and try again.`
+          : 'Failed to start duel due to an unexpected error. Please check your deck and try again.';
+        onError?.(errorMessage, 'error');
       }
     },
     [createError, logError, onError]
@@ -247,7 +251,7 @@ export function useDuelState(options: UseDuelStateOptions = {}): UseDuelStateRet
    */
   const resetDuel = useCallback(() => {
     // Zurück zu null setzen
-    dispatch(null as any);
+    dispatch(null);
   }, []);
 
   // Verwende den State von der History falls verfügbar, sonst den Reducer-State
@@ -288,10 +292,10 @@ export function useDuelState(options: UseDuelStateOptions = {}): UseDuelStateRet
         true
       );
       if (duelError) logError(duelError);
-      toast.error('Failed to undo action.');
+      toast({ variant: "error", title: "Failed to undo action." });
       return null;
     }
-  }, [undo, createError, logError, onError]);
+  }, [undo, createError, logError, onError, toast]);
 
   const safeRedo = useCallback((): DuelState | null => {
     try {
@@ -307,7 +311,7 @@ export function useDuelState(options: UseDuelStateOptions = {}): UseDuelStateRet
       onError?.('Failed to redo action.', 'error');
       return null;
     }
-  }, [redo, createError, logError, onError]);
+  }, [redo, createError, logError, onError, toast]);
 
   return {
     state: effectiveState,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, startTransition } from 'react';
 import Image from 'next/image';
 import { shouldLoadImage, getOptimizedImageUrl } from '@/lib/utils/image-optimization';
 import { Skeleton } from '@/components/components/ui/skeleton';
@@ -49,8 +49,14 @@ export function OptimizedImage({
     if (priority || shouldLoad) return;
 
     // Intersection Observer für Lazy Loading
-    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
-      setShouldLoad(true);
+    if (typeof window === 'undefined') {
+      // Server-side rendering - lade nicht
+      return;
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      // Fallback für Browser ohne IntersectionObserver
+      startTransition(() => setShouldLoad(true));
       return;
     }
 

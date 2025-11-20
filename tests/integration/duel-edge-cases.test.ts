@@ -143,7 +143,7 @@ describe('Duel Edge Cases Integration', () => {
 
   describe('LP = 0 Gleichstand', () => {
     it('should handle simultaneous LP = 0', () => {
-      let state = createInitialDuelState(mockDeck);
+      const state = createInitialDuelState(mockDeck);
 
       // Beide Spieler auf 0 LP setzen
       state.player.lp = 0;
@@ -164,7 +164,7 @@ describe('Duel Edge Cases Integration', () => {
     });
 
     it('should handle LP going below 0', () => {
-      let state = createInitialDuelState(mockDeck);
+      const state = createInitialDuelState(mockDeck);
 
       // Spieler auf 100 LP setzen
       state.player.lp = 100;
@@ -185,7 +185,7 @@ describe('Duel Edge Cases Integration', () => {
     });
 
     it('should detect win condition when LP reaches 0', () => {
-      let state = createInitialDuelState(mockDeck);
+      const state = createInitialDuelState(mockDeck);
 
       // Spieler auf 100 LP setzen
       state.opponent.lp = 100;
@@ -255,7 +255,7 @@ describe('Duel Edge Cases Integration', () => {
       const malformedAction = {
         type: 'INVALID_TYPE',
         player: 'PLAYER',
-      } as any;
+      } as DuelAction;
 
       const validation = validateAction(initialState, malformedAction);
       expect(validation.ok).toBe(false);
@@ -265,7 +265,7 @@ describe('Duel Edge Cases Integration', () => {
     it('should reject actions with wrong player', () => {
       const wrongPlayerAction: DuelAction = {
         type: 'DRAW',
-        player: 'INVALID_PLAYER' as any,
+        player: 'INVALID_PLAYER' as string,
         count: 1,
       };
 
@@ -378,7 +378,7 @@ describe('Duel Edge Cases Integration', () => {
     });
 
     it('should handle state corruption gracefully', () => {
-      let state = createInitialDuelState(mockDeck);
+      const state = createInitialDuelState(mockDeck);
 
       // Simuliere State-Korruption
       state.player.monsterZone = Array(6).fill(null); // Zu viele Zonen
@@ -396,7 +396,7 @@ describe('Duel Edge Cases Integration', () => {
     });
 
     it('should validate state transitions', () => {
-      let state = createInitialDuelState(mockDeck);
+      const state = createInitialDuelState(mockDeck);
 
       // Ungültiger Phasenübergang
       const invalidTransition: DuelAction = {

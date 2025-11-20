@@ -11,7 +11,7 @@ type ReducerAction = DuelAction | DuelState | null;
  */
 export function duelReducer(state: DuelState | null, action: ReducerAction): DuelState | null {
   // Direkte State-Setzung (für startDuel/resetDuel)
-  if (action === null || (typeof action === 'object' && 'turnPlayer' in action)) {
+  if (action === null || (typeof action === 'object' && 'turnPlayer' in action && !('type' in action))) {
     return action as DuelState | null;
   }
 

@@ -32,7 +32,6 @@ import { DRAG_ACTIVATION_DISTANCE } from '@/lib/constants/deck.constants';
 import {
   sortComboSteps,
   exportComboToJSON,
-  exportComboToText,
   importComboFromJSON,
 } from '@/lib/utils/combo.utils';
 import { Button } from '@/components/components/ui/button';
@@ -48,7 +47,6 @@ import {
 import { Textarea } from '@/components/components/ui/textarea';
 import {
   AlertCircle,
-  CheckCircle2,
   Plus,
   Save,
   ArrowLeft,
@@ -56,6 +54,7 @@ import {
   Redo2,
   Download,
   Upload,
+  Trash2,
 } from 'lucide-react';
 import { useToast } from '@/components/components/ui/toast';
 import type { ComboWithSteps } from '@/types/combo.types';
@@ -462,7 +461,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
 
     await addStep({
       cardId: stepToDuplicate.cardId,
-      actionType: stepToDuplicate.actionType as any,
+      actionType: stepToDuplicate.actionType,
       description: stepToDuplicate.description || undefined,
       targetCardId: stepToDuplicate.targetCardId || undefined,
       order: maxOrder + 1,
@@ -615,7 +614,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
                   for (const step of imported.steps) {
                     await addStep({
                       cardId: step.cardId,
-                      actionType: step.actionType as any,
+                      actionType: step.actionType,
                       description: step.description || undefined,
                       targetCardId: step.targetCardId || undefined,
                       order: step.order,
@@ -879,7 +878,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
           editingStep
             ? {
                 cardId: editingStep.cardId,
-                actionType: editingStep.actionType as any,
+                actionType: editingStep.actionType,
                 description: editingStep.description,
                 targetCardId: editingStep.targetCardId,
                 order: editingStep.order,
