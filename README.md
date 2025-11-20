@@ -5,6 +5,7 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
 ## Features
 
 ### Deck-Verwaltung
+
 - **Deck-Erstellung**: Erstelle und verwalte beliebig viele Decks
 - **Kartendatenbank**: Über 13.000 Yu-Gi-Oh! Karten verfügbar
 - **Intelligente Suche**: Suche nach Name, Typ, Attribut, Level, Archetype und mehr
@@ -16,6 +17,7 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
 ### Deck-Editor - Erweiterte Features
 
 #### Interaktion & Navigation
+
 - **Drag & Drop**: Karten per Drag & Drop zwischen Sektionen verschieben
 - **Haptic Feedback**: Vibration bei Drag-Operationen auf mobilen Geräten
 - **Keyboard-Shortcuts**:
@@ -27,28 +29,33 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
   - `+` / `-`: Anzahl erhöhen/verringern
 
 #### Multi-Select & Bulk-Operationen
+
 - **Multi-Select**: Mehrere Karten gleichzeitig auswählen
-- **Bulk-Actions**: 
+- **Bulk-Actions**:
   - Mehrere Karten gleichzeitig entfernen
   - Mehrere Karten zwischen Sektionen verschieben
 - **Checkbox-Integration**: Einfache Auswahl per Checkbox
 
 #### Undo/Redo & History
+
 - **Vollständige History**: Alle Änderungen werden gespeichert
 - **History-Timeline**: Visuelle Darstellung der Änderungshistorie
 - **Anpassbares Limit**: Konfigurierbare History-Größe (10-200 Einträge)
 - **Jump-to-History**: Springe zu einem beliebigen Punkt in der History
 
 #### YDK Import/Export
+
 - **YDK-Export**: Decks als YDK-Datei exportieren
 - **YDK-Import**: YDK-Dateien importieren (in Entwicklung)
 
 #### Suche & Filter im Deck
+
 - **Deck-interne Suche**: Suche nach Karten im aktuellen Deck
 - **Sortierung**: Sortiere nach Name, Typ, Level, ATK, DEF
 - **Sortierreihenfolge**: Aufsteigend/Absteigend
 
 #### Performance-Optimierungen
+
 - **Optimistic UI Updates**: Sofortiges Feedback bei Aktionen
 - **Request-Deduplizierung**: Verhindert doppelte API-Aufrufe
 - **Card-Cache**: Intelligentes Caching von Kartendaten
@@ -57,12 +64,14 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
 - **Bild-Optimierung**: Lazy Loading und responsive Images
 
 #### Offline-Unterstützung
+
 - **Service Worker**: Caching für Offline-Nutzung
 - **LocalStorage**: Offline-Speicherung von Deck-Änderungen
 - **Sync-Queue**: Automatische Synchronisation bei Wiederverbindung
 - **Offline-Indikator**: Visuelles Feedback zum Online/Offline-Status
 
 #### Error-Handling
+
 - **Error Boundaries**: Granulare Fehlerbehandlung
   - Global Error Boundary
   - Deck-spezifische Error Boundary
@@ -71,6 +80,7 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
 - **Benutzerfreundliche Fehlermeldungen**: Klare, verständliche Fehlermeldungen
 
 ### Kombo-Editor
+
 - **Kombo-Erstellung**: Erstelle Schritt-für-Schritt Kombos mit Kartenauswahl und Aktionstypen
 - **Step-Management**: Füge, bearbeite und lösche Schritte mit Drag & Drop zum Neuanordnen
 - **Aktionstypen**: Definiere Aktionen wie Beschwören, Aktivieren, Setzen, Angreifen, etc.
@@ -81,11 +91,13 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
 - **Virtualisierung**: Effiziente Darstellung bei vielen Steps (ab 50 Steps)
 
 ### Duellmodus
+
 - Teste deine Decks und Kombos in einer simulierten Duell-Umgebung (in Entwicklung)
 
 ## Tech Stack
 
 ### Frontend
+
 - **Framework**: Next.js 16 (App Router)
 - **Sprache**: TypeScript
 - **Styling**: Tailwind CSS 4
@@ -97,13 +109,15 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
 - **Internationalisierung**: i18next / react-i18next
 
 ### Backend
+
 - **Datenbank**: Prisma ORM mit SQLite (Development) / PostgreSQL (Production)
 - **Authentifizierung**: NextAuth.js v5
 - **Server Actions**: Next.js Server Actions für Datenbank-Operationen
 - **API Routes**: RESTful API für Karten-Suche
 
 ### Performance & Optimierung
-- **Caching**: 
+
+- **Caching**:
   - Client-seitig: SWR, Card-Cache
   - Server-seitig: In-Memory Cache für Autocomplete
   - Service Worker: Cache First / Network First Strategien
@@ -111,6 +125,7 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
 - **Code-Splitting**: Automatisch durch Next.js App Router
 
 ### Testing & Quality
+
 - **Testing**: Vitest + React Testing Library
 - **Linting**: ESLint (Next.js Config)
 - **Formatting**: Prettier
@@ -124,27 +139,32 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
 ## Installation
 
 1. Repository klonen:
+
 ```bash
 git clone <repository-url>
 cd DuelPath
 ```
 
 2. Dependencies installieren:
+
 ```bash
 npm install
 ```
 
 3. Environment Variables einrichten:
+
 ```bash
 cp .env.example .env
 ```
 
 Bearbeite `.env` und setze die benötigten Werte:
+
 - `DATABASE_URL`: SQLite-Datenbank-Pfad (Standard: `file:./prisma/dev.db`)
 - `AUTH_SECRET`: Generiere einen Secret mit `openssl rand -base64 32` (NextAuth v5 verwendet AUTH_SECRET statt NEXTAUTH_SECRET)
 - `AUTH_URL`: URL der Anwendung (Standard: `http://localhost:3000`)
 
 4. Datenbank einrichten:
+
 ```bash
 # Prisma Client generieren
 npm run db:generate
@@ -160,6 +180,7 @@ npm run db:seed
 ```
 
 5. Entwicklungsserver starten:
+
 ```bash
 npm run dev
 ```
@@ -169,11 +190,13 @@ Die Anwendung ist nun unter [http://localhost:3000](http://localhost:3000) errei
 ## Verfügbare Scripts
 
 ### Entwicklung
+
 - `npm run dev` - Startet den Entwicklungsserver
 - `npm run build` - Erstellt einen Production-Build
 - `npm run start` - Startet den Production-Server
 
 ### Datenbank
+
 - `npm run db:generate` - Generiert den Prisma Client
 - `npm run db:migrate` - Führt Migrationen aus
 - `npm run db:push` - Pusht Schema-Änderungen zur Datenbank (ohne Migration)
@@ -181,12 +204,14 @@ Die Anwendung ist nun unter [http://localhost:3000](http://localhost:3000) errei
 - `npm run db:seed` - Führt das Seed-Script aus (erstellt Test-User)
 
 ### Code Quality
+
 - `npm run lint` - Führt ESLint aus
 - `npm run format` - Formatiert Code mit Prettier
 - `npm run format:check` - Prüft Code-Formatierung
 - `npm run type-check` - Prüft TypeScript-Typen
 
 ### Testing
+
 - `npm run test` - Führt Tests aus
 - `npm run test:watch` - Führt Tests im Watch-Modus aus
 
@@ -303,6 +328,7 @@ DuelPath/
 ### Code-Style
 
 Das Projekt verwendet:
+
 - **ESLint** für Linting (Next.js Config)
 - **Prettier** für Code-Formatierung
 - **TypeScript** mit strict mode
@@ -340,9 +366,11 @@ Für Production sollte PostgreSQL als Datenbank verwendet werden (nicht SQLite).
 ### Karten-API
 
 #### GET `/api/cards`
+
 Sucht Karten mit Filtern, Pagination und Sortierung.
 
 **Query-Parameter:**
+
 - `name` (string): Kartennamen-Suche (teilweise Übereinstimmung)
 - `type` (string): Kartentyp-Filter
 - `race` (string): Monster-Typ oder Spell/Trap-Kategorie
@@ -360,11 +388,13 @@ Sucht Karten mit Filtern, Pagination und Sortierung.
 - `query` (string): Suchbegriff für Autocomplete
 
 **Beispiel:**
+
 ```bash
 GET /api/cards?name=Blue-Eyes&type=Normal Monster&page=1&limit=20
 ```
 
 **Response:**
+
 ```json
 {
   "cards": [...],
@@ -376,11 +406,13 @@ GET /api/cards?name=Blue-Eyes&type=Normal Monster&page=1&limit=20
 ```
 
 #### POST `/api/cards/import`
+
 Importiert alle Karten von der YGOPRODeck API.
 
 **Erfordert:** Authentifizierung
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -435,9 +467,10 @@ Alle Deck-Operationen werden über Server Actions ausgeführt:
 ## Deck-Editor Features
 
 ### Kartensuche
+
 - **Textsuche**: Suche nach Kartennamen mit Autocomplete
 - **Debounced Search**: Optimierte Suche mit Verzögerung
-- **Filter**: 
+- **Filter**:
   - Kartentyp (Normal Monster, Effect Monster, Spell, Trap, etc.)
   - Attribut (LIGHT, DARK, EARTH, WATER, FIRE, WIND, DIVINE)
   - Level (0-12)
@@ -450,25 +483,27 @@ Alle Deck-Operationen werden über Server Actions ausgeführt:
 - **Virtualisierung**: Effiziente Darstellung bei vielen Ergebnissen
 
 ### Deck-Verwaltung
+
 - **Main Deck**: 40-60 Karten
 - **Extra Deck**: Max. 15 Karten (Fusion, Synchro, XYZ, Link Monster)
 - **Side Deck**: Max. 15 Karten
 - **Automatische Zuordnung**: Extra Deck Karten werden automatisch ins Extra Deck zugeordnet
 - **Kartendetails**: Klick auf eine Karte öffnet einen Dialog mit vollständigen Details
-- **Validierung**: 
+- **Validierung**:
   - Echtzeit-Feedback bei Regelverstößen
   - Visuelle Warnungen für ungültige Konfigurationen
   - Tooltips mit detaillierten Fehlermeldungen
   - Karten-spezifische Validierung (max. 3 Kopien, Banlist-Status)
 
 ### Performance-Features
+
 - **Optimistic Updates**: Sofortiges UI-Feedback ohne Warten auf Server
 - **Request-Deduplizierung**: Verhindert doppelte API-Aufrufe
 - **Batch-Operationen**: Mehrere Operationen werden gebündelt
 - **Card-Cache**: Intelligentes Caching mit TTL
 - **Prefetching**: Karten werden beim Hover vorab geladen
 - **Virtualisierung**: Nur sichtbare Elemente werden gerendert
-- **Bild-Optimierung**: 
+- **Bild-Optimierung**:
   - Lazy Loading für Bilder außerhalb des Viewports
   - Responsive Images mit srcset
   - AVIF/WebP Support (durch Next.js)
@@ -493,7 +528,7 @@ Das Projekt verwendet mehrere wiederverwendbare Custom Hooks:
 
 ### Error-Handling
 
-- **Error Boundaries**: 
+- **Error Boundaries**:
   - `GlobalErrorBoundary`: Fängt alle nicht abgefangenen Fehler
   - `DeckErrorBoundary`: Deck-spezifische Fehlerbehandlung
   - `CardSearchErrorBoundary`: Fehler in der Kartensuche
@@ -504,14 +539,14 @@ Das Projekt verwendet mehrere wiederverwendbare Custom Hooks:
 
 ### Offline-Unterstützung
 
-- **Service Worker**: 
+- **Service Worker**:
   - Cache First für statische Assets
   - Network First für API-Requests
   - Stale-While-Revalidate für Bilder
-- **LocalStorage**: 
+- **LocalStorage**:
   - Offline-Speicherung von Deck-Änderungen
   - Sync-Queue für ausstehende Operationen
-- **Automatische Synchronisation**: 
+- **Automatische Synchronisation**:
   - Bei Wiederverbindung
   - Regelmäßige Sync-Versuche
 - **Offline-Indikator**: Visuelles Feedback zum Online/Offline-Status

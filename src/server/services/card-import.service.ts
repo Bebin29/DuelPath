@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma/client";
+import { prisma } from '@/lib/prisma/client';
 
 /**
  * YGOPRODeck API Card Response Interface
@@ -39,7 +39,7 @@ export interface ImportStats {
 
 /**
  * Service für den Import von Yu-Gi-Oh! Karten von der YGOPRODeck API
- * 
+ *
  * Features:
  * - Batch-Import aller Karten
  * - Upsert-Logik (neue Karten einfügen, bestehende aktualisieren)
@@ -47,33 +47,33 @@ export interface ImportStats {
  * - Rate-Limiting (20 Requests/Sekunde)
  */
 export class CardImportService {
-  private readonly API_BASE_URL = "https://db.ygoprodeck.com/api/v7";
+  private readonly API_BASE_URL = 'https://db.ygoprodeck.com/api/v7';
   private readonly RATE_LIMIT_DELAY = 50; // 50ms = 20 Requests/Sekunde
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY = 1000; // 1 Sekunde
 
   /**
    * Lädt alle Karten von der YGOPRODeck API
-   * 
+   *
    * @returns Array von Karten-Daten
    * @throws Error bei API-Fehlern
    */
   private async fetchAllCards(): Promise<YGOPRODeckCard[]> {
     const url = `${this.API_BASE_URL}/cardinfo.php?misc=yes`;
-    
+
     let retries = 0;
     while (retries < this.MAX_RETRIES) {
       try {
         const response = await fetch(url);
-        
+
         if (!response.ok) {
           throw new Error(`API request failed: ${response.status} ${response.statusText}`);
         }
 
         const data: YGOPRODeckResponse = await response.json();
-        
+
         if (!data.data || !Array.isArray(data.data)) {
-          throw new Error("Invalid API response format");
+          throw new Error('Invalid API response format');
         }
 
         return data.data;
@@ -84,18 +84,18 @@ export class CardImportService {
             `Failed to fetch cards after ${this.MAX_RETRIES} retries: ${error instanceof Error ? error.message : String(error)}`
           );
         }
-        
+
         // Exponential backoff
         await this.delay(this.RETRY_DELAY * retries);
       }
     }
 
-    throw new Error("Unexpected error in fetchAllCards");
+    throw new Error('Unexpected error in fetchAllCards');
   }
 
   /**
    * Konvertiert YGOPRODeck API-Daten in Prisma Card-Format
-   * 
+   *
    * @param apiCard - Karte von der API
    * @returns Prisma Card-Daten
    */
@@ -107,9 +107,9 @@ export class CardImportService {
     // Serialisiere banlistInfo als JSON-String, falls es ein Objekt ist
     let banlistInfo: string | null = null;
     if (apiCard.banlist_info) {
-      if (typeof apiCard.banlist_info === "string") {
+      if (typeof apiCard.banlist_info === 'string') {
         banlistInfo = apiCard.banlist_info;
-      } else if (typeof apiCard.banlist_info === "object") {
+      } else if (typeof apiCard.banlist_info === 'object') {
         banlistInfo = JSON.stringify(apiCard.banlist_info);
       }
     }
@@ -138,7 +138,7 @@ export class CardImportService {
 
   /**
    * Verzögerung für Rate-Limiting
-   * 
+   *
    * @param ms - Millisekunden
    */
   private delay(ms: number): Promise<void> {
@@ -147,11 +147,11 @@ export class CardImportService {
 
   /**
    * Importiert eine einzelne Karte (Upsert)
-   * 
+   *
    * @param apiCard - Karte von der API
    * @returns true wenn erstellt, false wenn aktualisiert
    */
-  private async importCard(apiCard: YGOPRODeckCard): Promise<"created" | "updated" | "skipped"> {
+  private async importCard(apiCard: YGOPRODeckCard): Promise<'created' | 'updated' | 'skipped'> {
     try {
       const cardData = this.mapApiCardToPrisma(apiCard);
 
@@ -166,24 +166,24 @@ export class CardImportService {
           where: { id: cardData.id },
           data: cardData,
         });
-        return "updated";
+        return 'updated';
       } else {
         // Erstelle neue Karte
         await prisma.card.create({
           data: cardData,
         });
-        return "created";
+        return 'created';
       }
     } catch (error) {
       // Bei Fehlern (z.B. Constraint-Verletzungen) überspringen
       console.error(`Error importing card ${apiCard.name} (ID: ${apiCard.id}):`, error);
-      return "skipped";
+      return 'skipped';
     }
   }
 
   /**
    * Importiert alle Karten von der YGOPRODeck API
-   * 
+   *
    * @param onProgress - Callback für Fortschritts-Updates (optional)
    * @returns Import-Statistiken
    */
@@ -206,22 +206,22 @@ export class CardImportService {
       // Importiere Karten in Batches (mit Rate-Limiting)
       for (let i = 0; i < apiCards.length; i++) {
         const apiCard = apiCards[i];
-        
+
         // Rate-Limiting: Warte zwischen Requests
         if (i > 0) {
           await this.delay(this.RATE_LIMIT_DELAY);
         }
 
         const result = await this.importCard(apiCard);
-        
+
         switch (result) {
-          case "created":
+          case 'created':
             stats.created++;
             break;
-          case "updated":
+          case 'updated':
             stats.updated++;
             break;
-          case "skipped":
+          case 'skipped':
             stats.skipped++;
             stats.errors++;
             break;
@@ -243,7 +243,7 @@ export class CardImportService {
 
   /**
    * Importiert Karten in Batches (für große Imports)
-   * 
+   *
    * @param batchSize - Anzahl Karten pro Batch
    * @param onProgress - Callback für Fortschritts-Updates (optional)
    * @returns Import-Statistiken
@@ -272,15 +272,15 @@ export class CardImportService {
         // Importiere Batch
         for (const apiCard of batch) {
           const result = await this.importCard(apiCard);
-          
+
           switch (result) {
-            case "created":
+            case 'created':
               stats.created++;
               break;
-            case "updated":
+            case 'updated':
               stats.updated++;
               break;
-            case "skipped":
+            case 'skipped':
               stats.skipped++;
               stats.errors++;
               break;
@@ -306,5 +306,3 @@ export class CardImportService {
     }
   }
 }
-
-

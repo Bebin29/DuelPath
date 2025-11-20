@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useTranslation } from "@/lib/i18n/hooks";
-import { Button } from "@/components/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/components/ui/card";
-import { Badge } from "@/components/components/ui/badge";
-import { Heart, Minus, Plus } from "lucide-react";
-import type { PlayerId } from "@/types/duel.types";
+import { useTranslation } from '@/lib/i18n/hooks';
+import { Button } from '@/components/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/components/ui/card';
+import { Badge } from '@/components/components/ui/badge';
+import { Heart, Minus, Plus } from 'lucide-react';
+import type { PlayerId } from '@/types/duel.types';
 
 interface DuelLifePointsProps {
   playerLp: number;
@@ -21,9 +21,9 @@ export function DuelLifePoints({ playerLp, opponentLp, winner }: DuelLifePointsP
   const { t } = useTranslation();
 
   const getLpColor = (lp: number) => {
-    if (lp <= 1000) return "text-red-600";
-    if (lp <= 4000) return "text-yellow-600";
-    return "text-green-600";
+    if (lp <= 1000) return 'text-red-600';
+    if (lp <= 4000) return 'text-yellow-600';
+    return 'text-green-600';
   };
 
   const isGameOver = winner !== undefined;
@@ -33,43 +33,33 @@ export function DuelLifePoints({ playerLp, opponentLp, winner }: DuelLifePointsP
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Heart className="w-5 h-5" />
-          {t("duel.lifePoints")}
+          {t('duel.lifePoints')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Gegner LP */}
         <div className="text-center">
-          <div className="text-sm text-muted-foreground mb-1">
-            {t("duel.opponent")}
-          </div>
-          <div className={`text-3xl font-bold ${getLpColor(opponentLp)}`}>
-            {opponentLp}
-          </div>
+          <div className="text-sm text-muted-foreground mb-1">{t('duel.opponent')}</div>
+          <div className={`text-3xl font-bold ${getLpColor(opponentLp)}`}>{opponentLp}</div>
         </div>
 
         {/* VS */}
-        <div className="text-center text-2xl font-bold text-muted-foreground">
-          VS
-        </div>
+        <div className="text-center text-2xl font-bold text-muted-foreground">VS</div>
 
         {/* Spieler LP */}
         <div className="text-center">
-          <div className={`text-3xl font-bold ${getLpColor(playerLp)}`}>
-            {playerLp}
-          </div>
-          <div className="text-sm text-muted-foreground mt-1">
-            {t("duel.you")}
-          </div>
+          <div className={`text-3xl font-bold ${getLpColor(playerLp)}`}>{playerLp}</div>
+          <div className="text-sm text-muted-foreground mt-1">{t('duel.you')}</div>
         </div>
 
         {/* Sieg/Niederlage */}
         {isGameOver && (
           <div className="text-center mt-4">
             <Badge
-              variant={winner === "PLAYER" ? "default" : "destructive"}
+              variant={winner === 'PLAYER' ? 'default' : 'destructive'}
               className="text-lg px-4 py-2"
             >
-              {winner === "PLAYER" ? t("duel.victory") : t("duel.defeat")}
+              {winner === 'PLAYER' ? t('duel.victory') : t('duel.defeat')}
             </Badge>
           </div>
         )}
@@ -82,7 +72,7 @@ export function DuelLifePoints({ playerLp, opponentLp, winner }: DuelLifePointsP
               variant="outline"
               onClick={() => {
                 // TODO: LP anpassen - wird später implementiert
-                console.log("Decrease LP");
+                console.log('Decrease LP');
               }}
             >
               <Minus className="w-4 h-4" />
@@ -92,7 +82,7 @@ export function DuelLifePoints({ playerLp, opponentLp, winner }: DuelLifePointsP
               variant="outline"
               onClick={() => {
                 // TODO: LP anpassen - wird später implementiert
-                console.log("Increase LP");
+                console.log('Increase LP');
               }}
             >
               <Plus className="w-4 h-4" />

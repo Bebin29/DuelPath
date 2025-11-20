@@ -1,13 +1,19 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { signUpAction } from "@/server/actions/auth";
-import { Button } from "@/components/components/ui/button";
-import { Input } from "@/components/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/components/ui/card";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { signUpAction } from '@/server/actions/auth';
+import { Button } from '@/components/components/ui/button';
+import { Input } from '@/components/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/components/ui/card';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 /**
  * Registrierungsformular
@@ -29,14 +35,14 @@ export default function SignUpPage() {
       setIsLoading(false);
     } else if (result?.success) {
       // Weiterleitung zur Anmeldeseite nach erfolgreicher Registrierung
-      router.push("/auth/signin?registered=true");
+      router.push('/auth/signin?registered=true');
     }
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("auth.signUp")}</CardTitle>
+        <CardTitle>{t('auth.signUp')}</CardTitle>
         <CardDescription>
           Erstelle ein Konto, um deine Decks und Kombos zu verwalten
         </CardDescription>
@@ -51,7 +57,7 @@ export default function SignUpPage() {
 
           <div className="space-y-2">
             <label htmlFor="name" className="text-sm font-medium">
-              {t("auth.name")}
+              {t('auth.name')}
             </label>
             <Input
               id="name"
@@ -59,13 +65,13 @@ export default function SignUpPage() {
               type="text"
               required
               placeholder="Dein Name"
-              aria-invalid={error ? "true" : "false"}
+              aria-invalid={error ? 'true' : 'false'}
             />
           </div>
 
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
-              {t("auth.email")}
+              {t('auth.email')}
             </label>
             <Input
               id="email"
@@ -73,13 +79,13 @@ export default function SignUpPage() {
               type="email"
               required
               placeholder="deine@email.de"
-              aria-invalid={error ? "true" : "false"}
+              aria-invalid={error ? 'true' : 'false'}
             />
           </div>
 
           <div className="space-y-2">
             <label htmlFor="password" className="text-sm font-medium">
-              {t("auth.password")}
+              {t('auth.password')}
             </label>
             <Input
               id="password"
@@ -88,7 +94,7 @@ export default function SignUpPage() {
               required
               placeholder="Mindestens 8 Zeichen"
               minLength={8}
-              aria-invalid={error ? "true" : "false"}
+              aria-invalid={error ? 'true' : 'false'}
             />
           </div>
 
@@ -102,23 +108,22 @@ export default function SignUpPage() {
               type="password"
               required
               placeholder="Passwort wiederholen"
-              aria-invalid={error ? "true" : "false"}
+              aria-invalid={error ? 'true' : 'false'}
             />
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? t("common.loading") : t("auth.signUp")}
+            {isLoading ? t('common.loading') : t('auth.signUp')}
           </Button>
         </form>
 
         <div className="mt-4 text-center text-sm text-muted-foreground">
-          {t("auth.hasAccount")}{" "}
+          {t('auth.hasAccount')}{' '}
           <Link href="/auth/signin" className="text-primary hover:underline">
-            {t("auth.signIn")}
+            {t('auth.signIn')}
           </Link>
         </div>
       </CardContent>
     </Card>
   );
 }
-

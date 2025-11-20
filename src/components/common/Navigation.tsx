@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { Button } from "@/components/components/ui/button";
-import { cn } from "@/lib/utils";
-import { signOut } from "next-auth/react";
-import { useSession } from "next-auth/react";
-import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { Button } from '@/components/components/ui/button';
+import { cn } from '@/lib/utils';
+import { signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
 /**
  * Hauptnavigation mit Links zu Decks, Kombos, Duell
- * 
+ *
  * Active Link States: Nutzt --accent für aktive/hover Links
  * Focus Styles: Sichtbarer Focus-Ring (2px, --ring) für Tastaturnutzer
  * Responsive: Sidebar auf Desktop, Hamburger-Menu auf Mobile
@@ -24,15 +24,15 @@ export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { href: "/", label: t("navigation.home") },
-    { href: "/decks", label: t("navigation.decks") },
-    { href: "/combos", label: t("navigation.combos") },
-    { href: "/duel", label: t("navigation.duel") },
+    { href: '/', label: t('navigation.home') },
+    { href: '/decks', label: t('navigation.decks') },
+    { href: '/combos', label: t('navigation.combos') },
+    { href: '/duel', label: t('navigation.duel') },
   ];
 
   const isActive = (href: string) => {
-    if (href === "/") {
-      return pathname === "/";
+    if (href === '/') {
+      return pathname === '/';
     }
     return pathname?.startsWith(href);
   };
@@ -46,7 +46,7 @@ export function Navigation() {
             href="/"
             className="text-xl font-bold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            {t("common.appName")}
+            {t('common.appName')}
           </Link>
 
           {/* Desktop Navigation */}
@@ -56,10 +56,10 @@ export function Navigation() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md",
+                  'px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md',
                   isActive(item.href)
-                    ? "bg-accent text-accent-foreground"
-                    : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                 )}
               >
                 {item.label}
@@ -67,18 +67,13 @@ export function Navigation() {
             ))}
 
             {session ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => signOut()}
-                className="ml-4"
-              >
-                {t("auth.signOut")}
+              <Button variant="outline" size="sm" onClick={() => signOut()} className="ml-4">
+                {t('auth.signOut')}
               </Button>
             ) : (
               <Link href="/auth/signin">
                 <Button variant="default" size="sm" className="ml-4">
-                  {t("auth.signIn")}
+                  {t('auth.signIn')}
                 </Button>
               </Link>
             )}
@@ -103,10 +98,10 @@ export function Navigation() {
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  "block px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md",
+                  'block px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md',
                   isActive(item.href)
-                    ? "bg-accent text-accent-foreground"
-                    : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                 )}
               >
                 {item.label}
@@ -123,7 +118,7 @@ export function Navigation() {
                   }}
                   className="w-full"
                 >
-                  {t("auth.signOut")}
+                  {t('auth.signOut')}
                 </Button>
               ) : (
                 <Link href="/auth/signin" className="block">
@@ -133,7 +128,7 @@ export function Navigation() {
                     className="w-full"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    {t("auth.signIn")}
+                    {t('auth.signIn')}
                   </Button>
                 </Link>
               )}
@@ -144,9 +139,3 @@ export function Navigation() {
     </nav>
   );
 }
-
-
-
-
-
-

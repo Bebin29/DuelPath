@@ -1,6 +1,6 @@
 /**
  * Web Vitals Monitoring
- * 
+ *
  * Erfasst Core Web Vitals und andere Performance-Metriken
  */
 
@@ -8,7 +8,7 @@ export interface WebVitalsMetric {
   id: string;
   name: string;
   value: number;
-  rating: "good" | "needs-improvement" | "poor";
+  rating: 'good' | 'needs-improvement' | 'poor';
   delta: number;
   navigationType: string;
 }
@@ -28,13 +28,13 @@ const VITALS_THRESHOLDS = {
 /**
  * Bewertet eine Metrik basierend auf Schwellenwerten
  */
-function getRating(name: string, value: number): "good" | "needs-improvement" | "poor" {
+function getRating(name: string, value: number): 'good' | 'needs-improvement' | 'poor' {
   const thresholds = VITALS_THRESHOLDS[name as keyof typeof VITALS_THRESHOLDS];
-  if (!thresholds) return "good";
+  if (!thresholds) return 'good';
 
-  if (value <= thresholds.good) return "good";
-  if (value <= thresholds.poor) return "needs-improvement";
-  return "poor";
+  if (value <= thresholds.good) return 'good';
+  if (value <= thresholds.poor) return 'needs-improvement';
+  return 'poor';
 }
 
 /**
@@ -42,7 +42,7 @@ function getRating(name: string, value: number): "good" | "needs-improvement" | 
  */
 function sendToAnalytics(metric: WebVitalsMetric): void {
   // In Production: Sende an Analytics-Service (z.B. Google Analytics, Vercel Analytics)
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === 'production') {
     // Beispiel: Google Analytics 4
     // gtag('event', metric.name, {
     //   value: Math.round(metric.value),
@@ -50,7 +50,6 @@ function sendToAnalytics(metric: WebVitalsMetric): void {
     //   metric_value: metric.value,
     //   metric_delta: metric.delta,
     // });
-
     // Beispiel: Vercel Analytics
     // if (typeof window !== 'undefined' && (window as any).va) {
     //   (window as any).va('track', metric.name, {
@@ -58,7 +57,6 @@ function sendToAnalytics(metric: WebVitalsMetric): void {
     //     rating: metric.rating,
     //   });
     // }
-
     // Beispiel: Custom Backend
     // fetch('/api/analytics/web-vitals', {
     //   method: 'POST',
@@ -70,7 +68,7 @@ function sendToAnalytics(metric: WebVitalsMetric): void {
   }
 
   // In Development: Logge zur Console
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === 'development') {
     console.log(`[Web Vitals] ${metric.name}:`, {
       value: metric.value.toFixed(2),
       rating: metric.rating,
@@ -83,40 +81,42 @@ function sendToAnalytics(metric: WebVitalsMetric): void {
  * Initialisiert Web Vitals Monitoring
  */
 export function reportWebVitals(onPerfEntry?: (metric: WebVitalsMetric) => void): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
 
   // Dynamisch importieren um Bundle-Größe zu reduzieren
-  import("web-vitals").then(({ onCLS, onFID, onFCP, onLCP, onTTFB, onINP }) => {
-    const reportMetric = (metric: any) => {
-      const webVitalsMetric: WebVitalsMetric = {
-        id: metric.id,
-        name: metric.name,
-        value: metric.value,
-        rating: getRating(metric.name, metric.value),
-        delta: metric.delta,
-        navigationType: metric.navigationType,
+  import('web-vitals')
+    .then(({ onCLS, onFID, onFCP, onLCP, onTTFB, onINP }) => {
+      const reportMetric = (metric: any) => {
+        const webVitalsMetric: WebVitalsMetric = {
+          id: metric.id,
+          name: metric.name,
+          value: metric.value,
+          rating: getRating(metric.name, metric.value),
+          delta: metric.delta,
+          navigationType: metric.navigationType,
+        };
+
+        sendToAnalytics(webVitalsMetric);
+        onPerfEntry?.(webVitalsMetric);
       };
 
-      sendToAnalytics(webVitalsMetric);
-      onPerfEntry?.(webVitalsMetric);
-    };
-
-    onCLS(reportMetric);
-    onFID(reportMetric);
-    onFCP(reportMetric);
-    onLCP(reportMetric);
-    onTTFB(reportMetric);
-    onINP(reportMetric);
-  }).catch((error) => {
-    console.warn("Failed to load web-vitals:", error);
-  });
+      onCLS(reportMetric);
+      onFID(reportMetric);
+      onFCP(reportMetric);
+      onLCP(reportMetric);
+      onTTFB(reportMetric);
+      onINP(reportMetric);
+    })
+    .catch((error) => {
+      console.warn('Failed to load web-vitals:', error);
+    });
 }
 
 /**
  * Erfasst Custom Performance-Metriken
  */
-export function reportCustomMetric(name: string, value: number, unit: string = "ms"): void {
-  if (typeof window === "undefined" || !("performance" in window)) return;
+export function reportCustomMetric(name: string, value: number, unit: string = 'ms'): void {
+  if (typeof window === 'undefined' || !('performance' in window)) return;
 
   try {
     const metric = {
@@ -131,7 +131,7 @@ export function reportCustomMetric(name: string, value: number, unit: string = "
     performance.measure(name, `${name}-start`);
 
     // Sende an Analytics
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV === 'production') {
       // fetch('/api/analytics/custom-metric', {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
@@ -141,7 +141,6 @@ export function reportCustomMetric(name: string, value: number, unit: string = "
       console.log(`[Custom Metric] ${name}:`, value, unit);
     }
   } catch (error) {
-    console.warn("Failed to report custom metric:", error);
+    console.warn('Failed to report custom metric:', error);
   }
 }
-

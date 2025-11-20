@@ -4,7 +4,7 @@ import path from 'path';
 
 /**
  * Vitest Konfiguration für DuelPath
- * 
+ *
  * Unterstützt:
  * - React Testing Library
  * - Path-Aliases (@/)
@@ -25,4 +25,3 @@ export default defineConfig({
     },
   },
 });
-

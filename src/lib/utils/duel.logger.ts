@@ -1,4 +1,4 @@
-import type { DuelState, DuelAction, DuelLogEntry } from "@/types/duel.types";
+import type { DuelState, DuelAction, DuelLogEntry } from '@/types/duel.types';
 
 /**
  * Duel Logger Utility
@@ -47,7 +47,7 @@ export class DuelLogger {
     actionType?: string;
     searchTerm?: string;
   }): DuelLogEntry[] {
-    return this.logs.filter(log => {
+    return this.logs.filter((log) => {
       if (filters.turn !== undefined && log.turn !== filters.turn) return false;
       if (filters.phase && log.phase !== filters.phase) return false;
       if (filters.player && log.player !== filters.player) return false;
@@ -65,14 +65,14 @@ export class DuelLogger {
    * Gibt Logs für einen bestimmten Turn zurück
    */
   getLogsForTurn(turn: number): DuelLogEntry[] {
-    return this.logs.filter(log => log.turn === turn);
+    return this.logs.filter((log) => log.turn === turn);
   }
 
   /**
    * Gibt Logs für eine bestimmte Phase zurück
    */
   getLogsForPhase(phase: string): DuelLogEntry[] {
-    return this.logs.filter(log => log.phase === phase);
+    return this.logs.filter((log) => log.phase === phase);
   }
 
   /**
@@ -80,7 +80,7 @@ export class DuelLogger {
    */
   exportAsJSON(): string {
     const exportData = {
-      version: "1.0",
+      version: '1.0',
       exportedAt: new Date().toISOString(),
       logs: this.logs,
     };
@@ -101,7 +101,7 @@ export class DuelLogger {
         return true;
       }
     } catch (error) {
-      console.error("Failed to import logs:", error);
+      console.error('Failed to import logs:', error);
     }
     return false;
   }
@@ -118,21 +118,27 @@ export class DuelLogger {
    */
   getStats() {
     const totalLogs = this.logs.length;
-    const actionCounts = this.logs.reduce((acc, log) => {
-      acc[log.action.type] = (acc[log.action.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const actionCounts = this.logs.reduce(
+      (acc, log) => {
+        acc[log.action.type] = (acc[log.action.type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
-    const playerCounts = this.logs.reduce((acc, log) => {
-      acc[log.player] = (acc[log.player] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const playerCounts = this.logs.reduce(
+      (acc, log) => {
+        acc[log.player] = (acc[log.player] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     return {
       totalLogs,
       actionCounts,
       playerCounts,
-      turnsCovered: new Set(this.logs.map(log => log.turn)).size,
+      turnsCovered: new Set(this.logs.map((log) => log.turn)).size,
     };
   }
 }

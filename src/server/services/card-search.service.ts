@@ -1,11 +1,11 @@
-import { prisma } from "@/lib/prisma/client";
-import type { CardSearchFilter, CardListResult, CardSortOptions } from "@/types/card.types";
-import type { Prisma } from "@prisma/client";
-import { cardNameCache, archetypeCache, raceCache } from "./autocomplete-cache.service";
+import { prisma } from '@/lib/prisma/client';
+import type { CardSearchFilter, CardListResult, CardSortOptions } from '@/types/card.types';
+import type { Prisma } from '@prisma/client';
+import { cardNameCache, archetypeCache, raceCache } from './autocomplete-cache.service';
 
 /**
  * Service für die Kartensuche
- * 
+ *
  * Unterstützt:
  * - Filterung nach verschiedenen Kriterien
  * - Pagination
@@ -15,7 +15,7 @@ import { cardNameCache, archetypeCache, raceCache } from "./autocomplete-cache.s
 export class CardSearchService {
   /**
    * Sucht Karten mit Filtern und Pagination
-   * 
+   *
    * @param filter - Suchfilter
    * @param page - Seitennummer (1-basiert)
    * @param pageSize - Anzahl Karten pro Seite
@@ -39,7 +39,7 @@ export class CardSearchService {
 
     if (filter.name) {
       const searchTerm = filter.name.trim();
-      
+
       if (filter.useRegex) {
         // Regex-Suche (nur für SQLite, begrenzte Unterstützung)
         // SQLite unterstützt REGEXP nur wenn sqlite3 mit Regex-Erweiterung kompiliert wurde
@@ -60,10 +60,10 @@ export class CardSearchService {
       } else {
         // Case-insensitive Suche: Verwende nameLower für optimierte Suche
         const normalizedSearchTerm = searchTerm.toLowerCase();
-        
+
         // Verbesserte Suche: Unterstützt mehrere Wörter
         const searchTerms = normalizedSearchTerm.split(/\s+/).filter((term) => term.length > 0);
-        
+
         if (searchTerms.length > 1) {
           // Mehrere Suchbegriffe: Alle müssen vorkommen
           andConditions.push({
@@ -175,16 +175,16 @@ export class CardSearchService {
     if (sortOptions) {
       const sortField = sortOptions.sortBy;
       const sortOrder = sortOptions.order;
-      
+
       // Type-safe mapping der Sortierfelder
-      if (sortField === "name" || sortField === "type" || sortField === "archetype") {
+      if (sortField === 'name' || sortField === 'type' || sortField === 'archetype') {
         orderBy[sortField] = sortOrder;
-      } else if (sortField === "level" || sortField === "atk" || sortField === "def") {
+      } else if (sortField === 'level' || sortField === 'atk' || sortField === 'def') {
         orderBy[sortField] = sortOrder;
       }
     } else {
       // Default: Sortierung nach Name
-      orderBy.name = "asc";
+      orderBy.name = 'asc';
     }
 
     // Führe Abfrage aus
@@ -211,7 +211,7 @@ export class CardSearchService {
 
   /**
    * Autocomplete für Kartennamen
-   * 
+   *
    * @param query - Suchbegriff
    * @param limit - Maximale Anzahl Ergebnisse (default: 5)
    * @returns Array von Kartennamen
@@ -242,21 +242,21 @@ export class CardSearchService {
       },
       take: limit,
       orderBy: {
-        name: "asc",
+        name: 'asc',
       },
     });
 
     const names = cards.map((card) => card.name);
-    
+
     // Speichere im Cache
     cardNameCache.set(cacheKey, names);
-    
+
     return names;
   }
 
   /**
    * Holt eine Karte nach ID
-   * 
+   *
    * @param cardId - Karten-ID (Passcode)
    * @returns Karte oder null
    */
@@ -268,7 +268,7 @@ export class CardSearchService {
 
   /**
    * Holt mehrere Karten nach IDs
-   * 
+   *
    * @param cardIds - Array von Karten-IDs
    * @returns Array von Karten
    */
@@ -284,7 +284,7 @@ export class CardSearchService {
 
   /**
    * Autocomplete für Race-Werte
-   * 
+   *
    * @param query - Suchbegriff
    * @param limit - Maximale Anzahl Ergebnisse (default: 5)
    * @returns Array von eindeutigen Race-Werten
@@ -316,9 +316,9 @@ export class CardSearchService {
         race: true,
       },
       take: limit * 2, // Mehr holen, da wir deduplizieren
-      distinct: ["race"],
+      distinct: ['race'],
       orderBy: {
-        race: "asc",
+        race: 'asc',
       },
     });
 
@@ -331,16 +331,16 @@ export class CardSearchService {
     });
 
     const results = Array.from(races).slice(0, limit);
-    
+
     // Speichere im Cache
     raceCache.set(cacheKey, results);
-    
+
     return results;
   }
 
   /**
    * Autocomplete für Archetype-Werte
-   * 
+   *
    * @param query - Suchbegriff
    * @param limit - Maximale Anzahl Ergebnisse (default: 5)
    * @returns Array von eindeutigen Archetype-Werten
@@ -372,9 +372,9 @@ export class CardSearchService {
         archetype: true,
       },
       take: limit * 2, // Mehr holen, da wir deduplizieren
-      distinct: ["archetype"],
+      distinct: ['archetype'],
       orderBy: {
-        archetype: "asc",
+        archetype: 'asc',
       },
     });
 
@@ -387,12 +387,10 @@ export class CardSearchService {
     });
 
     const results = Array.from(archetypes).slice(0, limit);
-    
+
     // Speichere im Cache
     archetypeCache.set(cacheKey, results);
-    
+
     return results;
   }
 }
-
-

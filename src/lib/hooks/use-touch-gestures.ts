@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback } from 'react';
 
 interface TouchGestureOptions {
   onSwipeLeft?: () => void;
@@ -61,21 +61,32 @@ export function useTouchGestures({
         onSwipeDown?.();
       }
     }
-  }, [onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, minSwipeDistance, maxVerticalOffset, maxHorizontalOffset]);
+  }, [
+    onSwipeLeft,
+    onSwipeRight,
+    onSwipeUp,
+    onSwipeDown,
+    minSwipeDistance,
+    maxVerticalOffset,
+    maxHorizontalOffset,
+  ]);
 
-  const attachListeners = useCallback((element: HTMLElement | null) => {
-    if (!element) return;
+  const attachListeners = useCallback(
+    (element: HTMLElement | null) => {
+      if (!element) return;
 
-    element.addEventListener("touchstart", handleTouchStart, { passive: true });
-    element.addEventListener("touchmove", handleTouchMove, { passive: true });
-    element.addEventListener("touchend", handleTouchEnd, { passive: true });
+      element.addEventListener('touchstart', handleTouchStart, { passive: true });
+      element.addEventListener('touchmove', handleTouchMove, { passive: true });
+      element.addEventListener('touchend', handleTouchEnd, { passive: true });
 
-    return () => {
-      element.removeEventListener("touchstart", handleTouchStart);
-      element.removeEventListener("touchmove", handleTouchMove);
-      element.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+      return () => {
+        element.removeEventListener('touchstart', handleTouchStart);
+        element.removeEventListener('touchmove', handleTouchMove);
+        element.removeEventListener('touchend', handleTouchEnd);
+      };
+    },
+    [handleTouchStart, handleTouchMove, handleTouchEnd]
+  );
 
   return { attachListeners };
 }

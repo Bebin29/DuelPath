@@ -18,22 +18,22 @@ Farbpalette
 
 Die folgende Tabelle listet die definierten Farben von DuelPath mit ihrer Rolle, dem Hex-Code und einem kurzen Verwendungszweck auf:
 
-Farbrolle	Hexcode	Beschreibung / Verwendung
-Primärfarbe (Primary)	#194038	Sehr dunkles Grün (ein dunkles Zyan
+Farbrolle Hexcode Beschreibung / Verwendung
+Primärfarbe (Primary) #194038 Sehr dunkles Grün (ein dunkles Zyan
 colorhexa.com
 ). Dient als Hauptfarbe für Branding und primäre UI-Elemente. Vermittelt einen stabilen, natürlichen Eindruck
 piktochart.com
 . Eignet sich für wichtige Aktionen (z. B. Haupt-Buttons); helle Schrift oder Icons (weiß) darauf gewährleisten hervorragenden Kontrast und Lesbarkeit
 daily.dev
 .
-Sekundärfarbe (Secondary)	#D9B473	Warmer Beige-/Goldton. Zweite Markenfarbe zur Unterstützung der Primärfarbe. Wird für Hervorhebungen, Icons oder sekundäre Elemente verwendet, um Akzente zu setzen. Kann z. B. für Hover-Effekte oder sekundäre Buttons genutzt werden – dunkle Schrift (Schwarz) ist auf diesem hellen Ton sehr gut lesbar (hoher Kontrast).
-Akzentfarbe (Accent)	#734F43	Dunkles Braun. Zusätzliche Akzentfarbe für besondere Highlights oder alternative Hintergründe. Kann sparsam für Überschriften, Hervorhebungen oder abgesetzte Sektionen eingesetzt werden, um dem Design mehr Tiefe zu geben. Weiße Schrift hat auf diesem dunklen Braun einen hohen Kontrast (ca. 7:1 oder besser, erfüllt somit WCAG-AAA für normalen Text).
-Hintergrund (Background)	#EDD8A2	Helles Beige. Eignet sich als Hintergrundfarbe für Flächen, Seitenbereiche oder Cards. Wirkt freundlich und zurückhaltend, lässt das Dunkelgrün hervorstechen. Schwarze Schrift hat auf diesem hellen Beige einen ausgezeichneten Kontrast (≈15:1, AAA-konform)
+Sekundärfarbe (Secondary) #D9B473 Warmer Beige-/Goldton. Zweite Markenfarbe zur Unterstützung der Primärfarbe. Wird für Hervorhebungen, Icons oder sekundäre Elemente verwendet, um Akzente zu setzen. Kann z. B. für Hover-Effekte oder sekundäre Buttons genutzt werden – dunkle Schrift (Schwarz) ist auf diesem hellen Ton sehr gut lesbar (hoher Kontrast).
+Akzentfarbe (Accent) #734F43 Dunkles Braun. Zusätzliche Akzentfarbe für besondere Highlights oder alternative Hintergründe. Kann sparsam für Überschriften, Hervorhebungen oder abgesetzte Sektionen eingesetzt werden, um dem Design mehr Tiefe zu geben. Weiße Schrift hat auf diesem dunklen Braun einen hohen Kontrast (ca. 7:1 oder besser, erfüllt somit WCAG-AAA für normalen Text).
+Hintergrund (Background) #EDD8A2 Helles Beige. Eignet sich als Hintergrundfarbe für Flächen, Seitenbereiche oder Cards. Wirkt freundlich und zurückhaltend, lässt das Dunkelgrün hervorstechen. Schwarze Schrift hat auf diesem hellen Beige einen ausgezeichneten Kontrast (≈15:1, AAA-konform)
 colorcombos.com
 , wohingegen weiße Schrift darauf nicht zu empfehlen ist (Kontrast zu niedrig
 colorcombos.com
 ).
-Neutral (Neutral Gray)	#8F9189	Neutrales Grau mit leicht grünlichem Unterton. Wird für sekundäre UI-Elemente und dezente Details genutzt – etwa für Ränder, Divider, Platzhaltertext oder Hintergrund von deaktivierten Elementen. Als Hintergrundfarbe sollte es bevorzugt mit dunkler Schrift kombiniert werden, da weiße Schrift auf mittlerem Grau nur in großer Schriftgröße ausreichend kontrastiert
+Neutral (Neutral Gray) #8F9189 Neutrales Grau mit leicht grünlichem Unterton. Wird für sekundäre UI-Elemente und dezente Details genutzt – etwa für Ränder, Divider, Platzhaltertext oder Hintergrund von deaktivierten Elementen. Als Hintergrundfarbe sollte es bevorzugt mit dunkler Schrift kombiniert werden, da weiße Schrift auf mittlerem Grau nur in großer Schriftgröße ausreichend kontrastiert
 chromium.googlesource.com
 . Dieses Grau bietet einen unaufdringlichen Gegenpol zu den Buntfarben und unterstützt ein ausgewogenes Gesamtbild.
 Hinweise zur Zugänglichkeit und Nutzung

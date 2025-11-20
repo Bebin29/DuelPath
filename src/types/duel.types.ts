@@ -1,42 +1,42 @@
-import type { Card } from "@prisma/client";
+import type { Card } from '@prisma/client';
 
 /**
  * Spieler im Duell
  */
-export type PlayerId = "PLAYER" | "OPPONENT";
+export type PlayerId = 'PLAYER' | 'OPPONENT';
 
 /**
  * Duell-Phasen (intern als Enum, nicht als Strings)
  */
 export enum DuelPhase {
-  DRAW = "DRAW",
-  STANDBY = "STANDBY",
-  MAIN1 = "MAIN1",
-  BATTLE = "BATTLE",
-  MAIN2 = "MAIN2",
-  END = "END",
+  DRAW = 'DRAW',
+  STANDBY = 'STANDBY',
+  MAIN1 = 'MAIN1',
+  BATTLE = 'BATTLE',
+  MAIN2 = 'MAIN2',
+  END = 'END',
 }
 
 /**
  * Kartenposition
  */
 export type CardPosition =
-  | "FACE_UP_ATTACK"
-  | "FACE_UP_DEFENSE"
-  | "FACE_DOWN_ATTACK"
-  | "FACE_DOWN_DEFENSE";
+  | 'FACE_UP_ATTACK'
+  | 'FACE_UP_DEFENSE'
+  | 'FACE_DOWN_ATTACK'
+  | 'FACE_DOWN_DEFENSE';
 
 /**
  * Zonen im Duell
  */
 export type DuelZone =
-  | "HAND"
-  | "MONSTER_ZONE"
-  | "SPELL_TRAP_ZONE"
-  | "GRAVEYARD"
-  | "DECK"
-  | "EXTRA_DECK"
-  | "FIELD_SPELL";
+  | 'HAND'
+  | 'MONSTER_ZONE'
+  | 'SPELL_TRAP_ZONE'
+  | 'GRAVEYARD'
+  | 'DECK'
+  | 'EXTRA_DECK'
+  | 'FIELD_SPELL';
 
 /**
  * Karteninstanz im Duell (für Mehrfachkopien unterscheidbar)
@@ -83,14 +83,19 @@ export interface DuelState {
  * Duell-Aktionen als Discriminated Union
  */
 export type DuelAction =
-  | { type: "DRAW"; player: PlayerId; count: number }
-  | { type: "NORMAL_SUMMON"; player: PlayerId; cardInstanceId: string; targetZoneIndex: number }
-  | { type: "SET_MONSTER"; player: PlayerId; cardInstanceId: string; targetZoneIndex: number }
-  | { type: "ACTIVATE_SPELL"; player: PlayerId; cardInstanceId: string; targetZoneIndex?: number }
-  | { type: "SET_SPELL"; player: PlayerId; cardInstanceId: string; targetZoneIndex?: number }
-  | { type: "ATTACK"; player: PlayerId; attackerId: string; target?: "LP" | { cardInstanceId: string } }
-  | { type: "CHANGE_PHASE"; nextPhase: DuelPhase }
-  | { type: "END_DUEL"; winner: PlayerId };
+  | { type: 'DRAW'; player: PlayerId; count: number }
+  | { type: 'NORMAL_SUMMON'; player: PlayerId; cardInstanceId: string; targetZoneIndex: number }
+  | { type: 'SET_MONSTER'; player: PlayerId; cardInstanceId: string; targetZoneIndex: number }
+  | { type: 'ACTIVATE_SPELL'; player: PlayerId; cardInstanceId: string; targetZoneIndex?: number }
+  | { type: 'SET_SPELL'; player: PlayerId; cardInstanceId: string; targetZoneIndex?: number }
+  | {
+      type: 'ATTACK';
+      player: PlayerId;
+      attackerId: string;
+      target?: 'LP' | { cardInstanceId: string };
+    }
+  | { type: 'CHANGE_PHASE'; nextPhase: DuelPhase }
+  | { type: 'END_DUEL'; winner: PlayerId };
 
 /**
  * Log-Eintrag für Duell-Aktionen

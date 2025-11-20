@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useRef, useMemo, memo } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { ComboStepItem } from "./ComboStepItem";
-import type { ComboStepWithCard } from "@/lib/utils/combo.utils";
-import { sortComboSteps } from "@/lib/utils/combo.utils";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { useMultiSelect } from "@/lib/hooks/use-keyboard-shortcuts";
+import { useRef, useMemo, memo } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { ComboStepItem } from './ComboStepItem';
+import type { ComboStepWithCard } from '@/lib/utils/combo.utils';
+import { sortComboSteps } from '@/lib/utils/combo.utils';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { useMultiSelect } from '@/lib/hooks/use-keyboard-shortcuts';
 
 interface ComboTimelineProps {
   steps: ComboStepWithCard[];
@@ -38,7 +38,7 @@ const VIRTUALIZATION_OVERSCAN = 5;
 
 /**
  * Vertikale Timeline für Combo-Steps
- * 
+ *
  * Features:
  * - Virtualisierung für viele Steps (ab 25 Steps)
  * - Sortierung nach order
@@ -70,7 +70,7 @@ function ComboTimelineComponent({
         }
       : undefined
   );
-  
+
   const { selectedIds, toggleSelection, clearSelection, isSelected } = enableMultiSelect
     ? multiSelectResult
     : {
@@ -81,10 +81,7 @@ function ComboTimelineComponent({
       };
 
   // Sortable Items (MUSS vor allen bedingten Returns sein)
-  const sortableItems = useMemo(
-    () => sortedSteps.map((step) => step.id),
-    [sortedSteps]
-  );
+  const sortableItems = useMemo(() => sortedSteps.map((step) => step.id), [sortedSteps]);
 
   // Virtualisierung
   const virtualizer = useVirtualizer({
@@ -97,11 +94,7 @@ function ComboTimelineComponent({
   const shouldVirtualize = sortedSteps.length > VIRTUALIZATION_THRESHOLD;
 
   if (sortedSteps.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        {t("combo.noSteps")}
-      </div>
-    );
+    return <div className="text-center py-8 text-muted-foreground">{t('combo.noSteps')}</div>;
   }
 
   // Keine Virtualisierung für kleine Listen
@@ -132,16 +125,12 @@ function ComboTimelineComponent({
   // Virtualisierte Liste
   return (
     <SortableContext items={sortableItems} strategy={verticalListSortingStrategy}>
-      <div
-        ref={parentRef}
-        className="h-[600px] overflow-auto"
-        style={{ contain: "strict" }}
-      >
+      <div ref={parentRef} className="h-[600px] overflow-auto" style={{ contain: 'strict' }}>
         <div
           style={{
             height: `${virtualizer.getTotalSize()}px`,
-            width: "100%",
-            position: "relative",
+            width: '100%',
+            position: 'relative',
           }}
         >
           {virtualizer.getVirtualItems().map((virtualItem) => {
@@ -154,15 +143,15 @@ function ComboTimelineComponent({
               <div
                 key={virtualItem.key}
                 style={{
-                  position: "absolute",
+                  position: 'absolute',
                   top: 0,
                   left: 0,
-                  width: "100%",
+                  width: '100%',
                   height: `${virtualItem.size}px`,
                   transform: `translateY(${virtualItem.start}px)`,
                 }}
                 className={`${
-                  highlightedStepId === step.id ? "ring-2 ring-primary rounded-lg" : ""
+                  highlightedStepId === step.id ? 'ring-2 ring-primary rounded-lg' : ''
                 }`}
               >
                 <div className="p-2">
@@ -185,4 +174,3 @@ function ComboTimelineComponent({
 }
 
 export const ComboTimeline = memo(ComboTimelineComponent);
-

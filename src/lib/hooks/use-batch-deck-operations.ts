@@ -1,11 +1,11 @@
-import { useCallback, useRef, useState, useEffect } from "react";
-import { useTransition } from "react";
-import type { DeckSection } from "@/lib/validations/deck.schema";
-import type { DeckWithCards, CardForDeck } from "./use-deck-history";
-import { batchDeckOperations } from "@/server/actions/deck.actions";
+import { useCallback, useRef, useState, useEffect } from 'react';
+import { useTransition } from 'react';
+import type { DeckSection } from '@/lib/validations/deck.schema';
+import type { DeckWithCards, CardForDeck } from './use-deck-history';
+import { batchDeckOperations } from '@/server/actions/deck.actions';
 
 interface BatchOperation {
-  type: "add" | "update" | "remove" | "move";
+  type: 'add' | 'update' | 'remove' | 'move';
   cardId: string;
   section: DeckSection;
   toSection?: DeckSection;
@@ -28,7 +28,7 @@ interface UseBatchDeckOperationsOptions {
 
 /**
  * Hook für Batch-Deck-Operationen
- * 
+ *
  * Sammelt Operationen in einer Queue und sendet sie in Batches an den Server
  * Reduziert die Anzahl der Server-Requests bei mehreren schnellen Operationen
  */
@@ -61,29 +61,29 @@ export function useBatchDeckOperations({
     // Konvertiere zu Batch-Format
     const batchOperations = operationsToProcess.map((op) => {
       switch (op.type) {
-        case "add":
+        case 'add':
           return {
-            type: "add" as const,
+            type: 'add' as const,
             cardId: op.cardId,
             deckSection: op.section,
             quantity: op.quantity || 1,
           };
-        case "update":
+        case 'update':
           return {
-            type: "update" as const,
+            type: 'update' as const,
             cardId: op.cardId,
             deckSection: op.section,
             quantity: op.quantity!,
           };
-        case "remove":
+        case 'remove':
           return {
-            type: "remove" as const,
+            type: 'remove' as const,
             cardId: op.cardId,
             deckSection: op.section,
           };
-        case "move":
+        case 'move':
           return {
-            type: "move" as const,
+            type: 'move' as const,
             cardId: op.cardId,
             fromSection: op.section,
             toSection: op.toSection!,
@@ -114,8 +114,8 @@ export function useBatchDeckOperations({
 
                 const op = batchResult.operation;
                 switch (op.type) {
-                  case "add":
-                  case "update":
+                  case 'add':
+                  case 'update':
                     if (batchResult.deckCard) {
                       const existingIndex = newDeckCards.findIndex(
                         (dc) =>
@@ -129,12 +129,12 @@ export function useBatchDeckOperations({
                       }
                     }
                     break;
-                  case "remove":
+                  case 'remove':
                     newDeckCards = newDeckCards.filter(
                       (dc) => !(dc.cardId === op.cardId && dc.deckSection === op.deckSection)
                     );
                     break;
-                  case "move":
+                  case 'move':
                     // Entferne aus alter Sektion
                     newDeckCards = newDeckCards.filter(
                       (dc) => !(dc.cardId === op.cardId && dc.deckSection === op.fromSection)
@@ -157,7 +157,7 @@ export function useBatchDeckOperations({
               }
 
               const updatedDeck = { ...current, deckCards: newDeckCards };
-              
+
               // Füge alle Operationen zur History hinzu
               operationsToProcess.forEach((op) => {
                 addHistoryEntry(
@@ -178,7 +178,7 @@ export function useBatchDeckOperations({
           }
         } catch (err) {
           await loadDeck();
-          onError?.(err instanceof Error ? err.message : "Batch operation failed");
+          onError?.(err instanceof Error ? err.message : 'Batch operation failed');
         } finally {
           processingRef.current = false;
         }
@@ -190,10 +190,10 @@ export function useBatchDeckOperations({
    * Fügt eine Operation zur Queue hinzu
    */
   const enqueueOperation = useCallback(
-    (operation: Omit<BatchOperation, "timestamp">) => {
+    (operation: Omit<BatchOperation, 'timestamp'>) => {
       setQueue((prev) => {
         const newQueue = [...prev, { ...operation, timestamp: Date.now() }];
-        
+
         // Wenn Queue voll ist, verarbeite sofort
         if (newQueue.length >= batchSize) {
           if (batchTimerRef.current) {
@@ -203,7 +203,7 @@ export function useBatchDeckOperations({
           setTimeout(() => processQueue(), 0);
           return [];
         }
-        
+
         // Sonst starte Timer für verzögertes Senden
         if (batchTimerRef.current) {
           clearTimeout(batchTimerRef.current);
@@ -212,7 +212,7 @@ export function useBatchDeckOperations({
           processQueue();
           batchTimerRef.current = null;
         }, batchDelay);
-        
+
         return newQueue;
       });
     },
@@ -249,4 +249,3 @@ export function useBatchDeckOperations({
     isPending,
   };
 }
-

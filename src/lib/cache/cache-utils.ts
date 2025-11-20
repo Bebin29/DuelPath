@@ -37,14 +37,14 @@ export function parseCacheControl(header: string | null): {
   if (!header) return {};
 
   const directives: Record<string, string | boolean> = {};
-  const parts = header.split(",").map((p) => p.trim());
+  const parts = header.split(',').map((p) => p.trim());
 
   for (const part of parts) {
-    if (part === "no-cache" || part === "no-store" || part === "must-revalidate") {
-      directives[part.replace("-", "")] = true;
-    } else if (part.includes("=")) {
-      const [key, value] = part.split("=").map((p) => p.trim());
-      directives[key.replace("-", "")] = value;
+    if (part === 'no-cache' || part === 'no-store' || part === 'must-revalidate') {
+      directives[part.replace('-', '')] = true;
+    } else if (part.includes('=')) {
+      const [key, value] = part.split('=').map((p) => p.trim());
+      directives[key.replace('-', '')] = value;
     }
   }
 
@@ -72,4 +72,3 @@ export function getCacheExpiry(maxAge: number): Date {
 export function isCacheExpired(expiryDate: Date): boolean {
   return new Date() > expiryDate;
 }
-

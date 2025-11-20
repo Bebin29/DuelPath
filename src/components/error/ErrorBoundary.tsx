@@ -1,12 +1,18 @@
-"use client";
+'use client';
 
-import { Component, type ReactNode } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/components/ui/card";
-import { Button } from "@/components/components/ui/button";
-import { AlertCircle, RefreshCw, Home } from "lucide-react";
-import { logError, getErrorMessage, isRetryableError } from "@/lib/utils/error-logger";
-import { useTranslation } from "@/lib/i18n/hooks";
-import Link from "next/link";
+import { Component, type ReactNode } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/components/ui/card';
+import { Button } from '@/components/components/ui/button';
+import { AlertCircle, RefreshCw, Home } from 'lucide-react';
+import { logError, getErrorMessage, isRetryableError } from '@/lib/utils/error-logger';
+import { useTranslation } from '@/lib/i18n/hooks';
+import Link from 'next/link';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -26,7 +32,7 @@ interface ErrorBoundaryState {
 
 /**
  * Basis Error Boundary Komponente
- * 
+ *
  * Fängt Fehler in der Komponenten-Hierarchie ab und zeigt eine Fallback-UI
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -133,17 +139,24 @@ interface ErrorFallbackProps {
 /**
  * Fallback-UI für Fehler
  */
-function ErrorFallback({ error, errorInfo, onReset, onReload, showDetails = false, retryCount }: ErrorFallbackProps) {
+function ErrorFallback({
+  error,
+  errorInfo,
+  onReset,
+  onReload,
+  showDetails = false,
+  retryCount,
+}: ErrorFallbackProps) {
   const { t } = useTranslation();
   const canRetry = error && isRetryableError(error);
-  const errorMessage = error ? getErrorMessage(error, t("common.error")) : t("common.error");
+  const errorMessage = error ? getErrorMessage(error, t('common.error')) : t('common.error');
 
   return (
     <Card className="border-destructive">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-destructive">
           <AlertCircle className="h-5 w-5" />
-          {t("error.title")}
+          {t('error.title')}
         </CardTitle>
         <CardDescription>{errorMessage}</CardDescription>
       </CardHeader>
@@ -153,14 +166,20 @@ function ErrorFallback({ error, errorInfo, onReset, onReload, showDetails = fals
             <p className="font-mono text-xs break-all">{error.message}</p>
             {error.stack && (
               <details className="mt-2">
-                <summary className="cursor-pointer text-xs text-muted-foreground">Stack Trace</summary>
+                <summary className="cursor-pointer text-xs text-muted-foreground">
+                  Stack Trace
+                </summary>
                 <pre className="mt-2 text-xs overflow-auto max-h-40">{error.stack}</pre>
               </details>
             )}
             {errorInfo?.componentStack && (
               <details className="mt-2">
-                <summary className="cursor-pointer text-xs text-muted-foreground">Component Stack</summary>
-                <pre className="mt-2 text-xs overflow-auto max-h-40 whitespace-pre-wrap">{errorInfo.componentStack}</pre>
+                <summary className="cursor-pointer text-xs text-muted-foreground">
+                  Component Stack
+                </summary>
+                <pre className="mt-2 text-xs overflow-auto max-h-40 whitespace-pre-wrap">
+                  {errorInfo.componentStack}
+                </pre>
               </details>
             )}
           </div>
@@ -170,28 +189,25 @@ function ErrorFallback({ error, errorInfo, onReset, onReload, showDetails = fals
           {canRetry && retryCount < 3 && (
             <Button onClick={onReset} variant="default">
               <RefreshCw className="h-4 w-4 mr-2" />
-              {t("error.retry")}
+              {t('error.retry')}
             </Button>
           )}
           <Button onClick={onReload} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
-            {t("error.reload")}
+            {t('error.reload')}
           </Button>
           <Link href="/">
             <Button variant="outline">
               <Home className="h-4 w-4 mr-2" />
-              {t("error.home")}
+              {t('error.home')}
             </Button>
           </Link>
         </div>
 
         {retryCount >= 3 && (
-          <p className="text-sm text-muted-foreground">
-            {t("error.maxRetries")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t('error.maxRetries')}</p>
         )}
       </CardContent>
     </Card>
   );
 }
-

@@ -1,6 +1,6 @@
 /**
  * Request-Deduplizierung für Backend-Requests
- * 
+ *
  * Verhindert, dass identische Requests innerhalb eines kurzen Zeitfensters
  * mehrfach ausgeführt werden. Stattdessen wird das Ergebnis des ersten Requests
  * für alle wartenden Requests verwendet.
@@ -16,20 +16,17 @@ const DEDUP_WINDOW_MS = 100; // 100ms Fenster für Deduplizierung
 
 /**
  * Führt eine deduplizierte Request-Funktion aus
- * 
+ *
  * @param key - Eindeutiger Schlüssel für den Request
  * @param requestFn - Funktion, die den Request ausführt
  * @returns Promise mit dem Request-Ergebnis
  */
-export async function deduplicateRequest<T>(
-  key: string,
-  requestFn: () => Promise<T>
-): Promise<T> {
+export async function deduplicateRequest<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
   const now = Date.now();
-  
+
   // Prüfe ob bereits ein identischer Request läuft
   const existing = pendingRequests.get(key);
-  if (existing && (now - existing.timestamp) < DEDUP_WINDOW_MS) {
+  if (existing && now - existing.timestamp < DEDUP_WINDOW_MS) {
     // Verwende das bestehende Promise
     return existing.promise;
   }
@@ -53,12 +50,8 @@ export async function deduplicateRequest<T>(
 /**
  * Erstellt einen Request-Key aus Method, URL und Body
  */
-export function createRequestKey(
-  method: string,
-  url: string,
-  body?: unknown
-): string {
-  const bodyHash = body ? JSON.stringify(body) : "";
+export function createRequestKey(method: string, url: string, body?: unknown): string {
+  const bodyHash = body ? JSON.stringify(body) : '';
   return `${method}:${url}:${bodyHash}`;
 }
 
@@ -81,7 +74,6 @@ export function cleanupExpiredRequests(): void {
 }
 
 // Periodische Bereinigung (alle 5 Sekunden)
-if (typeof setInterval !== "undefined") {
+if (typeof setInterval !== 'undefined') {
   setInterval(cleanupExpiredRequests, 5000);
 }
-

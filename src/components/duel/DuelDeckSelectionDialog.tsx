@@ -1,21 +1,27 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { getUserDecks } from "@/server/actions/deck.actions";
+import { useState, useEffect } from 'react';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { getUserDecks } from '@/server/actions/deck.actions';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/components/ui/dialog";
-import { Button } from "@/components/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/components/ui/card";
-import { Badge } from "@/components/components/ui/badge";
-import { Loader2, Swords } from "lucide-react";
-import type { DuelDeck } from "@/types/duel.types";
-import type { DeckWithCards } from "@/lib/hooks/use-deck-history";
+} from '@/components/components/ui/dialog';
+import { Button } from '@/components/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/components/ui/card';
+import { Badge } from '@/components/components/ui/badge';
+import { Loader2, Swords } from 'lucide-react';
+import type { DuelDeck } from '@/types/duel.types';
+import type { DeckWithCards } from '@/lib/hooks/use-deck-history';
 
 interface DuelDeckSelectionDialogProps {
   open: boolean;
@@ -61,8 +67,8 @@ export function DuelDeckSelectionDialog({
         setDecks(result.decks);
       }
     } catch (err) {
-      setError("Failed to load decks");
-      console.error("Deck loading error:", err);
+      setError('Failed to load decks');
+      console.error('Deck loading error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -77,8 +83,8 @@ export function DuelDeckSelectionDialog({
       id: deck.id,
       name: deck.name,
       cards: deck.deckCards
-        .filter(dc => dc.card !== null && dc.card !== undefined)
-        .map(dc => dc.card),
+        .filter((dc) => dc.card !== null && dc.card !== undefined)
+        .map((dc) => dc.card),
     };
 
     onDeckSelected(duelDeck);
@@ -90,11 +96,9 @@ export function DuelDeckSelectionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Swords className="w-5 h-5" />
-            {t("duel.selectDeck")}
+            {t('duel.selectDeck')}
           </DialogTitle>
-          <DialogDescription>
-            {t("duel.selectDeckDescription")}
-          </DialogDescription>
+          <DialogDescription>{t('duel.selectDeckDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -107,27 +111,17 @@ export function DuelDeckSelectionDialog({
           {error && (
             <div className="text-center py-8 text-destructive">
               <p>{error}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={loadDecks}
-                className="mt-2"
-              >
-                {t("common.retry")}
+              <Button variant="outline" size="sm" onClick={loadDecks} className="mt-2">
+                {t('common.retry')}
               </Button>
             </div>
           )}
 
           {!isLoading && !error && decks.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">
-                {t("duel.noDecksAvailable")}
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                {t("common.close")}
+              <p className="text-muted-foreground mb-4">{t('duel.noDecksAvailable')}</p>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                {t('common.close')}
               </Button>
             </div>
           )}
@@ -145,20 +139,18 @@ export function DuelDeckSelectionDialog({
                       <CardTitle className="text-lg">{deck.name}</CardTitle>
                       <Badge variant="secondary">{deck.format}</Badge>
                     </div>
-                    {deck.description && (
-                      <CardDescription>{deck.description}</CardDescription>
-                    )}
+                    {deck.description && <CardDescription>{deck.description}</CardDescription>}
                   </CardHeader>
                   <CardContent>
                     <div className="flex gap-4 text-sm text-muted-foreground">
                       <span>
-                        Main: {deck.deckCards.filter(dc => dc.deckSection === "MAIN").length}
+                        Main: {deck.deckCards.filter((dc) => dc.deckSection === 'MAIN').length}
                       </span>
                       <span>
-                        Extra: {deck.deckCards.filter(dc => dc.deckSection === "EXTRA").length}
+                        Extra: {deck.deckCards.filter((dc) => dc.deckSection === 'EXTRA').length}
                       </span>
                       <span>
-                        Side: {deck.deckCards.filter(dc => dc.deckSection === "SIDE").length}
+                        Side: {deck.deckCards.filter((dc) => dc.deckSection === 'SIDE').length}
                       </span>
                     </div>
                   </CardContent>

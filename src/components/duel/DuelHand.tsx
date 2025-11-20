@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import React from "react";
-import { DuelCard } from "./DuelCard";
-import { DuelActionMenu } from "./DuelActionMenu";
-import { useResponsiveLayout } from "@/lib/hooks/use-responsive-layout";
-import { useDraggable } from "@dnd-kit/core";
-import type { DuelCardInstance } from "@/types/duel.types";
-import type { DragDropItem } from "@/lib/hooks/use-duel-drag-drop";
+import React from 'react';
+import { DuelCard } from './DuelCard';
+import { DuelActionMenu } from './DuelActionMenu';
+import { useResponsiveLayout } from '@/lib/hooks/use-responsive-layout';
+import { useDraggable } from '@dnd-kit/core';
+import type { DuelCardInstance } from '@/types/duel.types';
+import type { DragDropItem } from '@/lib/hooks/use-duel-drag-drop';
 
 interface DuelHandProps {
   hand: DuelCardInstance[];
@@ -26,10 +26,10 @@ function DraggableCard({
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: cardInstance.instanceId,
     data: {
-      type: "card",
+      type: 'card',
       data: {
         cardInstance,
-        zoneType: "hand",
+        zoneType: 'hand',
       },
     } as DragDropItem,
   });
@@ -67,10 +67,7 @@ export const DuelHand = React.memo(function DuelHand({ hand }: DuelHandProps) {
       <h4 className={`font-medium mb-2 text-muted-foreground text-${fontSize}`}>
         Hand ({hand.length})
       </h4>
-      <div
-        className="flex overflow-x-auto pb-4"
-        style={{ gap: `${adaptiveSizes.handGap}px` }}
-      >
+      <div className="flex overflow-x-auto pb-4" style={{ gap: `${adaptiveSizes.handGap}px` }}>
         {hand.map((card) => (
           <DuelActionMenu key={card.instanceId} cardInstanceId={card.instanceId}>
             <DraggableCard cardInstance={card}>
@@ -83,11 +80,7 @@ export const DuelHand = React.memo(function DuelHand({ hand }: DuelHandProps) {
                   transform: isMobile ? 'scale(0.9)' : undefined,
                 }}
               >
-                <DuelCard
-                  cardInstance={card}
-                  size="medium"
-                  readonly={false}
-                />
+                <DuelCard cardInstance={card} size="medium" readonly={false} />
               </div>
             </DraggableCard>
           </DuelActionMenu>

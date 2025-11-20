@@ -1,8 +1,8 @@
-"use server";
+'use server';
 
-import { auth } from "@/lib/auth/auth";
-import { prisma } from "@/lib/prisma/client";
-import type { ComboWithSteps } from "@/types/combo.types";
+import { auth } from '@/lib/auth/auth';
+import { prisma } from '@/lib/prisma/client';
+import type { ComboWithSteps } from '@/types/combo.types';
 
 /**
  * Erstellt eine neue Version einer Combo
@@ -14,7 +14,7 @@ export async function createComboVersion(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Lade aktuelle Combo
@@ -38,23 +38,23 @@ export async function createComboVersion(
               },
             },
           },
-          orderBy: { order: "asc" },
+          orderBy: { order: 'asc' },
         },
       },
     });
 
     if (!combo) {
-      return { error: "Combo not found" };
+      return { error: 'Combo not found' };
     }
 
     if (combo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Finde höchste Versionsnummer
     const latestVersion = await prisma.comboVersion.findFirst({
       where: { comboId },
-      orderBy: { version: "desc" },
+      orderBy: { version: 'desc' },
       select: { version: true },
     });
 
@@ -97,9 +97,9 @@ export async function createComboVersion(
 
     return { success: true, version };
   } catch (error) {
-    console.error("Failed to create combo version:", error);
+    console.error('Failed to create combo version:', error);
     return {
-      error: error instanceof Error ? error.message : "Failed to create version",
+      error: error instanceof Error ? error.message : 'Failed to create version',
     };
   }
 }
@@ -111,7 +111,7 @@ export async function getComboVersions(comboId: string) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Combo existiert und User berechtigt ist
@@ -121,16 +121,16 @@ export async function getComboVersions(comboId: string) {
     });
 
     if (!combo) {
-      return { error: "Combo not found" };
+      return { error: 'Combo not found' };
     }
 
     if (combo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     const versions = await prisma.comboVersion.findMany({
       where: { comboId },
-      orderBy: { version: "desc" },
+      orderBy: { version: 'desc' },
       select: {
         id: true,
         version: true,
@@ -144,9 +144,9 @@ export async function getComboVersions(comboId: string) {
 
     return { success: true, versions };
   } catch (error) {
-    console.error("Failed to get combo versions:", error);
+    console.error('Failed to get combo versions:', error);
     return {
-      error: error instanceof Error ? error.message : "Failed to get versions",
+      error: error instanceof Error ? error.message : 'Failed to get versions',
     };
   }
 }
@@ -158,7 +158,7 @@ export async function getComboVersion(comboId: string, version: number) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Combo existiert und User berechtigt ist
@@ -168,11 +168,11 @@ export async function getComboVersion(comboId: string, version: number) {
     });
 
     if (!combo) {
-      return { error: "Combo not found" };
+      return { error: 'Combo not found' };
     }
 
     if (combo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     const versionData = await prisma.comboVersion.findUnique({
@@ -185,16 +185,16 @@ export async function getComboVersion(comboId: string, version: number) {
     });
 
     if (!versionData) {
-      return { error: "Version not found" };
+      return { error: 'Version not found' };
     }
 
     const snapshot = JSON.parse(versionData.snapshot) as ComboWithSteps;
 
     return { success: true, version: versionData, snapshot };
   } catch (error) {
-    console.error("Failed to get combo version:", error);
+    console.error('Failed to get combo version:', error);
     return {
-      error: error instanceof Error ? error.message : "Failed to get version",
+      error: error instanceof Error ? error.message : 'Failed to get version',
     };
   }
 }
@@ -209,7 +209,7 @@ export async function restoreComboVersion(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Combo existiert und User berechtigt ist
@@ -219,11 +219,11 @@ export async function restoreComboVersion(
     });
 
     if (!combo) {
-      return { error: "Combo not found" };
+      return { error: 'Combo not found' };
     }
 
     if (combo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Lade Version
@@ -237,13 +237,13 @@ export async function restoreComboVersion(
     });
 
     if (!versionData) {
-      return { error: "Version not found" };
+      return { error: 'Version not found' };
     }
 
     const snapshot = JSON.parse(versionData.snapshot) as ComboWithSteps;
 
     // Erstelle Backup der aktuellen Version
-    await createComboVersion(comboId, "Backup vor Wiederherstellung");
+    await createComboVersion(comboId, 'Backup vor Wiederherstellung');
 
     // Stelle Combo wieder her
     await prisma.$transaction(async (tx) => {
@@ -279,9 +279,9 @@ export async function restoreComboVersion(
 
     return { success: true };
   } catch (error) {
-    console.error("Failed to restore combo version:", error);
+    console.error('Failed to restore combo version:', error);
     return {
-      error: error instanceof Error ? error.message : "Failed to restore version",
+      error: error instanceof Error ? error.message : 'Failed to restore version',
     };
   }
 }
@@ -296,7 +296,7 @@ export async function deleteComboVersion(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Combo existiert und User berechtigt ist
@@ -306,11 +306,11 @@ export async function deleteComboVersion(
     });
 
     if (!combo) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     if (combo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     await prisma.comboVersion.delete({
@@ -324,10 +324,9 @@ export async function deleteComboVersion(
 
     return { success: true };
   } catch (error) {
-    console.error("Failed to delete combo version:", error);
+    console.error('Failed to delete combo version:', error);
     return {
-      error: error instanceof Error ? error.message : "Failed to delete version",
+      error: error instanceof Error ? error.message : 'Failed to delete version',
     };
   }
 }
-

@@ -2,30 +2,21 @@
  * Utility-Funktionen für Deck-Operationen
  */
 
-import type { DeckWithCards } from "@/lib/hooks/use-deck-history";
-import type { DeckSection } from "@/lib/validations/deck.schema";
+import type { DeckWithCards } from '@/lib/hooks/use-deck-history';
+import type { DeckSection } from '@/lib/validations/deck.schema';
 
 /**
  * Findet eine DeckCard anhand von cardId und section
  */
-export function findDeckCard(
-  deck: DeckWithCards | null,
-  cardId: string,
-  section: DeckSection
-) {
+export function findDeckCard(deck: DeckWithCards | null, cardId: string, section: DeckSection) {
   if (!deck) return null;
-  return deck.deckCards.find(
-    (dc) => dc.cardId === cardId && dc.deckSection === section
-  ) || null;
+  return deck.deckCards.find((dc) => dc.cardId === cardId && dc.deckSection === section) || null;
 }
 
 /**
  * Findet alle DeckCards für eine bestimmte Sektion
  */
-export function getDeckCardsBySection(
-  deck: DeckWithCards | null,
-  section: DeckSection
-) {
+export function getDeckCardsBySection(deck: DeckWithCards | null, section: DeckSection) {
   if (!deck) return [];
   return deck.deckCards.filter((dc) => dc.deckSection === section);
 }
@@ -33,10 +24,7 @@ export function getDeckCardsBySection(
 /**
  * Berechnet die Gesamtanzahl der Karten in einer Sektion
  */
-export function getSectionTotal(
-  deck: DeckWithCards | null,
-  section: DeckSection
-): number {
+export function getSectionTotal(deck: DeckWithCards | null, section: DeckSection): number {
   if (!deck) return 0;
   return deck.deckCards
     .filter((dc) => dc.deckSection === section)
@@ -48,19 +36,19 @@ export function getSectionTotal(
  */
 export function createYDKContent(deck: DeckWithCards): string {
   const mainDeck = deck.deckCards
-    .filter((dc) => dc.deckSection === "MAIN")
+    .filter((dc) => dc.deckSection === 'MAIN')
     .flatMap((dc) => Array(dc.quantity).fill(dc.cardId))
-    .join("\n");
+    .join('\n');
 
   const extraDeck = deck.deckCards
-    .filter((dc) => dc.deckSection === "EXTRA")
+    .filter((dc) => dc.deckSection === 'EXTRA')
     .flatMap((dc) => Array(dc.quantity).fill(dc.cardId))
-    .join("\n");
+    .join('\n');
 
   const sideDeck = deck.deckCards
-    .filter((dc) => dc.deckSection === "SIDE")
+    .filter((dc) => dc.deckSection === 'SIDE')
     .flatMap((dc) => Array(dc.quantity).fill(dc.cardId))
-    .join("\n");
+    .join('\n');
 
   return `#created by DuelPath
 #main
@@ -85,25 +73,40 @@ export function parseYDKFile(content: string): {
   const extra: string[] = [];
   const side: string[] = [];
 
-  const mainStart = textLower.indexOf("#main");
-  const extraStart = textLower.indexOf("#extra");
-  const sideStart = textLower.indexOf("!side");
+  const mainStart = textLower.indexOf('#main');
+  const extraStart = textLower.indexOf('#extra');
+  const sideStart = textLower.indexOf('!side');
 
   if (mainStart >= 0) {
-    const mainEnd = extraStart >= 0 ? extraStart : (sideStart >= 0 ? sideStart : content.length);
+    const mainEnd = extraStart >= 0 ? extraStart : sideStart >= 0 ? sideStart : content.length;
     const mainContent = content.substring(mainStart, mainEnd);
-    main.push(...mainContent.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#")));
+    main.push(
+      ...mainContent
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((l) => l && !l.startsWith('#'))
+    );
   }
 
   if (extraStart >= 0) {
     const extraEnd = sideStart >= 0 ? sideStart : content.length;
     const extraContent = content.substring(extraStart, extraEnd);
-    extra.push(...extraContent.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#")));
+    extra.push(
+      ...extraContent
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((l) => l && !l.startsWith('#'))
+    );
   }
 
   if (sideStart >= 0) {
     const sideContent = content.substring(sideStart);
-    side.push(...sideContent.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("!")));
+    side.push(
+      ...sideContent
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((l) => l && !l.startsWith('!'))
+    );
   }
 
   return { main, extra, side };
@@ -112,10 +115,14 @@ export function parseYDKFile(content: string): {
 /**
  * Downloadet eine Datei im Browser
  */
-export function downloadFile(content: string, filename: string, mimeType: string = "text/plain"): void {
+export function downloadFile(
+  content: string,
+  filename: string,
+  mimeType: string = 'text/plain'
+): void {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
@@ -123,4 +130,3 @@ export function downloadFile(content: string, filename: string, mimeType: string
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-

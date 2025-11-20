@@ -1,19 +1,19 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 interface OfflineOperation {
   id: string;
-  type: "create" | "update" | "delete";
-  resource: "combo" | "step";
+  type: 'create' | 'update' | 'delete';
+  resource: 'combo' | 'step';
   data: unknown;
   timestamp: number;
 }
 
-const STORAGE_KEY = "duelpath_offline_operations";
+const STORAGE_KEY = 'duelpath_offline_operations';
 const STORAGE_VERSION = 1;
 
 /**
  * Hook für Offline-Storage und Sync
- * 
+ *
  * Speichert Operationen lokal wenn offline und synchronisiert sie wenn wieder online
  */
 export function useOfflineStorage() {
@@ -28,12 +28,12 @@ export function useOfflineStorage() {
     };
 
     setIsOnline(navigator.onLine);
-    window.addEventListener("online", updateOnlineStatus);
-    window.addEventListener("offline", updateOnlineStatus);
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
 
     return () => {
-      window.removeEventListener("online", updateOnlineStatus);
-      window.removeEventListener("offline", updateOnlineStatus);
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
     };
   }, []);
 
@@ -46,7 +46,7 @@ export function useOfflineStorage() {
         setPendingOperations(operations);
       }
     } catch (error) {
-      console.error("Failed to load offline operations:", error);
+      console.error('Failed to load offline operations:', error);
     }
   }, []);
 
@@ -56,7 +56,7 @@ export function useOfflineStorage() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(operations));
       setPendingOperations(operations);
     } catch (error) {
-      console.error("Failed to save offline operations:", error);
+      console.error('Failed to save offline operations:', error);
     }
   }, []);
 
@@ -64,11 +64,7 @@ export function useOfflineStorage() {
    * Fügt eine Operation zur Offline-Queue hinzu
    */
   const queueOperation = useCallback(
-    (
-      type: OfflineOperation["type"],
-      resource: OfflineOperation["resource"],
-      data: unknown
-    ) => {
+    (type: OfflineOperation['type'], resource: OfflineOperation['resource'], data: unknown) => {
       const operation: OfflineOperation = {
         id: `offline-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         type,
@@ -120,24 +116,20 @@ export function useOfflineStorage() {
               failed.push(operation);
             }
           } catch (error) {
-            console.error("Failed to sync operation:", operation, error);
+            console.error('Failed to sync operation:', operation, error);
             failed.push(operation);
           }
         }
 
         // Entferne erfolgreiche Operationen
         if (successful.length > 0) {
-          const updated = pendingOperations.filter(
-            (op) => !successful.includes(op.id)
-          );
+          const updated = pendingOperations.filter((op) => !successful.includes(op.id));
           saveOperations(updated);
         }
 
         // Speichere fehlgeschlagene Operationen für späteren Retry
         if (failed.length > 0) {
-          const updated = pendingOperations.filter((op) =>
-            failed.some((f) => f.id === op.id)
-          );
+          const updated = pendingOperations.filter((op) => failed.some((f) => f.id === op.id));
           saveOperations(updated);
         }
       } finally {
@@ -165,4 +157,3 @@ export function useOfflineStorage() {
     hasPendingOperations: pendingOperations.length > 0,
   };
 }
-

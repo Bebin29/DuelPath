@@ -1,4 +1,4 @@
-import type { Deck, DeckCard, Card } from "@prisma/client";
+import type { Deck, DeckCard, Card } from '@prisma/client';
 
 /**
  * Deck mit allen zugehörigen Karten
@@ -12,12 +12,12 @@ export type DeckWithCards = Deck & {
 /**
  * Deck-Sektion Typ
  */
-export type DeckSection = "MAIN" | "EXTRA" | "SIDE";
+export type DeckSection = 'MAIN' | 'EXTRA' | 'SIDE';
 
 /**
  * Deck-Format Typ
  */
-export type DeckFormat = "TCG" | "OCG" | "Casual";
+export type DeckFormat = 'TCG' | 'OCG' | 'Casual';
 
 /**
  * Deck-Validierungs-Ergebnis
@@ -37,9 +37,3 @@ export interface DeckStats {
   sideDeckCount: number;
   totalCount: number;
 }
-
-
-
-
-
-

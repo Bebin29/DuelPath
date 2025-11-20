@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { PrismaClient } from "@prisma/client";
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { PrismaClient } from '@prisma/client';
 import {
   createDeck,
   updateDeck,
@@ -9,13 +9,13 @@ import {
   addCardToDeck,
   updateCardQuantity,
   removeCardFromDeck,
-} from "@/server/actions/deck.actions";
-import { auth } from "@/lib/auth/auth";
-import { prisma } from "@/lib/prisma/client";
+} from '@/server/actions/deck.actions';
+import { auth } from '@/lib/auth/auth';
+import { prisma } from '@/lib/prisma/client';
 
 // Mock dependencies
-vi.mock("@/lib/auth/auth");
-vi.mock("@/lib/prisma/client", () => ({
+vi.mock('@/lib/auth/auth');
+vi.mock('@/lib/prisma/client', () => ({
   prisma: {
     deck: {
       create: vi.fn(),
@@ -39,12 +39,12 @@ vi.mock("@/lib/prisma/client", () => ({
 const mockAuth = vi.mocked(auth);
 const mockPrisma = vi.mocked(prisma);
 
-describe("Deck Actions", () => {
-  const mockUserId = "user-123";
+describe('Deck Actions', () => {
+  const mockUserId = 'user-123';
   const mockSession = {
     user: {
       id: mockUserId,
-      email: "test@example.com",
+      email: 'test@example.com',
     },
   };
 
@@ -53,16 +53,16 @@ describe("Deck Actions", () => {
     mockAuth.mockResolvedValue(mockSession as any);
   });
 
-  describe("createDeck", () => {
-    it("should create a deck successfully", async () => {
+  describe('createDeck', () => {
+    it('should create a deck successfully', async () => {
       const deckData = {
-        name: "Test Deck",
-        description: "A test deck",
-        format: "TCG" as const,
+        name: 'Test Deck',
+        description: 'A test deck',
+        format: 'TCG' as const,
       };
 
       const mockDeck = {
-        id: "deck-123",
+        id: 'deck-123',
         ...deckData,
         userId: mockUserId,
         createdAt: new Date(),
@@ -83,32 +83,32 @@ describe("Deck Actions", () => {
       });
     });
 
-    it("should return error if unauthorized", async () => {
+    it('should return error if unauthorized', async () => {
       mockAuth.mockResolvedValue(null);
 
       const result = await createDeck({
-        name: "Test Deck",
-        format: "TCG",
+        name: 'Test Deck',
+        format: 'TCG',
       });
 
-      expect(result.error).toBe("Unauthorized");
+      expect(result.error).toBe('Unauthorized');
       expect(mockPrisma.deck.create).not.toHaveBeenCalled();
     });
   });
 
-  describe("updateDeck", () => {
-    it("should update a deck successfully", async () => {
+  describe('updateDeck', () => {
+    it('should update a deck successfully', async () => {
       const existingDeck = {
-        id: "deck-123",
-        name: "Old Name",
+        id: 'deck-123',
+        name: 'Old Name',
         userId: mockUserId,
-        format: "TCG",
+        format: 'TCG',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       const updateData = {
-        name: "New Name",
+        name: 'New Name',
       };
 
       const updatedDeck = {
@@ -120,45 +120,45 @@ describe("Deck Actions", () => {
       mockPrisma.deck.findUnique.mockResolvedValue(existingDeck as any);
       mockPrisma.deck.update.mockResolvedValue(updatedDeck as any);
 
-      const result = await updateDeck("deck-123", updateData);
+      const result = await updateDeck('deck-123', updateData);
 
       expect(result.success).toBe(true);
       expect(result.deck).toEqual(updatedDeck);
     });
 
-    it("should return error if deck not found", async () => {
+    it('should return error if deck not found', async () => {
       mockPrisma.deck.findUnique.mockResolvedValue(null);
 
-      const result = await updateDeck("deck-123", { name: "New Name" });
+      const result = await updateDeck('deck-123', { name: 'New Name' });
 
-      expect(result.error).toBe("Deck not found");
+      expect(result.error).toBe('Deck not found');
     });
 
-    it("should return error if user is not owner", async () => {
+    it('should return error if user is not owner', async () => {
       const existingDeck = {
-        id: "deck-123",
-        name: "Old Name",
-        userId: "other-user",
-        format: "TCG",
+        id: 'deck-123',
+        name: 'Old Name',
+        userId: 'other-user',
+        format: 'TCG',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       mockPrisma.deck.findUnique.mockResolvedValue(existingDeck as any);
 
-      const result = await updateDeck("deck-123", { name: "New Name" });
+      const result = await updateDeck('deck-123', { name: 'New Name' });
 
-      expect(result.error).toBe("Forbidden");
+      expect(result.error).toBe('Forbidden');
     });
   });
 
-  describe("deleteDeck", () => {
-    it("should delete a deck successfully", async () => {
+  describe('deleteDeck', () => {
+    it('should delete a deck successfully', async () => {
       const existingDeck = {
-        id: "deck-123",
-        name: "Test Deck",
+        id: 'deck-123',
+        name: 'Test Deck',
         userId: mockUserId,
-        format: "TCG",
+        format: 'TCG',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -166,32 +166,32 @@ describe("Deck Actions", () => {
       mockPrisma.deck.findUnique.mockResolvedValue(existingDeck as any);
       mockPrisma.deck.delete.mockResolvedValue(existingDeck as any);
 
-      const result = await deleteDeck("deck-123");
+      const result = await deleteDeck('deck-123');
 
       expect(result.success).toBe(true);
       expect(mockPrisma.deck.delete).toHaveBeenCalledWith({
-        where: { id: "deck-123" },
+        where: { id: 'deck-123' },
       });
     });
   });
 
-  describe("getUserDecks", () => {
-    it("should return user decks", async () => {
+  describe('getUserDecks', () => {
+    it('should return user decks', async () => {
       const mockDecks = [
         {
-          id: "deck-1",
-          name: "Deck 1",
+          id: 'deck-1',
+          name: 'Deck 1',
           userId: mockUserId,
-          format: "TCG",
+          format: 'TCG',
           createdAt: new Date(),
           updatedAt: new Date(),
           _count: { deckCards: 40 },
         },
         {
-          id: "deck-2",
-          name: "Deck 2",
+          id: 'deck-2',
+          name: 'Deck 2',
           userId: mockUserId,
-          format: "OCG",
+          format: 'OCG',
           createdAt: new Date(),
           updatedAt: new Date(),
           _count: { deckCards: 45 },
@@ -206,7 +206,7 @@ describe("Deck Actions", () => {
       expect(result.decks).toEqual(mockDecks);
       expect(mockPrisma.deck.findMany).toHaveBeenCalledWith({
         where: { userId: mockUserId },
-        orderBy: { updatedAt: "desc" },
+        orderBy: { updatedAt: 'desc' },
         include: {
           _count: {
             select: {
@@ -218,26 +218,26 @@ describe("Deck Actions", () => {
     });
   });
 
-  describe("getDeckById", () => {
-    it("should return deck with cards", async () => {
+  describe('getDeckById', () => {
+    it('should return deck with cards', async () => {
       const mockDeck = {
-        id: "deck-123",
-        name: "Test Deck",
+        id: 'deck-123',
+        name: 'Test Deck',
         userId: mockUserId,
-        format: "TCG",
+        format: 'TCG',
         createdAt: new Date(),
         updatedAt: new Date(),
         deckCards: [
           {
-            id: "deckcard-1",
-            deckId: "deck-123",
-            cardId: "card-1",
+            id: 'deckcard-1',
+            deckId: 'deck-123',
+            cardId: 'card-1',
             quantity: 3,
-            deckSection: "MAIN",
+            deckSection: 'MAIN',
             card: {
-              id: "card-1",
-              name: "Test Card",
-              type: "Effect Monster",
+              id: 'card-1',
+              name: 'Test Card',
+              type: 'Effect Monster',
             },
           },
         ],
@@ -245,35 +245,35 @@ describe("Deck Actions", () => {
 
       mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as any);
 
-      const result = await getDeckById("deck-123");
+      const result = await getDeckById('deck-123');
 
       expect(result.success).toBe(true);
       expect(result.deck).toEqual(mockDeck);
     });
   });
 
-  describe("addCardToDeck", () => {
-    it("should add a new card to deck", async () => {
+  describe('addCardToDeck', () => {
+    it('should add a new card to deck', async () => {
       const mockDeck = {
-        id: "deck-123",
+        id: 'deck-123',
         userId: mockUserId,
-        format: "TCG",
+        format: 'TCG',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       const mockCard = {
-        id: "card-1",
-        name: "Test Card",
-        type: "Effect Monster",
+        id: 'card-1',
+        name: 'Test Card',
+        type: 'Effect Monster',
       };
 
       const mockDeckCard = {
-        id: "deckcard-1",
-        deckId: "deck-123",
-        cardId: "card-1",
+        id: 'deckcard-1',
+        deckId: 'deck-123',
+        cardId: 'card-1',
         quantity: 1,
-        deckSection: "MAIN",
+        deckSection: 'MAIN',
         card: mockCard,
       };
 
@@ -282,37 +282,37 @@ describe("Deck Actions", () => {
       mockPrisma.deckCard.findUnique.mockResolvedValue(null);
       mockPrisma.deckCard.create.mockResolvedValue(mockDeckCard as any);
 
-      const result = await addCardToDeck("deck-123", {
-        cardId: "card-1",
+      const result = await addCardToDeck('deck-123', {
+        cardId: 'card-1',
         quantity: 1,
-        deckSection: "MAIN",
+        deckSection: 'MAIN',
       });
 
       expect(result.success).toBe(true);
       expect(result.deckCard).toEqual(mockDeckCard);
     });
 
-    it("should update quantity if card already exists", async () => {
+    it('should update quantity if card already exists', async () => {
       const mockDeck = {
-        id: "deck-123",
+        id: 'deck-123',
         userId: mockUserId,
-        format: "TCG",
+        format: 'TCG',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       const mockCard = {
-        id: "card-1",
-        name: "Test Card",
-        type: "Effect Monster",
+        id: 'card-1',
+        name: 'Test Card',
+        type: 'Effect Monster',
       };
 
       const existingDeckCard = {
-        id: "deckcard-1",
-        deckId: "deck-123",
-        cardId: "card-1",
+        id: 'deckcard-1',
+        deckId: 'deck-123',
+        cardId: 'card-1',
         quantity: 1,
-        deckSection: "MAIN",
+        deckSection: 'MAIN',
       };
 
       const updatedDeckCard = {
@@ -325,10 +325,10 @@ describe("Deck Actions", () => {
       mockPrisma.deckCard.findUnique.mockResolvedValue(existingDeckCard as any);
       mockPrisma.deckCard.update.mockResolvedValue(updatedDeckCard as any);
 
-      const result = await addCardToDeck("deck-123", {
-        cardId: "card-1",
+      const result = await addCardToDeck('deck-123', {
+        cardId: 'card-1',
         quantity: 1,
-        deckSection: "MAIN",
+        deckSection: 'MAIN',
       });
 
       expect(result.success).toBe(true);
@@ -336,30 +336,30 @@ describe("Deck Actions", () => {
     });
   });
 
-  describe("updateCardQuantity", () => {
-    it("should update card quantity", async () => {
+  describe('updateCardQuantity', () => {
+    it('should update card quantity', async () => {
       const mockDeck = {
-        id: "deck-123",
+        id: 'deck-123',
         userId: mockUserId,
-        format: "TCG",
+        format: 'TCG',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       const existingDeckCard = {
-        id: "deckcard-1",
-        deckId: "deck-123",
-        cardId: "card-1",
+        id: 'deckcard-1',
+        deckId: 'deck-123',
+        cardId: 'card-1',
         quantity: 1,
-        deckSection: "MAIN",
+        deckSection: 'MAIN',
       };
 
       const updatedDeckCard = {
         ...existingDeckCard,
         quantity: 2,
         card: {
-          id: "card-1",
-          name: "Test Card",
+          id: 'card-1',
+          name: 'Test Card',
         },
       };
 
@@ -367,10 +367,10 @@ describe("Deck Actions", () => {
       mockPrisma.deckCard.findUnique.mockResolvedValue(existingDeckCard as any);
       mockPrisma.deckCard.update.mockResolvedValue(updatedDeckCard as any);
 
-      const result = await updateCardQuantity("deck-123", {
-        cardId: "card-1",
+      const result = await updateCardQuantity('deck-123', {
+        cardId: 'card-1',
         quantity: 2,
-        deckSection: "MAIN",
+        deckSection: 'MAIN',
       });
 
       expect(result.success).toBe(true);
@@ -378,39 +378,37 @@ describe("Deck Actions", () => {
     });
   });
 
-  describe("removeCardFromDeck", () => {
-    it("should remove card from deck", async () => {
+  describe('removeCardFromDeck', () => {
+    it('should remove card from deck', async () => {
       const mockDeck = {
-        id: "deck-123",
+        id: 'deck-123',
         userId: mockUserId,
-        format: "TCG",
+        format: 'TCG',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       const existingDeckCard = {
-        id: "deckcard-1",
-        deckId: "deck-123",
-        cardId: "card-1",
+        id: 'deckcard-1',
+        deckId: 'deck-123',
+        cardId: 'card-1',
         quantity: 1,
-        deckSection: "MAIN",
+        deckSection: 'MAIN',
       };
 
       mockPrisma.deck.findUnique.mockResolvedValue(mockDeck as any);
       mockPrisma.deckCard.findUnique.mockResolvedValue(existingDeckCard as any);
       mockPrisma.deckCard.delete.mockResolvedValue(existingDeckCard as any);
 
-      const result = await removeCardFromDeck("deck-123", {
-        cardId: "card-1",
-        deckSection: "MAIN",
+      const result = await removeCardFromDeck('deck-123', {
+        cardId: 'card-1',
+        deckSection: 'MAIN',
       });
 
       expect(result.success).toBe(true);
       expect(mockPrisma.deckCard.delete).toHaveBeenCalledWith({
-        where: { id: "deckcard-1" },
+        where: { id: 'deckcard-1' },
       });
     });
   });
 });
-
-

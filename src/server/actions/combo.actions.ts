@@ -1,7 +1,7 @@
-"use server";
+'use server';
 
-import { auth } from "@/lib/auth/auth";
-import { prisma } from "@/lib/prisma/client";
+import { auth } from '@/lib/auth/auth';
+import { prisma } from '@/lib/prisma/client';
 import {
   createComboSchema,
   updateComboSchema,
@@ -15,12 +15,12 @@ import {
   type UpdateComboStepInput,
   type ComboStepOrderInput,
   type BatchComboStepOperationsInput,
-} from "@/lib/validations/combo.schema";
-import type { ComboWithSteps } from "@/types/combo.types";
+} from '@/lib/validations/combo.schema';
+import type { ComboWithSteps } from '@/types/combo.types';
 
 /**
  * Validiert ob Card-IDs existieren
- * 
+ *
  * @param cardIds - Array von Card-IDs zu validieren
  * @returns Objekt mit existingCardIds Set und missingCardIds Array
  */
@@ -33,7 +33,7 @@ async function validateCardIds(cardIds: string[]): Promise<{
   }
 
   // Filtere ungültige Platzhalter-IDs
-  const validCardIds = cardIds.filter((id) => id && id !== "00000000");
+  const validCardIds = cardIds.filter((id) => id && id !== '00000000');
 
   if (validCardIds.length === 0) {
     return { existingCardIds: new Set(), missingCardIds: [] };
@@ -58,7 +58,7 @@ async function validateCardIds(cardIds: string[]): Promise<{
 
 /**
  * Server Action: Erstellt eine neue Kombo
- * 
+ *
  * @param data - Kombo-Daten inkl. Steps
  * @returns Erstellte Kombo oder Fehler
  */
@@ -67,7 +67,7 @@ export async function createCombo(data: CreateComboInput) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob User in der Datenbank existiert
@@ -76,7 +76,7 @@ export async function createCombo(data: CreateComboInput) {
     });
 
     if (!user) {
-      return { error: "User not found in database. Please sign out and sign in again." };
+      return { error: 'User not found in database. Please sign out and sign in again.' };
     }
 
     // Validierung
@@ -89,7 +89,7 @@ export async function createCombo(data: CreateComboInput) {
       });
 
       if (!deck) {
-        return { error: "Deck not found" };
+        return { error: 'Deck not found' };
       }
 
       if (deck.userId !== session.user.id) {
@@ -101,17 +101,15 @@ export async function createCombo(data: CreateComboInput) {
     if (validatedData.steps && validatedData.steps.length > 0) {
       const cardIds = [
         ...validatedData.steps.map((step) => step.cardId),
-        ...validatedData.steps
-          .map((step) => step.targetCardId)
-          .filter((id): id is string => !!id),
+        ...validatedData.steps.map((step) => step.targetCardId).filter((id): id is string => !!id),
       ];
       const uniqueCardIds = [...new Set(cardIds)];
 
       // Prüfe ob ungültige Platzhalter-IDs verwendet werden
-      const hasInvalidPlaceholder = uniqueCardIds.some((id) => id === "00000000");
+      const hasInvalidPlaceholder = uniqueCardIds.some((id) => id === '00000000');
       if (hasInvalidPlaceholder) {
         return {
-          error: "Bitte wähle eine gültige Karte aus. Platzhalter-Karten sind nicht erlaubt.",
+          error: 'Bitte wähle eine gültige Karte aus. Platzhalter-Karten sind nicht erlaubt.',
         };
       }
 
@@ -120,7 +118,7 @@ export async function createCombo(data: CreateComboInput) {
 
       if (missingCardIds.length > 0) {
         return {
-          error: `Invalid card IDs: ${missingCardIds.join(", ")}`,
+          error: `Invalid card IDs: ${missingCardIds.join(', ')}`,
         };
       }
     }
@@ -138,22 +136,23 @@ export async function createCombo(data: CreateComboInput) {
       });
 
       // Erstelle Steps (nur wenn vorhanden)
-      const steps = validatedData.steps && validatedData.steps.length > 0
-        ? await Promise.all(
-            validatedData.steps.map((step) =>
-              tx.comboStep.create({
-                data: {
-                  comboId: newCombo.id,
-                  cardId: step.cardId,
-                  actionType: step.actionType,
-                  description: step.description || null,
-                  targetCardId: step.targetCardId || null,
-                  order: step.order,
-                },
-              })
+      const steps =
+        validatedData.steps && validatedData.steps.length > 0
+          ? await Promise.all(
+              validatedData.steps.map((step) =>
+                tx.comboStep.create({
+                  data: {
+                    comboId: newCombo.id,
+                    cardId: step.cardId,
+                    actionType: step.actionType,
+                    description: step.description || null,
+                    targetCardId: step.targetCardId || null,
+                    order: step.order,
+                  },
+                })
+              )
             )
-          )
-        : [];
+          : [];
 
       return { ...newCombo, steps };
     });
@@ -162,18 +161,18 @@ export async function createCombo(data: CreateComboInput) {
   } catch (error) {
     if (error instanceof Error) {
       // Prüfe ob es ein Foreign Key Constraint Fehler ist
-      if (error.message.includes("foreign key") || error.message.includes("Foreign key")) {
-        return { error: "Invalid card or deck reference" };
+      if (error.message.includes('foreign key') || error.message.includes('Foreign key')) {
+        return { error: 'Invalid card or deck reference' };
       }
       return { error: error.message };
     }
-    return { error: "Failed to create combo" };
+    return { error: 'Failed to create combo' };
   }
 }
 
 /**
  * Server Action: Aktualisiert eine Kombo
- * 
+ *
  * @param comboId - Kombo-ID
  * @param data - Update-Daten
  * @returns Aktualisierte Kombo oder Fehler
@@ -183,7 +182,7 @@ export async function updateCombo(comboId: string, data: UpdateComboInput) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Kombo existiert und User berechtigt ist
@@ -192,11 +191,11 @@ export async function updateCombo(comboId: string, data: UpdateComboInput) {
     });
 
     if (!existingCombo) {
-      return { error: "Combo not found" };
+      return { error: 'Combo not found' };
     }
 
     if (existingCombo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Prüfe ob Deck existiert und User berechtigt ist (falls deckId geändert wird)
@@ -207,7 +206,7 @@ export async function updateCombo(comboId: string, data: UpdateComboInput) {
         });
 
         if (!deck) {
-          return { error: "Deck not found" };
+          return { error: 'Deck not found' };
         }
 
         if (deck.userId !== session.user.id) {
@@ -230,13 +229,13 @@ export async function updateCombo(comboId: string, data: UpdateComboInput) {
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to update combo" };
+    return { error: 'Failed to update combo' };
   }
 }
 
 /**
  * Server Action: Löscht eine Kombo
- * 
+ *
  * @param comboId - Kombo-ID
  * @returns Erfolg oder Fehler
  */
@@ -245,7 +244,7 @@ export async function deleteCombo(comboId: string) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Kombo existiert und User berechtigt ist
@@ -254,11 +253,11 @@ export async function deleteCombo(comboId: string) {
     });
 
     if (!existingCombo) {
-      return { error: "Combo not found" };
+      return { error: 'Combo not found' };
     }
 
     if (existingCombo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Kombo löschen (Steps werden durch Cascade automatisch gelöscht)
@@ -271,25 +270,24 @@ export async function deleteCombo(comboId: string) {
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to delete combo" };
+    return { error: 'Failed to delete combo' };
   }
 }
 
 /**
  * Server Action: Lädt eine einzelne Kombo mit allen Steps
- * 
+ *
  * @param comboId - Kombo-ID
  * @returns Kombo mit Steps oder Fehler
  */
-export async function getCombo(comboId: string): Promise<
-  | { success: true; combo: ComboWithSteps }
-  | { error: string }
-> {
+export async function getCombo(
+  comboId: string
+): Promise<{ success: true; combo: ComboWithSteps } | { error: string }> {
   try {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Lade Kombo mit Steps und Karten (nur benötigte Card-Felder)
@@ -308,19 +306,19 @@ export async function getCombo(comboId: string): Promise<
             },
           },
           orderBy: {
-            order: "asc",
+            order: 'asc',
           },
         },
       },
     });
 
     if (!combo) {
-      return { error: "Combo not found" };
+      return { error: 'Combo not found' };
     }
 
     // Prüfe ob User berechtigt ist
     if (combo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     return { success: true, combo: combo as ComboWithSteps };
@@ -328,13 +326,13 @@ export async function getCombo(comboId: string): Promise<
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to get combo" };
+    return { error: 'Failed to get combo' };
   }
 }
 
 /**
  * Server Action: Lädt alle Kombos des aktuellen Users
- * 
+ *
  * @param deckId - Optional: Filter nach Deck-ID
  * @param options - Optional: Pagination-Optionen
  * @returns Liste von Kombos oder Fehler
@@ -344,7 +342,7 @@ export async function getCombosByUser(deckId?: string, options?: { skip?: number
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Lade Kombos
@@ -374,13 +372,14 @@ export async function getCombosByUser(deckId?: string, options?: { skip?: number
         },
       },
       orderBy: {
-        updatedAt: "desc",
+        updatedAt: 'desc',
       },
     });
 
-    const totalCount = options?.skip !== undefined || options?.take !== undefined
-      ? await prisma.combo.count({ where })
-      : combos.length;
+    const totalCount =
+      options?.skip !== undefined || options?.take !== undefined
+        ? await prisma.combo.count({ where })
+        : combos.length;
 
     // Transformiere Ergebnis: Ersetze _count.steps durch steps Array für Kompatibilität
     const combosWithStepCount = combos.map((combo) => {
@@ -391,25 +390,26 @@ export async function getCombosByUser(deckId?: string, options?: { skip?: number
       };
     });
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       combos: combosWithStepCount,
       totalCount,
-      hasMore: options?.skip !== undefined && options?.take !== undefined
-        ? (options.skip + options.take) < totalCount
-        : false,
+      hasMore:
+        options?.skip !== undefined && options?.take !== undefined
+          ? options.skip + options.take < totalCount
+          : false,
     };
   } catch (error) {
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to get combos" };
+    return { error: 'Failed to get combos' };
   }
 }
 
 /**
  * Server Action: Lädt alle Kombos eines Decks
- * 
+ *
  * @param deckId - Deck-ID
  * @returns Liste von Kombos oder Fehler
  */
@@ -418,7 +418,7 @@ export async function getCombosByDeck(deckId: string) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Deck existiert und User berechtigt ist
@@ -427,11 +427,11 @@ export async function getCombosByDeck(deckId: string) {
     });
 
     if (!deck) {
-      return { error: "Deck not found" };
+      return { error: 'Deck not found' };
     }
 
     if (deck.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Lade Kombos
@@ -443,13 +443,13 @@ export async function getCombosByDeck(deckId: string) {
       include: {
         steps: {
           orderBy: {
-            order: "asc",
+            order: 'asc',
           },
           take: 1, // Nur ersten Step für Vorschau
         },
       },
       orderBy: {
-        updatedAt: "desc",
+        updatedAt: 'desc',
       },
     });
 
@@ -458,13 +458,13 @@ export async function getCombosByDeck(deckId: string) {
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to get combos" };
+    return { error: 'Failed to get combos' };
   }
 }
 
 /**
  * Server Action: Fügt einen Step zu einer Kombo hinzu
- * 
+ *
  * @param comboId - Kombo-ID
  * @param step - Step-Daten
  * @returns Erstellter Step oder Fehler
@@ -474,7 +474,7 @@ export async function addComboStep(comboId: string, step: CreateComboStepInput) 
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Kombo existiert und User berechtigt ist
@@ -483,11 +483,11 @@ export async function addComboStep(comboId: string, step: CreateComboStepInput) 
     });
 
     if (!existingCombo) {
-      return { error: "Combo not found" };
+      return { error: 'Combo not found' };
     }
 
     if (existingCombo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Prüfe ob order bereits existiert
@@ -501,23 +501,22 @@ export async function addComboStep(comboId: string, step: CreateComboStepInput) 
     });
 
     if (existingStep) {
-      return { error: "A step with this order already exists" };
+      return { error: 'A step with this order already exists' };
     }
 
     // Validierung
     const validatedStep = createComboStepSchema.parse(step);
 
     // Prüfe ob Karten existieren
-    const cardIds = [
-      validatedStep.cardId,
-      validatedStep.targetCardId,
-    ].filter((id): id is string => !!id);
+    const cardIds = [validatedStep.cardId, validatedStep.targetCardId].filter(
+      (id): id is string => !!id
+    );
 
     const { missingCardIds } = await validateCardIds(cardIds);
 
     if (missingCardIds.length > 0) {
       return {
-        error: `Invalid card IDs: ${missingCardIds.join(", ")}`,
+        error: `Invalid card IDs: ${missingCardIds.join(', ')}`,
       };
     }
 
@@ -540,18 +539,21 @@ export async function addComboStep(comboId: string, step: CreateComboStepInput) 
   } catch (error) {
     if (error instanceof Error) {
       // Prüfe ob es ein Unique Constraint Fehler ist
-      if (error.message.includes("Unique constraint") || error.message.includes("unique constraint")) {
-        return { error: "A step with this order already exists" };
+      if (
+        error.message.includes('Unique constraint') ||
+        error.message.includes('unique constraint')
+      ) {
+        return { error: 'A step with this order already exists' };
       }
       return { error: error.message };
     }
-    return { error: "Failed to add step" };
+    return { error: 'Failed to add step' };
   }
 }
 
 /**
  * Server Action: Aktualisiert einen Step
- * 
+ *
  * @param stepId - Step-ID
  * @param step - Update-Daten
  * @returns Aktualisierter Step oder Fehler
@@ -561,7 +563,7 @@ export async function updateComboStep(stepId: string, step: UpdateComboStepInput
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Step existiert und User berechtigt ist
@@ -573,11 +575,11 @@ export async function updateComboStep(stepId: string, step: UpdateComboStepInput
     });
 
     if (!existingStep) {
-      return { error: "Step not found" };
+      return { error: 'Step not found' };
     }
 
     if (existingStep.combo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Prüfe ob order geändert wird und bereits existiert
@@ -592,7 +594,7 @@ export async function updateComboStep(stepId: string, step: UpdateComboStepInput
       });
 
       if (conflictingStep) {
-        return { error: "A step with this order already exists" };
+        return { error: 'A step with this order already exists' };
       }
     }
 
@@ -600,17 +602,16 @@ export async function updateComboStep(stepId: string, step: UpdateComboStepInput
     const validatedStep = updateComboStepSchema.parse(step);
 
     // Prüfe ob Karten existieren (falls geändert)
-    const cardIds = [
-      validatedStep.cardId,
-      validatedStep.targetCardId,
-    ].filter((id): id is string => !!id);
+    const cardIds = [validatedStep.cardId, validatedStep.targetCardId].filter(
+      (id): id is string => !!id
+    );
 
     if (cardIds.length > 0) {
       const { missingCardIds } = await validateCardIds(cardIds);
 
       if (missingCardIds.length > 0) {
         return {
-          error: `Invalid card IDs: ${missingCardIds.join(", ")}`,
+          error: `Invalid card IDs: ${missingCardIds.join(', ')}`,
         };
       }
     }
@@ -628,18 +629,21 @@ export async function updateComboStep(stepId: string, step: UpdateComboStepInput
   } catch (error) {
     if (error instanceof Error) {
       // Prüfe ob es ein Unique Constraint Fehler ist
-      if (error.message.includes("Unique constraint") || error.message.includes("unique constraint")) {
-        return { error: "A step with this order already exists" };
+      if (
+        error.message.includes('Unique constraint') ||
+        error.message.includes('unique constraint')
+      ) {
+        return { error: 'A step with this order already exists' };
       }
       return { error: error.message };
     }
-    return { error: "Failed to update step" };
+    return { error: 'Failed to update step' };
   }
 }
 
 /**
  * Server Action: Löscht einen Step
- * 
+ *
  * @param stepId - Step-ID
  * @returns Erfolg oder Fehler
  */
@@ -648,7 +652,7 @@ export async function deleteComboStep(stepId: string) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Step existiert und User berechtigt ist
@@ -660,11 +664,11 @@ export async function deleteComboStep(stepId: string) {
     });
 
     if (!existingStep) {
-      return { error: "Step not found" };
+      return { error: 'Step not found' };
     }
 
     if (existingStep.combo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Step löschen
@@ -677,13 +681,13 @@ export async function deleteComboStep(stepId: string) {
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to delete step" };
+    return { error: 'Failed to delete step' };
   }
 }
 
 /**
  * Server Action: Sortiert Steps einer Kombo neu
- * 
+ *
  * @param comboId - Kombo-ID
  * @param stepIds - Array von Step-IDs in neuer Reihenfolge
  * @returns Erfolg oder Fehler
@@ -693,7 +697,7 @@ export async function reorderComboSteps(comboId: string, stepIds: string[]) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Kombo existiert und User berechtigt ist
@@ -702,11 +706,11 @@ export async function reorderComboSteps(comboId: string, stepIds: string[]) {
     });
 
     if (!existingCombo) {
-      return { error: "Combo not found" };
+      return { error: 'Combo not found' };
     }
 
     if (existingCombo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Validierung
@@ -728,7 +732,7 @@ export async function reorderComboSteps(comboId: string, stepIds: string[]) {
     // Erstelle CASE-Statement für jeden Step
     const caseStatements = validatedData.stepIds
       .map((stepId, index) => `WHEN '${stepId}' THEN ${index + 1}`)
-      .join(" ");
+      .join(' ');
 
     // Führe Bulk-Update in einer Transaction aus
     await prisma.$transaction(async (tx) => {
@@ -736,7 +740,7 @@ export async function reorderComboSteps(comboId: string, stepIds: string[]) {
       await tx.$executeRawUnsafe(
         `UPDATE ComboStep 
          SET "order" = CASE id ${caseStatements} END 
-         WHERE id IN (${validatedData.stepIds.map((id) => `'${id}'`).join(", ")})`
+         WHERE id IN (${validatedData.stepIds.map((id) => `'${id}'`).join(', ')})`
       );
     });
 
@@ -745,13 +749,13 @@ export async function reorderComboSteps(comboId: string, stepIds: string[]) {
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to reorder steps" };
+    return { error: 'Failed to reorder steps' };
   }
 }
 
 /**
  * Server Action: Führt Batch-Operationen auf Combo-Steps aus
- * 
+ *
  * @param comboId - Kombo-ID
  * @param operations - Array von Batch-Operationen
  * @returns Ergebnisse der Operationen oder Fehler
@@ -768,7 +772,7 @@ export async function batchComboStepOperations(
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Kombo existiert und User berechtigt ist
@@ -777,11 +781,11 @@ export async function batchComboStepOperations(
     });
 
     if (!existingCombo) {
-      return { error: "Combo not found" };
+      return { error: 'Combo not found' };
     }
 
     if (existingCombo.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Validiere alle Step-IDs gehören zur Kombo
@@ -804,7 +808,7 @@ export async function batchComboStepOperations(
       // Sammle alle Card-IDs für Validierung
       const cardIdsToValidate = new Set<string>();
       for (const operation of operations) {
-        if (operation.type === "update") {
+        if (operation.type === 'update') {
           if (operation.data.cardId) {
             cardIdsToValidate.add(operation.data.cardId);
           }
@@ -818,19 +822,19 @@ export async function batchComboStepOperations(
       if (cardIdsToValidate.size > 0) {
         const { missingCardIds } = await validateCardIds(Array.from(cardIdsToValidate));
         if (missingCardIds.length > 0) {
-          throw new Error(`Invalid card IDs: ${missingCardIds.join(", ")}`);
+          throw new Error(`Invalid card IDs: ${missingCardIds.join(', ')}`);
         }
       }
 
       // Führe Operationen aus
       for (const operation of operations) {
         try {
-          if (operation.type === "delete") {
+          if (operation.type === 'delete') {
             await tx.comboStep.delete({
               where: { id: operation.stepId },
             });
             results.push({ success: true, stepId: operation.stepId });
-          } else if (operation.type === "update") {
+          } else if (operation.type === 'update') {
             // Prüfe ob order geändert wird und bereits existiert
             if (operation.data.order !== undefined) {
               const existingStep = await tx.comboStep.findUnique({
@@ -851,7 +855,7 @@ export async function batchComboStepOperations(
                   results.push({
                     success: false,
                     stepId: operation.stepId,
-                    error: "A step with this order already exists",
+                    error: 'A step with this order already exists',
                   });
                   continue;
                 }
@@ -884,7 +888,7 @@ export async function batchComboStepOperations(
           results.push({
             success: false,
             stepId: operation.stepId,
-            error: error instanceof Error ? error.message : "Operation failed",
+            error: error instanceof Error ? error.message : 'Operation failed',
           });
         }
       }
@@ -906,7 +910,6 @@ export async function batchComboStepOperations(
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to execute batch operations" };
+    return { error: 'Failed to execute batch operations' };
   }
 }
-

@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useTranslation } from "@/lib/i18n/hooks";
+import { useState, useEffect } from 'react';
+import { useTranslation } from '@/lib/i18n/hooks';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/components/ui/dialog";
-import { Button } from "@/components/components/ui/button";
-import { Badge } from "@/components/components/ui/badge";
-import { Separator } from "@/components/components/ui/separator";
-import { ScrollArea } from "@/components/components/ui/scroll-area";
-import type { Card } from "@prisma/client";
-import type { CardForDeck } from "@/lib/hooks/use-deck-history";
-import Image from "next/image";
+} from '@/components/components/ui/dialog';
+import { Button } from '@/components/components/ui/button';
+import { Badge } from '@/components/components/ui/badge';
+import { Separator } from '@/components/components/ui/separator';
+import { ScrollArea } from '@/components/components/ui/scroll-area';
+import type { Card } from '@prisma/client';
+import type { CardForDeck } from '@/lib/hooks/use-deck-history';
+import Image from 'next/image';
 
 interface CardDetailDialogProps {
   card: CardForDeck | Card | null;
@@ -27,12 +27,7 @@ interface CardDetailDialogProps {
 /**
  * Dialog zur Anzeige von Kartendetails
  */
-export function CardDetailDialog({
-  card,
-  open,
-  onOpenChange,
-  onAddToDeck,
-}: CardDetailDialogProps) {
+export function CardDetailDialog({ card, open, onOpenChange, onAddToDeck }: CardDetailDialogProps) {
   const { t } = useTranslation();
   const [fullCard, setFullCard] = useState<Card | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +36,7 @@ export function CardDetailDialog({
   useEffect(() => {
     if (open && card) {
       // Prüfe ob Card vollständig ist (hat desc-Feld)
-      if ("desc" in card) {
+      if ('desc' in card) {
         setFullCard(card as Card);
         setIsLoading(false);
       } else {
@@ -109,48 +104,48 @@ export function CardDetailDialog({
                 <h3 className="text-lg font-semibold">Karteninformationen</h3>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <span className="font-medium text-muted-foreground">Typ:</span>{" "}
+                    <span className="font-medium text-muted-foreground">Typ:</span>{' '}
                     <span>{card.type}</span>
                   </div>
                   {card.race && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Kategorie:</span>{" "}
+                      <span className="font-medium text-muted-foreground">Kategorie:</span>{' '}
                       <span>{card.race}</span>
                     </div>
                   )}
                   {card.attribute && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Attribut:</span>{" "}
+                      <span className="font-medium text-muted-foreground">Attribut:</span>{' '}
                       <Badge variant="outline">{card.attribute}</Badge>
                     </div>
                   )}
                   {card.level !== null && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Level/Rang:</span>{" "}
+                      <span className="font-medium text-muted-foreground">Level/Rang:</span>{' '}
                       <span>{card.level}</span>
                     </div>
                   )}
                   {card.atk !== null && (
                     <div>
-                      <span className="font-medium text-muted-foreground">ATK:</span>{" "}
-                      <span>{card.atk === -1 ? "?" : card.atk}</span>
+                      <span className="font-medium text-muted-foreground">ATK:</span>{' '}
+                      <span>{card.atk === -1 ? '?' : card.atk}</span>
                     </div>
                   )}
                   {card.def !== null && (
                     <div>
-                      <span className="font-medium text-muted-foreground">DEF:</span>{" "}
-                      <span>{card.def === -1 ? "?" : card.def}</span>
+                      <span className="font-medium text-muted-foreground">DEF:</span>{' '}
+                      <span>{card.def === -1 ? '?' : card.def}</span>
                     </div>
                   )}
                   {card.archetype && (
                     <div className="col-span-2">
-                      <span className="font-medium text-muted-foreground">Archetype:</span>{" "}
+                      <span className="font-medium text-muted-foreground">Archetype:</span>{' '}
                       <Badge variant="secondary">{card.archetype}</Badge>
                     </div>
                   )}
                   {card.passcode && (
                     <div>
-                      <span className="font-medium text-muted-foreground">Passcode:</span>{" "}
+                      <span className="font-medium text-muted-foreground">Passcode:</span>{' '}
                       <span className="font-mono text-xs">{card.passcode}</span>
                     </div>
                   )}
@@ -183,14 +178,14 @@ export function CardDetailDialog({
                             <div className="space-y-1">
                               {Object.entries(banlist).map(([format, status]) => (
                                 <div key={format}>
-                                  <span className="font-medium">{format}:</span>{" "}
+                                  <span className="font-medium">{format}:</span>{' '}
                                   <Badge
                                     variant={
-                                      status === "Forbidden"
-                                        ? "destructive"
-                                        : status === "Limited"
-                                        ? "default"
-                                        : "secondary"
+                                      status === 'Forbidden'
+                                        ? 'destructive'
+                                        : status === 'Limited'
+                                          ? 'default'
+                                          : 'secondary'
                                     }
                                   >
                                     {String(status)}
@@ -200,9 +195,7 @@ export function CardDetailDialog({
                             </div>
                           );
                         } catch {
-                          return (
-                            <Badge variant="secondary">{card.banlistInfo}</Badge>
-                          );
+                          return <Badge variant="secondary">{card.banlistInfo}</Badge>;
                         }
                       })()}
                     </div>
@@ -215,9 +208,7 @@ export function CardDetailDialog({
                 <>
                   <Separator />
                   <div className="flex justify-end">
-                    <Button onClick={() => onAddToDeck(card.id)}>
-                      {t("deck.addCard")}
-                    </Button>
+                    <Button onClick={() => onAddToDeck(card.id)}>{t('deck.addCard')}</Button>
                   </div>
                 </>
               )}
@@ -228,4 +219,3 @@ export function CardDetailDialog({
     </Dialog>
   );
 }
-

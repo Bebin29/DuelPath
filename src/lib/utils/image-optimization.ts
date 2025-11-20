@@ -9,7 +9,7 @@ export function generateSrcSet(
   baseUrl: string,
   widths: number[] = [320, 640, 960, 1280, 1920]
 ): string {
-  return widths.map((width) => `${baseUrl}?w=${width} ${width}w`).join(", ");
+  return widths.map((width) => `${baseUrl}?w=${width} ${width}w`).join(', ');
 }
 
 /**
@@ -34,14 +34,14 @@ export function generateSizes(breakpoints: {
   }
   sizes.push(breakpoints.default);
 
-  return sizes.join(", ");
+  return sizes.join(', ');
 }
 
 /**
  * Prüft ob ein Bild geladen werden sollte (Intersection Observer)
  */
 export function shouldLoadImage(element: HTMLElement | null): boolean {
-  if (!element || typeof window === "undefined" || !("IntersectionObserver" in window)) {
+  if (!element || typeof window === 'undefined' || !('IntersectionObserver' in window)) {
     return true; // Fallback: Lade sofort wenn kein IntersectionObserver
   }
 
@@ -76,17 +76,17 @@ export function getOptimizedImageUrl(
     width?: number;
     height?: number;
     quality?: number;
-    format?: "webp" | "avif" | "jpg" | "png";
+    format?: 'webp' | 'avif' | 'jpg' | 'png';
   } = {}
 ): string {
   const params = new URLSearchParams();
 
-  if (options.width) params.set("w", options.width.toString());
-  if (options.height) params.set("h", options.height.toString());
-  if (options.quality) params.set("q", options.quality.toString());
-  if (options.format) params.set("f", options.format);
+  if (options.width) params.set('w', options.width.toString());
+  if (options.height) params.set('h', options.height.toString());
+  if (options.quality) params.set('q', options.quality.toString());
+  if (options.format) params.set('f', options.format);
 
-  const separator = baseUrl.includes("?") ? "&" : "?";
+  const separator = baseUrl.includes('?') ? '&' : '?';
   return `${baseUrl}${separator}${params.toString()}`;
 }
 
@@ -107,7 +107,7 @@ export function calculateOptimalImageSize(
  */
 export function supportsWebP(): Promise<boolean> {
   return new Promise((resolve) => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       resolve(false);
       return;
     }
@@ -117,7 +117,7 @@ export function supportsWebP(): Promise<boolean> {
       resolve(webP.height === 2);
     };
     webP.src =
-      "data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA";
+      'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
   });
 }
 
@@ -126,7 +126,7 @@ export function supportsWebP(): Promise<boolean> {
  */
 export function supportsAVIF(): Promise<boolean> {
   return new Promise((resolve) => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       resolve(false);
       return;
     }
@@ -136,16 +136,15 @@ export function supportsAVIF(): Promise<boolean> {
       resolve(avif.height === 2);
     };
     avif.src =
-      "data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgABogQEAwgMg8f8D///8WfhwB8+ErK42A=";
+      'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgABogQEAwgMg8f8D///8WfhwB8+ErK42A=';
   });
 }
 
 /**
  * Gibt das beste unterstützte Bildformat zurück
  */
-export async function getBestImageFormat(): Promise<"avif" | "webp" | "jpg"> {
-  if (await supportsAVIF()) return "avif";
-  if (await supportsWebP()) return "webp";
-  return "jpg";
+export async function getBestImageFormat(): Promise<'avif' | 'webp' | 'jpg'> {
+  if (await supportsAVIF()) return 'avif';
+  if (await supportsWebP()) return 'webp';
+  return 'jpg';
 }
-

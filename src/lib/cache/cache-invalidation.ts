@@ -2,7 +2,7 @@
  * Cache-Invalidierung Utilities
  */
 
-import { getCacheExpiry, isCacheExpired } from "./cache-utils";
+import { getCacheExpiry, isCacheExpired } from './cache-utils';
 
 interface CacheEntry<T> {
   data: T;
@@ -49,7 +49,7 @@ export function invalidateCache(key: string): void {
  * Invalidiert alle Cache-Einträge die einem Pattern entsprechen
  */
 export function invalidateCachePattern(pattern: string | RegExp): void {
-  const regex = typeof pattern === "string" ? new RegExp(pattern) : pattern;
+  const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
   const keysToDelete: string[] = [];
 
   for (const key of cacheStore.keys()) {
@@ -110,9 +110,11 @@ export function cleanupExpiredCache(): number {
 }
 
 // Automatische Bereinigung alle 5 Minuten
-if (typeof window !== "undefined") {
-  setInterval(() => {
-    cleanupExpiredCache();
-  }, 5 * 60 * 1000);
+if (typeof window !== 'undefined') {
+  setInterval(
+    () => {
+      cleanupExpiredCache();
+    },
+    5 * 60 * 1000
+  );
 }
-

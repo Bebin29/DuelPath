@@ -1,17 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { useDuelState } from "@/lib/hooks/use-duel-state";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/components/ui/popover";
-import { Button } from "@/components/components/ui/button";
-import { Badge } from "@/components/components/ui/badge";
-import { Separator } from "@/components/components/ui/separator";
-import type { DuelAction } from "@/types/duel.types";
+import { useState } from 'react';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { useDuelState } from '@/lib/hooks/use-duel-state';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/components/ui/popover';
+import { Button } from '@/components/components/ui/button';
+import { Badge } from '@/components/components/ui/badge';
+import { Separator } from '@/components/components/ui/separator';
+import type { DuelAction } from '@/types/duel.types';
 
 interface DuelActionMenuProps {
   cardInstanceId: string;
@@ -38,17 +34,13 @@ export function DuelActionMenu({ cardInstanceId, children }: DuelActionMenuProps
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        {children}
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-64 p-2" align="start">
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">{t("duel.availableActions")}</h4>
+          <h4 className="font-medium text-sm">{t('duel.availableActions')}</h4>
 
           {actions.length === 0 ? (
-            <div className="text-sm text-muted-foreground py-2">
-              {t("duel.noActionsAvailable")}
-            </div>
+            <div className="text-sm text-muted-foreground py-2">{t('duel.noActionsAvailable')}</div>
           ) : (
             <div className="space-y-1">
               {actions.map((actionItem, index) => (
@@ -61,9 +53,7 @@ export function DuelActionMenu({ cardInstanceId, children }: DuelActionMenuProps
                   disabled={actionItem.disabled}
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-sm">
-                      {t(actionItem.labelKey)}
-                    </span>
+                    <span className="text-sm">{t(actionItem.labelKey)}</span>
                     {actionItem.disabled && actionItem.reason && (
                       <Badge variant="secondary" className="text-xs ml-2">
                         {actionItem.reason}
@@ -83,7 +73,7 @@ export function DuelActionMenu({ cardInstanceId, children }: DuelActionMenuProps
             className="w-full text-muted-foreground"
             onClick={() => setOpen(false)}
           >
-            {t("common.cancel")}
+            {t('common.cancel')}
           </Button>
         </div>
       </PopoverContent>

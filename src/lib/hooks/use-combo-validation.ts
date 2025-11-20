@@ -1,11 +1,11 @@
-import { useMemo, useCallback } from "react";
-import type { ComboWithSteps } from "@/types/combo.types";
+import { useMemo, useCallback } from 'react';
+import type { ComboWithSteps } from '@/types/combo.types';
 import {
   validateComboSteps,
   validateComboCardsInDeck,
   type ComboValidationResult,
-} from "@/lib/utils/combo.utils";
-import type { DeckWithCards } from "./use-deck-history";
+} from '@/lib/utils/combo.utils';
+import type { DeckWithCards } from './use-deck-history';
 
 interface UseComboValidationOptions {
   combo: ComboWithSteps | null;
@@ -14,16 +14,13 @@ interface UseComboValidationOptions {
 
 /**
  * Custom Hook für Combo-Validierung
- * 
+ *
  * Features:
  * - Echtzeit-Validierung von Kombos
  * - Prüfung ob verwendete Karten im zugeordneten Deck vorhanden sind
  * - Warnungen für potenzielle Probleme
  */
-export function useComboValidation({
-  combo,
-  deck,
-}: UseComboValidationOptions) {
+export function useComboValidation({ combo, deck }: UseComboValidationOptions) {
   /**
    * Validiert die gesamte Kombo
    */
@@ -31,7 +28,7 @@ export function useComboValidation({
     if (!combo) {
       return {
         isValid: false,
-        errors: ["Keine Kombo vorhanden"],
+        errors: ['Keine Kombo vorhanden'],
         warnings: [],
       };
     }
@@ -61,7 +58,9 @@ export function useComboValidation({
       errors.push(...cardValidation.errors);
       warnings.push(...cardValidation.warnings);
     } else if (combo.deckId && !deck) {
-      warnings.push("Deck zugeordnet, aber Deck-Daten nicht verfügbar - Karten-Validierung nicht möglich");
+      warnings.push(
+        'Deck zugeordnet, aber Deck-Daten nicht verfügbar - Karten-Validierung nicht möglich'
+      );
     }
 
     return {
@@ -77,12 +76,12 @@ export function useComboValidation({
   const validateStep = useCallback(
     (stepId: string): { isValid: boolean; error?: string; warning?: string } => {
       if (!combo) {
-        return { isValid: false, error: "Keine Kombo vorhanden" };
+        return { isValid: false, error: 'Keine Kombo vorhanden' };
       }
 
       const step = combo.steps.find((s) => s.id === stepId);
       if (!step) {
-        return { isValid: false, error: "Step nicht gefunden" };
+        return { isValid: false, error: 'Step nicht gefunden' };
       }
 
       // Prüfe ob Karte im Deck vorhanden ist (falls Deck zugeordnet)
@@ -91,7 +90,7 @@ export function useComboValidation({
         if (!isInDeck) {
           return {
             isValid: false,
-            error: "Diese Karte ist nicht im zugeordneten Deck vorhanden",
+            error: 'Diese Karte ist nicht im zugeordneten Deck vorhanden',
           };
         }
       }
@@ -132,6 +131,3 @@ export function useComboValidation({
     warnings: validationResult.warnings,
   };
 }
-
-
-

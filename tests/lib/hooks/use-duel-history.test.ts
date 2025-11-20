@@ -2,18 +2,18 @@
  * Unit-Tests für useDuelHistory Hook
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useDuelHistory } from "@/lib/hooks/use-duel-history";
-import type { DuelState, DuelAction } from "@/types/duel.types";
-import { DuelPhase } from "@/types/duel.types";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { useDuelHistory } from '@/lib/hooks/use-duel-history';
+import type { DuelState, DuelAction } from '@/types/duel.types';
+import { DuelPhase } from '@/types/duel.types';
 
-describe("useDuelHistory", () => {
+describe('useDuelHistory', () => {
   let initialState: DuelState;
 
   beforeEach(() => {
     initialState = {
-      turnPlayer: "PLAYER",
+      turnPlayer: 'PLAYER',
       phase: DuelPhase.DRAW,
       turnCount: 1,
       player: {
@@ -39,7 +39,7 @@ describe("useDuelHistory", () => {
     };
   });
 
-  it("should initialize with initial state", () => {
+  it('should initialize with initial state', () => {
     const { result } = renderHook(() => useDuelHistory(initialState));
 
     expect(result.current.currentDuelState).toEqual(initialState);
@@ -49,10 +49,10 @@ describe("useDuelHistory", () => {
     expect(result.current.canRedo).toBe(false);
   });
 
-  it("should add history entry", () => {
+  it('should add history entry', () => {
     const { result } = renderHook(() => useDuelHistory(initialState));
 
-    const action: DuelAction = { type: "CHANGE_PHASE", nextPhase: DuelPhase.STANDBY };
+    const action: DuelAction = { type: 'CHANGE_PHASE', nextPhase: DuelPhase.STANDBY };
     const newState = { ...initialState, phase: DuelPhase.STANDBY };
 
     act(() => {
@@ -66,10 +66,10 @@ describe("useDuelHistory", () => {
     expect(result.current.canRedo).toBe(false);
   });
 
-  it("should undo action", () => {
+  it('should undo action', () => {
     const { result } = renderHook(() => useDuelHistory(initialState));
 
-    const action: DuelAction = { type: "CHANGE_PHASE", nextPhase: DuelPhase.STANDBY };
+    const action: DuelAction = { type: 'CHANGE_PHASE', nextPhase: DuelPhase.STANDBY };
     const newState = { ...initialState, phase: DuelPhase.STANDBY };
 
     act(() => {
@@ -87,10 +87,10 @@ describe("useDuelHistory", () => {
     expect(result.current.canRedo).toBe(true);
   });
 
-  it("should redo action", () => {
+  it('should redo action', () => {
     const { result } = renderHook(() => useDuelHistory(initialState));
 
-    const action: DuelAction = { type: "CHANGE_PHASE", nextPhase: DuelPhase.STANDBY };
+    const action: DuelAction = { type: 'CHANGE_PHASE', nextPhase: DuelPhase.STANDBY };
     const newState = { ...initialState, phase: DuelPhase.STANDBY };
 
     act(() => {
@@ -108,13 +108,13 @@ describe("useDuelHistory", () => {
     expect(result.current.canRedo).toBe(false);
   });
 
-  it("should limit history size", () => {
+  it('should limit history size', () => {
     const maxSize = 3;
     const { result } = renderHook(() => useDuelHistory(initialState, maxSize));
 
     // Füge mehr Einträge hinzu als maxSize
     for (let i = 0; i < maxSize + 2; i++) {
-      const action: DuelAction = { type: "CHANGE_PHASE", nextPhase: DuelPhase.STANDBY };
+      const action: DuelAction = { type: 'CHANGE_PHASE', nextPhase: DuelPhase.STANDBY };
       const newState = { ...initialState, turnCount: i + 2 };
 
       act(() => {
@@ -126,10 +126,10 @@ describe("useDuelHistory", () => {
     expect(result.current.maxHistorySizeReached).toBe(true);
   });
 
-  it("should reset history", () => {
+  it('should reset history', () => {
     const { result } = renderHook(() => useDuelHistory(initialState));
 
-    const action: DuelAction = { type: "CHANGE_PHASE", nextPhase: DuelPhase.STANDBY };
+    const action: DuelAction = { type: 'CHANGE_PHASE', nextPhase: DuelPhase.STANDBY };
     const newState = { ...initialState, phase: DuelPhase.STANDBY };
 
     act(() => {
@@ -142,13 +142,13 @@ describe("useDuelHistory", () => {
     expect(result.current.currentDuelState).toBeNull();
   });
 
-  it("should handle jump to history index", () => {
+  it('should handle jump to history index', () => {
     const { result } = renderHook(() => useDuelHistory(initialState));
 
     // Füge mehrere Einträge hinzu
     const states = [initialState];
     for (let i = 0; i < 3; i++) {
-      const action: DuelAction = { type: "CHANGE_PHASE", nextPhase: DuelPhase.STANDBY };
+      const action: DuelAction = { type: 'CHANGE_PHASE', nextPhase: DuelPhase.STANDBY };
       const newState = { ...initialState, turnCount: i + 2 };
       states.push(newState);
 

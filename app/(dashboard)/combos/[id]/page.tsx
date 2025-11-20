@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { use } from "react";
-import { ComboEditor } from "@/components/combo/ComboEditor";
-import { ComboErrorBoundary } from "@/components/error/ComboErrorBoundary";
+import { use } from 'react';
+import { ComboEditor } from '@/components/combo/ComboEditor';
+import { ComboErrorBoundary } from '@/components/error/ComboErrorBoundary';
 
 interface ComboEditorPageProps {
   params: Promise<{ id: string }>;
@@ -22,4 +22,3 @@ export default function ComboEditorPage({ params }: ComboEditorPageProps) {
     </div>
   );
 }
-

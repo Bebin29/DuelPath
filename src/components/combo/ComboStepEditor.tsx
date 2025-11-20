@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { CardSearch } from "@/components/deck/CardSearch";
-import { Button } from "@/components/components/ui/button";
+import { useState, useEffect } from 'react';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { CardSearch } from '@/components/deck/CardSearch';
+import { Button } from '@/components/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -11,35 +11,35 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/components/ui/dialog";
-import { Label } from "@/components/components/ui/label";
+} from '@/components/components/ui/dialog';
+import { Label } from '@/components/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/components/ui/select";
-import { Textarea } from "@/components/components/ui/textarea";
-import type { ActionType } from "@/types/combo.types";
-import type { CreateComboStepInput, UpdateComboStepInput } from "@/lib/validations/combo.schema";
-import { useCardCache } from "@/lib/hooks/use-card-cache";
+} from '@/components/components/ui/select';
+import { Textarea } from '@/components/components/ui/textarea';
+import type { ActionType } from '@/types/combo.types';
+import type { CreateComboStepInput, UpdateComboStepInput } from '@/lib/validations/combo.schema';
+import { useCardCache } from '@/lib/hooks/use-card-cache';
 
 /**
  * Action-Type Labels
  */
 const ACTION_TYPES: ActionType[] = [
-  "SUMMON",
-  "ACTIVATE",
-  "SET",
-  "ATTACK",
-  "DRAW",
-  "DISCARD",
-  "SPECIAL_SUMMON",
-  "TRIBUTE_SUMMON",
-  "NORMAL_SUMMON",
-  "FLIP_SUMMON",
-  "OTHER",
+  'SUMMON',
+  'ACTIVATE',
+  'SET',
+  'ATTACK',
+  'DRAW',
+  'DISCARD',
+  'SPECIAL_SUMMON',
+  'TRIBUTE_SUMMON',
+  'NORMAL_SUMMON',
+  'FLIP_SUMMON',
+  'OTHER',
 ];
 
 interface ComboStepEditorProps {
@@ -53,7 +53,7 @@ interface ComboStepEditorProps {
     targetCardId?: string | null;
     order: number;
   };
-  mode?: "create" | "edit";
+  mode?: 'create' | 'edit';
 }
 
 /**
@@ -64,22 +64,22 @@ export function ComboStepEditor({
   onOpenChange,
   onSave,
   initialStep,
-  mode = "create",
+  mode = 'create',
 }: ComboStepEditorProps) {
   const { t } = useTranslation();
   const { getCardData } = useCardCache();
-  const [selectedCardId, setSelectedCardId] = useState<string>(initialStep?.cardId || "");
+  const [selectedCardId, setSelectedCardId] = useState<string>(initialStep?.cardId || '');
   const [actionType, setActionType] = useState<ActionType>(
-    (initialStep?.actionType as ActionType) || "OTHER"
+    (initialStep?.actionType as ActionType) || 'OTHER'
   );
-  const [description, setDescription] = useState<string>(initialStep?.description || "");
-  const [targetCardId, setTargetCardId] = useState<string>(initialStep?.targetCardId || "");
+  const [description, setDescription] = useState<string>(initialStep?.description || '');
+  const [targetCardId, setTargetCardId] = useState<string>(initialStep?.targetCardId || '');
   const [isLoadingCard, setIsLoadingCard] = useState(false);
-  const [selectedCardName, setSelectedCardName] = useState<string>("");
+  const [selectedCardName, setSelectedCardName] = useState<string>('');
 
   // Lade Kartenname wenn cardId gesetzt ist
   useEffect(() => {
-    if (selectedCardId && selectedCardId !== "00000000") {
+    if (selectedCardId && selectedCardId !== '00000000') {
       setIsLoadingCard(true);
       getCardData(selectedCardId)
         .then((card) => {
@@ -90,7 +90,7 @@ export function ComboStepEditor({
         .catch(console.error)
         .finally(() => setIsLoadingCard(false));
     } else {
-      setSelectedCardName("");
+      setSelectedCardName('');
     }
   }, [selectedCardId, getCardData]);
 
@@ -98,15 +98,15 @@ export function ComboStepEditor({
   useEffect(() => {
     if (open) {
       if (initialStep) {
-        setSelectedCardId(initialStep.cardId || "");
-        setActionType((initialStep.actionType as ActionType) || "OTHER");
-        setDescription(initialStep.description || "");
-        setTargetCardId(initialStep.targetCardId || "");
+        setSelectedCardId(initialStep.cardId || '');
+        setActionType((initialStep.actionType as ActionType) || 'OTHER');
+        setDescription(initialStep.description || '');
+        setTargetCardId(initialStep.targetCardId || '');
       } else {
-        setSelectedCardId("");
-        setActionType("OTHER");
-        setDescription("");
-        setTargetCardId("");
+        setSelectedCardId('');
+        setActionType('OTHER');
+        setDescription('');
+        setTargetCardId('');
       }
     }
   }, [open, initialStep]);
@@ -116,7 +116,7 @@ export function ComboStepEditor({
   }
 
   function handleSave() {
-    if (!selectedCardId || selectedCardId === "00000000") {
+    if (!selectedCardId || selectedCardId === '00000000') {
       return; // Karte muss ausgewählt sein
     }
 
@@ -141,35 +141,32 @@ export function ComboStepEditor({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? t("combo.step.add") || "Schritt hinzufügen" : t("combo.step.edit") || "Schritt bearbeiten"}
+            {mode === 'create'
+              ? t('combo.step.add') || 'Schritt hinzufügen'
+              : t('combo.step.edit') || 'Schritt bearbeiten'}
           </DialogTitle>
           <DialogDescription>
-            {mode === "create"
-              ? t("combo.stepCreateDescription")
-              : t("combo.stepEditDescription")}
+            {mode === 'create' ? t('combo.stepCreateDescription') : t('combo.stepEditDescription')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           {/* Kartenauswahl */}
           <div className="space-y-2">
-            <Label>{t("combo.step.card") || "Karte"}</Label>
-            {selectedCardId && selectedCardId !== "00000000" && (
+            <Label>{t('combo.step.card') || 'Karte'}</Label>
+            {selectedCardId && selectedCardId !== '00000000' && (
               <div className="rounded-md border p-2 bg-muted/50">
                 <p className="text-sm font-medium">
-                  {isLoadingCard ? t("common.loading") : selectedCardName || selectedCardId}
+                  {isLoadingCard ? t('common.loading') : selectedCardName || selectedCardId}
                 </p>
               </div>
             )}
-            <CardSearch
-              onCardSelect={handleCardSelect}
-              showAddButton={false}
-            />
+            <CardSearch onCardSelect={handleCardSelect} showAddButton={false} />
           </div>
 
           {/* Aktionstyp */}
           <div className="space-y-2">
-            <Label htmlFor="action-type">{t("combo.step.actionType") || "Aktionstyp"}</Label>
+            <Label htmlFor="action-type">{t('combo.step.actionType') || 'Aktionstyp'}</Label>
             <Select
               value={actionType}
               onValueChange={(value) => setActionType(value as ActionType)}
@@ -189,53 +186,49 @@ export function ComboStepEditor({
 
           {/* Beschreibung */}
           <div className="space-y-2">
-            <Label htmlFor="step-description">{t("combo.step.description") || "Beschreibung"}</Label>
+            <Label htmlFor="step-description">
+              {t('combo.step.description') || 'Beschreibung'}
+            </Label>
             <Textarea
               id="step-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("combo.stepDescriptionPlaceholder")}
+              placeholder={t('combo.stepDescriptionPlaceholder')}
               rows={3}
               maxLength={1000}
             />
             <p className="text-xs text-muted-foreground">
-              {t("combo.charactersCount", { count: description.length })}
+              {t('combo.charactersCount', { count: description.length })}
             </p>
           </div>
 
           {/* Zielkarte (optional) */}
           <div className="space-y-2">
-            <Label htmlFor="target-card">{t("combo.step.targetCard") || "Zielkarte (Optional)"}</Label>
-            <CardSearch
-              onCardSelect={setTargetCardId}
-              showAddButton={false}
-            />
+            <Label htmlFor="target-card">
+              {t('combo.step.targetCard') || 'Zielkarte (Optional)'}
+            </Label>
+            <CardSearch onCardSelect={setTargetCardId} showAddButton={false} />
             {targetCardId && (
               <p className="text-xs text-muted-foreground">
-                {t("combo.targetCardLabel", { cardId: targetCardId })}
+                {t('combo.targetCardLabel', { cardId: targetCardId })}
               </p>
             )}
           </div>
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-          >
-            {t("common.cancel")}
+          <Button type="button" variant="outline" onClick={handleCancel}>
+            {t('common.cancel')}
           </Button>
           <Button
             type="button"
             onClick={handleSave}
-            disabled={!selectedCardId || selectedCardId === "00000000"}
+            disabled={!selectedCardId || selectedCardId === '00000000'}
           >
-            {t("common.save")}
+            {t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-

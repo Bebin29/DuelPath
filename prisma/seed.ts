@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 /**
  * Seed-Script für DuelPath
- * 
+ *
  * Erstellt einen Test-User für Entwicklung und Tests
  */
 async function main() {
@@ -52,4 +52,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

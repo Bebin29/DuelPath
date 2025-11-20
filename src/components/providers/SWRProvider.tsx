@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { SWRConfig } from "swr";
-import { swrConfig } from "@/lib/swr-config";
+import { SWRConfig } from 'swr';
+import { swrConfig } from '@/lib/swr-config';
 
 /**
  * SWR Provider für Request-Caching und Deduplizierung
@@ -9,6 +9,3 @@ import { swrConfig } from "@/lib/swr-config";
 export function SWRProvider({ children }: { children: React.ReactNode }) {
   return <SWRConfig value={swrConfig}>{children}</SWRConfig>;
 }
-
-
-

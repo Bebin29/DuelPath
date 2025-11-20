@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
-import { shouldLoadImage, getOptimizedImageUrl } from "@/lib/utils/image-optimization";
-import { Skeleton } from "@/components/components/ui/skeleton";
-import type { ImageProps } from "next/image";
+import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import { shouldLoadImage, getOptimizedImageUrl } from '@/lib/utils/image-optimization';
+import { Skeleton } from '@/components/components/ui/skeleton';
+import type { ImageProps } from 'next/image';
 
-interface OptimizedImageProps extends Omit<ImageProps, "src"> {
+interface OptimizedImageProps extends Omit<ImageProps, 'src'> {
   src: string;
   alt: string;
   width: number;
   height: number;
   priority?: boolean;
   quality?: number;
-  placeholder?: "blur" | "empty";
+  placeholder?: 'blur' | 'empty';
   blurDataURL?: string;
   sizes?: string;
   className?: string;
@@ -21,7 +21,7 @@ interface OptimizedImageProps extends Omit<ImageProps, "src"> {
 
 /**
  * Optimierte Image-Komponente mit Lazy Loading und Responsive Images
- * 
+ *
  * Features:
  * - Automatisches Lazy Loading (außer bei priority)
  * - Responsive Images mit srcset
@@ -35,7 +35,7 @@ export function OptimizedImage({
   height,
   priority = false,
   quality = 75,
-  placeholder = "empty",
+  placeholder = 'empty',
   blurDataURL,
   sizes,
   className,
@@ -49,7 +49,7 @@ export function OptimizedImage({
     if (priority || shouldLoad) return;
 
     // Intersection Observer für Lazy Loading
-    if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
       setShouldLoad(true);
       return;
     }
@@ -64,7 +64,7 @@ export function OptimizedImage({
         });
       },
       {
-        rootMargin: "200px", // 200px Vorlade-Bereich
+        rootMargin: '200px', // 200px Vorlade-Bereich
         threshold: 0.01,
       }
     );
@@ -79,15 +79,16 @@ export function OptimizedImage({
   }, [priority, shouldLoad]);
 
   // Generiere optimierte URL (wenn Next.js Image Optimization nicht verwendet wird)
-  const optimizedSrc = src.startsWith("http") && !src.includes("_next/image")
-    ? getOptimizedImageUrl(src, { width, height, quality })
-    : src;
+  const optimizedSrc =
+    src.startsWith('http') && !src.includes('_next/image')
+      ? getOptimizedImageUrl(src, { width, height, quality })
+      : src;
 
   // Generiere sizes wenn nicht angegeben
   const imageSizes = sizes || `(max-width: 640px) ${width}px, ${width}px`;
 
   return (
-    <div ref={imageRef} className={`relative overflow-hidden ${className || ""}`}>
+    <div ref={imageRef} className={`relative overflow-hidden ${className || ''}`}>
       {isLoading && (
         <Skeleton
           className="absolute inset-0"
@@ -105,14 +106,13 @@ export function OptimizedImage({
           placeholder={placeholder}
           blurDataURL={blurDataURL}
           sizes={imageSizes}
-          loading={priority ? undefined : "lazy"}
+          loading={priority ? undefined : 'lazy'}
           onLoad={() => setIsLoading(false)}
           onError={() => setIsLoading(false)}
-          className={`transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"} ${className || ""}`}
+          className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} ${className || ''}`}
           {...props}
         />
       )}
     </div>
   );
 }
-

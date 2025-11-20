@@ -1,23 +1,29 @@
-"use client";
+'use client';
 
-import React, { useState, useRef, useCallback } from "react";
-import type { DuelState, DuelAction } from "@/types/duel.types";
-import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { useToast } from "@/components/components/ui/toast";
-import { useResponsiveLayout } from "@/lib/hooks/use-responsive-layout";
-import { useTouchGestures } from "@/lib/hooks/use-touch-gestures";
-import { useDuelDragDrop } from "@/lib/hooks/use-duel-drag-drop";
-import { DndContext } from "@dnd-kit/core";
-import { DuelField } from "./DuelField";
-import { DuelHand } from "./DuelHand";
-import { DuelPhaseController } from "./DuelPhaseController";
-import { DuelLifePoints } from "./DuelLifePoints";
-import { DuelLog } from "./DuelLog";
-import { SaveDuelAsComboDialog } from "./SaveDuelAsComboDialog";
-import { Button } from "@/components/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/components/ui/sheet";
-import { Save, Undo, Redo, Menu, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useRef, useCallback } from 'react';
+import type { DuelState, DuelAction } from '@/types/duel.types';
+import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { useToast } from '@/components/components/ui/toast';
+import { useResponsiveLayout } from '@/lib/hooks/use-responsive-layout';
+import { useTouchGestures } from '@/lib/hooks/use-touch-gestures';
+import { useDuelDragDrop } from '@/lib/hooks/use-duel-drag-drop';
+import { DndContext } from '@dnd-kit/core';
+import { DuelField } from './DuelField';
+import { DuelHand } from './DuelHand';
+import { DuelPhaseController } from './DuelPhaseController';
+import { DuelLifePoints } from './DuelLifePoints';
+import { DuelLog } from './DuelLog';
+import { SaveDuelAsComboDialog } from './SaveDuelAsComboDialog';
+import { Button } from '@/components/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/components/ui/sheet';
+import { Save, Undo, Redo, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DuelBoardProps {
   duelState: DuelState;
@@ -54,7 +60,14 @@ export function DuelBoard({
   // Error handler für Toast-Nachrichten
   const handleError = (message: string, type: 'error' | 'warning' | 'info' | 'success') => {
     addToast({
-      title: type === 'error' ? 'Error' : type === 'warning' ? 'Warning' : type === 'success' ? 'Success' : 'Info',
+      title:
+        type === 'error'
+          ? 'Error'
+          : type === 'warning'
+            ? 'Warning'
+            : type === 'success'
+              ? 'Success'
+              : 'Info',
       description: message,
       variant: type,
     });
@@ -73,20 +86,20 @@ export function DuelBoard({
   // Touch-Gesten für mobile Phasenwechsel
   const handleSwipeLeft = useCallback(() => {
     if (duelState && isMobile) {
-      const phaseOrder = ["DRAW", "STANDBY", "MAIN1", "BATTLE", "MAIN2", "END"];
+      const phaseOrder = ['DRAW', 'STANDBY', 'MAIN1', 'BATTLE', 'MAIN2', 'END'];
       const currentIndex = phaseOrder.indexOf(duelState.phase);
       const nextPhase = phaseOrder[(currentIndex + 1) % phaseOrder.length];
-      onDispatchAction({ type: "CHANGE_PHASE", nextPhase });
+      onDispatchAction({ type: 'CHANGE_PHASE', nextPhase });
     }
   }, [duelState, isMobile, onDispatchAction]);
 
   const handleSwipeRight = useCallback(() => {
     if (duelState && isMobile) {
-      const phaseOrder = ["DRAW", "STANDBY", "MAIN1", "BATTLE", "MAIN2", "END"];
+      const phaseOrder = ['DRAW', 'STANDBY', 'MAIN1', 'BATTLE', 'MAIN2', 'END'];
       const currentIndex = phaseOrder.indexOf(duelState.phase);
       const prevIndex = currentIndex === 0 ? phaseOrder.length - 1 : currentIndex - 1;
       const prevPhase = phaseOrder[prevIndex];
-      onDispatchAction({ type: "CHANGE_PHASE", nextPhase: prevPhase });
+      onDispatchAction({ type: 'CHANGE_PHASE', nextPhase: prevPhase });
     }
   }, [duelState, isMobile, onDispatchAction]);
 
@@ -101,21 +114,21 @@ export function DuelBoard({
     shortcuts: [
       // Space: Nächste Phase
       {
-        key: " ",
+        key: ' ',
         handler: (e) => {
           e.preventDefault();
           if (duelState) {
-            const phaseOrder = ["DRAW", "STANDBY", "MAIN1", "BATTLE", "MAIN2", "END"];
+            const phaseOrder = ['DRAW', 'STANDBY', 'MAIN1', 'BATTLE', 'MAIN2', 'END'];
             const currentIndex = phaseOrder.indexOf(duelState.phase);
             const nextPhase = phaseOrder[(currentIndex + 1) % phaseOrder.length];
-            onDispatchAction({ type: "CHANGE_PHASE", nextPhase });
+            onDispatchAction({ type: 'CHANGE_PHASE', nextPhase });
           }
         },
-        description: "Nächste Phase",
+        description: 'Nächste Phase',
       },
       // Ctrl+Z: Undo
       {
-        key: "z",
+        key: 'z',
         ctrl: true,
         handler: (e) => {
           e.preventDefault();
@@ -123,11 +136,11 @@ export function DuelBoard({
             onUndo();
           }
         },
-        description: "Rückgängig",
+        description: 'Rückgängig',
       },
       // Ctrl+Y oder Ctrl+Shift+Z: Redo
       {
-        key: "y",
+        key: 'y',
         ctrl: true,
         handler: (e) => {
           e.preventDefault();
@@ -135,10 +148,10 @@ export function DuelBoard({
             onRedo();
           }
         },
-        description: "Wiederholen",
+        description: 'Wiederholen',
       },
       {
-        key: "z",
+        key: 'z',
         ctrl: true,
         shift: true,
         handler: (e) => {
@@ -147,15 +160,15 @@ export function DuelBoard({
             onRedo();
           }
         },
-        description: "Wiederholen",
+        description: 'Wiederholen',
       },
       // Escape: Menüs schließen (wird von ActionMenu behandelt)
       {
-        key: "Escape",
+        key: 'Escape',
         handler: () => {
           // TODO: ActionMenu schließen
         },
-        description: "Menü schließen",
+        description: 'Menü schließen',
       },
     ],
   });
@@ -215,9 +228,7 @@ export function DuelBoard({
             <DuelPhaseController
               currentPhase={duelState.phase}
               turnPlayer={duelState.turnPlayer}
-              onPhaseChange={(nextPhase) =>
-                onDispatchAction({ type: "CHANGE_PHASE", nextPhase })
-              }
+              onPhaseChange={(nextPhase) => onDispatchAction({ type: 'CHANGE_PHASE', nextPhase })}
             />
           </div>
 
@@ -230,9 +241,7 @@ export function DuelBoard({
           </div>
 
           <div className="lg:col-span-1">
-            <DuelLog
-              duelState={duelState}
-            />
+            <DuelLog duelState={duelState} />
           </div>
         </div>
       )}
@@ -244,9 +253,7 @@ export function DuelBoard({
       <DuelPhaseController
         currentPhase={duelState.phase}
         turnPlayer={duelState.turnPlayer}
-        onPhaseChange={(nextPhase) =>
-          onDispatchAction({ type: "CHANGE_PHASE", nextPhase })
-        }
+        onPhaseChange={(nextPhase) => onDispatchAction({ type: 'CHANGE_PHASE', nextPhase })}
       />
 
       <DuelLifePoints
@@ -255,18 +262,12 @@ export function DuelBoard({
         winner={duelState.winner}
       />
 
-      <DuelLog
-        duelState={duelState}
-      />
+      <DuelLog duelState={duelState} />
     </div>
   );
 
   return (
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
+    <DndContext onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
       <div ref={duelBoardRef} className="w-full">
         {/* Touch-Hinweis für mobile Geräte */}
         {isMobile && (
@@ -291,7 +292,7 @@ export function DuelBoard({
                   title="Rückgängig (Ctrl+Z)"
                 >
                   <Undo className="w-4 h-4" />
-                  {t("common.undo")}
+                  {t('common.undo')}
                 </Button>
 
                 <Button
@@ -302,7 +303,7 @@ export function DuelBoard({
                   title="Wiederholen (Ctrl+Y)"
                 >
                   <Redo className="w-4 h-4" />
-                  {t("common.redo")}
+                  {t('common.redo')}
                 </Button>
 
                 <Button
@@ -311,7 +312,7 @@ export function DuelBoard({
                   className="flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" />
-                  {t("duel.saveAsCombo")}
+                  {t('duel.saveAsCombo')}
                 </Button>
               </div>
             )}
@@ -350,7 +351,7 @@ export function DuelBoard({
                   title="Rückgängig (Ctrl+Z)"
                 >
                   <Undo className="w-4 h-4" />
-                  {t("common.undo")}
+                  {t('common.undo')}
                 </Button>
 
                 <Button
@@ -362,7 +363,7 @@ export function DuelBoard({
                   title="Wiederholen (Ctrl+Y)"
                 >
                   <Redo className="w-4 h-4" />
-                  {t("common.redo")}
+                  {t('common.redo')}
                 </Button>
 
                 <Button
@@ -372,7 +373,7 @@ export function DuelBoard({
                   className="flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" />
-                  {t("duel.saveAsCombo")}
+                  {t('duel.saveAsCombo')}
                 </Button>
               </div>
             </div>

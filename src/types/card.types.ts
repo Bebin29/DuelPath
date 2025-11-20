@@ -1,4 +1,4 @@
-import type { Card } from "@prisma/client";
+import type { Card } from '@prisma/client';
 
 /**
  * Karten-Suchfilter
@@ -23,15 +23,9 @@ export interface CardSearchFilter {
 /**
  * Karten-Sortierung
  */
-export type CardSortBy =
-  | "name"
-  | "type"
-  | "level"
-  | "atk"
-  | "def"
-  | "archetype";
+export type CardSortBy = 'name' | 'type' | 'level' | 'atk' | 'def' | 'archetype';
 
-export type CardSortOrder = "asc" | "desc";
+export type CardSortOrder = 'asc' | 'desc';
 
 /**
  * Karten-Sortier-Optionen
@@ -51,7 +45,3 @@ export interface CardListResult {
   pageSize: number;
   totalPages: number;
 }
-
-
-
-

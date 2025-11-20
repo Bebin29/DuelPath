@@ -1,41 +1,41 @@
-import { z } from "zod";
-import type { ActionType } from "@/types/combo.types";
+import { z } from 'zod';
+import type { ActionType } from '@/types/combo.types';
 
 /**
  * Aktionstyp Enum für Validierung
  */
 export const ACTION_TYPES = [
-  "SUMMON",
-  "ACTIVATE",
-  "SET",
-  "ATTACK",
-  "DRAW",
-  "DISCARD",
-  "SPECIAL_SUMMON",
-  "TRIBUTE_SUMMON",
-  "NORMAL_SUMMON",
-  "FLIP_SUMMON",
-  "OTHER",
+  'SUMMON',
+  'ACTIVATE',
+  'SET',
+  'ATTACK',
+  'DRAW',
+  'DISCARD',
+  'SPECIAL_SUMMON',
+  'TRIBUTE_SUMMON',
+  'NORMAL_SUMMON',
+  'FLIP_SUMMON',
+  'OTHER',
 ] as const;
 
 /**
  * Schema für Combo-Schritt Erstellung
  */
 export const createComboStepSchema = z.object({
-  cardId: z.string().min(1, "Karten-ID ist erforderlich"),
+  cardId: z.string().min(1, 'Karten-ID ist erforderlich'),
   actionType: z.enum(ACTION_TYPES, {
-    errorMap: () => ({ message: "Ungültiger Aktionstyp" }),
+    errorMap: () => ({ message: 'Ungültiger Aktionstyp' }),
   }),
   description: z
     .string()
-    .max(1000, "Beschreibung darf maximal 1000 Zeichen lang sein")
+    .max(1000, 'Beschreibung darf maximal 1000 Zeichen lang sein')
     .optional()
     .nullable(),
   targetCardId: z.string().min(1).optional().nullable(),
   order: z
     .number()
-    .int("Reihenfolge muss eine ganze Zahl sein")
-    .min(1, "Reihenfolge muss mindestens 1 sein"),
+    .int('Reihenfolge muss eine ganze Zahl sein')
+    .min(1, 'Reihenfolge muss mindestens 1 sein'),
 });
 
 export type CreateComboStepInput = z.infer<typeof createComboStepSchema>;
@@ -44,22 +44,22 @@ export type CreateComboStepInput = z.infer<typeof createComboStepSchema>;
  * Schema für Combo-Schritt Update
  */
 export const updateComboStepSchema = z.object({
-  cardId: z.string().min(1, "Karten-ID ist erforderlich").optional(),
+  cardId: z.string().min(1, 'Karten-ID ist erforderlich').optional(),
   actionType: z
     .enum(ACTION_TYPES, {
-      errorMap: () => ({ message: "Ungültiger Aktionstyp" }),
+      errorMap: () => ({ message: 'Ungültiger Aktionstyp' }),
     })
     .optional(),
   description: z
     .string()
-    .max(1000, "Beschreibung darf maximal 1000 Zeichen lang sein")
+    .max(1000, 'Beschreibung darf maximal 1000 Zeichen lang sein')
     .optional()
     .nullable(),
   targetCardId: z.string().min(1).optional().nullable(),
   order: z
     .number()
-    .int("Reihenfolge muss eine ganze Zahl sein")
-    .min(1, "Reihenfolge muss mindestens 1 sein")
+    .int('Reihenfolge muss eine ganze Zahl sein')
+    .min(1, 'Reihenfolge muss mindestens 1 sein')
     .optional(),
 });
 
@@ -68,42 +68,44 @@ export type UpdateComboStepInput = z.infer<typeof updateComboStepSchema>;
 /**
  * Schema für Combo-Erstellung
  */
-export const createComboSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Titel muss mindestens 1 Zeichen lang sein")
-    .max(200, "Titel darf maximal 200 Zeichen lang sein")
-    .trim(),
-  description: z
-    .string()
-    .max(2000, "Beschreibung darf maximal 2000 Zeichen lang sein")
-    .optional()
-    .nullable(),
-  deckId: z.string().min(1).optional().nullable(),
-  steps: z
-    .array(createComboStepSchema)
-    .max(100, "Eine Kombo darf maximal 100 Schritte haben")
-    .optional()
-    .default([]),
-}).refine(
-  (data) => {
-    // Prüfe ob order-Werte eindeutig und sequenziell sind (nur wenn Steps vorhanden)
-    if (!data.steps || data.steps.length === 0) {
-      return true; // Keine Steps ist erlaubt beim Erstellen
-    }
-    const orders = data.steps.map((step) => step.order).sort((a, b) => a - b);
-    for (let i = 0; i < orders.length; i++) {
-      if (orders[i] !== i + 1) {
-        return false;
+export const createComboSchema = z
+  .object({
+    title: z
+      .string()
+      .min(1, 'Titel muss mindestens 1 Zeichen lang sein')
+      .max(200, 'Titel darf maximal 200 Zeichen lang sein')
+      .trim(),
+    description: z
+      .string()
+      .max(2000, 'Beschreibung darf maximal 2000 Zeichen lang sein')
+      .optional()
+      .nullable(),
+    deckId: z.string().min(1).optional().nullable(),
+    steps: z
+      .array(createComboStepSchema)
+      .max(100, 'Eine Kombo darf maximal 100 Schritte haben')
+      .optional()
+      .default([]),
+  })
+  .refine(
+    (data) => {
+      // Prüfe ob order-Werte eindeutig und sequenziell sind (nur wenn Steps vorhanden)
+      if (!data.steps || data.steps.length === 0) {
+        return true; // Keine Steps ist erlaubt beim Erstellen
       }
+      const orders = data.steps.map((step) => step.order).sort((a, b) => a - b);
+      for (let i = 0; i < orders.length; i++) {
+        if (orders[i] !== i + 1) {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message: 'Reihenfolge-Werte müssen eindeutig und sequenziell sein (1, 2, 3, ...)',
+      path: ['steps'],
     }
-    return true;
-  },
-  {
-    message: "Reihenfolge-Werte müssen eindeutig und sequenziell sein (1, 2, 3, ...)",
-    path: ["steps"],
-  }
-);
+  );
 
 export type CreateComboInput = z.infer<typeof createComboSchema>;
 
@@ -113,13 +115,13 @@ export type CreateComboInput = z.infer<typeof createComboSchema>;
 export const updateComboSchema = z.object({
   title: z
     .string()
-    .min(1, "Titel muss mindestens 1 Zeichen lang sein")
-    .max(200, "Titel darf maximal 200 Zeichen lang sein")
+    .min(1, 'Titel muss mindestens 1 Zeichen lang sein')
+    .max(200, 'Titel darf maximal 200 Zeichen lang sein')
     .trim()
     .optional(),
   description: z
     .string()
-    .max(2000, "Beschreibung darf maximal 2000 Zeichen lang sein")
+    .max(2000, 'Beschreibung darf maximal 2000 Zeichen lang sein')
     .optional()
     .nullable(),
   deckId: z.string().min(1).optional().nullable(),
@@ -133,8 +135,8 @@ export type UpdateComboInput = z.infer<typeof updateComboSchema>;
 export const comboStepOrderSchema = z.object({
   stepIds: z
     .array(z.string().min(1))
-    .min(1, "Mindestens eine Step-ID ist erforderlich")
-    .max(100, "Maximal 100 Steps können neu sortiert werden"),
+    .min(1, 'Mindestens eine Step-ID ist erforderlich')
+    .max(100, 'Maximal 100 Steps können neu sortiert werden'),
 });
 
 export type ComboStepOrderInput = z.infer<typeof comboStepOrderSchema>;
@@ -145,20 +147,20 @@ export type ComboStepOrderInput = z.infer<typeof comboStepOrderSchema>;
 export const batchComboStepOperationsSchema = z.object({
   operations: z
     .array(
-      z.discriminatedUnion("type", [
+      z.discriminatedUnion('type', [
         z.object({
-          type: z.literal("delete"),
+          type: z.literal('delete'),
           stepId: z.string().min(1),
         }),
         z.object({
-          type: z.literal("update"),
+          type: z.literal('update'),
           stepId: z.string().min(1),
           data: updateComboStepSchema,
         }),
       ])
     )
-    .min(1, "Mindestens eine Operation ist erforderlich")
-    .max(50, "Maximal 50 Operationen pro Batch erlaubt"),
+    .min(1, 'Mindestens eine Operation ist erforderlich')
+    .max(50, 'Maximal 50 Operationen pro Batch erlaubt'),
 });
 
 export type BatchComboStepOperationsInput = z.infer<typeof batchComboStepOperationsSchema>;
@@ -186,7 +188,7 @@ export interface ComboValidationResult {
 
 /**
  * Validiert Combo-Schritte
- * 
+ *
  * @param steps - Array von Combo-Schritten
  * @returns Validierungsergebnis
  */
@@ -213,9 +215,9 @@ export function validateComboSteps(
   // Prüfe ob order-Werte eindeutig und sequenziell sind
   const orders = steps.map((step) => step.order).sort((a, b) => a - b);
   const uniqueOrders = new Set(orders);
-  
+
   if (uniqueOrders.size !== orders.length) {
-    errors.push("Reihenfolge-Werte müssen eindeutig sein");
+    errors.push('Reihenfolge-Werte müssen eindeutig sein');
   }
 
   for (let i = 0; i < orders.length; i++) {
@@ -236,7 +238,7 @@ export function validateComboSteps(
 
 /**
  * Validiert ob eine Karte in einem Deck vorhanden ist
- * 
+ *
  * @param cardId - ID der Karte
  * @param deckId - ID des Decks
  * @returns true wenn Karte im Deck vorhanden ist
@@ -254,4 +256,3 @@ export async function validateCardInDeck(
   // Hier nur die Signatur für die Validierung
   return { isValid: true };
 }
-

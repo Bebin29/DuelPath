@@ -42,4 +42,3 @@ describe('Button', () => {
     expect(button).toHaveClass('h-10');
   });
 });
-

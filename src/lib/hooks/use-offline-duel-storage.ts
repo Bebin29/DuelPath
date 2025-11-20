@@ -1,7 +1,7 @@
-import { useEffect, useCallback } from "react";
-import type { DuelState } from "@/types/duel.types";
+import { useEffect, useCallback } from 'react';
+import type { DuelState } from '@/types/duel.types';
 
-const DUEL_STORAGE_KEY = "duelpath-duel-state";
+const DUEL_STORAGE_KEY = 'duelpath-duel-state';
 const DUEL_AUTO_SAVE_INTERVAL = 5000; // 5 Sekunden
 
 /**
@@ -24,7 +24,7 @@ export function useOfflineDuelStorage() {
 
       return parsed as DuelState;
     } catch (error) {
-      console.error("Failed to load duel from localStorage:", error);
+      console.error('Failed to load duel from localStorage:', error);
       return null;
     }
   }, []);
@@ -36,7 +36,7 @@ export function useOfflineDuelStorage() {
     try {
       localStorage.setItem(DUEL_STORAGE_KEY, JSON.stringify(duelState));
     } catch (error) {
-      console.error("Failed to save duel to localStorage:", error);
+      console.error('Failed to save duel to localStorage:', error);
     }
   }, []);
 
@@ -47,30 +47,33 @@ export function useOfflineDuelStorage() {
     try {
       localStorage.removeItem(DUEL_STORAGE_KEY);
     } catch (error) {
-      console.error("Failed to clear duel from localStorage:", error);
+      console.error('Failed to clear duel from localStorage:', error);
     }
   }, []);
 
   /**
    * Auto-Save Hook: Speichert den Duel-Zustand periodisch
    */
-  const useAutoSave = useCallback((duelState: DuelState | null) => {
-    useEffect(() => {
-      if (!duelState) {
-        clearDuelLocally();
-        return;
-      }
+  const useAutoSave = useCallback(
+    (duelState: DuelState | null) => {
+      useEffect(() => {
+        if (!duelState) {
+          clearDuelLocally();
+          return;
+        }
 
-      const saveInterval = setInterval(() => {
+        const saveInterval = setInterval(() => {
+          saveDuelLocally(duelState);
+        }, DUEL_AUTO_SAVE_INTERVAL);
+
+        // Speichere auch sofort bei Änderungen
         saveDuelLocally(duelState);
-      }, DUEL_AUTO_SAVE_INTERVAL);
 
-      // Speichere auch sofort bei Änderungen
-      saveDuelLocally(duelState);
-
-      return () => clearInterval(saveInterval);
-    }, [duelState]);
-  }, [saveDuelLocally, clearDuelLocally]);
+        return () => clearInterval(saveInterval);
+      }, [duelState]);
+    },
+    [saveDuelLocally, clearDuelLocally]
+  );
 
   /**
    * Prüft ob ein Duel lokal gespeichert ist

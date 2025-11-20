@@ -1,9 +1,9 @@
-import { useCallback, useRef, useState } from "react";
-import { useTransition } from "react";
-import type { ComboWithSteps } from "@/types/combo.types";
-import type { CreateComboStepInput, UpdateComboStepInput } from "@/lib/validations/combo.schema";
-import type { Card } from "@prisma/client";
-import { useRetry } from "./use-retry";
+import { useCallback, useRef, useState } from 'react';
+import { useTransition } from 'react';
+import type { ComboWithSteps } from '@/types/combo.types';
+import type { CreateComboStepInput, UpdateComboStepInput } from '@/lib/validations/combo.schema';
+import type { Card } from '@prisma/client';
+import { useRetry } from './use-retry';
 import {
   createCombo,
   updateCombo,
@@ -12,9 +12,9 @@ import {
   updateComboStep,
   deleteComboStep,
   reorderComboSteps,
-} from "@/server/actions/combo.actions";
-import { sortComboSteps } from "@/lib/utils/combo.utils";
-import type { HistoryAction } from "./use-combo-history";
+} from '@/server/actions/combo.actions';
+import { sortComboSteps } from '@/lib/utils/combo.utils';
+import type { HistoryAction } from './use-combo-history';
 
 interface UseComboOperationsOptions {
   comboId?: string;
@@ -25,21 +25,21 @@ interface UseComboOperationsOptions {
   onSuccess?: (message?: string) => void;
   loadCombo?: () => Promise<void>;
   queueOfflineOperation?: (
-    type: "create" | "update" | "delete",
-    resource: "combo" | "step",
+    type: 'create' | 'update' | 'delete',
+    resource: 'combo' | 'step',
     data: unknown
   ) => void;
 }
 
 interface PendingOperation {
   stepId?: string;
-  type: "create" | "update" | "delete" | "addStep" | "updateStep" | "deleteStep" | "reorderSteps";
+  type: 'create' | 'update' | 'delete' | 'addStep' | 'updateStep' | 'deleteStep' | 'reorderSteps';
   timestamp: number;
 }
 
 /**
  * Custom Hook für Combo-Operationen mit Request-Deduplizierung
- * 
+ *
  * Features:
  * - Request-Queue mit Debouncing
  * - Identische Requests innerhalb 500ms werden dedupliziert
@@ -79,24 +79,18 @@ export function useComboOperations({
   /**
    * Generiert einen eindeutigen Key für eine Operation
    */
-  const getOperationKey = useCallback(
-    (type: string, stepId?: string) => {
-      return stepId ? `${type}-${stepId}` : type;
-    },
-    []
-  );
+  const getOperationKey = useCallback((type: string, stepId?: string) => {
+    return stepId ? `${type}-${stepId}` : type;
+  }, []);
 
   /**
    * Prüft ob eine identische Operation bereits pending ist
    */
-  const isOperationPending = useCallback(
-    (key: string, maxAge: number = 500) => {
-      const pending = pendingOperationsRef.current.get(key);
-      if (!pending) return false;
-      return Date.now() - pending.timestamp < maxAge;
-    },
-    []
-  );
+  const isOperationPending = useCallback((key: string, maxAge: number = 500) => {
+    const pending = pendingOperationsRef.current.get(key);
+    if (!pending) return false;
+    return Date.now() - pending.timestamp < maxAge;
+  }, []);
 
   /**
    * Bricht eine pending Operation ab
@@ -116,11 +110,11 @@ export function useComboOperations({
   const updateComboData = useCallback(
     async (data: { title?: string; description?: string | null; deckId?: string | null }) => {
       if (!comboId) {
-        onError?.("Keine Kombo-ID vorhanden");
+        onError?.('Keine Kombo-ID vorhanden');
         return;
       }
 
-      const key = getOperationKey("update");
+      const key = getOperationKey('update');
 
       if (isOperationPending(key)) {
         return;
@@ -141,10 +135,10 @@ export function useComboOperations({
         };
       });
 
-      setPendingOperations((prev) => new Map(prev).set(key, "update"));
+      setPendingOperations((prev) => new Map(prev).set(key, 'update'));
       setLoadingStates((prev) => ({ ...prev, isUpdatingCombo: true }));
       pendingOperationsRef.current.set(key, {
-        type: "update",
+        type: 'update',
         timestamp: Date.now(),
       });
 
@@ -179,7 +173,10 @@ export function useComboOperations({
                   ...result.combo,
                   steps: current.steps, // Behalte Steps
                 };
-                addHistoryEntry({ type: "updateCombo", field: Object.keys(data)[0] || "" }, updated);
+                addHistoryEntry(
+                  { type: 'updateCombo', field: Object.keys(data)[0] || '' },
+                  updated
+                );
                 return updated;
               });
               onSuccess?.();
@@ -198,12 +195,23 @@ export function useComboOperations({
             } else if (loadCombo) {
               await loadCombo();
             }
-            onError?.(err instanceof Error ? err.message : "Failed to update combo");
+            onError?.(err instanceof Error ? err.message : 'Failed to update combo');
           }
         })();
       });
     },
-    [comboId, combo, setCombo, addHistoryEntry, onError, onSuccess, getOperationKey, isOperationPending, retry, loadCombo]
+    [
+      comboId,
+      combo,
+      setCombo,
+      addHistoryEntry,
+      onError,
+      onSuccess,
+      getOperationKey,
+      isOperationPending,
+      retry,
+      loadCombo,
+    ]
   );
 
   /**
@@ -212,11 +220,11 @@ export function useComboOperations({
   const addStep = useCallback(
     async (step: CreateComboStepInput) => {
       if (!comboId) {
-        onError?.("Keine Kombo-ID vorhanden");
+        onError?.('Keine Kombo-ID vorhanden');
         return;
       }
 
-      const key = getOperationKey("addStep");
+      const key = getOperationKey('addStep');
 
       if (isOperationPending(key)) {
         return;
@@ -231,18 +239,18 @@ export function useComboOperations({
       const tempStepId = `temp-${Date.now()}`;
       setCombo((current) => {
         if (!current) return current;
-        
+
         // Versuche Card-Daten aus bestehenden Steps zu finden
         const existingCard = current.steps.find((s) => s.cardId === step.cardId)?.card;
-        
+
         // Erstelle minimale Card-Struktur falls nicht vorhanden
-        const card: Pick<Card, "id" | "name" | "imageSmall" | "type"> = existingCard || {
+        const card: Pick<Card, 'id' | 'name' | 'imageSmall' | 'type'> = existingCard || {
           id: step.cardId,
-          name: "",
+          name: '',
           imageSmall: null,
-          type: "",
+          type: '',
         };
-        
+
         const newStep = {
           id: tempStepId,
           comboId: current.id,
@@ -260,10 +268,10 @@ export function useComboOperations({
         return updated;
       });
 
-      setPendingOperations((prev) => new Map(prev).set(key, "addStep"));
+      setPendingOperations((prev) => new Map(prev).set(key, 'addStep'));
       setLoadingStates((prev) => ({ ...prev, isAddingStep: true }));
       pendingOperationsRef.current.set(key, {
-        type: "addStep",
+        type: 'addStep',
         timestamp: Date.now(),
       });
 
@@ -296,13 +304,11 @@ export function useComboOperations({
                 const updated = {
                   ...current,
                   steps: sortComboSteps(
-                    current.steps
-                      .filter((s) => s.id !== tempStepId)
-                      .concat(result.step!)
+                    current.steps.filter((s) => s.id !== tempStepId).concat(result.step!)
                   ),
                 };
                 addHistoryEntry(
-                  { type: "addStep", stepId: result.step!.id, order: result.step!.order },
+                  { type: 'addStep', stepId: result.step!.id, order: result.step!.order },
                   updated
                 );
                 return updated;
@@ -324,12 +330,23 @@ export function useComboOperations({
             } else if (loadCombo) {
               await loadCombo();
             }
-            onError?.(err instanceof Error ? err.message : "Failed to add step");
+            onError?.(err instanceof Error ? err.message : 'Failed to add step');
           }
         })();
       });
     },
-    [comboId, combo, setCombo, addHistoryEntry, onError, onSuccess, getOperationKey, isOperationPending, retry, loadCombo]
+    [
+      comboId,
+      combo,
+      setCombo,
+      addHistoryEntry,
+      onError,
+      onSuccess,
+      getOperationKey,
+      isOperationPending,
+      retry,
+      loadCombo,
+    ]
   );
 
   /**
@@ -338,11 +355,11 @@ export function useComboOperations({
   const updateStep = useCallback(
     async (stepId: string, step: UpdateComboStepInput) => {
       if (!comboId) {
-        onError?.("Keine Kombo-ID vorhanden");
+        onError?.('Keine Kombo-ID vorhanden');
         return;
       }
 
-      const key = getOperationKey("updateStep", stepId);
+      const key = getOperationKey('updateStep', stepId);
 
       if (isOperationPending(key)) {
         return;
@@ -371,14 +388,14 @@ export function useComboOperations({
         return updated;
       });
 
-      setPendingOperations((prev) => new Map(prev).set(key, "updateStep"));
+      setPendingOperations((prev) => new Map(prev).set(key, 'updateStep'));
       setLoadingStates((prev) => ({
         ...prev,
         isUpdatingStep: new Map(prev.isUpdatingStep).set(stepId, true),
       }));
       pendingOperationsRef.current.set(key, {
         stepId,
-        type: "updateStep",
+        type: 'updateStep',
         timestamp: Date.now(),
       });
 
@@ -419,7 +436,7 @@ export function useComboOperations({
                   ),
                 };
                 addHistoryEntry(
-                  { type: "updateStep", stepId: result.step!.id, order: result.step!.order },
+                  { type: 'updateStep', stepId: result.step!.id, order: result.step!.order },
                   updated
                 );
                 return updated;
@@ -445,12 +462,23 @@ export function useComboOperations({
             } else if (loadCombo) {
               await loadCombo();
             }
-            onError?.(err instanceof Error ? err.message : "Failed to update step");
+            onError?.(err instanceof Error ? err.message : 'Failed to update step');
           }
         })();
       });
     },
-    [comboId, combo, setCombo, addHistoryEntry, onError, onSuccess, getOperationKey, isOperationPending, retry, loadCombo]
+    [
+      comboId,
+      combo,
+      setCombo,
+      addHistoryEntry,
+      onError,
+      onSuccess,
+      getOperationKey,
+      isOperationPending,
+      retry,
+      loadCombo,
+    ]
   );
 
   /**
@@ -459,11 +487,11 @@ export function useComboOperations({
   const removeStep = useCallback(
     async (stepId: string) => {
       if (!comboId) {
-        onError?.("Keine Kombo-ID vorhanden");
+        onError?.('Keine Kombo-ID vorhanden');
         return;
       }
 
-      const key = getOperationKey("deleteStep", stepId);
+      const key = getOperationKey('deleteStep', stepId);
 
       if (isOperationPending(key)) {
         return;
@@ -480,21 +508,23 @@ export function useComboOperations({
         if (!current) return current;
         return {
           ...current,
-          steps: current.steps.filter((s) => s.id !== stepId).map((s, index) => ({
-            ...s,
-            order: index + 1,
-          })),
+          steps: current.steps
+            .filter((s) => s.id !== stepId)
+            .map((s, index) => ({
+              ...s,
+              order: index + 1,
+            })),
         };
       });
 
-      setPendingOperations((prev) => new Map(prev).set(key, "deleteStep"));
+      setPendingOperations((prev) => new Map(prev).set(key, 'deleteStep'));
       setLoadingStates((prev) => ({
         ...prev,
         isDeletingStep: new Map(prev.isDeletingStep).set(stepId, true),
       }));
       pendingOperationsRef.current.set(key, {
         stepId,
-        type: "deleteStep",
+        type: 'deleteStep',
         timestamp: Date.now(),
       });
 
@@ -527,10 +557,7 @@ export function useComboOperations({
               onError?.(result.error);
             } else {
               if (step) {
-                addHistoryEntry(
-                  { type: "removeStep", stepId: step.id, order: step.order },
-                  combo!
-                );
+                addHistoryEntry({ type: 'removeStep', stepId: step.id, order: step.order }, combo!);
               }
               onSuccess?.();
             }
@@ -553,12 +580,23 @@ export function useComboOperations({
             } else if (loadCombo) {
               await loadCombo();
             }
-            onError?.(err instanceof Error ? err.message : "Failed to delete step");
+            onError?.(err instanceof Error ? err.message : 'Failed to delete step');
           }
         })();
       });
     },
-    [comboId, combo, setCombo, addHistoryEntry, onError, onSuccess, getOperationKey, isOperationPending, retry, loadCombo]
+    [
+      comboId,
+      combo,
+      setCombo,
+      addHistoryEntry,
+      onError,
+      onSuccess,
+      getOperationKey,
+      isOperationPending,
+      retry,
+      loadCombo,
+    ]
   );
 
   /**
@@ -567,11 +605,11 @@ export function useComboOperations({
   const reorderSteps = useCallback(
     async (stepIds: string[]) => {
       if (!comboId) {
-        onError?.("Keine Kombo-ID vorhanden");
+        onError?.('Keine Kombo-ID vorhanden');
         return;
       }
 
-      const key = getOperationKey("reorderSteps");
+      const key = getOperationKey('reorderSteps');
 
       if (isOperationPending(key)) {
         return;
@@ -599,10 +637,10 @@ export function useComboOperations({
         };
       });
 
-      setPendingOperations((prev) => new Map(prev).set(key, "reorderSteps"));
+      setPendingOperations((prev) => new Map(prev).set(key, 'reorderSteps'));
       setLoadingStates((prev) => ({ ...prev, isReorderingSteps: true }));
       pendingOperationsRef.current.set(key, {
-        type: "reorderSteps",
+        type: 'reorderSteps',
         timestamp: Date.now(),
       });
 
@@ -631,7 +669,7 @@ export function useComboOperations({
               onError?.(result.error);
             } else {
               if (combo) {
-                addHistoryEntry({ type: "reorderSteps", stepIds }, combo);
+                addHistoryEntry({ type: 'reorderSteps', stepIds }, combo);
               }
               onSuccess?.();
             }
@@ -650,12 +688,23 @@ export function useComboOperations({
             } else if (loadCombo) {
               await loadCombo();
             }
-            onError?.(err instanceof Error ? err.message : "Failed to reorder steps");
+            onError?.(err instanceof Error ? err.message : 'Failed to reorder steps');
           }
         })();
       });
     },
-    [comboId, combo, setCombo, addHistoryEntry, onError, onSuccess, getOperationKey, isOperationPending, retry, loadCombo]
+    [
+      comboId,
+      combo,
+      setCombo,
+      addHistoryEntry,
+      onError,
+      onSuccess,
+      getOperationKey,
+      isOperationPending,
+      retry,
+      loadCombo,
+    ]
   );
 
   /**
@@ -664,13 +713,13 @@ export function useComboOperations({
   const batchOperations = useCallback(
     async (
       operations: Array<
-        | { type: "delete"; stepId: string }
-        | { type: "update"; stepId: string; data: UpdateComboStepInput }
+        | { type: 'delete'; stepId: string }
+        | { type: 'update'; stepId: string; data: UpdateComboStepInput }
       >
     ) => {
       if (!comboId || !combo) return;
 
-      const key = getOperationKey("batchOperations", { operations });
+      const key = getOperationKey('batchOperations', { operations });
       if (isOperationPending(key)) {
         return;
       }
@@ -686,9 +735,9 @@ export function useComboOperations({
         let updatedSteps = [...current.steps];
 
         for (const operation of operations) {
-          if (operation.type === "delete") {
+          if (operation.type === 'delete') {
             updatedSteps = updatedSteps.filter((s) => s.id !== operation.stepId);
-          } else if (operation.type === "update") {
+          } else if (operation.type === 'update') {
             updatedSteps = updatedSteps.map((s) =>
               s.id === operation.stepId ? { ...s, ...operation.data } : s
             );
@@ -701,15 +750,15 @@ export function useComboOperations({
         };
       });
 
-      setPendingOperations((prev) => new Map(prev).set(key, "batchOperations"));
+      setPendingOperations((prev) => new Map(prev).set(key, 'batchOperations'));
       setLoadingStates((prev) => ({ ...prev, isUpdatingCombo: true }));
 
       startTransition(() => {
         (async () => {
           try {
             const response = await fetch(`/api/combos/${comboId}/steps/batch`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ operations: operations }),
             });
 
@@ -732,7 +781,7 @@ export function useComboOperations({
               } else if (loadCombo) {
                 await loadCombo();
               }
-              onError?.(result.error || "Batch operations failed");
+              onError?.(result.error || 'Batch operations failed');
             } else {
               // Reload combo to get updated data
               if (loadCombo) {
@@ -755,7 +804,7 @@ export function useComboOperations({
             } else if (loadCombo) {
               await loadCombo();
             }
-            onError?.(err instanceof Error ? err.message : "Failed to execute batch operations");
+            onError?.(err instanceof Error ? err.message : 'Failed to execute batch operations');
           }
         })();
       });
@@ -776,4 +825,3 @@ export function useComboOperations({
     cancelOperation,
   };
 }
-

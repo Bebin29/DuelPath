@@ -1,6 +1,6 @@
-import { useRef, useCallback } from "react";
-import type { Card } from "@prisma/client";
-import type { CardForDeck } from "./use-deck-history";
+import { useRef, useCallback } from 'react';
+import type { Card } from '@prisma/client';
+import type { CardForDeck } from './use-deck-history';
 
 interface CachedCard {
   card: CardForDeck;
@@ -11,7 +11,7 @@ const CACHE_TTL = 60 * 60 * 1000; // 1 Stunde in Millisekunden
 
 /**
  * Card-Cache für bessere Performance
- * 
+ *
  * Cacht Card-Daten aus Suchergebnissen und API-Responses
  * Mit TTL-basiertem Caching (1 Stunde)
  */
@@ -40,65 +40,77 @@ export function useCardCache() {
   /**
    * Fügt eine Card zum Cache hinzu
    */
-  const addToCache = useCallback((card: Card | CardForDeck) => {
-    const cardForDeck: CardForDeck = {
-      id: card.id,
-      name: card.name,
-      type: card.type,
-      race: card.race ?? null,
-      attribute: card.attribute ?? null,
-      level: card.level ?? null,
-      atk: card.atk ?? null,
-      def: card.def ?? null,
-      archetype: card.archetype ?? null,
-      imageSmall: card.imageSmall ?? null,
-    };
-    cacheRef.current.set(card.id, {
-      card: cardForDeck,
-      timestamp: Date.now(),
-    });
-    // Periodische Bereinigung (alle 100 Einträge)
-    if (cacheRef.current.size % 100 === 0) {
-      cleanupExpiredEntries();
-    }
-  }, [cleanupExpiredEntries]);
+  const addToCache = useCallback(
+    (card: Card | CardForDeck) => {
+      const cardForDeck: CardForDeck = {
+        id: card.id,
+        name: card.name,
+        type: card.type,
+        race: card.race ?? null,
+        attribute: card.attribute ?? null,
+        level: card.level ?? null,
+        atk: card.atk ?? null,
+        def: card.def ?? null,
+        archetype: card.archetype ?? null,
+        imageSmall: card.imageSmall ?? null,
+      };
+      cacheRef.current.set(card.id, {
+        card: cardForDeck,
+        timestamp: Date.now(),
+      });
+      // Periodische Bereinigung (alle 100 Einträge)
+      if (cacheRef.current.size % 100 === 0) {
+        cleanupExpiredEntries();
+      }
+    },
+    [cleanupExpiredEntries]
+  );
 
   /**
    * Fügt mehrere Cards zum Cache hinzu
    */
-  const addMultipleToCache = useCallback((cards: (Card | CardForDeck)[]) => {
-    cards.forEach((card) => addToCache(card));
-  }, [addToCache]);
+  const addMultipleToCache = useCallback(
+    (cards: (Card | CardForDeck)[]) => {
+      cards.forEach((card) => addToCache(card));
+    },
+    [addToCache]
+  );
 
   /**
    * Holt eine Card aus dem Cache
    */
-  const getFromCache = useCallback((cardId: string): CardForDeck | null => {
-    const cached = cacheRef.current.get(cardId);
-    if (!cached) return null;
-    
-    if (isCacheValid(cached)) {
-      return cached.card;
-    } else {
-      // Cache-Eintrag abgelaufen, entfernen
-      cacheRef.current.delete(cardId);
-      return null;
-    }
-  }, [isCacheValid]);
+  const getFromCache = useCallback(
+    (cardId: string): CardForDeck | null => {
+      const cached = cacheRef.current.get(cardId);
+      if (!cached) return null;
+
+      if (isCacheValid(cached)) {
+        return cached.card;
+      } else {
+        // Cache-Eintrag abgelaufen, entfernen
+        cacheRef.current.delete(cardId);
+        return null;
+      }
+    },
+    [isCacheValid]
+  );
 
   /**
    * Holt mehrere Cards aus dem Cache
    */
-  const getMultipleFromCache = useCallback((cardIds: string[]): Map<string, CardForDeck> => {
-    const result = new Map<string, CardForDeck>();
-    cardIds.forEach((id) => {
-      const card = getFromCache(id);
-      if (card) {
-        result.set(id, card);
-      }
-    });
-    return result;
-  }, [getFromCache]);
+  const getMultipleFromCache = useCallback(
+    (cardIds: string[]): Map<string, CardForDeck> => {
+      const result = new Map<string, CardForDeck>();
+      cardIds.forEach((id) => {
+        const card = getFromCache(id);
+        if (card) {
+          result.set(id, card);
+        }
+      });
+      return result;
+    },
+    [getFromCache]
+  );
 
   /**
    * Lädt eine Card von der API (mit Cache-Fallback)
@@ -133,7 +145,7 @@ export function useCardCache() {
           }
         }
       } catch (error) {
-        console.error("Failed to fetch card:", error);
+        console.error('Failed to fetch card:', error);
       }
       return null;
     },
@@ -155,7 +167,7 @@ export function useCardCache() {
 
       // Batch-Request für fehlende Cards
       try {
-        const response = await fetch(`/api/cards?ids=${missingIds.join(",")}`);
+        const response = await fetch(`/api/cards?ids=${missingIds.join(',')}`);
         if (response.ok) {
           const data = await response.json();
           if (data.cards && Array.isArray(data.cards)) {
@@ -178,7 +190,7 @@ export function useCardCache() {
           }
         }
       } catch (error) {
-        console.error("Failed to fetch cards:", error);
+        console.error('Failed to fetch cards:', error);
       }
 
       return cached;
@@ -203,4 +215,3 @@ export function useCardCache() {
     clearCache,
   };
 }
-

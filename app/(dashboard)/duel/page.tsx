@@ -1,17 +1,23 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { useDuelState } from "@/lib/hooks/use-duel-state";
-import { getUserDecks } from "@/server/actions/deck.actions";
-import { useToast } from "@/components/components/ui/toast";
-import { DuelBoard } from "@/components/duel/DuelBoard";
-import { DuelDeckSelectionDialog } from "@/components/duel/DuelDeckSelectionDialog";
-import { DuelErrorBoundary } from "@/components/error/DuelErrorBoundary";
-import { Button } from "@/components/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/components/ui/card";
-import { Swords } from "lucide-react";
-import type { DuelDeck } from "@/types/duel.types";
+import { useState } from 'react';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { useDuelState } from '@/lib/hooks/use-duel-state';
+import { getUserDecks } from '@/server/actions/deck.actions';
+import { useToast } from '@/components/components/ui/toast';
+import { DuelBoard } from '@/components/duel/DuelBoard';
+import { DuelDeckSelectionDialog } from '@/components/duel/DuelDeckSelectionDialog';
+import { DuelErrorBoundary } from '@/components/error/DuelErrorBoundary';
+import { Button } from '@/components/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/components/ui/card';
+import { Swords } from 'lucide-react';
+import type { DuelDeck } from '@/types/duel.types';
 
 /**
  * Duel-Modus Seite
@@ -23,13 +29,21 @@ export default function DuelPage() {
   // Error handler für Toast-Nachrichten
   const handleError = (message: string, type: 'error' | 'warning' | 'info' | 'success') => {
     addToast({
-      title: type === 'error' ? 'Error' : type === 'warning' ? 'Warning' : type === 'success' ? 'Success' : 'Info',
+      title:
+        type === 'error'
+          ? 'Error'
+          : type === 'warning'
+            ? 'Warning'
+            : type === 'success'
+              ? 'Success'
+              : 'Info',
       description: message,
       variant: type,
     });
   };
 
-  const { state, dispatchDuelAction, startDuel, resetDuel, undo, redo, canUndo, canRedo } = useDuelState({ onError: handleError });
+  const { state, dispatchDuelAction, startDuel, resetDuel, undo, redo, canUndo, canRedo } =
+    useDuelState({ onError: handleError });
   const [showDeckSelection, setShowDeckSelection] = useState(false);
   const [isLoadingDecks, setIsLoadingDecks] = useState(false);
 
@@ -41,7 +55,7 @@ export default function DuelPage() {
     const result = await getUserDecks();
 
     if (result.error) {
-      console.error("Failed to load decks:", result.error);
+      console.error('Failed to load decks:', result.error);
       setIsLoadingDecks(false);
       return;
     }
@@ -50,7 +64,7 @@ export default function DuelPage() {
       setShowDeckSelection(true);
     } else {
       // Keine Decks vorhanden
-      console.warn("No decks available for duel");
+      console.warn('No decks available for duel');
     }
 
     setIsLoadingDecks(false);
@@ -68,10 +82,8 @@ export default function DuelPage() {
     <DuelErrorBoundary>
       <div>
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{t("navigation.duel")}</h1>
-          <p className="text-muted-foreground">
-            Teste deine Decks und Kombos im Duellmodus
-          </p>
+          <h1 className="text-3xl font-bold mb-2">{t('navigation.duel')}</h1>
+          <p className="text-muted-foreground">Teste deine Decks und Kombos im Duellmodus</p>
         </div>
 
         {state ? (
@@ -92,7 +104,7 @@ export default function DuelPage() {
               <div className="flex items-center gap-3">
                 <Swords className="w-8 h-8 text-primary" />
                 <div>
-                  <CardTitle>{t("duel.startNewDuel")}</CardTitle>
+                  <CardTitle>{t('duel.startNewDuel')}</CardTitle>
                   <CardDescription>
                     Wähle ein Deck aus, um ein neues Duell zu starten
                   </CardDescription>
@@ -100,12 +112,8 @@ export default function DuelPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <Button
-                variant="default"
-                onClick={handleStartDuel}
-                disabled={isLoadingDecks}
-              >
-                {isLoadingDecks ? t("common.loading") : t("duel.startDuel")}
+              <Button variant="default" onClick={handleStartDuel} disabled={isLoadingDecks}>
+                {isLoadingDecks ? t('common.loading') : t('duel.startDuel')}
               </Button>
             </CardContent>
           </Card>
@@ -121,9 +129,3 @@ export default function DuelPage() {
     </DuelErrorBoundary>
   );
 }
-
-
-
-
-
-

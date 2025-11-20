@@ -96,4 +96,3 @@ describe('Auth Config', () => {
     }
   });
 });
-

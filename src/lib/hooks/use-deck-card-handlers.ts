@@ -2,18 +2,27 @@
  * Custom Hook für Deck-Card-Handler mit gemeinsamer Logik
  */
 
-import { useCallback } from "react";
-import type { DeckSection } from "@/lib/validations/deck.schema";
-import type { DeckWithCards, CardForDeck } from "./use-deck-history";
-import { findDeckCard } from "@/lib/utils/deck.utils";
-import { MAX_CARD_COPIES } from "@/lib/constants/deck.constants";
+import { useCallback } from 'react';
+import type { DeckSection } from '@/lib/validations/deck.schema';
+import type { DeckWithCards, CardForDeck } from './use-deck-history';
+import { findDeckCard } from '@/lib/utils/deck.utils';
+import { MAX_CARD_COPIES } from '@/lib/constants/deck.constants';
 
 interface UseDeckCardHandlersOptions {
   optimisticDeck: DeckWithCards | null;
   addCardOperation: (cardId: string, section: DeckSection, card: CardForDeck) => Promise<void>;
-  updateQuantityOperation: (cardId: string, section: DeckSection, quantity: number, oldQuantity: number) => Promise<void>;
+  updateQuantityOperation: (
+    cardId: string,
+    section: DeckSection,
+    quantity: number,
+    oldQuantity: number
+  ) => Promise<void>;
   removeCardOperation: (cardId: string, section: DeckSection) => Promise<void>;
-  moveCardOperation: (cardId: string, fromSection: DeckSection, toSection: DeckSection) => Promise<void>;
+  moveCardOperation: (
+    cardId: string,
+    fromSection: DeckSection,
+    toSection: DeckSection
+  ) => Promise<void>;
   getCardData: (cardId: string) => Promise<CardForDeck | null>;
   onError: (title: string, description: string) => void;
   t: (key: string, params?: Record<string, any>) => string;
@@ -40,8 +49,8 @@ export function useDeckCardHandlers({
       const existingDeckCard = findDeckCard(optimisticDeck, cardId, section);
       if (existingDeckCard && existingDeckCard.quantity >= MAX_CARD_COPIES) {
         onError(
-          t("deck.errors.addCardFailed"),
-          t("deck.validation.maxCopies", { max: MAX_CARD_COPIES })
+          t('deck.errors.addCardFailed'),
+          t('deck.validation.maxCopies', { max: MAX_CARD_COPIES })
         );
         return;
       }
@@ -51,10 +60,7 @@ export function useDeckCardHandlers({
       if (!cardData) {
         cardData = await getCardData(cardId);
         if (!cardData) {
-          onError(
-            t("deck.errors.addCardFailed"),
-            t("deck.errors.cardNotFound")
-          );
+          onError(t('deck.errors.addCardFailed'), t('deck.errors.cardNotFound'));
           return;
         }
       }
@@ -74,8 +80,8 @@ export function useDeckCardHandlers({
       // Client-seitige Validierung
       if (deckCard.quantity >= MAX_CARD_COPIES) {
         onError(
-          t("deck.errors.updateQuantityFailed"),
-          t("deck.validation.maxCopies", { max: MAX_CARD_COPIES })
+          t('deck.errors.updateQuantityFailed'),
+          t('deck.validation.maxCopies', { max: MAX_CARD_COPIES })
         );
         return;
       }
@@ -102,10 +108,7 @@ export function useDeckCardHandlers({
 
       // Client-seitige Validierung
       if (!deckCard) {
-        onError(
-          t("deck.errors.updateQuantityFailed"),
-          t("deck.errors.cardNotInDeck")
-        );
+        onError(t('deck.errors.updateQuantityFailed'), t('deck.errors.cardNotInDeck'));
         return;
       }
 
@@ -149,4 +152,3 @@ export function useDeckCardHandlers({
     handleDuplicateCard,
   };
 }
-

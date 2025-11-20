@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, type ReactNode } from "react";
-import { reportWebVitals } from "@/lib/monitoring/web-vitals";
+import { useEffect, type ReactNode } from 'react';
+import { reportWebVitals } from '@/lib/monitoring/web-vitals';
 
 interface PerformanceProviderProps {
   children: ReactNode;
@@ -9,7 +9,7 @@ interface PerformanceProviderProps {
 
 /**
  * Provider für Performance-Monitoring
- * 
+ *
  * Initialisiert Web Vitals und andere Performance-Tracking
  */
 export function PerformanceProvider({ children }: PerformanceProviderProps) {
@@ -23,4 +23,3 @@ export function PerformanceProvider({ children }: PerformanceProviderProps) {
 
   return <>{children}</>;
 }
-

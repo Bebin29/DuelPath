@@ -30,11 +30,11 @@ export class DuelErrorHandler {
   ): DuelError {
     // Stelle sicher, dass die Parameter gültig sind
     if (!code || !message) {
-      console.error("[DuelError] Invalid error parameters:", { code, message, context });
+      console.error('[DuelError] Invalid error parameters:', { code, message, context });
       // Erstelle einen Fallback-Fehler
       const fallbackError: DuelError = {
-        code: "UNKNOWN_ERROR",
-        message: "An unknown error occurred",
+        code: 'UNKNOWN_ERROR',
+        message: 'An unknown error occurred',
         context: { originalParams: { code, message, context } },
         recoverable: false,
         timestamp: Date.now(),
@@ -67,7 +67,7 @@ export class DuelErrorHandler {
   logError(error: DuelError, additionalContext?: Record<string, any>): void {
     // Stelle sicher, dass der Fehler gültig ist
     if (!error || !error.code || !error.message) {
-      console.error("[DuelError] Invalid error object:", error);
+      console.error('[DuelError] Invalid error object:', error);
       return;
     }
 
@@ -79,10 +79,10 @@ export class DuelErrorHandler {
       timestamp: new Date().toISOString(),
     };
 
-    console.error("[DuelError]", logData);
+    console.error('[DuelError]', logData);
 
     // In Produktion könnte hier eine Logging-API aufgerufen werden
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV === 'production') {
       // TODO: Send to error reporting service (Sentry, etc.)
     }
   }
@@ -112,18 +112,22 @@ export class DuelErrorHandler {
    * Prüft ob ein bestimmter Fehler-Typ aufgetreten ist
    */
   hasError(code: string): boolean {
-    return this.errors.some(error => error.code === code);
+    return this.errors.some((error) => error.code === code);
   }
 
   /**
    * Exportiert Fehler für Debugging
    */
   exportErrors(): string {
-    return JSON.stringify({
-      version: "1.0",
-      exportedAt: new Date().toISOString(),
-      errors: this.errors,
-    }, null, 2);
+    return JSON.stringify(
+      {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        errors: this.errors,
+      },
+      null,
+      2
+    );
   }
 }
 
@@ -137,8 +141,18 @@ export const duelErrorHandler = new DuelErrorHandler();
  */
 export function useDuelErrorHandler() {
   return {
-    createError: (code?: string, message?: string, context?: Record<string, any>, recoverable = true) =>
-      duelErrorHandler.createError(code || "UNKNOWN_ERROR", message || "An unknown error occurred", context, recoverable),
+    createError: (
+      code?: string,
+      message?: string,
+      context?: Record<string, any>,
+      recoverable = true
+    ) =>
+      duelErrorHandler.createError(
+        code || 'UNKNOWN_ERROR',
+        message || 'An unknown error occurred',
+        context,
+        recoverable
+      ),
     logError: (error: DuelError, context?: Record<string, any>) =>
       duelErrorHandler.logError(error, context),
     getErrors: () => duelErrorHandler.getErrors(),
@@ -153,14 +167,14 @@ export function useDuelErrorHandler() {
  * Hilfsfunktion für häufige Fehler
  */
 export const DuelErrors = {
-  INVALID_ACTION: "INVALID_ACTION",
-  STATE_CORRUPTION: "STATE_CORRUPTION",
-  NETWORK_ERROR: "NETWORK_ERROR",
-  VALIDATION_FAILED: "VALIDATION_FAILED",
-  DECK_LOAD_FAILED: "DECK_LOAD_FAILED",
-  CARD_NOT_FOUND: "CARD_NOT_FOUND",
-  PHASE_TRANSITION_INVALID: "PHASE_TRANSITION_INVALID",
-  GAME_STATE_INCONSISTENT: "GAME_STATE_INCONSISTENT",
+  INVALID_ACTION: 'INVALID_ACTION',
+  STATE_CORRUPTION: 'STATE_CORRUPTION',
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  VALIDATION_FAILED: 'VALIDATION_FAILED',
+  DECK_LOAD_FAILED: 'DECK_LOAD_FAILED',
+  CARD_NOT_FOUND: 'CARD_NOT_FOUND',
+  PHASE_TRANSITION_INVALID: 'PHASE_TRANSITION_INVALID',
+  GAME_STATE_INCONSISTENT: 'GAME_STATE_INCONSISTENT',
 } as const;
 
 /**
@@ -169,22 +183,22 @@ export const DuelErrors = {
 export function getRecoverySuggestion(error: DuelError): string {
   switch (error.code) {
     case DuelErrors.INVALID_ACTION:
-      return "Try a different action or check the current game phase.";
+      return 'Try a different action or check the current game phase.';
     case DuelErrors.STATE_CORRUPTION:
-      return "Reload the duel to restore a clean state.";
+      return 'Reload the duel to restore a clean state.';
     case DuelErrors.NETWORK_ERROR:
-      return "Check your internet connection and try again.";
+      return 'Check your internet connection and try again.';
     case DuelErrors.VALIDATION_FAILED:
-      return "The action is not allowed in the current game state.";
+      return 'The action is not allowed in the current game state.';
     case DuelErrors.DECK_LOAD_FAILED:
-      return "Try selecting a different deck or reload the page.";
+      return 'Try selecting a different deck or reload the page.';
     case DuelErrors.CARD_NOT_FOUND:
-      return "The card data could not be loaded. Try refreshing.";
+      return 'The card data could not be loaded. Try refreshing.';
     case DuelErrors.PHASE_TRANSITION_INVALID:
-      return "Phase transition not allowed. Follow the correct turn order.";
+      return 'Phase transition not allowed. Follow the correct turn order.';
     case DuelErrors.GAME_STATE_INCONSISTENT:
-      return "Game state is corrupted. Starting a new duel is recommended.";
+      return 'Game state is corrupted. Starting a new duel is recommended.';
     default:
-      return "An unexpected error occurred. Please reload the page.";
+      return 'An unexpected error occurred. Please reload the page.';
   }
 }

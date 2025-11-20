@@ -1,10 +1,10 @@
-import { z } from "zod";
-import { DuelPhase } from "@/types/duel.types";
+import { z } from 'zod';
+import { DuelPhase } from '@/types/duel.types';
 
 /**
  * Basis-Schema für PlayerId
  */
-const playerIdSchema = z.enum(["PLAYER", "OPPONENT"]);
+const playerIdSchema = z.enum(['PLAYER', 'OPPONENT']);
 
 /**
  * Basis-Schema für DuelPhase
@@ -15,7 +15,7 @@ const duelPhaseSchema = z.nativeEnum(DuelPhase);
  * Schema für DRAW Action
  */
 const drawActionSchema = z.object({
-  type: z.literal("DRAW"),
+  type: z.literal('DRAW'),
   player: playerIdSchema,
   count: z.number().int().min(1).max(5), // max. 5 Karten ziehen
 });
@@ -24,7 +24,7 @@ const drawActionSchema = z.object({
  * Schema für NORMAL_SUMMON Action
  */
 const normalSummonActionSchema = z.object({
-  type: z.literal("NORMAL_SUMMON"),
+  type: z.literal('NORMAL_SUMMON'),
   player: playerIdSchema,
   cardInstanceId: z.string().min(1),
   targetZoneIndex: z.number().int().min(0).max(4), // 0-4 für Monster-Zone
@@ -34,7 +34,7 @@ const normalSummonActionSchema = z.object({
  * Schema für SET_MONSTER Action
  */
 const setMonsterActionSchema = z.object({
-  type: z.literal("SET_MONSTER"),
+  type: z.literal('SET_MONSTER'),
   player: playerIdSchema,
   cardInstanceId: z.string().min(1),
   targetZoneIndex: z.number().int().min(0).max(4), // 0-4 für Monster-Zone
@@ -44,7 +44,7 @@ const setMonsterActionSchema = z.object({
  * Schema für ACTIVATE_SPELL Action
  */
 const activateSpellActionSchema = z.object({
-  type: z.literal("ACTIVATE_SPELL"),
+  type: z.literal('ACTIVATE_SPELL'),
   player: playerIdSchema,
   cardInstanceId: z.string().min(1),
   targetZoneIndex: z.number().int().min(0).max(4).optional(), // 0-4 für Spell/Trap-Zone
@@ -54,7 +54,7 @@ const activateSpellActionSchema = z.object({
  * Schema für SET_SPELL Action
  */
 const setSpellActionSchema = z.object({
-  type: z.literal("SET_SPELL"),
+  type: z.literal('SET_SPELL'),
   player: playerIdSchema,
   cardInstanceId: z.string().min(1),
   targetZoneIndex: z.number().int().min(0).max(4).optional(), // 0-4 für Spell/Trap-Zone
@@ -64,20 +64,17 @@ const setSpellActionSchema = z.object({
  * Schema für ATTACK Action
  */
 const attackActionSchema = z.object({
-  type: z.literal("ATTACK"),
+  type: z.literal('ATTACK'),
   player: playerIdSchema,
   attackerId: z.string().min(1),
-  target: z.union([
-    z.literal("LP"),
-    z.object({ cardInstanceId: z.string().min(1) })
-  ]).optional(),
+  target: z.union([z.literal('LP'), z.object({ cardInstanceId: z.string().min(1) })]).optional(),
 });
 
 /**
  * Schema für CHANGE_PHASE Action
  */
 const changePhaseActionSchema = z.object({
-  type: z.literal("CHANGE_PHASE"),
+  type: z.literal('CHANGE_PHASE'),
   nextPhase: duelPhaseSchema,
 });
 
@@ -85,14 +82,14 @@ const changePhaseActionSchema = z.object({
  * Schema für END_DUEL Action
  */
 const endDuelActionSchema = z.object({
-  type: z.literal("END_DUEL"),
+  type: z.literal('END_DUEL'),
   winner: playerIdSchema,
 });
 
 /**
  * Vollständiges DuelAction Schema (Discriminated Union)
  */
-export const duelActionSchema = z.discriminatedUnion("type", [
+export const duelActionSchema = z.discriminatedUnion('type', [
   drawActionSchema,
   normalSummonActionSchema,
   setMonsterActionSchema,
@@ -142,7 +139,7 @@ export function validateDuelAction(action: unknown): DuelValidationResult {
 
   return {
     ok: false,
-    errors: result.error.errors.map(err => err.message),
+    errors: result.error.errors.map((err) => err.message),
     warnings: [],
   };
 }

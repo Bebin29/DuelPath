@@ -1,14 +1,14 @@
-import { prisma } from "@/lib/prisma/client";
+import { prisma } from '@/lib/prisma/client';
 
 /**
  * Backfill-Script für normalisierte Suchfelder (typeLower, raceLower, archetypeLower)
- * 
+ *
  * Füllt die normalisierten Felder für alle bestehenden Karten
  * Usage: tsx prisma/scripts/backfill-normalized-fields.ts
  */
 async function main() {
-  console.log("Starting normalized fields backfill...");
-  
+  console.log('Starting normalized fields backfill...');
+
   try {
     // Hole alle Karten
     const cards = await prisma.card.findMany({
@@ -41,7 +41,7 @@ async function main() {
 
     for (let i = 0; i < cardsToUpdate.length; i += batchSize) {
       const batch = cardsToUpdate.slice(i, i + batchSize);
-      
+
       await Promise.all(
         batch.map((card) => {
           const updateData: {
@@ -75,17 +75,14 @@ async function main() {
       process.stdout.write(`\rProgress: ${updated}/${cardsToUpdate.length}`);
     }
 
-    console.log("\n\nBackfill completed!");
+    console.log('\n\nBackfill completed!');
     console.log(`Updated ${updated} cards`);
-    
+
     process.exit(0);
   } catch (error) {
-    console.error("\n\nBackfill failed:", error);
+    console.error('\n\nBackfill failed:', error);
     process.exit(1);
   }
 }
 
 main();
-
-
-

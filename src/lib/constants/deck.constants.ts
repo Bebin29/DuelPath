@@ -53,4 +53,3 @@ export const VIRTUALIZATION_OVERSCAN = 5;
  * Drag-Aktivierungsdistanz in Pixeln
  */
 export const DRAG_ACTIVATION_DISTANCE = 8;
-

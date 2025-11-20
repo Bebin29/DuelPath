@@ -2,17 +2,17 @@
  * Unit-Tests für useComboHistory Hook
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useComboHistory } from "@/lib/hooks/use-combo-history";
-import type { ComboWithSteps } from "@/types/combo.types";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { useComboHistory } from '@/lib/hooks/use-combo-history';
+import type { ComboWithSteps } from '@/types/combo.types';
 
-describe("useComboHistory", () => {
+describe('useComboHistory', () => {
   const createMockCombo = (id: string, stepCount: number = 0): ComboWithSteps => ({
     id,
-    title: "Test Combo",
-    description: "Test Description",
-    userId: "user-1",
+    title: 'Test Combo',
+    description: 'Test Description',
+    userId: 'user-1',
     deckId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -21,15 +21,15 @@ describe("useComboHistory", () => {
       comboId: id,
       order: i + 1,
       cardId: `card-${i}`,
-      actionType: "NORMAL_SUMMON",
+      actionType: 'NORMAL_SUMMON',
       description: null,
       targetCardId: null,
       card: {
         id: `card-${i}`,
         name: `Card ${i}`,
-        type: "Effect Monster",
-        race: "Warrior",
-        attribute: "LIGHT",
+        type: 'Effect Monster',
+        race: 'Warrior',
+        attribute: 'LIGHT',
         level: 4,
         atk: 1800,
         def: 1200,
@@ -45,9 +45,9 @@ describe("useComboHistory", () => {
     })),
   });
 
-  describe("Initialisierung", () => {
-    it("sollte mit initialer Kombo initialisieren", () => {
-      const initialCombo = createMockCombo("combo-1", 5);
+  describe('Initialisierung', () => {
+    it('sollte mit initialer Kombo initialisieren', () => {
+      const initialCombo = createMockCombo('combo-1', 5);
       const { result } = renderHook(() => useComboHistory(initialCombo, 50));
 
       expect(result.current.currentCombo).toEqual(initialCombo);
@@ -57,7 +57,7 @@ describe("useComboHistory", () => {
       expect(result.current.canRedo).toBe(false);
     });
 
-    it("sollte mit null initialisieren", () => {
+    it('sollte mit null initialisieren', () => {
       const { result } = renderHook(() => useComboHistory(null, 50));
 
       expect(result.current.currentCombo).toBeNull();
@@ -65,17 +65,14 @@ describe("useComboHistory", () => {
     });
   });
 
-  describe("addHistoryEntry", () => {
-    it("sollte History-Eintrag hinzufügen", () => {
-      const initialCombo = createMockCombo("combo-1", 5);
+  describe('addHistoryEntry', () => {
+    it('sollte History-Eintrag hinzufügen', () => {
+      const initialCombo = createMockCombo('combo-1', 5);
       const { result } = renderHook(() => useComboHistory(initialCombo, 50));
 
-      const newCombo = createMockCombo("combo-1", 6);
+      const newCombo = createMockCombo('combo-1', 6);
       act(() => {
-        result.current.addHistoryEntry(
-          { type: "addStep", stepId: "step-5", order: 6 },
-          newCombo
-        );
+        result.current.addHistoryEntry({ type: 'addStep', stepId: 'step-5', order: 6 }, newCombo);
       });
 
       expect(result.current.history).toHaveLength(1);
@@ -84,16 +81,16 @@ describe("useComboHistory", () => {
       expect(result.current.canRedo).toBe(false);
     });
 
-    it("sollte History-Größe begrenzen", () => {
-      const initialCombo = createMockCombo("combo-1", 5);
+    it('sollte History-Größe begrenzen', () => {
+      const initialCombo = createMockCombo('combo-1', 5);
       const { result } = renderHook(() => useComboHistory(initialCombo, 3));
 
       // Füge 5 Einträge hinzu
       for (let i = 0; i < 5; i++) {
-        const newCombo = createMockCombo("combo-1", 5 + i);
+        const newCombo = createMockCombo('combo-1', 5 + i);
         act(() => {
           result.current.addHistoryEntry(
-            { type: "addStep", stepId: `step-${i}`, order: i + 1 },
+            { type: 'addStep', stepId: `step-${i}`, order: i + 1 },
             newCombo
           );
         });
@@ -104,17 +101,14 @@ describe("useComboHistory", () => {
     });
   });
 
-  describe("undo", () => {
-    it("sollte letzte Aktion rückgängig machen", () => {
-      const initialCombo = createMockCombo("combo-1", 5);
+  describe('undo', () => {
+    it('sollte letzte Aktion rückgängig machen', () => {
+      const initialCombo = createMockCombo('combo-1', 5);
       const { result } = renderHook(() => useComboHistory(initialCombo, 50));
 
-      const newCombo = createMockCombo("combo-1", 6);
+      const newCombo = createMockCombo('combo-1', 6);
       act(() => {
-        result.current.addHistoryEntry(
-          { type: "addStep", stepId: "step-5", order: 6 },
-          newCombo
-        );
+        result.current.addHistoryEntry({ type: 'addStep', stepId: 'step-5', order: 6 }, newCombo);
       });
 
       act(() => {
@@ -128,8 +122,8 @@ describe("useComboHistory", () => {
       expect(result.current.canRedo).toBe(true);
     });
 
-    it("sollte null zurückgeben wenn keine History vorhanden", () => {
-      const initialCombo = createMockCombo("combo-1", 5);
+    it('sollte null zurückgeben wenn keine History vorhanden', () => {
+      const initialCombo = createMockCombo('combo-1', 5);
       const { result } = renderHook(() => useComboHistory(initialCombo, 50));
 
       act(() => {
@@ -139,17 +133,14 @@ describe("useComboHistory", () => {
     });
   });
 
-  describe("redo", () => {
-    it("sollte letzte rückgängig gemachte Aktion wiederholen", () => {
-      const initialCombo = createMockCombo("combo-1", 5);
+  describe('redo', () => {
+    it('sollte letzte rückgängig gemachte Aktion wiederholen', () => {
+      const initialCombo = createMockCombo('combo-1', 5);
       const { result } = renderHook(() => useComboHistory(initialCombo, 50));
 
-      const newCombo = createMockCombo("combo-1", 6);
+      const newCombo = createMockCombo('combo-1', 6);
       act(() => {
-        result.current.addHistoryEntry(
-          { type: "addStep", stepId: "step-5", order: 6 },
-          newCombo
-        );
+        result.current.addHistoryEntry({ type: 'addStep', stepId: 'step-5', order: 6 }, newCombo);
       });
 
       act(() => {
@@ -166,8 +157,8 @@ describe("useComboHistory", () => {
       expect(result.current.canRedo).toBe(false);
     });
 
-    it("sollte null zurückgeben wenn keine Redo möglich", () => {
-      const initialCombo = createMockCombo("combo-1", 5);
+    it('sollte null zurückgeben wenn keine Redo möglich', () => {
+      const initialCombo = createMockCombo('combo-1', 5);
       const { result } = renderHook(() => useComboHistory(initialCombo, 50));
 
       act(() => {
@@ -177,23 +168,17 @@ describe("useComboHistory", () => {
     });
   });
 
-  describe("jumpToHistory", () => {
-    it("sollte zu bestimmtem History-Eintrag springen", () => {
-      const initialCombo = createMockCombo("combo-1", 5);
+  describe('jumpToHistory', () => {
+    it('sollte zu bestimmtem History-Eintrag springen', () => {
+      const initialCombo = createMockCombo('combo-1', 5);
       const { result } = renderHook(() => useComboHistory(initialCombo, 50));
 
-      const combo1 = createMockCombo("combo-1", 6);
-      const combo2 = createMockCombo("combo-1", 7);
+      const combo1 = createMockCombo('combo-1', 6);
+      const combo2 = createMockCombo('combo-1', 7);
 
       act(() => {
-        result.current.addHistoryEntry(
-          { type: "addStep", stepId: "step-5", order: 6 },
-          combo1
-        );
-        result.current.addHistoryEntry(
-          { type: "addStep", stepId: "step-6", order: 7 },
-          combo2
-        );
+        result.current.addHistoryEntry({ type: 'addStep', stepId: 'step-5', order: 6 }, combo1);
+        result.current.addHistoryEntry({ type: 'addStep', stepId: 'step-6', order: 7 }, combo2);
       });
 
       act(() => {
@@ -205,16 +190,13 @@ describe("useComboHistory", () => {
       expect(result.current.currentCombo).toEqual(combo1);
     });
 
-    it("sollte zur initialen Kombo springen wenn Index -1", () => {
-      const initialCombo = createMockCombo("combo-1", 5);
+    it('sollte zur initialen Kombo springen wenn Index -1', () => {
+      const initialCombo = createMockCombo('combo-1', 5);
       const { result } = renderHook(() => useComboHistory(initialCombo, 50));
 
-      const newCombo = createMockCombo("combo-1", 6);
+      const newCombo = createMockCombo('combo-1', 6);
       act(() => {
-        result.current.addHistoryEntry(
-          { type: "addStep", stepId: "step-5", order: 6 },
-          newCombo
-        );
+        result.current.addHistoryEntry({ type: 'addStep', stepId: 'step-5', order: 6 }, newCombo);
       });
 
       act(() => {
@@ -227,20 +209,17 @@ describe("useComboHistory", () => {
     });
   });
 
-  describe("resetHistory", () => {
-    it("sollte History zurücksetzen", () => {
-      const initialCombo = createMockCombo("combo-1", 5);
+  describe('resetHistory', () => {
+    it('sollte History zurücksetzen', () => {
+      const initialCombo = createMockCombo('combo-1', 5);
       const { result } = renderHook(() => useComboHistory(initialCombo, 50));
 
-      const newCombo = createMockCombo("combo-1", 6);
+      const newCombo = createMockCombo('combo-1', 6);
       act(() => {
-        result.current.addHistoryEntry(
-          { type: "addStep", stepId: "step-5", order: 6 },
-          newCombo
-        );
+        result.current.addHistoryEntry({ type: 'addStep', stepId: 'step-5', order: 6 }, newCombo);
       });
 
-      const resetCombo = createMockCombo("combo-1", 3);
+      const resetCombo = createMockCombo('combo-1', 3);
       act(() => {
         result.current.resetHistory(resetCombo);
       });
@@ -251,6 +230,3 @@ describe("useComboHistory", () => {
     });
   });
 });
-
-
-

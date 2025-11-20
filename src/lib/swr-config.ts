@@ -1,4 +1,4 @@
-import { SWRConfiguration } from "swr";
+import { SWRConfiguration } from 'swr';
 
 /**
  * SWR-Konfiguration für die gesamte App
@@ -12,6 +12,3 @@ export const swrConfig: SWRConfiguration = {
   errorRetryInterval: 5000,
   shouldRetryOnError: true,
 };
-
-
-

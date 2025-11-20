@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslation } from "@/lib/i18n/hooks";
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/hooks';
 import {
   DndContext,
   DragEndEvent,
@@ -12,41 +12,56 @@ import {
   useSensor,
   useSensors,
   closestCenter,
-} from "@dnd-kit/core";
-import { getUserDecks, getDeckById } from "@/server/actions/deck.actions";
-import useSWR from "swr";
-import { useComboHistory } from "@/lib/hooks/use-combo-history";
-import { useComboOperations } from "@/lib/hooks/use-combo-operations";
-import { useComboValidation } from "@/lib/hooks/use-combo-validation";
-import { useAutoSave } from "@/lib/hooks/use-auto-save";
-import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
-import { useCardPrefetch } from "@/lib/hooks/use-card-prefetch";
-import { useOfflineComboStorage } from "@/lib/hooks/use-offline-combo-storage";
-import type { DeckWithCards } from "@/lib/hooks/use-deck-history";
-import { ComboTimeline } from "./ComboTimeline";
-import { ComboStepEditor } from "./ComboStepEditor";
-import { ComboStepItem } from "./ComboStepItem";
-import { ComboPlayMode } from "./ComboPlayMode";
-import { ComboVersionHistory } from "./ComboVersionHistory";
-import { DRAG_ACTIVATION_DISTANCE } from "@/lib/constants/deck.constants";
-import { sortComboSteps, exportComboToJSON, exportComboToText, importComboFromJSON } from "@/lib/utils/combo.utils";
-import { Button } from "@/components/components/ui/button";
-import { Input } from "@/components/components/ui/input";
-import { Label } from "@/components/components/ui/label";
+} from '@dnd-kit/core';
+import { getUserDecks, getDeckById } from '@/server/actions/deck.actions';
+import useSWR from 'swr';
+import { useComboHistory } from '@/lib/hooks/use-combo-history';
+import { useComboOperations } from '@/lib/hooks/use-combo-operations';
+import { useComboValidation } from '@/lib/hooks/use-combo-validation';
+import { useAutoSave } from '@/lib/hooks/use-auto-save';
+import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
+import { useCardPrefetch } from '@/lib/hooks/use-card-prefetch';
+import { useOfflineComboStorage } from '@/lib/hooks/use-offline-combo-storage';
+import type { DeckWithCards } from '@/lib/hooks/use-deck-history';
+import { ComboTimeline } from './ComboTimeline';
+import { ComboStepEditor } from './ComboStepEditor';
+import { ComboStepItem } from './ComboStepItem';
+import { ComboPlayMode } from './ComboPlayMode';
+import { ComboVersionHistory } from './ComboVersionHistory';
+import { DRAG_ACTIVATION_DISTANCE } from '@/lib/constants/deck.constants';
+import {
+  sortComboSteps,
+  exportComboToJSON,
+  exportComboToText,
+  importComboFromJSON,
+} from '@/lib/utils/combo.utils';
+import { Button } from '@/components/components/ui/button';
+import { Input } from '@/components/components/ui/input';
+import { Label } from '@/components/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/components/ui/select";
-import { Textarea } from "@/components/components/ui/textarea";
-import { AlertCircle, CheckCircle2, Plus, Save, ArrowLeft, Undo2, Redo2, Download, Upload } from "lucide-react";
-import { useToast } from "@/components/components/ui/toast";
-import type { ComboWithSteps } from "@/types/combo.types";
-import type { CreateComboStepInput, UpdateComboStepInput } from "@/lib/validations/combo.schema";
-import type { Deck } from "@prisma/client";
-import { Skeleton } from "@/components/components/ui/skeleton";
+} from '@/components/components/ui/select';
+import { Textarea } from '@/components/components/ui/textarea';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Plus,
+  Save,
+  ArrowLeft,
+  Undo2,
+  Redo2,
+  Download,
+  Upload,
+} from 'lucide-react';
+import { useToast } from '@/components/components/ui/toast';
+import type { ComboWithSteps } from '@/types/combo.types';
+import type { CreateComboStepInput, UpdateComboStepInput } from '@/lib/validations/combo.schema';
+import type { Deck } from '@prisma/client';
+import { Skeleton } from '@/components/components/ui/skeleton';
 
 interface ComboEditorProps {
   comboId: string;
@@ -54,7 +69,7 @@ interface ComboEditorProps {
 
 /**
  * Combo-Editor Hauptkomponente
- * 
+ *
  * Features:
  * - Deck-Auswahl
  * - Titel & Beschreibung bearbeiten
@@ -68,16 +83,16 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
   const router = useRouter();
 
   // Offline-Storage
-  const {
-    isOnline,
-    hasPendingOperations,
-    loadComboLocally,
-    saveComboLocally,
-    queueOperation,
-  } = useOfflineComboStorage();
+  const { isOnline, hasPendingOperations, loadComboLocally, saveComboLocally, queueOperation } =
+    useOfflineComboStorage();
 
   // SWR für Combo-Daten
-  const { data: comboData, error: comboError, isLoading, mutate: mutateCombo } = useSWR<{
+  const {
+    data: comboData,
+    error: comboError,
+    isLoading,
+    mutate: mutateCombo,
+  } = useSWR<{
     success: boolean;
     combo: ComboWithSteps;
     error?: string;
@@ -102,15 +117,15 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
           }
         }
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch combo");
+        throw new Error(errorData.error || 'Failed to fetch combo');
       }
       const data = await response.json();
-      
+
       // Speichere lokal für Offline-Zugriff
       if (data.success && data.combo) {
         saveComboLocally(data.combo);
       }
-      
+
       return data;
     },
     {
@@ -128,8 +143,8 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
   const [stepEditorOpen, setStepEditorOpen] = useState(false);
   const [editingStepId, setEditingStepId] = useState<string | null>(null);
   const [playModeOpen, setPlayModeOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
   const [enableMultiSelect, setEnableMultiSelect] = useState(false);
@@ -167,7 +182,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
     if (combo && combo !== historyCombo) {
       resetHistory(combo);
       setTitle(combo.title);
-      setDescription(combo.description || "");
+      setDescription(combo.description || '');
       setSelectedDeckId(combo.deckId || null);
     }
   }, [combo, historyCombo, resetHistory]);
@@ -183,14 +198,14 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = "";
+        e.returnValue = '';
       }
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [historyCombo, title, description, selectedDeckId]);
 
@@ -198,8 +213,8 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
   useEffect(() => {
     if (error) {
       addToast({
-        variant: "error",
-        title: t("combo.errors.loadFailed") || "Fehler beim Laden",
+        variant: 'error',
+        title: t('combo.errors.loadFailed') || 'Fehler beim Laden',
         description: error,
       });
     }
@@ -217,7 +232,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
         setDecks(result.decks);
       }
     } catch (err) {
-      console.error("Failed to load decks:", err);
+      console.error('Failed to load decks:', err);
     } finally {
       setIsLoadingDecks(false);
     }
@@ -233,7 +248,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
         setDeckForValidation(null);
       }
     } catch (err) {
-      console.error("Failed to load deck for validation:", err);
+      console.error('Failed to load deck for validation:', err);
       setDeckForValidation(null);
     } finally {
       setIsLoadingDeckForValidation(false);
@@ -262,7 +277,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
         .map((step) => [step.cardId, step.targetCardId].filter(Boolean) as string[])
         .flat()
     : [];
-  
+
   useCardPrefetch({
     cardIds: cardIdsFromSteps,
     enabled: !!historyCombo && historyCombo.steps.length > 0,
@@ -298,8 +313,8 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
     addHistoryEntry,
     onError: (error) => {
       addToast({
-        variant: "error",
-        title: t("combo.errors.operationFailed") || "Fehler",
+        variant: 'error',
+        title: t('combo.errors.operationFailed') || 'Fehler',
         description: error,
       });
     },
@@ -340,16 +355,16 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
   useKeyboardShortcuts({
     shortcuts: [
       {
-        key: "s",
+        key: 's',
         ctrl: true,
         handler: (e) => {
           e.preventDefault();
           handleSave();
         },
-        description: "Speichern",
+        description: 'Speichern',
       },
       {
-        key: "z",
+        key: 'z',
         ctrl: true,
         handler: (e) => {
           e.preventDefault();
@@ -357,36 +372,36 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
             handleUndo();
           }
         },
-        description: "Rückgängig",
+        description: 'Rückgängig',
       },
       {
-        key: "z",
+        key: 'z',
         ctrl: true,
         shift: true,
         handler: (e) => {
           e.preventDefault();
           handleRedo();
         },
-        description: "Wiederholen",
+        description: 'Wiederholen',
       },
       {
-        key: "y",
+        key: 'y',
         ctrl: true,
         handler: (e) => {
           e.preventDefault();
           handleRedo();
         },
-        description: "Wiederholen",
+        description: 'Wiederholen',
       },
       {
-        key: "Delete",
+        key: 'Delete',
         handler: (e) => {
           if (editingStepId) {
             e.preventDefault();
             handleDeleteStep(editingStepId);
           }
         },
-        description: "Step löschen",
+        description: 'Step löschen',
       },
     ],
     enabled: !!historyCombo && !stepEditorOpen && !playModeOpen,
@@ -398,9 +413,9 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
     // Prüfe Validierung vor dem Speichern
     if (!validationResult.isValid) {
       addToast({
-        variant: "error",
-        title: t("combo.validationErrors") || "Validierungsfehler",
-        description: validationResult.errors.join(", "),
+        variant: 'error',
+        title: t('combo.validationErrors') || 'Validierungsfehler',
+        description: validationResult.errors.join(', '),
       });
       return;
     }
@@ -412,9 +427,10 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
     });
 
     addToast({
-      variant: "success",
-      title: t("combo.comboSaved") || "Kombo gespeichert",
-      description: t("combo.comboSavedDescription") || "Die Änderungen wurden erfolgreich gespeichert",
+      variant: 'success',
+      title: t('combo.comboSaved') || 'Kombo gespeichert',
+      description:
+        t('combo.comboSavedDescription') || 'Die Änderungen wurden erfolgreich gespeichert',
     });
   }
 
@@ -429,7 +445,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
   }
 
   function handleDeleteStep(stepId: string) {
-    if (!confirm(t("combo.step.confirmDelete") || "Möchtest du diesen Schritt wirklich löschen?")) {
+    if (!confirm(t('combo.step.confirmDelete') || 'Möchtest du diesen Schritt wirklich löschen?')) {
       return;
     }
     removeStep(stepId);
@@ -437,15 +453,13 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
 
   async function handleDuplicateStep(stepId: string) {
     if (!historyCombo) return;
-    
+
     const stepToDuplicate = historyCombo.steps.find((s) => s.id === stepId);
     if (!stepToDuplicate) return;
 
     const sortedSteps = sortComboSteps(historyCombo.steps);
-    const maxOrder = sortedSteps.length > 0 
-      ? Math.max(...sortedSteps.map((s) => s.order))
-      : 0;
-    
+    const maxOrder = sortedSteps.length > 0 ? Math.max(...sortedSteps.map((s) => s.order)) : 0;
+
     await addStep({
       cardId: stepToDuplicate.cardId,
       actionType: stepToDuplicate.actionType as any,
@@ -490,7 +504,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
 
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;
-    if (active.data.current?.type === "comboStep") {
+    if (active.data.current?.type === 'comboStep') {
       setActiveStepId(active.id as string);
     }
   }
@@ -537,7 +551,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
   if (error || !historyCombo) {
     return (
       <div className="rounded-md bg-destructive/10 p-4 text-destructive border border-destructive/20">
-        {error || t("combo.errors.notFound")}
+        {error || t('combo.errors.notFound')}
       </div>
     );
   }
@@ -551,39 +565,31 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => router.push("/combos")}
-          >
+          <Button variant="outline" onClick={() => router.push('/combos')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("common.back") || "Zurück"}
+            {t('common.back') || 'Zurück'}
           </Button>
           {!isOnline && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 text-sm">
               <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
-              {t("common.offline") || "Offline"}
+              {t('common.offline') || 'Offline'}
             </div>
           )}
           {isOnline && hasPendingOperations && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-600 text-sm">
               <div className="h-2 w-2 rounded-full bg-blue-500" />
-              {t("common.syncing") || "Synchronisiere..."}
+              {t('common.syncing') || 'Synchronisiere...'}
             </div>
           )}
         </div>
         <div className="flex gap-2">
-          {comboId && (
-            <ComboVersionHistory
-              comboId={comboId}
-              onVersionRestored={loadComboData}
-            />
-          )}
+          {comboId && <ComboVersionHistory comboId={comboId} onVersionRestored={loadComboData} />}
           <Button
             variant="outline"
             onClick={() => {
-              const input = document.createElement("input");
-              input.type = "file";
-              input.accept = "application/json";
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'application/json';
               input.onchange = async (e) => {
                 const file = (e.target as HTMLInputElement).files?.[0];
                 if (!file) return;
@@ -591,19 +597,19 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
                 try {
                   const text = await file.text();
                   const imported = importComboFromJSON(text);
-                  
+
                   if (!imported) {
                     addToast({
-                      variant: "error",
-                      title: t("combo.importFailed") || "Import fehlgeschlagen",
-                      description: t("combo.invalidFileFormat") || "Ungültiges Dateiformat",
+                      variant: 'error',
+                      title: t('combo.importFailed') || 'Import fehlgeschlagen',
+                      description: t('combo.invalidFileFormat') || 'Ungültiges Dateiformat',
                     });
                     return;
                   }
 
                   // Setze Titel und Beschreibung
                   setTitle(imported.title);
-                  setDescription(imported.description || "");
+                  setDescription(imported.description || '');
 
                   // Füge Steps hinzu
                   for (const step of imported.steps) {
@@ -617,14 +623,15 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
                   }
 
                   addToast({
-                    variant: "success",
-                    title: t("combo.imported") || "Kombo importiert",
-                    description: t("combo.importedDescription") || "Die Kombo wurde erfolgreich importiert",
+                    variant: 'success',
+                    title: t('combo.imported') || 'Kombo importiert',
+                    description:
+                      t('combo.importedDescription') || 'Die Kombo wurde erfolgreich importiert',
                   });
                 } catch (error) {
                   addToast({
-                    variant: "error",
-                    title: t("combo.importFailed") || "Import fehlgeschlagen",
+                    variant: 'error',
+                    title: t('combo.importFailed') || 'Import fehlgeschlagen',
                     description: error instanceof Error ? error.message : String(error),
                   });
                 }
@@ -633,30 +640,19 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
             }}
           >
             <Upload className="mr-2 h-4 w-4" />
-            {t("combo.import") || "Importieren"}
+            {t('combo.import') || 'Importieren'}
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleUndo}
-            disabled={!canUndo || isPending}
-          >
+          <Button variant="outline" onClick={handleUndo} disabled={!canUndo || isPending}>
             <Undo2 className="mr-2 h-4 w-4" />
-            {t("common.undo") || "Rückgängig"}
+            {t('common.undo') || 'Rückgängig'}
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleRedo}
-            disabled={!canRedo || isPending}
-          >
+          <Button variant="outline" onClick={handleRedo} disabled={!canRedo || isPending}>
             <Redo2 className="mr-2 h-4 w-4" />
-            {t("common.redo") || "Wiederholen"}
+            {t('common.redo') || 'Wiederholen'}
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isPending}
-          >
+          <Button onClick={handleSave} disabled={isPending}>
             <Save className="mr-2 h-4 w-4" />
-            {t("common.save") || "Speichern"}
+            {t('common.save') || 'Speichern'}
           </Button>
         </div>
       </div>
@@ -667,7 +663,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
           <div className="flex items-start gap-2">
             <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h4 className="font-semibold text-destructive mb-2">{t("combo.validationErrors")}</h4>
+              <h4 className="font-semibold text-destructive mb-2">{t('combo.validationErrors')}</h4>
               <ul className="list-disc list-inside space-y-1 text-sm">
                 {validationResult.errors.map((error, index) => (
                   <li key={index}>{error}</li>
@@ -683,7 +679,9 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
           <div className="flex items-start gap-2">
             <AlertCircle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h4 className="font-semibold text-yellow-600 mb-2">{t("combo.validationWarnings")}</h4>
+              <h4 className="font-semibold text-yellow-600 mb-2">
+                {t('combo.validationWarnings')}
+              </h4>
               <ul className="list-disc list-inside space-y-1 text-sm">
                 {validationResult.warnings.map((warning, index) => (
                   <li key={index}>{warning}</li>
@@ -697,28 +695,32 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
       {/* Combo-Info */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="combo-title">{t("combo.title") || "Titel"}</Label>
+          <Label htmlFor="combo-title">{t('combo.title') || 'Titel'}</Label>
           <Input
             id="combo-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={t("combo.titlePlaceholder")}
+            placeholder={t('combo.titlePlaceholder')}
             maxLength={200}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="combo-deck">{t("combo.deck") || "Deck (Optional)"}</Label>
+          <Label htmlFor="combo-deck">{t('combo.deck') || 'Deck (Optional)'}</Label>
           <Select
-            value={selectedDeckId || "none"}
-            onValueChange={(value) => setSelectedDeckId(value === "none" ? null : value)}
+            value={selectedDeckId || 'none'}
+            onValueChange={(value) => setSelectedDeckId(value === 'none' ? null : value)}
             disabled={isLoadingDecks}
           >
             <SelectTrigger id="combo-deck">
-              <SelectValue placeholder={isLoadingDecks ? t("common.loading") : t("combo.selectDeck") || "Deck auswählen"} />
+              <SelectValue
+                placeholder={
+                  isLoadingDecks ? t('common.loading') : t('combo.selectDeck') || 'Deck auswählen'
+                }
+              />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">{t("combo.noDeck") || "Kein Deck"}</SelectItem>
+              <SelectItem value="none">{t('combo.noDeck') || 'Kein Deck'}</SelectItem>
               {decks.map((deck) => (
                 <SelectItem key={deck.id} value={deck.id}>
                   {deck.name}
@@ -730,17 +732,17 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="combo-description">{t("combo.description") || "Beschreibung"}</Label>
+        <Label htmlFor="combo-description">{t('combo.description') || 'Beschreibung'}</Label>
         <Textarea
           id="combo-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder={t("combo.comboDescriptionPlaceholder")}
+          placeholder={t('combo.comboDescriptionPlaceholder')}
           rows={3}
           maxLength={2000}
         />
         <p className="text-xs text-muted-foreground">
-          {description.length}/2000 {t("combo.characters")}
+          {description.length}/2000 {t('combo.characters')}
         </p>
       </div>
 
@@ -748,16 +750,16 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">
-            {t("combo.steps") || "Schritte"} ({historyCombo.steps.length})
+            {t('combo.steps') || 'Schritte'} ({historyCombo.steps.length})
           </h2>
           <div className="flex gap-2">
             {historyCombo.steps.length > 0 && (
               <>
                 <Button variant="outline" onClick={() => setPlayModeOpen(true)}>
-                  {t("combo.playCombo") || "Kombo abspielen"}
+                  {t('combo.playCombo') || 'Kombo abspielen'}
                 </Button>
                 <Button
-                  variant={enableMultiSelect ? "default" : "outline"}
+                  variant={enableMultiSelect ? 'default' : 'outline'}
                   onClick={() => {
                     setEnableMultiSelect(!enableMultiSelect);
                     if (enableMultiSelect) {
@@ -766,17 +768,22 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
                   }}
                 >
                   {enableMultiSelect
-                    ? t("combo.cancelSelection") || "Auswahl abbrechen"
-                    : t("combo.selectMultiple") || "Mehrere auswählen"}
+                    ? t('combo.cancelSelection') || 'Auswahl abbrechen'
+                    : t('combo.selectMultiple') || 'Mehrere auswählen'}
                 </Button>
                 {enableMultiSelect && selectedStepIds.size > 0 && (
                   <Button
                     variant="destructive"
                     onClick={async () => {
-                      if (confirm(t("combo.batchDeleteConfirm") || `Möchtest du ${selectedStepIds.size} Schritte wirklich löschen?`)) {
+                      if (
+                        confirm(
+                          t('combo.batchDeleteConfirm') ||
+                            `Möchtest du ${selectedStepIds.size} Schritte wirklich löschen?`
+                        )
+                      ) {
                         const stepIdsArray = Array.from(selectedStepIds);
                         await batchOperations(
-                          stepIdsArray.map((id) => ({ type: "delete" as const, stepId: id }))
+                          stepIdsArray.map((id) => ({ type: 'delete' as const, stepId: id }))
                         );
                         setSelectedStepIds(new Set());
                         setEnableMultiSelect(false);
@@ -784,7 +791,7 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
                     }}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    {t("combo.deleteSelected") || `Löschen (${selectedStepIds.size})`}
+                    {t('combo.deleteSelected') || `Löschen (${selectedStepIds.size})`}
                   </Button>
                 )}
                 <Button
@@ -792,30 +799,31 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
                   onClick={() => {
                     if (!historyCombo) return;
                     const json = exportComboToJSON(historyCombo);
-                    const blob = new Blob([json], { type: "application/json" });
+                    const blob = new Blob([json], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
+                    const a = document.createElement('a');
                     a.href = url;
-                    a.download = `${historyCombo.title.replace(/[^a-z0-9]/gi, "_")}.json`;
+                    a.download = `${historyCombo.title.replace(/[^a-z0-9]/gi, '_')}.json`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     addToast({
-                      variant: "success",
-                      title: t("combo.exported") || "Kombo exportiert",
-                      description: t("combo.exportedDescription") || "Die Kombo wurde erfolgreich exportiert",
+                      variant: 'success',
+                      title: t('combo.exported') || 'Kombo exportiert',
+                      description:
+                        t('combo.exportedDescription') || 'Die Kombo wurde erfolgreich exportiert',
                     });
                   }}
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  {t("combo.export") || "Exportieren"}
+                  {t('combo.export') || 'Exportieren'}
                 </Button>
               </>
             )}
             <Button onClick={handleAddStep}>
               <Plus className="mr-2 h-4 w-4" />
-              {t("combo.step.add") || "Schritt hinzufügen"}
+              {t('combo.step.add') || 'Schritt hinzufügen'}
             </Button>
           </div>
         </div>
@@ -837,26 +845,27 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
           />
           <DragOverlay
             style={{
-              cursor: "grabbing",
+              cursor: 'grabbing',
             }}
             className="opacity-90"
           >
-            {activeStepId && (() => {
-              const step = historyCombo.steps.find((s) => s.id === activeStepId);
-              if (!step) return null;
-              const sortedSteps = sortComboSteps(historyCombo.steps);
-              const stepNumber = sortedSteps.findIndex((s) => s.id === activeStepId) + 1;
-              return (
-                <div className="transform rotate-2 shadow-2xl scale-105">
-                  <ComboStepItem
-                    step={step}
-                    stepNumber={stepNumber}
-                    showDragHandle={true}
-                    isDragging={true}
-                  />
-                </div>
-              );
-            })()}
+            {activeStepId &&
+              (() => {
+                const step = historyCombo.steps.find((s) => s.id === activeStepId);
+                if (!step) return null;
+                const sortedSteps = sortComboSteps(historyCombo.steps);
+                const stepNumber = sortedSteps.findIndex((s) => s.id === activeStepId) + 1;
+                return (
+                  <div className="transform rotate-2 shadow-2xl scale-105">
+                    <ComboStepItem
+                      step={step}
+                      stepNumber={stepNumber}
+                      showDragHandle={true}
+                      isDragging={true}
+                    />
+                  </div>
+                );
+              })()}
           </DragOverlay>
         </DndContext>
       </div>
@@ -866,25 +875,24 @@ export function ComboEditor({ comboId }: ComboEditorProps) {
         open={stepEditorOpen}
         onOpenChange={setStepEditorOpen}
         onSave={handleSaveStep}
-        initialStep={editingStep ? {
-          cardId: editingStep.cardId,
-          actionType: editingStep.actionType as any,
-          description: editingStep.description,
-          targetCardId: editingStep.targetCardId,
-          order: editingStep.order,
-        } : undefined}
-        mode={editingStepId ? "edit" : "create"}
+        initialStep={
+          editingStep
+            ? {
+                cardId: editingStep.cardId,
+                actionType: editingStep.actionType as any,
+                description: editingStep.description,
+                targetCardId: editingStep.targetCardId,
+                order: editingStep.order,
+              }
+            : undefined
+        }
+        mode={editingStepId ? 'edit' : 'create'}
       />
 
       {/* Play Mode Dialog */}
       {historyCombo && (
-        <ComboPlayMode
-          open={playModeOpen}
-          onOpenChange={setPlayModeOpen}
-          combo={historyCombo}
-        />
+        <ComboPlayMode open={playModeOpen} onOpenChange={setPlayModeOpen} combo={historyCombo} />
       )}
     </div>
   );
 }
-

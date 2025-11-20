@@ -1,14 +1,14 @@
-import { useCallback, useRef, useState } from "react";
-import { useTransition } from "react";
-import type { DeckSection } from "@/lib/validations/deck.schema";
-import type { DeckWithCards, CardForDeck } from "./use-deck-history";
-import { useRetry } from "./use-retry";
+import { useCallback, useRef, useState } from 'react';
+import { useTransition } from 'react';
+import type { DeckSection } from '@/lib/validations/deck.schema';
+import type { DeckWithCards, CardForDeck } from './use-deck-history';
+import { useRetry } from './use-retry';
 import {
   addCardToDeck,
   updateCardQuantity,
   removeCardFromDeck,
   moveCardBetweenSections,
-} from "@/server/actions/deck.actions";
+} from '@/server/actions/deck.actions';
 
 interface UseDeckOperationsOptions {
   deckId: string;
@@ -22,21 +22,21 @@ interface UseDeckOperationsOptions {
 }
 
 type OptimisticAction =
-  | { type: "addCard"; cardId: string; section: DeckSection; card: CardForDeck }
-  | { type: "updateQuantity"; cardId: string; section: DeckSection; quantity: number }
-  | { type: "removeCard"; cardId: string; section: DeckSection }
-  | { type: "moveCard"; cardId: string; fromSection: DeckSection; toSection: DeckSection };
+  | { type: 'addCard'; cardId: string; section: DeckSection; card: CardForDeck }
+  | { type: 'updateQuantity'; cardId: string; section: DeckSection; quantity: number }
+  | { type: 'removeCard'; cardId: string; section: DeckSection }
+  | { type: 'moveCard'; cardId: string; fromSection: DeckSection; toSection: DeckSection };
 
 interface PendingOperation {
   cardId: string;
   section: DeckSection;
-  type: "add" | "update" | "remove" | "move";
+  type: 'add' | 'update' | 'remove' | 'move';
   timestamp: number;
 }
 
 /**
  * Custom Hook für Deck-Operationen mit Request-Deduplizierung
- * 
+ *
  * Features:
  * - Request-Queue mit Debouncing für Quantity-Updates
  * - Identische Requests innerhalb 500ms werden dedupliziert
@@ -65,7 +65,7 @@ export function useDeckOperations({
    */
   const getOperationKey = useCallback(
     (type: string, cardId: string, section: DeckSection, toSection?: DeckSection) => {
-      return `${type}-${cardId}-${section}${toSection ? `-${toSection}` : ""}`;
+      return `${type}-${cardId}-${section}${toSection ? `-${toSection}` : ''}`;
     },
     []
   );
@@ -73,14 +73,11 @@ export function useDeckOperations({
   /**
    * Prüft ob eine identische Operation bereits pending ist
    */
-  const isOperationPending = useCallback(
-    (key: string, maxAge: number = 500) => {
-      const pending = pendingOperationsRef.current.get(key);
-      if (!pending) return false;
-      return Date.now() - pending.timestamp < maxAge;
-    },
-    []
-  );
+  const isOperationPending = useCallback((key: string, maxAge: number = 500) => {
+    const pending = pendingOperationsRef.current.get(key);
+    if (!pending) return false;
+    return Date.now() - pending.timestamp < maxAge;
+  }, []);
 
   /**
    * Bricht eine pending Operation ab
@@ -147,8 +144,8 @@ export function useDeckOperations({
    */
   const addCard = useCallback(
     async (cardId: string, section: DeckSection, card?: CardForDeck) => {
-      const key = getOperationKey("add", cardId, section);
-      
+      const key = getOperationKey('add', cardId, section);
+
       // Prüfe ob bereits pending
       if (isOperationPending(key)) {
         return;
@@ -161,18 +158,18 @@ export function useDeckOperations({
       }
 
       // Markiere als pending
-      setPendingOperations((prev) => new Map(prev).set(operationKey, "add"));
+      setPendingOperations((prev) => new Map(prev).set(operationKey, 'add'));
       pendingOperationsRef.current.set(key, {
         cardId,
         section,
-        type: "add",
+        type: 'add',
         timestamp: Date.now(),
       });
 
       // Optimistic update
       if (updateOptimisticDeck && card) {
         updateOptimisticDeck({
-          type: "addCard",
+          type: 'addCard',
           cardId,
           section,
           card,
@@ -209,16 +206,19 @@ export function useDeckOperations({
                 const updatedDeck = {
                   ...current,
                   deckCards: current.deckCards.some(
-                    (dc) => dc.cardId === result.deckCard!.cardId && dc.deckSection === result.deckCard!.deckSection
+                    (dc) =>
+                      dc.cardId === result.deckCard!.cardId &&
+                      dc.deckSection === result.deckCard!.deckSection
                   )
                     ? current.deckCards.map((dc) =>
-                        dc.cardId === result.deckCard!.cardId && dc.deckSection === result.deckCard!.deckSection
+                        dc.cardId === result.deckCard!.cardId &&
+                        dc.deckSection === result.deckCard!.deckSection
                           ? result.deckCard!
                           : dc
                       )
                     : [...current.deckCards, result.deckCard!],
                 };
-                addHistoryEntry({ type: "addCard", cardId, section }, updatedDeck);
+                addHistoryEntry({ type: 'addCard', cardId, section }, updatedDeck);
                 return updatedDeck;
               });
               onSuccess?.();
@@ -232,12 +232,24 @@ export function useDeckOperations({
             pendingOperationsRef.current.delete(key);
             // Selektiver Rollback statt loadDeck()
             rollbackOperation(operationKey, cardId, section);
-            onError?.(err instanceof Error ? err.message : "Failed to add card");
+            onError?.(err instanceof Error ? err.message : 'Failed to add card');
           }
         })();
       });
     },
-    [deckId, deck, setDeck, addHistoryEntry, onError, onSuccess, getOperationKey, isOperationPending, updateOptimisticDeck, retry, rollbackOperation]
+    [
+      deckId,
+      deck,
+      setDeck,
+      addHistoryEntry,
+      onError,
+      onSuccess,
+      getOperationKey,
+      isOperationPending,
+      updateOptimisticDeck,
+      retry,
+      rollbackOperation,
+    ]
   );
 
   /**
@@ -245,7 +257,7 @@ export function useDeckOperations({
    */
   const updateQuantity = useCallback(
     async (cardId: string, section: DeckSection, newQuantity: number, oldQuantity: number) => {
-      const key = getOperationKey("update", cardId, section);
+      const key = getOperationKey('update', cardId, section);
 
       // Bricht vorherige pending Operation ab
       cancelOperation(key);
@@ -257,18 +269,18 @@ export function useDeckOperations({
       }
 
       // Markiere als pending
-      setPendingOperations((prev) => new Map(prev).set(operationKey, "update"));
+      setPendingOperations((prev) => new Map(prev).set(operationKey, 'update'));
       pendingOperationsRef.current.set(key, {
         cardId,
         section,
-        type: "update",
+        type: 'update',
         timestamp: Date.now(),
       });
 
       // Optimistic update
       if (updateOptimisticDeck) {
         updateOptimisticDeck({
-          type: "updateQuantity",
+          type: 'updateQuantity',
           cardId,
           section,
           quantity: newQuantity,
@@ -312,7 +324,7 @@ export function useDeckOperations({
                     ),
                   };
                   addHistoryEntry(
-                    { type: "updateQuantity", cardId, section, oldQuantity, newQuantity },
+                    { type: 'updateQuantity', cardId, section, oldQuantity, newQuantity },
                     updatedDeck
                   );
                   return updatedDeck;
@@ -328,7 +340,7 @@ export function useDeckOperations({
               debounceTimersRef.current.delete(key);
               // Selektiver Rollback statt loadDeck()
               rollbackOperation(operationKey, cardId, section);
-              onError?.(err instanceof Error ? err.message : "Failed to update quantity");
+              onError?.(err instanceof Error ? err.message : 'Failed to update quantity');
             }
           })();
         });
@@ -355,7 +367,7 @@ export function useDeckOperations({
    */
   const removeCard = useCallback(
     async (cardId: string, section: DeckSection) => {
-      const key = getOperationKey("remove", cardId, section);
+      const key = getOperationKey('remove', cardId, section);
 
       if (isOperationPending(key)) {
         return;
@@ -367,18 +379,18 @@ export function useDeckOperations({
         optimisticStateRef.current.set(operationKey, JSON.parse(JSON.stringify(deck)));
       }
 
-      setPendingOperations((prev) => new Map(prev).set(operationKey, "remove"));
+      setPendingOperations((prev) => new Map(prev).set(operationKey, 'remove'));
       pendingOperationsRef.current.set(key, {
         cardId,
         section,
-        type: "remove",
+        type: 'remove',
         timestamp: Date.now(),
       });
 
       // Optimistic update
       if (updateOptimisticDeck) {
         updateOptimisticDeck({
-          type: "removeCard",
+          type: 'removeCard',
           cardId,
           section,
         });
@@ -416,7 +428,7 @@ export function useDeckOperations({
                     (dc) => !(dc.cardId === cardId && dc.deckSection === section)
                   ),
                 };
-                addHistoryEntry({ type: "removeCard", cardId, section }, updatedDeck);
+                addHistoryEntry({ type: 'removeCard', cardId, section }, updatedDeck);
                 return updatedDeck;
               });
               onSuccess?.();
@@ -430,12 +442,24 @@ export function useDeckOperations({
             pendingOperationsRef.current.delete(key);
             // Selektiver Rollback statt loadDeck()
             rollbackOperation(operationKey, cardId, section);
-            onError?.(err instanceof Error ? err.message : "Failed to remove card");
+            onError?.(err instanceof Error ? err.message : 'Failed to remove card');
           }
         })();
       });
     },
-    [deckId, deck, setDeck, addHistoryEntry, onError, onSuccess, getOperationKey, isOperationPending, updateOptimisticDeck, retry, rollbackOperation]
+    [
+      deckId,
+      deck,
+      setDeck,
+      addHistoryEntry,
+      onError,
+      onSuccess,
+      getOperationKey,
+      isOperationPending,
+      updateOptimisticDeck,
+      retry,
+      rollbackOperation,
+    ]
   );
 
   /**
@@ -443,7 +467,7 @@ export function useDeckOperations({
    */
   const moveCard = useCallback(
     async (cardId: string, fromSection: DeckSection, toSection: DeckSection) => {
-      const key = getOperationKey("move", cardId, fromSection, toSection);
+      const key = getOperationKey('move', cardId, fromSection, toSection);
 
       if (isOperationPending(key)) {
         return;
@@ -455,18 +479,18 @@ export function useDeckOperations({
         optimisticStateRef.current.set(operationKey, JSON.parse(JSON.stringify(deck)));
       }
 
-      setPendingOperations((prev) => new Map(prev).set(operationKey, "move"));
+      setPendingOperations((prev) => new Map(prev).set(operationKey, 'move'));
       pendingOperationsRef.current.set(key, {
         cardId,
         section: fromSection,
-        type: "move",
+        type: 'move',
         timestamp: Date.now(),
       });
 
       // Optimistic update
       if (updateOptimisticDeck) {
         updateOptimisticDeck({
-          type: "moveCard",
+          type: 'moveCard',
           cardId,
           fromSection,
           toSection,
@@ -505,7 +529,10 @@ export function useDeckOperations({
                 if (result.removedCardId && result.removedSection) {
                   newDeckCards = newDeckCards.filter(
                     (dc) =>
-                      !(dc.cardId === result.removedCardId && dc.deckSection === result.removedSection)
+                      !(
+                        dc.cardId === result.removedCardId &&
+                        dc.deckSection === result.removedSection
+                      )
                   );
                 } else {
                   newDeckCards = newDeckCards.map((dc) =>
@@ -527,7 +554,7 @@ export function useDeckOperations({
                 }
 
                 const updatedDeck = { ...current, deckCards: newDeckCards };
-                addHistoryEntry({ type: "moveCard", cardId, fromSection, toSection }, updatedDeck);
+                addHistoryEntry({ type: 'moveCard', cardId, fromSection, toSection }, updatedDeck);
                 return updatedDeck;
               });
             }
@@ -540,12 +567,23 @@ export function useDeckOperations({
             pendingOperationsRef.current.delete(key);
             // Selektiver Rollback statt loadDeck()
             rollbackOperation(operationKey, cardId, fromSection);
-            onError?.(err instanceof Error ? err.message : "Failed to move card");
+            onError?.(err instanceof Error ? err.message : 'Failed to move card');
           }
         })();
       });
     },
-    [deckId, deck, setDeck, addHistoryEntry, onError, getOperationKey, isOperationPending, updateOptimisticDeck, retry, rollbackOperation]
+    [
+      deckId,
+      deck,
+      setDeck,
+      addHistoryEntry,
+      onError,
+      getOperationKey,
+      isOperationPending,
+      updateOptimisticDeck,
+      retry,
+      rollbackOperation,
+    ]
   );
 
   return {
@@ -557,4 +595,3 @@ export function useDeckOperations({
     pendingOperations,
   };
 }
-

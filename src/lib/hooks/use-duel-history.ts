@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import type { DuelState, DuelAction } from "@/types/duel.types";
+import { useState, useCallback } from 'react';
+import type { DuelState, DuelAction } from '@/types/duel.types';
 
 type HistoryAction = DuelAction;
 
@@ -16,10 +16,7 @@ interface HistoryEntry {
  * @param maxHistorySize - Maximale Anzahl History-Einträge (default: 50)
  * @returns History-Management-Funktionen
  */
-export function useDuelHistory(
-  initialDuelState: DuelState | null,
-  maxHistorySize: number = 50
-) {
+export function useDuelHistory(initialDuelState: DuelState | null, maxHistorySize: number = 50) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [currentDuelState, setCurrentDuelState] = useState<DuelState | null>(initialDuelState);

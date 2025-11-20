@@ -37,21 +37,25 @@ Oder verwende einen Online-Generator für Base64-Strings.
 ## Installation
 
 1. Dependencies installieren:
+
 ```bash
 npm install
 ```
 
 2. Prisma Client generieren:
+
 ```bash
 npm run db:generate
 ```
 
 3. Datenbank-Migration ausführen:
+
 ```bash
 npm run db:migrate
 ```
 
 4. Development Server starten:
+
 ```bash
 npm run dev
 ```
@@ -80,5 +84,3 @@ Dieser Befehl importiert alle verfügbaren Karten (ca. 13.992 Karten) in die lok
 - `npm run db:push` - Synchronisiert Schema ohne Migration (nur für Development)
 - `npm run db:migrate` - Erstellt und führt Migrationen aus
 - `npx tsx prisma/scripts/import-cards.ts` - Importiert alle Karten von YGOPRODeck API
-
-

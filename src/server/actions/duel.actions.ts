@@ -1,10 +1,10 @@
-"use server";
+'use server';
 
-import { auth } from "@/lib/auth/auth";
-import { prisma } from "@/lib/prisma/client";
-import { createCombo } from "./combo.actions";
-import type { DuelState, DuelLogEntry } from "@/types/duel.types";
-import type { CreateComboInput } from "@/lib/validations/combo.schema";
+import { auth } from '@/lib/auth/auth';
+import { prisma } from '@/lib/prisma/client';
+import { createCombo } from './combo.actions';
+import type { DuelState, DuelLogEntry } from '@/types/duel.types';
+import type { CreateComboInput } from '@/lib/validations/combo.schema';
 
 /**
  * Konvertiert einen Duel-Log in Combo-Schritte
@@ -23,19 +23,19 @@ function convertDuelLogToComboInput(
   title: string,
   deckId?: string
 ): CreateComboInput {
-  const relevantSteps: CreateComboInput["steps"] = [];
+  const relevantSteps: CreateComboInput['steps'] = [];
 
   // Filtere nur relevante Aktionen und sortiere nach Turn/Phase
   const relevantActions = duelLog
-    .filter(entry => {
-      return ["NORMAL_SUMMON", "SPECIAL_SUMMON", "ACTIVATE_SPELL", "SET_MONSTER"].includes(
+    .filter((entry) => {
+      return ['NORMAL_SUMMON', 'SPECIAL_SUMMON', 'ACTIVATE_SPELL', 'SET_MONSTER'].includes(
         entry.action.type
       );
     })
     .sort((a, b) => {
       // Sortiere nach Turn, dann Phase, dann Timestamp
       if (a.turn !== b.turn) return a.turn - b.turn;
-      const phaseOrder = ["DRAW", "STANDBY", "MAIN1", "BATTLE", "MAIN2", "END"];
+      const phaseOrder = ['DRAW', 'STANDBY', 'MAIN1', 'BATTLE', 'MAIN2', 'END'];
       const aPhaseIndex = phaseOrder.indexOf(a.phase);
       const bPhaseIndex = phaseOrder.indexOf(b.phase);
       if (aPhaseIndex !== bPhaseIndex) return aPhaseIndex - bPhaseIndex;
@@ -44,23 +44,23 @@ function convertDuelLogToComboInput(
 
   // Konvertiere zu Combo-Steps
   relevantActions.forEach((entry, index) => {
-    let description = "";
+    let description = '';
     let targetCardId: string | undefined;
 
     switch (entry.action.type) {
-      case "NORMAL_SUMMON":
+      case 'NORMAL_SUMMON':
         description = `Beschwöre ${entry.action.cardInstanceId} in Angriffsposition`;
         break;
-      case "SPECIAL_SUMMON":
+      case 'SPECIAL_SUMMON':
         description = `Spezialbeschwöre ${entry.action.cardInstanceId}`;
         break;
-      case "ACTIVATE_SPELL":
+      case 'ACTIVATE_SPELL':
         description = `Aktiviere Zauber ${entry.action.cardInstanceId}`;
         if (entry.action.targetZoneIndex !== undefined) {
           description += ` in Zone ${entry.action.targetZoneIndex}`;
         }
         break;
-      case "SET_MONSTER":
+      case 'SET_MONSTER':
         description = `Setze Monster ${entry.action.cardInstanceId} in Verteidigungsposition`;
         break;
     }
@@ -90,16 +90,12 @@ function convertDuelLogToComboInput(
  * @param deckId - Optionale Deck-ID
  * @returns Erfolg oder Fehler
  */
-export async function convertDuelToCombo(
-  duelState: DuelState,
-  title: string,
-  deckId?: string
-) {
+export async function convertDuelToCombo(duelState: DuelState, title: string, deckId?: string) {
   try {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Erstelle Combo aus Duel-State
@@ -107,14 +103,14 @@ export async function convertDuelToCombo(
     const mockDuelLog: DuelLogEntry[] = [
       // Hier würden echte Log-Einträge aus duelState kommen
       {
-        id: "1",
+        id: '1',
         turn: 1,
-        phase: "MAIN1",
-        player: "PLAYER",
+        phase: 'MAIN1',
+        player: 'PLAYER',
         action: {
-          type: "NORMAL_SUMMON",
-          player: "PLAYER",
-          cardInstanceId: "mock-card-id", // TODO: Richtige cardId verwenden
+          type: 'NORMAL_SUMMON',
+          player: 'PLAYER',
+          cardInstanceId: 'mock-card-id', // TODO: Richtige cardId verwenden
           targetZoneIndex: 0,
         },
         timestamp: Date.now(),
@@ -126,15 +122,15 @@ export async function convertDuelToCombo(
     // Erstelle Combo über bestehende Combo-Actions
     const result = await createCombo(comboInput);
 
-    if ("error" in result) {
+    if ('error' in result) {
       return { error: result.error };
     }
 
     return { success: true, combo: result.combo };
   } catch (error) {
-    console.error("convertDuelToCombo error:", error);
+    console.error('convertDuelToCombo error:', error);
     return {
-      error: error instanceof Error ? error.message : "Failed to convert duel to combo",
+      error: error instanceof Error ? error.message : 'Failed to convert duel to combo',
     };
   }
 }
@@ -153,18 +149,18 @@ export async function saveDuel(duelState: DuelState) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // TODO: Implementiere Duel-Speicherung in DB
     // Für jetzt nur Validierung und Platzhalter
-    console.log("Saving duel:", duelState);
+    console.log('Saving duel:', duelState);
 
-    return { success: true, message: "Duel saved locally" };
+    return { success: true, message: 'Duel saved locally' };
   } catch (error) {
-    console.error("saveDuel error:", error);
+    console.error('saveDuel error:', error);
     return {
-      error: error instanceof Error ? error.message : "Failed to save duel",
+      error: error instanceof Error ? error.message : 'Failed to save duel',
     };
   }
 }

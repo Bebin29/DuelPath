@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { useDuelOperations } from "@/lib/hooks/use-duel-operations";
-import { useDuelState } from "@/lib/hooks/use-duel-state";
+import { useState } from 'react';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { useDuelOperations } from '@/lib/hooks/use-duel-operations';
+import { useDuelState } from '@/lib/hooks/use-duel-state';
 import {
   Dialog,
   DialogContent,
@@ -11,12 +11,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/components/ui/dialog";
-import { Button } from "@/components/components/ui/button";
-import { Input } from "@/components/components/ui/input";
-import { Label } from "@/components/components/ui/label";
-import { Loader2 } from "lucide-react";
-import type { DuelState } from "@/types/duel.types";
+} from '@/components/components/ui/dialog';
+import { Button } from '@/components/components/ui/button';
+import { Input } from '@/components/components/ui/input';
+import { Label } from '@/components/components/ui/label';
+import { Loader2 } from 'lucide-react';
+import type { DuelState } from '@/types/duel.types';
 
 interface SaveDuelAsComboDialogProps {
   open: boolean;
@@ -39,13 +39,13 @@ export function SaveDuelAsComboDialog({
     addHistoryEntry: () => {}, // Nicht benötigt für diese Operation
   });
 
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSave = async () => {
     if (!title.trim()) {
-      setError(t("combo.validation.titleRequired"));
+      setError(t('combo.validation.titleRequired'));
       return;
     }
 
@@ -55,16 +55,16 @@ export function SaveDuelAsComboDialog({
     try {
       await convertDuelToCombo(duelState, title.trim());
       onOpenChange(false);
-      setTitle("");
+      setTitle('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save combo");
+      setError(err instanceof Error ? err.message : 'Failed to save combo');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCancel = () => {
-    setTitle("");
+    setTitle('');
     setError(null);
     onOpenChange(false);
   };
@@ -73,42 +73,36 @@ export function SaveDuelAsComboDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("duel.saveAsCombo")}</DialogTitle>
-          <DialogDescription>
-            {t("duel.saveAsComboDescription")}
-          </DialogDescription>
+          <DialogTitle>{t('duel.saveAsCombo')}</DialogTitle>
+          <DialogDescription>{t('duel.saveAsComboDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="combo-title">{t("combo.title")}</Label>
+            <Label htmlFor="combo-title">{t('combo.title')}</Label>
             <Input
               id="combo-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={t("combo.titlePlaceholder")}
+              placeholder={t('combo.titlePlaceholder')}
               disabled={isLoading}
             />
           </div>
 
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
-              {error}
-            </div>
+            <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">{error}</div>
           )}
 
-          <div className="text-sm text-muted-foreground">
-            {t("duel.saveAsComboInfo")}
-          </div>
+          <div className="text-sm text-muted-foreground">{t('duel.saveAsComboInfo')}</div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
-            {t("common.cancel")}
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={isLoading || !title.trim()}>
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {t("duel.saveAsCombo")}
+            {t('duel.saveAsCombo')}
           </Button>
         </DialogFooter>
       </DialogContent>

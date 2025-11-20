@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { nanoid } from 'nanoid';
 import type {
   DuelState,
   DuelAction,
@@ -10,18 +10,18 @@ import type {
   DuelDeck,
   CardPosition,
   DuelZone,
-} from "@/types/duel.types";
+} from '@/types/duel.types';
 
 // Temporär: DuelPhase direkt definieren, um Import-Probleme zu vermeiden
 enum DuelPhase {
-  DRAW = "DRAW",
-  STANDBY = "STANDBY",
-  MAIN1 = "MAIN1",
-  BATTLE = "BATTLE",
-  MAIN2 = "MAIN2",
-  END = "END",
+  DRAW = 'DRAW',
+  STANDBY = 'STANDBY',
+  MAIN1 = 'MAIN1',
+  BATTLE = 'BATTLE',
+  MAIN2 = 'MAIN2',
+  END = 'END',
 }
-import { validateDuelAction, DUEL_VALIDATION_RULES } from "@/lib/validations/duel.schema";
+import { validateDuelAction, DUEL_VALIDATION_RULES } from '@/lib/validations/duel.schema';
 
 /**
  * Erstellt einen initialen Duellzustand aus einem Deck
@@ -30,56 +30,56 @@ export function createInitialDuelState(deck: DuelDeck): DuelState | null {
   try {
     // Stelle sicher, dass das Deck gültig ist
     if (!deck || !deck.cards || deck.cards.length === 0) {
-      console.error("Invalid deck provided to createInitialDuelState:", deck);
+      console.error('Invalid deck provided to createInitialDuelState:', deck);
       return null;
     }
 
     // Erstelle Karteninstanzen für alle Karten im Deck
     const deckInstances = shuffleArray(
-      deck.cards.map(card => {
+      deck.cards.map((card) => {
         if (!card || !card.id) {
           throw new Error(`Invalid card in deck: ${JSON.stringify(card)}`);
         }
-        return createCardInstance(card.id, "PLAYER", "DECK");
+        return createCardInstance(card.id, 'PLAYER', 'DECK');
       })
     );
 
-  // Ziehe 5 Starthand-Karten
-  const initialHand = deckInstances.splice(0, 5);
+    // Ziehe 5 Starthand-Karten
+    const initialHand = deckInstances.splice(0, 5);
 
-  const playerState: DuelPlayerState = {
-    lp: 8000,
-    hand: initialHand,
-    monsterZone: Array(5).fill(null),
-    spellTrapZone: Array(5).fill(null),
-    graveyard: [],
-    deck: deckInstances,
-    extraDeck: [], // Für später: Extra Deck auslesen
-  };
+    const playerState: DuelPlayerState = {
+      lp: 8000,
+      hand: initialHand,
+      monsterZone: Array(5).fill(null),
+      spellTrapZone: Array(5).fill(null),
+      graveyard: [],
+      deck: deckInstances,
+      extraDeck: [], // Für später: Extra Deck auslesen
+    };
 
-  // Einfacher Gegnerzustand (passiv)
-  const opponentState: DuelPlayerState = {
-    lp: 8000,
-    hand: [], // Gegner hat keine Karten sichtbar
-    monsterZone: Array(5).fill(null),
-    spellTrapZone: Array(5).fill(null),
-    graveyard: [],
-    deck: [], // Gegner-Deck nicht sichtbar
-    extraDeck: [],
-  };
+    // Einfacher Gegnerzustand (passiv)
+    const opponentState: DuelPlayerState = {
+      lp: 8000,
+      hand: [], // Gegner hat keine Karten sichtbar
+      monsterZone: Array(5).fill(null),
+      spellTrapZone: Array(5).fill(null),
+      graveyard: [],
+      deck: [], // Gegner-Deck nicht sichtbar
+      extraDeck: [],
+    };
 
     return {
-      turnPlayer: "PLAYER",
+      turnPlayer: 'PLAYER',
       phase: DuelPhase.DRAW,
       turnCount: 1,
       player: playerState,
       opponent: opponentState,
       normalSummonUsedThisTurn: false,
       duelEnded: false,
-      initialDeckOrder: deck.cards.map(card => card.id), // für Reproduzierbarkeit
+      initialDeckOrder: deck.cards.map((card) => card.id), // für Reproduzierbarkeit
     };
   } catch (error) {
-    console.error("Failed to create initial duel state:", error);
+    console.error('Failed to create initial duel state:', error);
     return null;
   }
 }
@@ -91,7 +91,7 @@ function createCardInstance(cardId: string, owner: PlayerId, zone: DuelZone): Du
   return {
     instanceId: nanoid(),
     cardId,
-    position: zone === "HAND" ? "FACE_UP_ATTACK" : "FACE_DOWN_DEFENSE",
+    position: zone === 'HAND' ? 'FACE_UP_ATTACK' : 'FACE_DOWN_DEFENSE',
     zone,
     owner,
   };
@@ -116,7 +116,7 @@ export function applyAction(state: DuelState, action: DuelAction): DuelState {
   const newState = structuredClone(state);
 
   switch (action.type) {
-    case "DRAW": {
+    case 'DRAW': {
       const playerState = newState[action.player];
       if (playerState.deck.length === 0) return newState; // Kann nicht ziehen
 
@@ -124,56 +124,60 @@ export function applyAction(state: DuelState, action: DuelAction): DuelState {
       const drawnCards = playerState.deck.splice(0, cardsToDraw);
 
       // Gezogene Karten zur Hand hinzufügen
-      drawnCards.forEach(card => {
-        card.zone = "HAND";
-        card.position = "FACE_UP_ATTACK";
+      drawnCards.forEach((card) => {
+        card.zone = 'HAND';
+        card.position = 'FACE_UP_ATTACK';
       });
 
       playerState.hand.push(...drawnCards);
       break;
     }
 
-    case "NORMAL_SUMMON": {
+    case 'NORMAL_SUMMON': {
       const playerState = newState[action.player];
-      const cardIndex = playerState.hand.findIndex(card => card.instanceId === action.cardInstanceId);
+      const cardIndex = playerState.hand.findIndex(
+        (card) => card.instanceId === action.cardInstanceId
+      );
       if (cardIndex === -1) return newState; // Karte nicht in Hand
 
       const card = playerState.hand.splice(cardIndex, 1)[0];
-      card.zone = "MONSTER_ZONE";
-      card.position = "FACE_UP_ATTACK";
+      card.zone = 'MONSTER_ZONE';
+      card.position = 'FACE_UP_ATTACK';
 
       playerState.monsterZone[action.targetZoneIndex] = card;
       playerState.normalSummonUsedThisTurn = true;
       break;
     }
 
-    case "SET_MONSTER": {
+    case 'SET_MONSTER': {
       const playerState = newState[action.player];
-      const cardIndex = playerState.hand.findIndex(card => card.instanceId === action.cardInstanceId);
+      const cardIndex = playerState.hand.findIndex(
+        (card) => card.instanceId === action.cardInstanceId
+      );
       if (cardIndex === -1) return newState;
 
       const card = playerState.hand.splice(cardIndex, 1)[0];
-      card.zone = "MONSTER_ZONE";
-      card.position = "FACE_DOWN_DEFENSE";
+      card.zone = 'MONSTER_ZONE';
+      card.position = 'FACE_DOWN_DEFENSE';
 
       playerState.monsterZone[action.targetZoneIndex] = card;
       break;
     }
 
-    case "ATTACK": {
+    case 'ATTACK': {
       const playerState = newState[action.player];
-      const attacker = findCardInZone(playerState, action.attackerId, "MONSTER_ZONE");
-      if (!attacker || attacker.position.includes("FACE_DOWN")) return newState;
+      const attacker = findCardInZone(playerState, action.attackerId, 'MONSTER_ZONE');
+      if (!attacker || attacker.position.includes('FACE_DOWN')) return newState;
 
-      if (action.target === "LP" || !action.target) {
+      if (action.target === 'LP' || !action.target) {
         // Direkter Angriff auf LP
-        const opponent = action.player === "PLAYER" ? newState.opponent : newState.player;
+        const opponent = action.player === 'PLAYER' ? newState.opponent : newState.player;
         // Vereinfacht: direkter Angriff auf LP (würde eigentlich ATK verwenden)
         opponent.lp = Math.max(0, opponent.lp - 1000); // Beispielwert
       } else {
         // Angriff auf Monster (vereinfacht)
-        const opponent = action.player === "PLAYER" ? newState.opponent : newState.player;
-        const target = findCardInZone(opponent, action.target.cardInstanceId, "MONSTER_ZONE");
+        const opponent = action.player === 'PLAYER' ? newState.opponent : newState.player;
+        const target = findCardInZone(opponent, action.target.cardInstanceId, 'MONSTER_ZONE');
         if (target) {
           // Vereinfachter Kampfausgang
           opponent.lp = Math.max(0, opponent.lp - 500);
@@ -184,7 +188,7 @@ export function applyAction(state: DuelState, action: DuelAction): DuelState {
       break;
     }
 
-    case "CHANGE_PHASE": {
+    case 'CHANGE_PHASE': {
       newState.phase = action.nextPhase;
 
       // Reset bei Phasenwechsel
@@ -197,14 +201,14 @@ export function applyAction(state: DuelState, action: DuelAction): DuelState {
       }
 
       // Auto-Draw in Draw Phase für Spieler
-      if (action.nextPhase === DuelPhase.DRAW && newState.turnPlayer === "PLAYER") {
-        return applyAction(newState, { type: "DRAW", player: "PLAYER", count: 1 });
+      if (action.nextPhase === DuelPhase.DRAW && newState.turnPlayer === 'PLAYER') {
+        return applyAction(newState, { type: 'DRAW', player: 'PLAYER', count: 1 });
       }
 
       break;
     }
 
-    case "END_DUEL": {
+    case 'END_DUEL': {
       newState.duelEnded = true;
       newState.winner = action.winner;
       break;
@@ -221,16 +225,20 @@ export function applyAction(state: DuelState, action: DuelAction): DuelState {
 /**
  * Hilfsfunktion: Findet Karte in einer Zone
  */
-function findCardInZone(playerState: DuelPlayerState, instanceId: string, zone: DuelZone): DuelCardInstance | null {
+function findCardInZone(
+  playerState: DuelPlayerState,
+  instanceId: string,
+  zone: DuelZone
+): DuelCardInstance | null {
   switch (zone) {
-    case "HAND":
-      return playerState.hand.find(card => card.instanceId === instanceId) || null;
-    case "MONSTER_ZONE":
-      return playerState.monsterZone.find(card => card?.instanceId === instanceId) || null;
-    case "SPELL_TRAP_ZONE":
-      return playerState.spellTrapZone.find(card => card?.instanceId === instanceId) || null;
-    case "GRAVEYARD":
-      return playerState.graveyard.find(card => card.instanceId === instanceId) || null;
+    case 'HAND':
+      return playerState.hand.find((card) => card.instanceId === instanceId) || null;
+    case 'MONSTER_ZONE':
+      return playerState.monsterZone.find((card) => card?.instanceId === instanceId) || null;
+    case 'SPELL_TRAP_ZONE':
+      return playerState.spellTrapZone.find((card) => card?.instanceId === instanceId) || null;
+    case 'GRAVEYARD':
+      return playerState.graveyard.find((card) => card.instanceId === instanceId) || null;
     default:
       return null;
   }
@@ -240,7 +248,7 @@ function findCardInZone(playerState: DuelPlayerState, instanceId: string, zone: 
  * Hilfsfunktion: Reset attack flags für alle Monster eines Spielers
  */
 function resetAttackFlags(playerState: DuelPlayerState): void {
-  playerState.monsterZone.forEach(card => {
+  playerState.monsterZone.forEach((card) => {
     if (card) {
       card.hasAttackedThisTurn = false;
     }
@@ -263,69 +271,76 @@ export function validateAction(state: DuelState, action: DuelAction): DuelValida
   const playerState = state[action.player];
 
   switch (action.type) {
-    case "DRAW": {
+    case 'DRAW': {
       if (playerState.deck.length === 0) {
-        errors.push("No cards left in deck");
+        errors.push('No cards left in deck');
       }
       break;
     }
 
-    case "NORMAL_SUMMON": {
+    case 'NORMAL_SUMMON': {
       if (state.normalSummonUsedThisTurn && state.turnPlayer === action.player) {
-        errors.push("Normal Summon already used this turn");
+        errors.push('Normal Summon already used this turn');
       }
 
-      const cardInHand = playerState.hand.find(card => card.instanceId === action.cardInstanceId);
+      const cardInHand = playerState.hand.find((card) => card.instanceId === action.cardInstanceId);
       if (!cardInHand) {
-        errors.push("Card not in hand");
+        errors.push('Card not in hand');
       }
 
       if (playerState.monsterZone[action.targetZoneIndex] !== null) {
-        errors.push("Monster zone occupied");
+        errors.push('Monster zone occupied');
       }
 
       break;
     }
 
-    case "SET_MONSTER": {
-      const cardInHand = playerState.hand.find(card => card.instanceId === action.cardInstanceId);
+    case 'SET_MONSTER': {
+      const cardInHand = playerState.hand.find((card) => card.instanceId === action.cardInstanceId);
       if (!cardInHand) {
-        errors.push("Card not in hand");
+        errors.push('Card not in hand');
       }
 
       if (playerState.monsterZone[action.targetZoneIndex] !== null) {
-        errors.push("Monster zone occupied");
+        errors.push('Monster zone occupied');
       }
 
       break;
     }
 
-    case "ATTACK": {
+    case 'ATTACK': {
       if (state.phase !== DuelPhase.BATTLE) {
-        errors.push("Can only attack in Battle Phase");
+        errors.push('Can only attack in Battle Phase');
       }
 
-      const attacker = findCardInZone(playerState, action.attackerId, "MONSTER_ZONE");
+      const attacker = findCardInZone(playerState, action.attackerId, 'MONSTER_ZONE');
       if (!attacker) {
-        errors.push("Attacker not found");
+        errors.push('Attacker not found');
       } else if (attacker.hasAttackedThisTurn) {
-        errors.push("Monster already attacked this turn");
+        errors.push('Monster already attacked this turn');
       }
 
       break;
     }
 
-    case "CHANGE_PHASE": {
+    case 'CHANGE_PHASE': {
       // Vereinfachte Phasenübergänge
       const currentPhase = state.phase;
       const nextPhase = action.nextPhase;
 
-      const phaseOrder = [DuelPhase.DRAW, DuelPhase.STANDBY, DuelPhase.MAIN1, DuelPhase.BATTLE, DuelPhase.MAIN2, DuelPhase.END];
+      const phaseOrder = [
+        DuelPhase.DRAW,
+        DuelPhase.STANDBY,
+        DuelPhase.MAIN1,
+        DuelPhase.BATTLE,
+        DuelPhase.MAIN2,
+        DuelPhase.END,
+      ];
       const currentIndex = phaseOrder.indexOf(currentPhase);
       const nextIndex = phaseOrder.indexOf(nextPhase);
 
       if (nextIndex !== (currentIndex + 1) % phaseOrder.length && nextPhase !== DuelPhase.DRAW) {
-        warnings.push("Unusual phase transition");
+        warnings.push('Unusual phase transition');
       }
 
       break;
@@ -349,15 +364,22 @@ export function getAvailableActions(state: DuelState, cardInstanceId?: string): 
 
   const player = state.turnPlayer;
   const playerState = state[player];
-  const isPlayerTurn = state.turnPlayer === "PLAYER";
+  const isPlayerTurn = state.turnPlayer === 'PLAYER';
 
   // Phase-Wechsel immer verfügbar
-  const phaseOrder = [DuelPhase.DRAW, DuelPhase.STANDBY, DuelPhase.MAIN1, DuelPhase.BATTLE, DuelPhase.MAIN2, DuelPhase.END];
+  const phaseOrder = [
+    DuelPhase.DRAW,
+    DuelPhase.STANDBY,
+    DuelPhase.MAIN1,
+    DuelPhase.BATTLE,
+    DuelPhase.MAIN2,
+    DuelPhase.END,
+  ];
   const currentIndex = phaseOrder.indexOf(state.phase);
   const nextPhase = phaseOrder[(currentIndex + 1) % phaseOrder.length];
 
   actions.push({
-    action: { type: "CHANGE_PHASE", nextPhase },
+    action: { type: 'CHANGE_PHASE', nextPhase },
     labelKey: `duel.action.changePhase.${nextPhase}`,
   });
 
@@ -365,15 +387,15 @@ export function getAvailableActions(state: DuelState, cardInstanceId?: string): 
 
   // Spezifische Karte
   if (cardInstanceId) {
-    const card = findCardInZone(playerState, cardInstanceId, "HAND");
+    const card = findCardInZone(playerState, cardInstanceId, 'HAND');
     if (card) {
       // Normal Summon
       if (!state.normalSummonUsedThisTurn && state.phase === DuelPhase.MAIN1) {
         for (let i = 0; i < 5; i++) {
           if (playerState.monsterZone[i] === null) {
             actions.push({
-              action: { type: "NORMAL_SUMMON", player, cardInstanceId, targetZoneIndex: i },
-              labelKey: "duel.action.normalSummon",
+              action: { type: 'NORMAL_SUMMON', player, cardInstanceId, targetZoneIndex: i },
+              labelKey: 'duel.action.normalSummon',
             });
             break; // Nur ein verfügbarer Slot zeigen
           }
@@ -385,8 +407,8 @@ export function getAvailableActions(state: DuelState, cardInstanceId?: string): 
         for (let i = 0; i < 5; i++) {
           if (playerState.monsterZone[i] === null) {
             actions.push({
-              action: { type: "SET_MONSTER", player, cardInstanceId, targetZoneIndex: i },
-              labelKey: "duel.action.setMonster",
+              action: { type: 'SET_MONSTER', player, cardInstanceId, targetZoneIndex: i },
+              labelKey: 'duel.action.setMonster',
             });
             break;
           }
@@ -395,11 +417,11 @@ export function getAvailableActions(state: DuelState, cardInstanceId?: string): 
     }
 
     // Attack (für Monster-Zone-Karten)
-    const monster = findCardInZone(playerState, cardInstanceId, "MONSTER_ZONE");
+    const monster = findCardInZone(playerState, cardInstanceId, 'MONSTER_ZONE');
     if (monster && state.phase === DuelPhase.BATTLE && !monster.hasAttackedThisTurn) {
       actions.push({
-        action: { type: "ATTACK", player, attackerId: cardInstanceId, target: "LP" },
-        labelKey: "duel.action.attackLp",
+        action: { type: 'ATTACK', player, attackerId: cardInstanceId, target: 'LP' },
+        labelKey: 'duel.action.attackLp',
       });
     }
 
@@ -410,8 +432,8 @@ export function getAvailableActions(state: DuelState, cardInstanceId?: string): 
   // Draw in Draw Phase (automatisch, aber als Fallback)
   if (state.phase === DuelPhase.DRAW && playerState.deck.length > 0) {
     actions.push({
-      action: { type: "DRAW", player, count: 1 },
-      labelKey: "duel.action.draw",
+      action: { type: 'DRAW', player, count: 1 },
+      labelKey: 'duel.action.draw',
     });
   }
 
@@ -421,7 +443,11 @@ export function getAvailableActions(state: DuelState, cardInstanceId?: string): 
 /**
  * Berechnet Kampfschaden (vereinfacht)
  */
-export function calculateDamage(attacker: DuelCardInstance, defender: DuelCardInstance | null, target: "LP" | DuelCardInstance): number {
+export function calculateDamage(
+  attacker: DuelCardInstance,
+  defender: DuelCardInstance | null,
+  target: 'LP' | DuelCardInstance
+): number {
   // Vereinfacht: immer 1000 Schaden
   // In Realität würde ATK/DEF der Karten verwendet
   return 1000;
@@ -431,7 +457,7 @@ export function calculateDamage(attacker: DuelCardInstance, defender: DuelCardIn
  * Prüft Siegbedingungen
  */
 export function checkWinCondition(state: DuelState): PlayerId | null {
-  if (state.player.lp <= 0) return "OPPONENT";
-  if (state.opponent.lp <= 0) return "PLAYER";
+  if (state.player.lp <= 0) return 'OPPONENT';
+  if (state.opponent.lp <= 0) return 'PLAYER';
   return null;
 }

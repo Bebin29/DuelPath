@@ -1,5 +1,5 @@
-import { useEffect, useCallback, useRef, useState } from "react";
-import * as React from "react";
+import { useEffect, useCallback, useRef, useState } from 'react';
+import * as React from 'react';
 
 interface KeyboardShortcut {
   key: string;
@@ -19,7 +19,7 @@ interface UseKeyboardShortcutsOptions {
 
 /**
  * Hook für Keyboard-Shortcuts
- * 
+ *
  * @param shortcuts - Array von Shortcut-Definitionen
  * @param enabled - Ob Shortcuts aktiviert sind (default: true)
  * @param ignoreInputs - Ob Shortcuts in Input-Feldern ignoriert werden sollen (default: true)
@@ -54,7 +54,7 @@ export function useKeyboardShortcuts({
       // Prüfe alle Shortcuts
       for (const shortcut of shortcutsRef.current) {
         const keyMatches = shortcut.key.toLowerCase() === e.key.toLowerCase();
-        const ctrlMatches = shortcut.ctrl ? (e.ctrlKey || e.metaKey) : !e.ctrlKey && !e.metaKey;
+        const ctrlMatches = shortcut.ctrl ? e.ctrlKey || e.metaKey : !e.ctrlKey && !e.metaKey;
         const metaMatches = shortcut.meta ? e.metaKey : !e.metaKey;
         const shiftMatches = shortcut.shift === undefined ? true : shortcut.shift === e.shiftKey;
         const altMatches = shortcut.alt === undefined ? true : shortcut.alt === e.altKey;
@@ -67,8 +67,8 @@ export function useKeyboardShortcuts({
       }
     }
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [enabled, ignoreInputs]);
 }
 
@@ -136,4 +136,3 @@ export function useMultiSelect<T extends { id: string }>(
     isSelected: (id: string) => selectedIds.has(id),
   };
 }
-

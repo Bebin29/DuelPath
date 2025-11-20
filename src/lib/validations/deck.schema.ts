@@ -1,15 +1,15 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Deck-Format Enum
  */
-export const DECK_FORMAT = ["TCG", "OCG", "Casual"] as const;
+export const DECK_FORMAT = ['TCG', 'OCG', 'Casual'] as const;
 export type DeckFormat = (typeof DECK_FORMAT)[number];
 
 /**
  * Deck-Sektion Enum
  */
-export const DECK_SECTION = ["MAIN", "EXTRA", "SIDE"] as const;
+export const DECK_SECTION = ['MAIN', 'EXTRA', 'SIDE'] as const;
 export type DeckSection = (typeof DECK_SECTION)[number];
 
 /**
@@ -18,13 +18,19 @@ export type DeckSection = (typeof DECK_SECTION)[number];
 export const createDeckSchema = z.object({
   name: z
     .string()
-    .min(1, "Deckname muss mindestens 1 Zeichen lang sein")
-    .max(100, "Deckname darf maximal 100 Zeichen lang sein")
+    .min(1, 'Deckname muss mindestens 1 Zeichen lang sein')
+    .max(100, 'Deckname darf maximal 100 Zeichen lang sein')
     .trim(),
-  description: z.string().max(500, "Beschreibung darf maximal 500 Zeichen lang sein").optional().nullable(),
-  format: z.enum(DECK_FORMAT, {
-    errorMap: () => ({ message: "Format muss TCG, OCG oder Casual sein" }),
-  }).default("TCG"),
+  description: z
+    .string()
+    .max(500, 'Beschreibung darf maximal 500 Zeichen lang sein')
+    .optional()
+    .nullable(),
+  format: z
+    .enum(DECK_FORMAT, {
+      errorMap: () => ({ message: 'Format muss TCG, OCG oder Casual sein' }),
+    })
+    .default('TCG'),
 });
 
 export type CreateDeckInput = z.infer<typeof createDeckSchema>;
@@ -35,14 +41,20 @@ export type CreateDeckInput = z.infer<typeof createDeckSchema>;
 export const updateDeckSchema = z.object({
   name: z
     .string()
-    .min(1, "Deckname muss mindestens 1 Zeichen lang sein")
-    .max(100, "Deckname darf maximal 100 Zeichen lang sein")
+    .min(1, 'Deckname muss mindestens 1 Zeichen lang sein')
+    .max(100, 'Deckname darf maximal 100 Zeichen lang sein')
     .trim()
     .optional(),
-  description: z.string().max(500, "Beschreibung darf maximal 500 Zeichen lang sein").optional().nullable(),
-  format: z.enum(DECK_FORMAT, {
-    errorMap: () => ({ message: "Format muss TCG, OCG oder Casual sein" }),
-  }).optional(),
+  description: z
+    .string()
+    .max(500, 'Beschreibung darf maximal 500 Zeichen lang sein')
+    .optional()
+    .nullable(),
+  format: z
+    .enum(DECK_FORMAT, {
+      errorMap: () => ({ message: 'Format muss TCG, OCG oder Casual sein' }),
+    })
+    .optional(),
 });
 
 export type UpdateDeckInput = z.infer<typeof updateDeckSchema>;
@@ -51,14 +63,14 @@ export type UpdateDeckInput = z.infer<typeof updateDeckSchema>;
  * Schema für Karte zu Deck hinzufügen
  */
 export const addCardToDeckSchema = z.object({
-  cardId: z.string().min(1, "Karten-ID ist erforderlich"),
+  cardId: z.string().min(1, 'Karten-ID ist erforderlich'),
   quantity: z
     .number()
-    .int("Anzahl muss eine ganze Zahl sein")
-    .min(1, "Anzahl muss mindestens 1 sein")
-    .max(3, "Anzahl darf maximal 3 sein"),
+    .int('Anzahl muss eine ganze Zahl sein')
+    .min(1, 'Anzahl muss mindestens 1 sein')
+    .max(3, 'Anzahl darf maximal 3 sein'),
   deckSection: z.enum(DECK_SECTION, {
-    errorMap: () => ({ message: "Deck-Sektion muss MAIN, EXTRA oder SIDE sein" }),
+    errorMap: () => ({ message: 'Deck-Sektion muss MAIN, EXTRA oder SIDE sein' }),
   }),
 });
 
@@ -68,14 +80,14 @@ export type AddCardToDeckInput = z.infer<typeof addCardToDeckSchema>;
  * Schema für Karten-Anzahl aktualisieren
  */
 export const updateCardQuantitySchema = z.object({
-  cardId: z.string().min(1, "Karten-ID ist erforderlich"),
+  cardId: z.string().min(1, 'Karten-ID ist erforderlich'),
   quantity: z
     .number()
-    .int("Anzahl muss eine ganze Zahl sein")
-    .min(1, "Anzahl muss mindestens 1 sein")
-    .max(3, "Anzahl darf maximal 3 sein"),
+    .int('Anzahl muss eine ganze Zahl sein')
+    .min(1, 'Anzahl muss mindestens 1 sein')
+    .max(3, 'Anzahl darf maximal 3 sein'),
   deckSection: z.enum(DECK_SECTION, {
-    errorMap: () => ({ message: "Deck-Sektion muss MAIN, EXTRA oder SIDE sein" }),
+    errorMap: () => ({ message: 'Deck-Sektion muss MAIN, EXTRA oder SIDE sein' }),
   }),
 });
 
@@ -85,9 +97,9 @@ export type UpdateCardQuantityInput = z.infer<typeof updateCardQuantitySchema>;
  * Schema für Karte aus Deck entfernen
  */
 export const removeCardFromDeckSchema = z.object({
-  cardId: z.string().min(1, "Karten-ID ist erforderlich"),
+  cardId: z.string().min(1, 'Karten-ID ist erforderlich'),
   deckSection: z.enum(DECK_SECTION, {
-    errorMap: () => ({ message: "Deck-Sektion muss MAIN, EXTRA oder SIDE sein" }),
+    errorMap: () => ({ message: 'Deck-Sektion muss MAIN, EXTRA oder SIDE sein' }),
   }),
 });
 
@@ -96,26 +108,26 @@ export type RemoveCardFromDeckInput = z.infer<typeof removeCardFromDeckSchema>;
 /**
  * Schema für Batch-Operationen
  */
-export const batchOperationSchema = z.discriminatedUnion("type", [
+export const batchOperationSchema = z.discriminatedUnion('type', [
   z.object({
-    type: z.literal("add"),
+    type: z.literal('add'),
     cardId: z.string().min(1),
     quantity: z.number().int().min(1).max(3),
     deckSection: z.enum(DECK_SECTION),
   }),
   z.object({
-    type: z.literal("update"),
+    type: z.literal('update'),
     cardId: z.string().min(1),
     quantity: z.number().int().min(1).max(3),
     deckSection: z.enum(DECK_SECTION),
   }),
   z.object({
-    type: z.literal("remove"),
+    type: z.literal('remove'),
     cardId: z.string().min(1),
     deckSection: z.enum(DECK_SECTION),
   }),
   z.object({
-    type: z.literal("move"),
+    type: z.literal('move'),
     cardId: z.string().min(1),
     fromSection: z.enum(DECK_SECTION),
     toSection: z.enum(DECK_SECTION),
@@ -152,7 +164,7 @@ export interface DeckValidationResult {
 
 /**
  * Validiert Deck-Größen und Kartenanzahl
- * 
+ *
  * @param mainDeckCount - Anzahl Karten im Main Deck
  * @param extraDeckCount - Anzahl Karten im Extra Deck
  * @param sideDeckCount - Anzahl Karten im Side Deck
@@ -197,7 +209,7 @@ export function validateDeckSizes(
   if (deckCards) {
     const cardCounts = new Map<string, number>();
     const cardNames = new Map<string, string>();
-    
+
     deckCards.forEach((dc) => {
       const currentCount = cardCounts.get(dc.cardId) || 0;
       cardCounts.set(dc.cardId, currentCount + dc.quantity);
@@ -222,7 +234,7 @@ export function validateDeckSizes(
 
 /**
  * Validiert eine einzelne Karte im Deck
- * 
+ *
  * @param cardId - ID der Karte
  * @param quantity - Anzahl der Kopien
  * @param allDeckCards - Alle Deck-Karten
@@ -254,6 +266,3 @@ export function validateCardInDeck(
 
   return { isValid: true };
 }
-
-
-

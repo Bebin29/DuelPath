@@ -2,12 +2,12 @@
  * Integration-Tests für Duel Edge-Cases
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createInitialDuelState, applyAction, validateAction } from "@/lib/utils/duel.utils";
-import type { DuelState, DuelAction, DuelDeck } from "@/types/duel.types";
-import type { Card } from "@prisma/client";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createInitialDuelState, applyAction, validateAction } from '@/lib/utils/duel.utils';
+import type { DuelState, DuelAction, DuelDeck } from '@/types/duel.types';
+import type { Card } from '@prisma/client';
 
-describe("Duel Edge Cases Integration", () => {
+describe('Duel Edge Cases Integration', () => {
   let mockDeck: DuelDeck;
   let mockSmallDeck: DuelDeck;
   let initialState: DuelState;
@@ -16,9 +16,9 @@ describe("Duel Edge Cases Integration", () => {
     const mockCards: Card[] = Array.from({ length: 20 }, (_, i) => ({
       id: `card-${i + 1}`,
       name: `Test Monster ${i + 1}`,
-      type: "Normal Monster",
-      race: "Warrior",
-      attribute: "LIGHT",
+      type: 'Normal Monster',
+      race: 'Warrior',
+      attribute: 'LIGHT',
       level: 4,
       atk: 1500,
       def: 1000,
@@ -29,31 +29,31 @@ describe("Duel Edge Cases Integration", () => {
       imageSmall: null,
       passcode: `${10000000 + i}`,
       nameLower: `test monster ${i + 1}`,
-      typeLower: "normal monster",
-      raceLower: "warrior",
+      typeLower: 'normal monster',
+      raceLower: 'warrior',
       archetypeLower: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     }));
 
     mockDeck = {
-      id: "test-deck",
-      name: "Test Deck",
+      id: 'test-deck',
+      name: 'Test Deck',
       cards: mockCards,
     };
 
     // Kleines Deck für Deck-Out Tests
     mockSmallDeck = {
-      id: "small-deck",
-      name: "Small Deck",
+      id: 'small-deck',
+      name: 'Small Deck',
       cards: mockCards.slice(0, 5), // Nur 5 Karten
     };
 
     initialState = createInitialDuelState(mockDeck);
   });
 
-  describe("Deck-Out Szenarien", () => {
-    it("should handle deck out during draw phase", () => {
+  describe('Deck-Out Szenarien', () => {
+    it('should handle deck out during draw phase', () => {
       // Erstelle State mit fast leerem Deck
       const smallState = createInitialDuelState(mockSmallDeck);
 
@@ -61,8 +61,8 @@ describe("Duel Edge Cases Integration", () => {
       let currentState = smallState;
       for (let i = 0; i < 5; i++) {
         currentState = applyAction(currentState, {
-          type: "DRAW",
-          player: "PLAYER",
+          type: 'DRAW',
+          player: 'PLAYER',
           count: 1,
         });
       }
@@ -72,8 +72,8 @@ describe("Duel Edge Cases Integration", () => {
 
       // Versuch eine weitere Karte zu ziehen sollte fehlschlagen
       const drawAction: DuelAction = {
-        type: "DRAW",
-        player: "PLAYER",
+        type: 'DRAW',
+        player: 'PLAYER',
         count: 1,
       };
 
@@ -82,56 +82,56 @@ describe("Duel Edge Cases Integration", () => {
       expect(afterDraw.player.hand.length).toBe(5); // Hand unverändert
     });
 
-    it("should handle deck out during opponent turn", () => {
+    it('should handle deck out during opponent turn', () => {
       const smallState = createInitialDuelState(mockSmallDeck);
 
       // Spieler zieht alle Karten
       let currentState = smallState;
       for (let i = 0; i < 5; i++) {
         currentState = applyAction(currentState, {
-          type: "DRAW",
-          player: "PLAYER",
+          type: 'DRAW',
+          player: 'PLAYER',
           count: 1,
         });
       }
 
       // Wechsle zu Gegner-Zug
       currentState = applyAction(currentState, {
-        type: "CHANGE_PHASE",
-        nextPhase: "END",
+        type: 'CHANGE_PHASE',
+        nextPhase: 'END',
       });
       currentState = applyAction(currentState, {
-        type: "CHANGE_PHASE",
-        nextPhase: "DRAW",
+        type: 'CHANGE_PHASE',
+        nextPhase: 'DRAW',
       });
 
       // Gegner sollte nicht ziehen können (vereinfacht - würde in Realität anders gehandhabt)
       expect(currentState.opponent.deck.length).toBe(0);
     });
 
-    it("should prevent actions when deck is empty but hand is full", () => {
+    it('should prevent actions when deck is empty but hand is full', () => {
       const smallState = createInitialDuelState(mockSmallDeck);
 
       // Fülle Hand und leere Deck
       let currentState = smallState;
       for (let i = 0; i < 5; i++) {
         currentState = applyAction(currentState, {
-          type: "DRAW",
-          player: "PLAYER",
+          type: 'DRAW',
+          player: 'PLAYER',
           count: 1,
         });
       }
 
       // Versuche zu summoen (sollte funktionieren, da Hand Karten hat)
       currentState = applyAction(currentState, {
-        type: "CHANGE_PHASE",
-        nextPhase: "MAIN1",
+        type: 'CHANGE_PHASE',
+        nextPhase: 'MAIN1',
       });
 
       const handCard = currentState.player.hand[0];
       const summonAction: DuelAction = {
-        type: "NORMAL_SUMMON",
-        player: "PLAYER",
+        type: 'NORMAL_SUMMON',
+        player: 'PLAYER',
         cardInstanceId: handCard.instanceId,
         targetZoneIndex: 0,
       };
@@ -141,8 +141,8 @@ describe("Duel Edge Cases Integration", () => {
     });
   });
 
-  describe("LP = 0 Gleichstand", () => {
-    it("should handle simultaneous LP = 0", () => {
+  describe('LP = 0 Gleichstand', () => {
+    it('should handle simultaneous LP = 0', () => {
       let state = createInitialDuelState(mockDeck);
 
       // Beide Spieler auf 0 LP setzen
@@ -151,19 +151,19 @@ describe("Duel Edge Cases Integration", () => {
 
       // Duel-Ende-Aktion auslösen
       const endDuelAction: DuelAction = {
-        type: "END_DUEL",
-        winner: "PLAYER", // Arbiträrer Gewinner
+        type: 'END_DUEL',
+        winner: 'PLAYER', // Arbiträrer Gewinner
       };
 
       const finalState = applyAction(state, endDuelAction);
 
       expect(finalState.duelEnded).toBe(true);
-      expect(finalState.winner).toBe("PLAYER");
+      expect(finalState.winner).toBe('PLAYER');
       expect(finalState.player.lp).toBe(0);
       expect(finalState.opponent.lp).toBe(0);
     });
 
-    it("should handle LP going below 0", () => {
+    it('should handle LP going below 0', () => {
       let state = createInitialDuelState(mockDeck);
 
       // Spieler auf 100 LP setzen
@@ -171,10 +171,10 @@ describe("Duel Edge Cases Integration", () => {
 
       // Großen Angriff ausführen
       const attackAction: DuelAction = {
-        type: "ATTACK",
-        player: "OPPONENT",
-        attackerId: "dummy-monster",
-        target: "LP",
+        type: 'ATTACK',
+        player: 'OPPONENT',
+        attackerId: 'dummy-monster',
+        target: 'LP',
       };
 
       const afterAttack = applyAction(state, attackAction);
@@ -184,7 +184,7 @@ describe("Duel Edge Cases Integration", () => {
       expect(afterAttack.player.lp).toBeGreaterThanOrEqual(0);
     });
 
-    it("should detect win condition when LP reaches 0", () => {
+    it('should detect win condition when LP reaches 0', () => {
       let state = createInitialDuelState(mockDeck);
 
       // Spieler auf 100 LP setzen
@@ -192,10 +192,10 @@ describe("Duel Edge Cases Integration", () => {
 
       // Angriff ausführen
       const attackAction: DuelAction = {
-        type: "ATTACK",
-        player: "PLAYER",
-        attackerId: "dummy-monster",
-        target: "LP",
+        type: 'ATTACK',
+        player: 'PLAYER',
+        attackerId: 'dummy-monster',
+        target: 'LP',
       };
 
       const afterAttack = applyAction(state, attackAction);
@@ -205,30 +205,30 @@ describe("Duel Edge Cases Integration", () => {
     });
   });
 
-  describe("Ungültige Aktionen", () => {
-    it("should reject actions with invalid card instance IDs", () => {
+  describe('Ungültige Aktionen', () => {
+    it('should reject actions with invalid card instance IDs', () => {
       const invalidAction: DuelAction = {
-        type: "NORMAL_SUMMON",
-        player: "PLAYER",
-        cardInstanceId: "non-existent-card",
+        type: 'NORMAL_SUMMON',
+        player: 'PLAYER',
+        cardInstanceId: 'non-existent-card',
         targetZoneIndex: 0,
       };
 
       const validation = validateAction(initialState, invalidAction);
       expect(validation.ok).toBe(false);
-      expect(validation.errors).toContain("Card not in hand");
+      expect(validation.errors).toContain('Card not in hand');
     });
 
-    it("should reject actions with invalid zone indices", () => {
+    it('should reject actions with invalid zone indices', () => {
       const main1State = applyAction(initialState, {
-        type: "CHANGE_PHASE",
-        nextPhase: "MAIN1",
+        type: 'CHANGE_PHASE',
+        nextPhase: 'MAIN1',
       });
 
       const handCard = main1State.player.hand[0];
       const invalidZoneAction: DuelAction = {
-        type: "NORMAL_SUMMON",
-        player: "PLAYER",
+        type: 'NORMAL_SUMMON',
+        player: 'PLAYER',
         cardInstanceId: handCard.instanceId,
         targetZoneIndex: 10, // Ungültiger Index
       };
@@ -237,12 +237,12 @@ describe("Duel Edge Cases Integration", () => {
       expect(validation.ok).toBe(false);
     });
 
-    it("should reject actions during wrong phases", () => {
+    it('should reject actions during wrong phases', () => {
       // Versuche in Draw Phase zu summoen
       const handCard = initialState.player.hand[0];
       const summonInDrawPhase: DuelAction = {
-        type: "NORMAL_SUMMON",
-        player: "PLAYER",
+        type: 'NORMAL_SUMMON',
+        player: 'PLAYER',
         cardInstanceId: handCard.instanceId,
         targetZoneIndex: 0,
       };
@@ -251,10 +251,10 @@ describe("Duel Edge Cases Integration", () => {
       expect(validation.ok).toBe(true); // Validation erfolgreich, aber Logik verhindert es später
     });
 
-    it("should reject malformed actions", () => {
+    it('should reject malformed actions', () => {
       const malformedAction = {
-        type: "INVALID_TYPE",
-        player: "PLAYER",
+        type: 'INVALID_TYPE',
+        player: 'PLAYER',
       } as any;
 
       const validation = validateAction(initialState, malformedAction);
@@ -262,10 +262,10 @@ describe("Duel Edge Cases Integration", () => {
       expect(validation.errors.length).toBeGreaterThan(0);
     });
 
-    it("should reject actions with wrong player", () => {
+    it('should reject actions with wrong player', () => {
       const wrongPlayerAction: DuelAction = {
-        type: "DRAW",
-        player: "INVALID_PLAYER" as any,
+        type: 'DRAW',
+        player: 'INVALID_PLAYER' as any,
         count: 1,
       };
 
@@ -274,12 +274,10 @@ describe("Duel Edge Cases Integration", () => {
     });
   });
 
-  describe("Netzwerk-Fehler beim Speichern", () => {
-    it("should handle save operation failures", async () => {
+  describe('Netzwerk-Fehler beim Speichern', () => {
+    it('should handle save operation failures', async () => {
       // Mock für Netzwerk-Fehler
-      const mockFetch = vi.fn(() =>
-        Promise.reject(new Error("Network error"))
-      );
+      const mockFetch = vi.fn(() => Promise.reject(new Error('Network error')));
       global.fetch = mockFetch;
 
       // Hier würden wir normalerweise Server-Actions testen
@@ -290,12 +288,10 @@ describe("Duel Edge Cases Integration", () => {
       delete global.fetch;
     });
 
-    it("should handle timeout during save operations", () => {
+    it('should handle timeout during save operations', () => {
       // Mock für Timeout
-      const mockFetch = vi.fn(() =>
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Timeout")), 5000)
-        )
+      const mockFetch = vi.fn(
+        () => new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
       );
       global.fetch = mockFetch;
 
@@ -306,39 +302,39 @@ describe("Duel Edge Cases Integration", () => {
     });
   });
 
-  describe("State-Konsistenz", () => {
-    it("should maintain card count across all zones", () => {
+  describe('State-Konsistenz', () => {
+    it('should maintain card count across all zones', () => {
       let state = createInitialDuelState(mockDeck);
       const initialCardCount = mockDeck.cards.length;
 
       // Führe mehrere Operationen aus
-      state = applyAction(state, { type: "DRAW", player: "PLAYER", count: 1 });
-      state = applyAction(state, { type: "CHANGE_PHASE", nextPhase: "MAIN1" });
+      state = applyAction(state, { type: 'DRAW', player: 'PLAYER', count: 1 });
+      state = applyAction(state, { type: 'CHANGE_PHASE', nextPhase: 'MAIN1' });
 
       // Summone ein Monster
       const handCard = state.player.hand[0];
       state = applyAction(state, {
-        type: "NORMAL_SUMMON",
-        player: "PLAYER",
+        type: 'NORMAL_SUMMON',
+        player: 'PLAYER',
         cardInstanceId: handCard.instanceId,
         targetZoneIndex: 0,
       });
 
       // Attackiere
-      state = applyAction(state, { type: "CHANGE_PHASE", nextPhase: "BATTLE" });
+      state = applyAction(state, { type: 'CHANGE_PHASE', nextPhase: 'BATTLE' });
       state = applyAction(state, {
-        type: "ATTACK",
-        player: "PLAYER",
+        type: 'ATTACK',
+        player: 'PLAYER',
         attackerId: handCard.instanceId,
-        target: "LP",
+        target: 'LP',
       });
 
       // Prüfe Konsistenz
       const totalCards =
         state.player.hand.length +
         state.player.deck.length +
-        state.player.monsterZone.filter(c => c !== null).length +
-        state.player.spellTrapZone.filter(c => c !== null).length +
+        state.player.monsterZone.filter((c) => c !== null).length +
+        state.player.spellTrapZone.filter((c) => c !== null).length +
         state.player.graveyard.length +
         state.player.extraDeck.length +
         (state.player.fieldSpell ? 1 : 0);
@@ -346,28 +342,28 @@ describe("Duel Edge Cases Integration", () => {
       expect(totalCards).toBe(initialCardCount);
     });
 
-    it("should handle rapid action sequences", () => {
+    it('should handle rapid action sequences', () => {
       let state = createInitialDuelState(mockDeck);
 
       // Schnelle Aktionsfolge
       const actions: DuelAction[] = [
-        { type: "CHANGE_PHASE", nextPhase: "MAIN1" },
+        { type: 'CHANGE_PHASE', nextPhase: 'MAIN1' },
         {
-          type: "NORMAL_SUMMON",
-          player: "PLAYER",
+          type: 'NORMAL_SUMMON',
+          player: 'PLAYER',
           cardInstanceId: state.player.hand[0].instanceId,
           targetZoneIndex: 0,
         },
-        { type: "CHANGE_PHASE", nextPhase: "BATTLE" },
+        { type: 'CHANGE_PHASE', nextPhase: 'BATTLE' },
         {
-          type: "ATTACK",
-          player: "PLAYER",
+          type: 'ATTACK',
+          player: 'PLAYER',
           attackerId: state.player.hand[0].instanceId,
-          target: "LP",
+          target: 'LP',
         },
-        { type: "CHANGE_PHASE", nextPhase: "MAIN2" },
-        { type: "CHANGE_PHASE", nextPhase: "END" },
-        { type: "CHANGE_PHASE", nextPhase: "DRAW" },
+        { type: 'CHANGE_PHASE', nextPhase: 'MAIN2' },
+        { type: 'CHANGE_PHASE', nextPhase: 'END' },
+        { type: 'CHANGE_PHASE', nextPhase: 'DRAW' },
       ];
 
       // Führe alle Aktionen aus
@@ -381,7 +377,7 @@ describe("Duel Edge Cases Integration", () => {
       expect(state.normalSummonUsedThisTurn).toBe(false); // Zurückgesetzt
     });
 
-    it("should handle state corruption gracefully", () => {
+    it('should handle state corruption gracefully', () => {
       let state = createInitialDuelState(mockDeck);
 
       // Simuliere State-Korruption
@@ -389,8 +385,8 @@ describe("Duel Edge Cases Integration", () => {
 
       // Versuche eine Aktion
       const action: DuelAction = {
-        type: "CHANGE_PHASE",
-        nextPhase: "MAIN1",
+        type: 'CHANGE_PHASE',
+        nextPhase: 'MAIN1',
       };
 
       // Sollte nicht abstürzen
@@ -399,83 +395,83 @@ describe("Duel Edge Cases Integration", () => {
       }).not.toThrow();
     });
 
-    it("should validate state transitions", () => {
+    it('should validate state transitions', () => {
       let state = createInitialDuelState(mockDeck);
 
       // Ungültiger Phasenübergang
       const invalidTransition: DuelAction = {
-        type: "CHANGE_PHASE",
-        nextPhase: "BATTLE", // Direkt von DRAW zu BATTLE
+        type: 'CHANGE_PHASE',
+        nextPhase: 'BATTLE', // Direkt von DRAW zu BATTLE
       };
 
       const afterTransition = applyAction(state, invalidTransition);
 
       // Sollte trotzdem funktionieren (vereinfachte Logik)
-      expect(afterTransition.phase).toBe("BATTLE");
+      expect(afterTransition.phase).toBe('BATTLE');
     });
 
-    it("should handle concurrent actions", () => {
+    it('should handle concurrent actions', () => {
       const state = createInitialDuelState(mockDeck);
 
       // Simuliere gleichzeitige Aktionen (würde in Realität nicht vorkommen)
-      const action1: DuelAction = { type: "CHANGE_PHASE", nextPhase: "MAIN1" };
-      const action2: DuelAction = { type: "DRAW", player: "PLAYER", count: 1 };
+      const action1: DuelAction = { type: 'CHANGE_PHASE', nextPhase: 'MAIN1' };
+      const action2: DuelAction = { type: 'DRAW', player: 'PLAYER', count: 1 };
 
       const state1 = applyAction(state, action1);
       const state2 = applyAction(state, action2);
 
       // States sollten unterschiedlich sein
-      expect(state1.phase).toBe("MAIN1");
+      expect(state1.phase).toBe('MAIN1');
       expect(state2.player.hand.length).toBe(6); // 5 initial + 1 draw
     });
   });
 
-  describe("Boundary Conditions", () => {
-    it("should handle maximum hand size", () => {
+  describe('Boundary Conditions', () => {
+    it('should handle maximum hand size', () => {
       let state = createInitialDuelState(mockDeck);
 
       // Fülle Hand bis zum Maximum (vereinfacht)
       for (let i = 0; i < 10; i++) {
-        state = applyAction(state, { type: "DRAW", player: "PLAYER", count: 1 });
+        state = applyAction(state, { type: 'DRAW', player: 'PLAYER', count: 1 });
       }
 
       expect(state.player.hand.length).toBe(15); // 5 initial + 10 draws
     });
 
-    it("should handle zero damage attacks", () => {
+    it('should handle zero damage attacks', () => {
       let state = createInitialDuelState(mockDeck);
 
       // Setup für Angriff
-      state = applyAction(state, { type: "CHANGE_PHASE", nextPhase: "MAIN1" });
+      state = applyAction(state, { type: 'CHANGE_PHASE', nextPhase: 'MAIN1' });
       const handCard = state.player.hand[0];
       state = applyAction(state, {
-        type: "NORMAL_SUMMON",
-        player: "PLAYER",
+        type: 'NORMAL_SUMMON',
+        player: 'PLAYER',
         cardInstanceId: handCard.instanceId,
         targetZoneIndex: 0,
       });
-      state = applyAction(state, { type: "CHANGE_PHASE", nextPhase: "BATTLE" });
+      state = applyAction(state, { type: 'CHANGE_PHASE', nextPhase: 'BATTLE' });
 
       // Angriff ausführen
       const attackState = applyAction(state, {
-        type: "ATTACK",
-        player: "PLAYER",
+        type: 'ATTACK',
+        player: 'PLAYER',
         attackerId: handCard.instanceId,
-        target: "LP",
+        target: 'LP',
       });
 
       // LP sollte reduziert worden sein
       expect(attackState.opponent.lp).toBeLessThan(8000);
     });
 
-    it("should handle multiple cards with same ID", () => {
+    it('should handle multiple cards with same ID', () => {
       // Erstelle Deck mit Duplikaten
       const duplicateCards = Array.from({ length: 20 }, (_, i) => ({
         id: `card-${(i % 5) + 1}`, // Nur 5 verschiedene IDs
         name: `Test Monster ${(i % 5) + 1}`,
-        type: "Normal Monster",
-        race: "Warrior",
-        attribute: "LIGHT",
+        type: 'Normal Monster',
+        race: 'Warrior',
+        attribute: 'LIGHT',
         level: 4,
         atk: 1500,
         def: 1000,
@@ -486,16 +482,16 @@ describe("Duel Edge Cases Integration", () => {
         imageSmall: null,
         passcode: `${10000000 + i}`,
         nameLower: `test monster ${(i % 5) + 1}`,
-        typeLower: "normal monster",
-        raceLower: "warrior",
+        typeLower: 'normal monster',
+        raceLower: 'warrior',
         archetypeLower: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
 
       const duplicateDeck: DuelDeck = {
-        id: "duplicate-deck",
-        name: "Duplicate Deck",
+        id: 'duplicate-deck',
+        name: 'Duplicate Deck',
         cards: duplicateCards,
       };
 

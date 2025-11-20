@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef } from 'react';
 
 interface RetryOptions {
   maxRetries?: number;
@@ -9,23 +9,18 @@ interface RetryOptions {
 
 /**
  * Hook für Retry-Logik mit exponential backoff
- * 
+ *
  * @param options - Retry-Optionen
  * @returns Retry-Funktion
  */
 export function useRetry(options: RetryOptions = {}) {
-  const {
-    maxRetries = 3,
-    initialDelay = 1000,
-    maxDelay = 10000,
-    backoffMultiplier = 2,
-  } = options;
+  const { maxRetries = 3, initialDelay = 1000, maxDelay = 10000, backoffMultiplier = 2 } = options;
 
   const retryCountRef = useRef<Map<string, number>>(new Map());
 
   /**
    * Führt eine Funktion mit Retry-Logik aus
-   * 
+   *
    * @param key - Eindeutiger Key für die Operation (für Retry-Tracking)
    * @param fn - Funktion die ausgeführt werden soll
    * @returns Promise mit dem Ergebnis
@@ -57,7 +52,7 @@ export function useRetry(options: RetryOptions = {}) {
         }
       }
 
-      throw new Error("Retry failed: Max attempts reached");
+      throw new Error('Retry failed: Max attempts reached');
     },
     [maxRetries, initialDelay, maxDelay, backoffMultiplier]
   );
@@ -82,4 +77,3 @@ export function useRetry(options: RetryOptions = {}) {
     resetAllRetries,
   };
 }
-

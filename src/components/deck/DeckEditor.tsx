@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useOptimistic, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { useDeckHistory } from "@/lib/hooks/use-deck-history";
-import { useDeckOperations } from "@/lib/hooks/use-deck-operations";
+import { useState, useEffect, useOptimistic, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { useDeckHistory } from '@/lib/hooks/use-deck-history';
+import { useDeckOperations } from '@/lib/hooks/use-deck-operations';
 import {
   DndContext,
   DragEndEvent,
@@ -15,49 +15,55 @@ import {
   useSensor,
   useSensors,
   closestCenter,
-} from "@dnd-kit/core";
-import { getDeckById } from "@/server/actions/deck.actions";
-import { CardSearch } from "./CardSearch";
-import { CardSearchErrorBoundary } from "@/components/error/CardSearchErrorBoundary";
-import { DeckListSection } from "./DeckListSection";
-import { validateDeckSizes } from "@/lib/validations/deck.schema";
-import type { DeckSection } from "@/lib/validations/deck.schema";
-import type { Card } from "@prisma/client";
-import { AlertCircle, CheckCircle2, X, Loader2, History, Download, Upload, Trash2, Move } from "lucide-react";
-import { HistoryTimeline } from "./HistoryTimeline";
+} from '@dnd-kit/core';
+import { getDeckById } from '@/server/actions/deck.actions';
+import { CardSearch } from './CardSearch';
+import { CardSearchErrorBoundary } from '@/components/error/CardSearchErrorBoundary';
+import { DeckListSection } from './DeckListSection';
+import { validateDeckSizes } from '@/lib/validations/deck.schema';
+import type { DeckSection } from '@/lib/validations/deck.schema';
+import type { Card } from '@prisma/client';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/components/ui/popover";
-import Image from "next/image";
-import { useToast } from "@/components/components/ui/toast";
-import { Button } from "@/components/components/ui/button";
-import { Input } from "@/components/components/ui/input";
-import { Skeleton } from "@/components/components/ui/skeleton";
+  AlertCircle,
+  CheckCircle2,
+  X,
+  Loader2,
+  History,
+  Download,
+  Upload,
+  Trash2,
+  Move,
+} from 'lucide-react';
+import { HistoryTimeline } from './HistoryTimeline';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/components/ui/popover';
+import Image from 'next/image';
+import { useToast } from '@/components/components/ui/toast';
+import { Button } from '@/components/components/ui/button';
+import { Input } from '@/components/components/ui/input';
+import { Skeleton } from '@/components/components/ui/skeleton';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/components/ui/select";
-import type { DeckWithCards, CardForDeck } from "@/lib/hooks/use-deck-history";
-import { useCardCache } from "@/lib/hooks/use-card-cache";
-import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
-import { useDeckCardHandlers } from "@/lib/hooks/use-deck-card-handlers";
-import { MAX_CARD_COPIES, DRAG_ACTIVATION_DISTANCE } from "@/lib/constants/deck.constants";
-import { createYDKContent, parseYDKFile, downloadFile, findDeckCard } from "@/lib/utils/deck.utils";
+} from '@/components/components/ui/select';
+import type { DeckWithCards, CardForDeck } from '@/lib/hooks/use-deck-history';
+import { useCardCache } from '@/lib/hooks/use-card-cache';
+import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';
+import { useDeckCardHandlers } from '@/lib/hooks/use-deck-card-handlers';
+import { MAX_CARD_COPIES, DRAG_ACTIVATION_DISTANCE } from '@/lib/constants/deck.constants';
+import { createYDKContent, parseYDKFile, downloadFile, findDeckCard } from '@/lib/utils/deck.utils';
 
 interface DeckEditorProps {
   deckId: string;
 }
 
 type OptimisticAction =
-  | { type: "addCard"; cardId: string; section: DeckSection; card: CardForDeck }
-  | { type: "updateQuantity"; cardId: string; section: DeckSection; quantity: number }
-  | { type: "removeCard"; cardId: string; section: DeckSection }
-  | { type: "moveCard"; cardId: string; fromSection: DeckSection; toSection: DeckSection };
+  | { type: 'addCard'; cardId: string; section: DeckSection; card: CardForDeck }
+  | { type: 'updateQuantity'; cardId: string; section: DeckSection; quantity: number }
+  | { type: 'removeCard'; cardId: string; section: DeckSection }
+  | { type: 'moveCard'; cardId: string; fromSection: DeckSection; toSection: DeckSection };
 
 /**
  * Deck-Editor mit Kartensuche und Deckliste
@@ -72,11 +78,11 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
   const [activeCard, setActiveCard] = useState<CardForDeck | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
-  
+
   // Deck-Suche und Sortierung (muss vor allen bedingten Returns sein)
-  const [deckSearchQuery, setDeckSearchQuery] = useState("");
-  const [deckSortBy, setDeckSortBy] = useState<"name" | "type" | "level" | "atk" | "def">("name");
-  const [deckSortOrder, setDeckSortOrder] = useState<"asc" | "desc">("asc");
+  const [deckSearchQuery, setDeckSearchQuery] = useState('');
+  const [deckSortBy, setDeckSortBy] = useState<'name' | 'type' | 'level' | 'atk' | 'def'>('name');
+  const [deckSortOrder, setDeckSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Undo/Redo History (anpassbares Limit)
   const [historyLimit, setHistoryLimit] = useState(50);
@@ -108,7 +114,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
       if (!currentDeck) return currentDeck;
 
       switch (action.type) {
-        case "addCard": {
+        case 'addCard': {
           const { cardId, section, card } = action;
           const existingDeckCard = currentDeck.deckCards.find(
             (dc) => dc.cardId === cardId && dc.deckSection === section
@@ -140,18 +146,16 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
             };
           }
         }
-        case "updateQuantity": {
+        case 'updateQuantity': {
           const { cardId, section, quantity } = action;
           return {
             ...currentDeck,
             deckCards: currentDeck.deckCards.map((dc) =>
-              dc.cardId === cardId && dc.deckSection === section
-                ? { ...dc, quantity }
-                : dc
+              dc.cardId === cardId && dc.deckSection === section ? { ...dc, quantity } : dc
             ),
           };
         }
-        case "removeCard": {
+        case 'removeCard': {
           const { cardId, section } = action;
           return {
             ...currentDeck,
@@ -160,7 +164,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
             ),
           };
         }
-        case "moveCard": {
+        case 'moveCard': {
           const { cardId, fromSection, toSection } = action;
           return {
             ...currentDeck,
@@ -194,8 +198,8 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
       if (result.error) {
         setError(result.error);
         addToast({
-          variant: "error",
-          title: t("deck.errors.loadFailed"),
+          variant: 'error',
+          title: t('deck.errors.loadFailed'),
           description: result.error,
         });
       } else if (result.deck) {
@@ -203,11 +207,11 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
         setDeck(deckData);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to load deck";
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load deck';
       setError(errorMessage);
       addToast({
-        variant: "error",
-        title: t("deck.errors.loadFailed"),
+        variant: 'error',
+        title: t('deck.errors.loadFailed'),
         description: errorMessage,
       });
     } finally {
@@ -224,7 +228,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
   const filteredAndSortedCards = useMemo(() => {
     if (!optimisticDeck) return { main: [], extra: [], side: [] };
 
-    const filterCards = (cards: DeckWithCards["deckCards"]) => {
+    const filterCards = (cards: DeckWithCards['deckCards']) => {
       let filtered = cards;
 
       // Filter nach Suchbegriff
@@ -244,23 +248,23 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
         let bValue: string | number | null = null;
 
         switch (deckSortBy) {
-          case "name":
+          case 'name':
             aValue = a.card.name;
             bValue = b.card.name;
             break;
-          case "type":
+          case 'type':
             aValue = a.card.type;
             bValue = b.card.type;
             break;
-          case "level":
+          case 'level':
             aValue = a.card.level ?? 0;
             bValue = b.card.level ?? 0;
             break;
-          case "atk":
+          case 'atk':
             aValue = a.card.atk ?? 0;
             bValue = b.card.atk ?? 0;
             break;
-          case "def":
+          case 'def':
             aValue = a.card.def ?? 0;
             bValue = b.card.def ?? 0;
             break;
@@ -271,20 +275,20 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
         if (bValue === null) return -1;
 
         const comparison =
-          typeof aValue === "string"
+          typeof aValue === 'string'
             ? aValue.localeCompare(bValue as string)
             : (aValue as number) - (bValue as number);
 
-        return deckSortOrder === "asc" ? comparison : -comparison;
+        return deckSortOrder === 'asc' ? comparison : -comparison;
       });
 
       return filtered;
     };
 
     return {
-      main: filterCards(optimisticDeck.deckCards.filter((dc) => dc.deckSection === "MAIN")),
-      extra: filterCards(optimisticDeck.deckCards.filter((dc) => dc.deckSection === "EXTRA")),
-      side: filterCards(optimisticDeck.deckCards.filter((dc) => dc.deckSection === "SIDE")),
+      main: filterCards(optimisticDeck.deckCards.filter((dc) => dc.deckSection === 'MAIN')),
+      extra: filterCards(optimisticDeck.deckCards.filter((dc) => dc.deckSection === 'EXTRA')),
+      side: filterCards(optimisticDeck.deckCards.filter((dc) => dc.deckSection === 'SIDE')),
     };
   }, [optimisticDeck, deckSearchQuery, deckSortBy, deckSortOrder]);
 
@@ -296,7 +300,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
   // Debug-Logging (kann später entfernt werden)
   useEffect(() => {
     if (optimisticDeck) {
-      console.log("DeckEditor: Card counts", {
+      console.log('DeckEditor: Card counts', {
         main: mainDeckCards.length,
         extra: extraDeckCards.length,
         side: sideDeckCards.length,
@@ -304,7 +308,13 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
         searchQuery: deckSearchQuery,
       });
     }
-  }, [optimisticDeck, mainDeckCards.length, extraDeckCards.length, sideDeckCards.length, deckSearchQuery]);
+  }, [
+    optimisticDeck,
+    mainDeckCards.length,
+    extraDeckCards.length,
+    sideDeckCards.length,
+    deckSearchQuery,
+  ]);
 
   // Validierung (mit detaillierter Karten-Validierung) - MUSS vor bedingten Returns sein!
   const validation = useMemo(() => {
@@ -338,8 +348,8 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
     addHistoryEntry,
     onError: (error) => {
       addToast({
-        variant: "error",
-        title: t("deck.errors.operationFailed"),
+        variant: 'error',
+        title: t('deck.errors.operationFailed'),
         description: error,
       });
     },
@@ -367,7 +377,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
     getCardData,
     onError: (title, description) => {
       addToast({
-        variant: "error",
+        variant: 'error',
         title,
         description,
       });
@@ -376,15 +386,18 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
   });
 
   // Wrapper für handleAddCard, der handleAddCardToSection mit MAIN aufruft
-  const handleAddCard = useCallback(async (cardId: string) => {
-    await handleAddCardToSection(cardId, "MAIN");
-  }, [handleAddCardToSection]);
+  const handleAddCard = useCallback(
+    async (cardId: string) => {
+      await handleAddCardToSection(cardId, 'MAIN');
+    },
+    [handleAddCardToSection]
+  );
 
   // Keyboard-Shortcuts (nach allen Handler-Funktionen)
   useKeyboardShortcuts({
     shortcuts: [
       {
-        key: "z",
+        key: 'z',
         ctrl: true,
         handler: () => {
           if (canUndo) {
@@ -394,10 +407,10 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
             }
           }
         },
-        description: "Undo",
+        description: 'Undo',
       },
       {
-        key: "z",
+        key: 'z',
         ctrl: true,
         shift: true,
         handler: () => {
@@ -408,15 +421,16 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
             }
           }
         },
-        description: "Redo",
+        description: 'Redo',
       },
       {
-        key: "Delete",
+        key: 'Delete',
         handler: () => {
           if (selectedCardId && optimisticDeck) {
-            const deckCard = findDeckCard(optimisticDeck, selectedCardId, "MAIN") ||
-              findDeckCard(optimisticDeck, selectedCardId, "EXTRA") ||
-              findDeckCard(optimisticDeck, selectedCardId, "SIDE");
+            const deckCard =
+              findDeckCard(optimisticDeck, selectedCardId, 'MAIN') ||
+              findDeckCard(optimisticDeck, selectedCardId, 'EXTRA') ||
+              findDeckCard(optimisticDeck, selectedCardId, 'SIDE');
             if (deckCard) {
               handleRemove(deckCard.cardId, deckCard.deckSection as DeckSection);
               setSelectedCardId(null);
@@ -433,40 +447,42 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
             setSelectedCardIds(new Set());
           }
         },
-        description: "Remove selected card(s)",
+        description: 'Remove selected card(s)',
       },
       {
-        key: "Backspace",
+        key: 'Backspace',
         handler: () => {
           if (selectedCardId && optimisticDeck) {
-            const deckCard = findDeckCard(optimisticDeck, selectedCardId, "MAIN") ||
-              findDeckCard(optimisticDeck, selectedCardId, "EXTRA") ||
-              findDeckCard(optimisticDeck, selectedCardId, "SIDE");
+            const deckCard =
+              findDeckCard(optimisticDeck, selectedCardId, 'MAIN') ||
+              findDeckCard(optimisticDeck, selectedCardId, 'EXTRA') ||
+              findDeckCard(optimisticDeck, selectedCardId, 'SIDE');
             if (deckCard) {
               handleRemove(deckCard.cardId, deckCard.deckSection as DeckSection);
               setSelectedCardId(null);
             }
           }
         },
-        description: "Remove selected card",
+        description: 'Remove selected card',
       },
       {
-        key: "d",
+        key: 'd',
         ctrl: true,
         handler: () => {
           if (selectedCardId && optimisticDeck) {
-            const deckCard = findDeckCard(optimisticDeck, selectedCardId, "MAIN") ||
-              findDeckCard(optimisticDeck, selectedCardId, "EXTRA") ||
-              findDeckCard(optimisticDeck, selectedCardId, "SIDE");
+            const deckCard =
+              findDeckCard(optimisticDeck, selectedCardId, 'MAIN') ||
+              findDeckCard(optimisticDeck, selectedCardId, 'EXTRA') ||
+              findDeckCard(optimisticDeck, selectedCardId, 'SIDE');
             if (deckCard) {
               handleDuplicateCard(deckCard.cardId, deckCard.deckSection as DeckSection);
             }
           }
         },
-        description: "Duplicate card",
+        description: 'Duplicate card',
       },
       {
-        key: "a",
+        key: 'a',
         ctrl: true,
         handler: () => {
           if (optimisticDeck) {
@@ -474,43 +490,45 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
             setSelectedCardIds(allIds);
           }
         },
-        description: "Select all cards",
+        description: 'Select all cards',
       },
       {
-        key: "Escape",
+        key: 'Escape',
         handler: () => {
           setSelectedCardId(null);
           setSelectedCardIds(new Set());
         },
-        description: "Clear selection",
+        description: 'Clear selection',
       },
       {
-        key: "+",
+        key: '+',
         handler: () => {
           if (selectedCardId && optimisticDeck) {
-            const deckCard = findDeckCard(optimisticDeck, selectedCardId, "MAIN") ||
-              findDeckCard(optimisticDeck, selectedCardId, "EXTRA") ||
-              findDeckCard(optimisticDeck, selectedCardId, "SIDE");
+            const deckCard =
+              findDeckCard(optimisticDeck, selectedCardId, 'MAIN') ||
+              findDeckCard(optimisticDeck, selectedCardId, 'EXTRA') ||
+              findDeckCard(optimisticDeck, selectedCardId, 'SIDE');
             if (deckCard) {
               handleIncreaseQuantity(deckCard.cardId, deckCard.deckSection as DeckSection);
             }
           }
         },
-        description: "Increase quantity",
+        description: 'Increase quantity',
       },
       {
-        key: "-",
+        key: '-',
         handler: () => {
           if (selectedCardId && optimisticDeck) {
-            const deckCard = findDeckCard(optimisticDeck, selectedCardId, "MAIN") ||
-              findDeckCard(optimisticDeck, selectedCardId, "EXTRA") ||
-              findDeckCard(optimisticDeck, selectedCardId, "SIDE");
+            const deckCard =
+              findDeckCard(optimisticDeck, selectedCardId, 'MAIN') ||
+              findDeckCard(optimisticDeck, selectedCardId, 'EXTRA') ||
+              findDeckCard(optimisticDeck, selectedCardId, 'SIDE');
             if (deckCard) {
               handleDecreaseQuantity(deckCard.cardId, deckCard.deckSection as DeckSection);
             }
           }
         },
-        description: "Decrease quantity",
+        description: 'Decrease quantity',
       },
     ],
     enabled: !isLoading && !!optimisticDeck,
@@ -537,10 +555,12 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
   const handleBulkRemove = useCallback(async () => {
     if (selectedCardIds.size === 0 || !optimisticDeck) return;
 
-    const operations = Array.from(selectedCardIds).map((cardId) => {
-      const deckCard = optimisticDeck.deckCards.find((dc) => dc.cardId === cardId);
-      return deckCard ? { cardId, section: deckCard.deckSection as DeckSection } : null;
-    }).filter((op): op is { cardId: string; section: DeckSection } => op !== null);
+    const operations = Array.from(selectedCardIds)
+      .map((cardId) => {
+        const deckCard = optimisticDeck.deckCards.find((dc) => dc.cardId === cardId);
+        return deckCard ? { cardId, section: deckCard.deckSection as DeckSection } : null;
+      })
+      .filter((op): op is { cardId: string; section: DeckSection } => op !== null);
 
     for (const op of operations) {
       await handleRemove(op.cardId, op.section);
@@ -549,107 +569,121 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
     setSelectedCardIds(new Set());
   }, [selectedCardIds, optimisticDeck, handleRemove]);
 
-  const handleBulkMove = useCallback(async (toSection: DeckSection) => {
-    if (selectedCardIds.size === 0 || !optimisticDeck) return;
+  const handleBulkMove = useCallback(
+    async (toSection: DeckSection) => {
+      if (selectedCardIds.size === 0 || !optimisticDeck) return;
 
-    const operations = Array.from(selectedCardIds).map((cardId) => {
-      const deckCard = optimisticDeck.deckCards.find((dc) => dc.cardId === cardId);
-      return deckCard ? { cardId, fromSection: deckCard.deckSection as DeckSection, toSection } : null;
-    }).filter((op): op is { cardId: string; fromSection: DeckSection; toSection: DeckSection } => 
-      op !== null && op.fromSection !== op.toSection
-    );
+      const operations = Array.from(selectedCardIds)
+        .map((cardId) => {
+          const deckCard = optimisticDeck.deckCards.find((dc) => dc.cardId === cardId);
+          return deckCard
+            ? { cardId, fromSection: deckCard.deckSection as DeckSection, toSection }
+            : null;
+        })
+        .filter(
+          (op): op is { cardId: string; fromSection: DeckSection; toSection: DeckSection } =>
+            op !== null && op.fromSection !== op.toSection
+        );
 
-    for (const op of operations) {
-      await handleMoveCard(op.cardId, op.fromSection, op.toSection);
-    }
+      for (const op of operations) {
+        await handleMoveCard(op.cardId, op.fromSection, op.toSection);
+      }
 
-    setSelectedCardIds(new Set());
-  }, [selectedCardIds, optimisticDeck, handleMoveCard]);
+      setSelectedCardIds(new Set());
+    },
+    [selectedCardIds, optimisticDeck, handleMoveCard]
+  );
 
   // YDK Export
   const handleExportYDK = useCallback(() => {
     if (!optimisticDeck) return;
 
     const ydkContent = createYDKContent(optimisticDeck);
-    const filename = `${optimisticDeck.name.replace(/[^a-z0-9]/gi, "_")}.ydk`;
+    const filename = `${optimisticDeck.name.replace(/[^a-z0-9]/gi, '_')}.ydk`;
     downloadFile(ydkContent, filename);
 
     addToast({
-      variant: "success",
-      title: t("deck.export.success"),
-      description: t("deck.export.successDescription"),
+      variant: 'success',
+      title: t('deck.export.success'),
+      description: t('deck.export.successDescription'),
     });
   }, [optimisticDeck, t, addToast]);
 
   // YDK Import
-  const handleImportYDK = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !optimisticDeck) return;
+  const handleImportYDK = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file || !optimisticDeck) return;
 
-    try {
-      const text = await file.text();
-      const { main: mainSection, extra: extraSection, side: sideSection } = parseYDKFile(text);
+      try {
+        const text = await file.text();
+        const { main: mainSection, extra: extraSection, side: sideSection } = parseYDKFile(text);
 
-      // Finde Karten anhand Passcode
-      const cardMap = new Map<string, string>(); // passcode -> cardId
-      // TODO: Lade alle Karten einmalig für bessere Performance
-      
-      let importedCount = 0;
-      const errors: string[] = [];
+        // Finde Karten anhand Passcode
+        const cardMap = new Map<string, string>(); // passcode -> cardId
+        // TODO: Lade alle Karten einmalig für bessere Performance
 
-      // Import Main Deck
-      for (const passcode of mainSection) {
-        if (!passcode) continue;
-        // TODO: Finde Karte anhand Passcode und füge hinzu
-        // Für jetzt: Skip (benötigt Card-Lookup)
-      }
+        let importedCount = 0;
+        const errors: string[] = [];
 
-      if (importedCount > 0) {
+        // Import Main Deck
+        for (const passcode of mainSection) {
+          if (!passcode) continue;
+          // TODO: Finde Karte anhand Passcode und füge hinzu
+          // Für jetzt: Skip (benötigt Card-Lookup)
+        }
+
+        if (importedCount > 0) {
+          addToast({
+            variant: 'success',
+            title: t('deck.import.success'),
+            description: t('deck.import.successDescription', { count: importedCount }),
+          });
+        }
+
+        if (errors.length > 0) {
+          addToast({
+            variant: 'warning',
+            title: t('deck.import.warning'),
+            description: errors.slice(0, 5).join(', '),
+          });
+        }
+      } catch (error) {
         addToast({
-          variant: "success",
-          title: t("deck.import.success"),
-          description: t("deck.import.successDescription", { count: importedCount }),
+          variant: 'error',
+          title: t('deck.import.error'),
+          description: error instanceof Error ? error.message : t('deck.import.errorDescription'),
         });
       }
 
-      if (errors.length > 0) {
-        addToast({
-          variant: "warning",
-          title: t("deck.import.warning"),
-          description: errors.slice(0, 5).join(", "),
-        });
-      }
-    } catch (error) {
-      addToast({
-        variant: "error",
-        title: t("deck.import.error"),
-        description: error instanceof Error ? error.message : t("deck.import.errorDescription"),
-      });
-    }
+      // Reset file input
+      event.target.value = '';
+    },
+    [optimisticDeck, t, addToast]
+  );
 
-    // Reset file input
-    event.target.value = "";
-  }, [optimisticDeck, t, addToast]);
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const { active } = event;
+      const data = active.data.current;
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const { active } = event;
-    const data = active.data.current;
-    
-    if (data?.type === "card" && data.card) {
-      setActiveCard(data.card);
-    } else if (data?.type === "deckCard" && optimisticDeck) {
-      // Finde Karte im Deck
-      const cardId = data.cardId as string;
-      const deckCard = optimisticDeck.deckCards.find((dc) => dc.cardId === cardId);
-      if (deckCard) {
-        setActiveCard(deckCard.card);
+      if (data?.type === 'card' && data.card) {
+        setActiveCard(data.card);
+      } else if (data?.type === 'deckCard' && optimisticDeck) {
+        // Finde Karte im Deck
+        const cardId = data.cardId as string;
+        const deckCard = optimisticDeck.deckCards.find((dc) => dc.cardId === cardId);
+        if (deckCard) {
+          setActiveCard(deckCard.card);
+        }
       }
-    }
-  }, [optimisticDeck]);
+    },
+    [optimisticDeck]
+  );
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
     // Haptic Feedback für mobile Geräte (wenn unterstützt)
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       const { active, over } = event;
       if (over && active.id !== over.id) {
         // Kurze Vibration beim Überfahren einer Drop-Zone
@@ -658,35 +692,38 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
     }
   }, []);
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveCard(null);
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      setActiveCard(null);
 
-    if (!over || !optimisticDeck) return;
+      if (!over || !optimisticDeck) return;
 
-    const activeData = active.data.current;
-    const overData = over.data.current;
+      const activeData = active.data.current;
+      const overData = over.data.current;
 
-    // Prüfe ob es eine Deck-Sektion ist
-    if (overData?.type === "deckSection") {
-      const targetSection = overData.section as DeckSection;
-      
-      if (activeData?.type === "card") {
-        // Neue Karte aus Suchergebnissen
-        const cardId = active.id as string;
-        const card = activeData.card as Card;
-        handleAddCardToSection(cardId, targetSection, card);
-      } else if (activeData?.type === "deckCard") {
-        // Karte bereits im Deck - verschiebe zwischen Sektionen
-        const cardId = activeData.cardId as string;
-        const fromSection = activeData.section as DeckSection;
-        
-        if (fromSection !== targetSection) {
-          handleMoveCard(cardId, fromSection, targetSection);
+      // Prüfe ob es eine Deck-Sektion ist
+      if (overData?.type === 'deckSection') {
+        const targetSection = overData.section as DeckSection;
+
+        if (activeData?.type === 'card') {
+          // Neue Karte aus Suchergebnissen
+          const cardId = active.id as string;
+          const card = activeData.card as Card;
+          handleAddCardToSection(cardId, targetSection, card);
+        } else if (activeData?.type === 'deckCard') {
+          // Karte bereits im Deck - verschiebe zwischen Sektionen
+          const cardId = activeData.cardId as string;
+          const fromSection = activeData.section as DeckSection;
+
+          if (fromSection !== targetSection) {
+            handleMoveCard(cardId, fromSection, targetSection);
+          }
         }
       }
-    }
-  }, [optimisticDeck, handleAddCardToSection, handleMoveCard]);
+    },
+    [optimisticDeck, handleAddCardToSection, handleMoveCard]
+  );
 
   if (isLoading) {
     return (
@@ -721,7 +758,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
   if (error || !deck) {
     return (
       <div className="rounded-md bg-destructive/10 p-4 text-destructive border border-destructive/20">
-        {error || t("deck.errors.notFound")}
+        {error || t('deck.errors.notFound')}
       </div>
     );
   }
@@ -739,93 +776,87 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
             {isPending && (
               <div className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {t("common.saving")}...
-                </span>
+                <span className="text-xs text-muted-foreground">{t('common.saving')}...</span>
               </div>
             )}
           </div>
-                 {/* Undo/Redo Buttons */}
-                 <div className="flex items-center gap-2">
-                   <Button
-                     variant="outline"
-                     size="sm"
-                     onClick={() => {
-                       const undoneDeck = undoHistory();
-                       if (undoneDeck) {
-                         setDeck(undoneDeck);
-                       }
-                     }}
-                     disabled={!canUndo}
-                     title={t("common.undo")}
-                   >
-                     {t("common.undo")}
-                   </Button>
-                   <Button
-                     variant="outline"
-                     size="sm"
-                     onClick={() => {
-                       const redoneDeck = redoHistory();
-                       if (redoneDeck) {
-                         setDeck(redoneDeck);
-                       }
-                     }}
-                     disabled={!canRedo}
-                     title={t("common.redo")}
-                   >
-                     {t("common.redo")}
-                   </Button>
-                   <Popover>
-                     <PopoverTrigger asChild>
-                       <Button
-                         variant="outline"
-                         size="sm"
-                         title={t("deck.history.timeline")}
-                       >
-                         <History className="h-4 w-4" />
-                       </Button>
-                     </PopoverTrigger>
-                     <PopoverContent className="w-80" align="end">
-                       <div className="space-y-2">
-                         <div className="flex items-center justify-between">
-                           <h4 className="font-semibold text-sm">{t("deck.history.timeline")}</h4>
-                           <span className="text-xs text-muted-foreground">
-                             {history.length}/{maxHistorySize}
-                           </span>
-                         </div>
-                         <HistoryTimeline
-                           history={history}
-                           currentIndex={historyIndex}
-                           onJumpToHistory={(index) => {
-                             const deck = jumpToHistory(index);
-                             if (deck) {
-                               setDeck(deck);
-                             }
-                           }}
-                           maxHistorySize={maxHistorySize}
-                         />
-                         <div className="flex items-center gap-2 pt-2 border-t">
-                           <label className="text-xs text-muted-foreground">
-                             {t("deck.history.limit")}:
-                           </label>
-                           <input
-                             type="number"
-                             min="10"
-                             max="200"
-                             value={historyLimit}
-                             onChange={(e) => {
-                               const newLimit = parseInt(e.target.value, 10);
-                               if (!isNaN(newLimit) && newLimit >= 10 && newLimit <= 200) {
-                                 setHistoryLimit(newLimit);
-                               }
-                             }}
-                             className="w-16 px-2 py-1 text-xs border rounded"
-                           />
-                         </div>
-                       </div>
-                     </PopoverContent>
-                   </Popover>
-                 </div>
+          {/* Undo/Redo Buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const undoneDeck = undoHistory();
+                if (undoneDeck) {
+                  setDeck(undoneDeck);
+                }
+              }}
+              disabled={!canUndo}
+              title={t('common.undo')}
+            >
+              {t('common.undo')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const redoneDeck = redoHistory();
+                if (redoneDeck) {
+                  setDeck(redoneDeck);
+                }
+              }}
+              disabled={!canRedo}
+              title={t('common.redo')}
+            >
+              {t('common.redo')}
+            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" title={t('deck.history.timeline')}>
+                  <History className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm">{t('deck.history.timeline')}</h4>
+                    <span className="text-xs text-muted-foreground">
+                      {history.length}/{maxHistorySize}
+                    </span>
+                  </div>
+                  <HistoryTimeline
+                    history={history}
+                    currentIndex={historyIndex}
+                    onJumpToHistory={(index) => {
+                      const deck = jumpToHistory(index);
+                      if (deck) {
+                        setDeck(deck);
+                      }
+                    }}
+                    maxHistorySize={maxHistorySize}
+                  />
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <label className="text-xs text-muted-foreground">
+                      {t('deck.history.limit')}:
+                    </label>
+                    <input
+                      type="number"
+                      min="10"
+                      max="200"
+                      value={historyLimit}
+                      onChange={(e) => {
+                        const newLimit = parseInt(e.target.value, 10);
+                        if (!isNaN(newLimit) && newLimit >= 10 && newLimit <= 200) {
+                          setHistoryLimit(newLimit);
+                        }
+                      }}
+                      className="w-16 px-2 py-1 text-xs border rounded"
+                    />
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
         {displayDeck.description && (
           <p className="text-muted-foreground mt-1">{displayDeck.description}</p>
@@ -838,13 +869,13 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
         {validation.isValid ? (
           <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
             <CheckCircle2 className="h-5 w-5" />
-            <span className="text-sm font-medium">{t("deck.validation.valid")}</span>
+            <span className="text-sm font-medium">{t('deck.validation.valid')}</span>
           </div>
         ) : (
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-destructive font-medium">
               <AlertCircle className="h-5 w-5" />
-              <span>{t("deck.validation.invalid")}</span>
+              <span>{t('deck.validation.invalid')}</span>
             </div>
             <div className="space-y-1 pl-7">
               {validation.errors.map((err, idx) => (
@@ -859,7 +890,10 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
         {validation.warnings.length > 0 && (
           <div className="mt-3 space-y-1 pl-7">
             {validation.warnings.map((warn, idx) => (
-              <div key={idx} className="flex items-start gap-2 text-yellow-600 dark:text-yellow-400 text-sm">
+              <div
+                key={idx}
+                className="flex items-start gap-2 text-yellow-600 dark:text-yellow-400 text-sm"
+              >
                 <span className="mt-0.5">⚠</span>
                 <span>{warn}</span>
               </div>
@@ -879,7 +913,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Linke Spalte: Kartensuche */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">{t("deck.searchCards")}</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('deck.searchCards')}</h3>
             <CardSearchErrorBoundary>
               <CardSearch onCardSelect={handleAddCard} />
             </CardSearchErrorBoundary>
@@ -888,39 +922,33 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
           {/* Rechte Spalte: Deckliste */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{t("deck.deckEditor")}</h3>
+              <h3 className="text-lg font-semibold">{t('deck.deckEditor')}</h3>
               <div className="flex items-center gap-2">
                 {/* Bulk-Actions */}
                 {selectedCardIds.size > 0 && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">
-                      {selectedCardIds.size} {t("common.selected")}
+                      {selectedCardIds.size} {t('common.selected')}
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleBulkRemove}
-                      title={t("deck.bulk.remove")}
+                      title={t('deck.bulk.remove')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    <Select
-                      onValueChange={(value) => handleBulkMove(value as DeckSection)}
-                    >
+                    <Select onValueChange={(value) => handleBulkMove(value as DeckSection)}>
                       <SelectTrigger className="w-[120px]">
-                        <SelectValue placeholder={t("deck.bulk.move")} />
+                        <SelectValue placeholder={t('deck.bulk.move')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="MAIN">{t("deck.mainDeck")}</SelectItem>
-                        <SelectItem value="EXTRA">{t("deck.extraDeck")}</SelectItem>
-                        <SelectItem value="SIDE">{t("deck.sideDeck")}</SelectItem>
+                        <SelectItem value="MAIN">{t('deck.mainDeck')}</SelectItem>
+                        <SelectItem value="EXTRA">{t('deck.extraDeck')}</SelectItem>
+                        <SelectItem value="SIDE">{t('deck.sideDeck')}</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedCardIds(new Set())}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedCardIds(new Set())}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -937,8 +965,8 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => document.getElementById("ydk-import")?.click()}
-                    title={t("deck.import.ydk")}
+                    onClick={() => document.getElementById('ydk-import')?.click()}
+                    title={t('deck.import.ydk')}
                   >
                     <Upload className="h-4 w-4" />
                   </Button>
@@ -946,7 +974,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
                     variant="outline"
                     size="sm"
                     onClick={handleExportYDK}
-                    title={t("deck.export.ydk")}
+                    title={t('deck.export.ydk')}
                   >
                     <Download className="h-4 w-4" />
                   </Button>
@@ -957,7 +985,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
             {/* Deck-Suche und Sortierung */}
             <div className="space-y-2">
               <Input
-                placeholder={t("deck.searchInDeck")}
+                placeholder={t('deck.searchInDeck')}
                 value={deckSearchQuery}
                 onChange={(e) => setDeckSearchQuery(e.target.value)}
                 className="w-full"
@@ -971,37 +999,39 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="name">{t("deck.sortByName")}</SelectItem>
-                    <SelectItem value="type">{t("deck.sortByType")}</SelectItem>
-                    <SelectItem value="level">{t("deck.sortByLevel")}</SelectItem>
-                    <SelectItem value="atk">{t("deck.sortByAtk")}</SelectItem>
-                    <SelectItem value="def">{t("deck.sortByDef")}</SelectItem>
+                    <SelectItem value="name">{t('deck.sortByName')}</SelectItem>
+                    <SelectItem value="type">{t('deck.sortByType')}</SelectItem>
+                    <SelectItem value="level">{t('deck.sortByLevel')}</SelectItem>
+                    <SelectItem value="atk">{t('deck.sortByAtk')}</SelectItem>
+                    <SelectItem value="def">{t('deck.sortByDef')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setDeckSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
+                  onClick={() => setDeckSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
                 >
-                  {deckSortOrder === "asc" ? "↑" : "↓"}
+                  {deckSortOrder === 'asc' ? '↑' : '↓'}
                 </Button>
                 {deckSearchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDeckSearchQuery("")}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setDeckSearchQuery('')}>
                     <X className="h-4 w-4" />
                   </Button>
                 )}
               </div>
             </div>
 
-            {([
-              { section: "MAIN" as DeckSection, title: t("deck.mainDeck"), cards: mainDeckCards },
-              { section: "EXTRA" as DeckSection, title: t("deck.extraDeck"), cards: extraDeckCards },
-              { section: "SIDE" as DeckSection, title: t("deck.sideDeck"), cards: sideDeckCards },
-            ] as const).map(({ section, title, cards }) => (
+            {(
+              [
+                { section: 'MAIN' as DeckSection, title: t('deck.mainDeck'), cards: mainDeckCards },
+                {
+                  section: 'EXTRA' as DeckSection,
+                  title: t('deck.extraDeck'),
+                  cards: extraDeckCards,
+                },
+                { section: 'SIDE' as DeckSection, title: t('deck.sideDeck'), cards: sideDeckCards },
+              ] as const
+            ).map(({ section, title, cards }) => (
               <DeckListSection
                 key={section}
                 title={title}
@@ -1027,10 +1057,10 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
         <DragOverlay
           dropAnimation={{
             duration: 200,
-            easing: "ease-out",
+            easing: 'ease-out',
           }}
           style={{
-            cursor: "grabbing",
+            cursor: 'grabbing',
           }}
         >
           {activeCard ? (
@@ -1059,5 +1089,3 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
     </div>
   );
 }
-
-

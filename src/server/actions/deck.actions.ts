@@ -1,7 +1,7 @@
-"use server";
+'use server';
 
-import { auth } from "@/lib/auth/auth";
-import { prisma } from "@/lib/prisma/client";
+import { auth } from '@/lib/auth/auth';
+import { prisma } from '@/lib/prisma/client';
 import {
   createDeckSchema,
   updateDeckSchema,
@@ -17,41 +17,41 @@ import {
   type BatchOperationsInput,
   type BatchOperation,
   type DeckSection,
-} from "@/lib/validations/deck.schema";
-import type { Card } from "@prisma/client";
+} from '@/lib/validations/deck.schema';
+import type { Card } from '@prisma/client';
 
 /**
  * Bestimmt die passende Deck-Sektion für eine Karte basierend auf ihrem Typ
- * 
+ *
  * @param card - Karte
  * @returns Deck-Sektion (MAIN, EXTRA oder SIDE)
  */
 function determineDeckSection(card: Card): DeckSection {
   const extraDeckTypes = [
-    "Fusion Monster",
-    "Synchro Monster",
-    "XYZ Monster",
-    "Link Monster",
-    "Pendulum Effect Fusion Monster",
-    "Pendulum Effect Synchro Monster",
-    "Pendulum Effect XYZ Monster",
-    "Pendulum Effect Link Monster",
-    "Ritual Effect Monster",
-    "Ritual Monster",
+    'Fusion Monster',
+    'Synchro Monster',
+    'XYZ Monster',
+    'Link Monster',
+    'Pendulum Effect Fusion Monster',
+    'Pendulum Effect Synchro Monster',
+    'Pendulum Effect XYZ Monster',
+    'Pendulum Effect Link Monster',
+    'Ritual Effect Monster',
+    'Ritual Monster',
   ];
 
   // Prüfe ob der Kartentyp Extra Deck Karten enthält
   if (extraDeckTypes.some((type) => card.type.includes(type))) {
-    return "EXTRA";
+    return 'EXTRA';
   }
 
   // Standard: Main Deck
-  return "MAIN";
+  return 'MAIN';
 }
 
 /**
  * Server Action: Erstellt ein neues Deck
- * 
+ *
  * @param data - Deck-Daten
  * @returns Erstelltes Deck oder Fehler
  */
@@ -60,7 +60,7 @@ export async function createDeck(data: CreateDeckInput) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob User in der Datenbank existiert
@@ -69,7 +69,7 @@ export async function createDeck(data: CreateDeckInput) {
     });
 
     if (!user) {
-      return { error: "User not found in database. Please sign out and sign in again." };
+      return { error: 'User not found in database. Please sign out and sign in again.' };
     }
 
     // Validierung
@@ -89,18 +89,18 @@ export async function createDeck(data: CreateDeckInput) {
   } catch (error) {
     if (error instanceof Error) {
       // Prüfe ob es ein Foreign Key Constraint Fehler ist
-      if (error.message.includes("foreign key") || error.message.includes("Foreign key")) {
-        return { error: "User not found in database. Please sign out and sign in again." };
+      if (error.message.includes('foreign key') || error.message.includes('Foreign key')) {
+        return { error: 'User not found in database. Please sign out and sign in again.' };
       }
       return { error: error.message };
     }
-    return { error: "Failed to create deck" };
+    return { error: 'Failed to create deck' };
   }
 }
 
 /**
  * Server Action: Aktualisiert ein Deck
- * 
+ *
  * @param deckId - Deck-ID
  * @param data - Update-Daten
  * @returns Aktualisiertes Deck oder Fehler
@@ -110,7 +110,7 @@ export async function updateDeck(deckId: string, data: UpdateDeckInput) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Deck existiert und User berechtigt ist
@@ -119,11 +119,11 @@ export async function updateDeck(deckId: string, data: UpdateDeckInput) {
     });
 
     if (!existingDeck) {
-      return { error: "Deck not found" };
+      return { error: 'Deck not found' };
     }
 
     if (existingDeck.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Validierung
@@ -140,13 +140,13 @@ export async function updateDeck(deckId: string, data: UpdateDeckInput) {
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to update deck" };
+    return { error: 'Failed to update deck' };
   }
 }
 
 /**
  * Server Action: Löscht ein Deck
- * 
+ *
  * @param deckId - Deck-ID
  * @returns Erfolg oder Fehler
  */
@@ -155,7 +155,7 @@ export async function deleteDeck(deckId: string) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Deck existiert und User berechtigt ist
@@ -164,11 +164,11 @@ export async function deleteDeck(deckId: string) {
     });
 
     if (!existingDeck) {
-      return { error: "Deck not found" };
+      return { error: 'Deck not found' };
     }
 
     if (existingDeck.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Deck löschen (Cascade löscht auch DeckCards)
@@ -181,13 +181,13 @@ export async function deleteDeck(deckId: string) {
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to delete deck" };
+    return { error: 'Failed to delete deck' };
   }
 }
 
 /**
  * Server Action: Holt alle Decks eines Users
- * 
+ *
  * @returns Array von Decks
  */
 export async function getUserDecks() {
@@ -195,7 +195,7 @@ export async function getUserDecks() {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob User in der Datenbank existiert
@@ -204,12 +204,12 @@ export async function getUserDecks() {
     });
 
     if (!user) {
-      return { error: "User not found in database. Please sign in again.", decks: [] };
+      return { error: 'User not found in database. Please sign in again.', decks: [] };
     }
 
     const decks = await prisma.deck.findMany({
       where: { userId: session.user.id },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: 'desc' },
       include: {
         deckCards: {
           include: {
@@ -237,26 +237,23 @@ export async function getUserDecks() {
     if (error instanceof Error) {
       return { error: error.message, decks: [] };
     }
-    return { error: "Failed to fetch decks", decks: [] };
+    return { error: 'Failed to fetch decks', decks: [] };
   }
 }
 
 /**
  * Server Action: Holt ein einzelnes Deck mit Karten
- * 
+ *
  * @param deckId - Deck-ID
  * @param options - Optionale Parameter für Pagination
  * @returns Deck mit Karten oder Fehler
  */
-export async function getDeckById(
-  deckId: string,
-  options?: { skip?: number; take?: number }
-) {
+export async function getDeckById(deckId: string, options?: { skip?: number; take?: number }) {
   try {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe zuerst ob Deck existiert und User berechtigt ist
@@ -274,11 +271,11 @@ export async function getDeckById(
     });
 
     if (!deck) {
-      return { error: "Deck not found" };
+      return { error: 'Deck not found' };
     }
 
     if (deck.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Hole DeckCards mit optionaler Pagination
@@ -288,8 +285,8 @@ export async function getDeckById(
     });
 
     const shouldPaginate = totalCards > 100 && options?.take;
-    const skip = shouldPaginate ? (options.skip || 0) : undefined;
-    const take = shouldPaginate ? (options.take || 100) : undefined;
+    const skip = shouldPaginate ? options.skip || 0 : undefined;
+    const take = shouldPaginate ? options.take || 100 : undefined;
 
     const deckCards = await prisma.deckCard.findMany({
       where: { deckId },
@@ -312,10 +309,7 @@ export async function getDeckById(
           },
         },
       },
-      orderBy: [
-        { deckSection: "asc" },
-        { card: { name: "asc" } },
-      ],
+      orderBy: [{ deckSection: 'asc' }, { card: { name: 'asc' } }],
     });
 
     return {
@@ -337,13 +331,13 @@ export async function getDeckById(
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to fetch deck" };
+    return { error: 'Failed to fetch deck' };
   }
 }
 
 /**
  * Server Action: Fügt eine Karte zu einem Deck hinzu
- * 
+ *
  * @param deckId - Deck-ID
  * @param data - Karten-Daten
  * @returns Erfolg oder Fehler
@@ -353,7 +347,7 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Validierung
@@ -379,24 +373,24 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
     ]);
 
     if (!deck) {
-      return { error: "Deck not found" };
+      return { error: 'Deck not found' };
     }
 
     if (deck.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     if (!card) {
-      return { error: "Card not found" };
+      return { error: 'Card not found' };
     }
 
     // Automatische Deck-Sektion-Zuordnung, falls MAIN angegeben oder nicht explizit gesetzt
     let deckSection = validatedData.deckSection;
-    if (deckSection === "MAIN") {
+    if (deckSection === 'MAIN') {
       // Prüfe ob die Karte automatisch ins Extra Deck gehört
       const suggestedSection = determineDeckSection(card);
-      if (suggestedSection === "EXTRA") {
-        deckSection = "EXTRA";
+      if (suggestedSection === 'EXTRA') {
+        deckSection = 'EXTRA';
         // Prüfe nochmal ob Karte in EXTRA bereits existiert
         if (!existingDeckCard) {
           const existingInExtra = await prisma.deckCard.findUnique({
@@ -404,16 +398,13 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
               deckId_cardId_deckSection: {
                 deckId,
                 cardId: validatedData.cardId,
-                deckSection: "EXTRA",
+                deckSection: 'EXTRA',
               },
             },
           });
           if (existingInExtra) {
             // Aktualisiere Anzahl (mit Max-Limit)
-            const newQuantity = Math.min(
-              existingInExtra.quantity + validatedData.quantity,
-              3
-            );
+            const newQuantity = Math.min(existingInExtra.quantity + validatedData.quantity, 3);
 
             const updated = await prisma.deckCard.update({
               where: { id: existingInExtra.id },
@@ -443,24 +434,22 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
     }
 
     // Prüfe nochmal ob Karte in der richtigen Sektion existiert (falls deckSection geändert wurde)
-    const finalExistingDeckCard = deckSection !== validatedData.deckSection
-      ? await prisma.deckCard.findUnique({
-          where: {
-            deckId_cardId_deckSection: {
-              deckId,
-              cardId: validatedData.cardId,
-              deckSection: deckSection,
+    const finalExistingDeckCard =
+      deckSection !== validatedData.deckSection
+        ? await prisma.deckCard.findUnique({
+            where: {
+              deckId_cardId_deckSection: {
+                deckId,
+                cardId: validatedData.cardId,
+                deckSection: deckSection,
+              },
             },
-          },
-        })
-      : existingDeckCard;
+          })
+        : existingDeckCard;
 
     if (finalExistingDeckCard) {
       // Aktualisiere Anzahl (mit Max-Limit)
-      const newQuantity = Math.min(
-        finalExistingDeckCard.quantity + validatedData.quantity,
-        3
-      );
+      const newQuantity = Math.min(finalExistingDeckCard.quantity + validatedData.quantity, 3);
 
       const updated = await prisma.deckCard.update({
         where: { id: finalExistingDeckCard.id },
@@ -517,13 +506,13 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to add card to deck" };
+    return { error: 'Failed to add card to deck' };
   }
 }
 
 /**
  * Server Action: Aktualisiert die Anzahl einer Karte im Deck
- * 
+ *
  * @param deckId - Deck-ID
  * @param data - Update-Daten
  * @returns Erfolg oder Fehler
@@ -533,7 +522,7 @@ export async function updateCardQuantity(deckId: string, data: UpdateCardQuantit
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Validierung
@@ -556,15 +545,15 @@ export async function updateCardQuantity(deckId: string, data: UpdateCardQuantit
     ]);
 
     if (!deck) {
-      return { error: "Deck not found" };
+      return { error: 'Deck not found' };
     }
 
     if (deck.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     if (!deckCard) {
-      return { error: "Card not found in deck" };
+      return { error: 'Card not found in deck' };
     }
 
     // Aktualisiere Anzahl
@@ -594,13 +583,13 @@ export async function updateCardQuantity(deckId: string, data: UpdateCardQuantit
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to update card quantity" };
+    return { error: 'Failed to update card quantity' };
   }
 }
 
 /**
  * Server Action: Verschiebt eine Karte zwischen Deck-Sektionen
- * 
+ *
  * @param deckId - Deck-ID
  * @param data - Karten-Daten mit neuer Sektion
  * @returns Erfolg oder Fehler
@@ -613,7 +602,7 @@ export async function moveCardBetweenSections(
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Kombiniere Queries: Prüfe Deck, sourceDeckCard und targetDeckCard parallel
@@ -642,23 +631,20 @@ export async function moveCardBetweenSections(
     ]);
 
     if (!deck) {
-      return { error: "Deck not found" };
+      return { error: 'Deck not found' };
     }
 
     if (deck.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     if (!sourceDeckCard) {
-      return { error: "Card not found in source section" };
+      return { error: 'Card not found in source section' };
     }
 
     if (targetDeckCard) {
       // Karte existiert bereits in Ziel-Sektion: Aktualisiere Anzahl
-      const newQuantity = Math.min(
-        targetDeckCard.quantity + sourceDeckCard.quantity,
-        3
-      );
+      const newQuantity = Math.min(targetDeckCard.quantity + sourceDeckCard.quantity, 3);
 
       const updated = await prisma.deckCard.update({
         where: { id: targetDeckCard.id },
@@ -686,7 +672,12 @@ export async function moveCardBetweenSections(
         where: { id: sourceDeckCard.id },
       });
 
-      return { success: true, deckCard: updated, removedCardId: sourceDeckCard.cardId, removedSection: data.fromSection };
+      return {
+        success: true,
+        deckCard: updated,
+        removedCardId: sourceDeckCard.cardId,
+        removedSection: data.fromSection,
+      };
     } else {
       // Verschiebe Karte zur neuen Sektion
       const updated = await prisma.deckCard.update({
@@ -716,13 +707,13 @@ export async function moveCardBetweenSections(
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to move card between sections" };
+    return { error: 'Failed to move card between sections' };
   }
 }
 
 /**
  * Server Action: Entfernt eine Karte aus einem Deck
- * 
+ *
  * @param deckId - Deck-ID
  * @param data - Karten-Daten
  * @returns Erfolg oder Fehler
@@ -732,7 +723,7 @@ export async function removeCardFromDeck(deckId: string, data: RemoveCardFromDec
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Validierung
@@ -771,15 +762,15 @@ export async function removeCardFromDeck(deckId: string, data: RemoveCardFromDec
     ]);
 
     if (!deck) {
-      return { error: "Deck not found" };
+      return { error: 'Deck not found' };
     }
 
     if (deck.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     if (!deckCard) {
-      return { error: "Card not found in deck" };
+      return { error: 'Card not found in deck' };
     }
 
     await prisma.deckCard.delete({
@@ -791,13 +782,13 @@ export async function removeCardFromDeck(deckId: string, data: RemoveCardFromDec
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to remove card from deck" };
+    return { error: 'Failed to remove card from deck' };
   }
 }
 
 /**
  * Server Action: Führt mehrere Deck-Operationen in einem Batch aus
- * 
+ *
  * @param deckId - Deck-ID
  * @param data - Batch-Operationen
  * @returns Ergebnisse der Operationen
@@ -807,7 +798,7 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
     // Authentifizierung prüfen
     const session = await auth();
     if (!session?.user?.id) {
-      return { error: "Unauthorized" };
+      return { error: 'Unauthorized' };
     }
 
     // Prüfe ob Deck existiert und User berechtigt ist
@@ -816,35 +807,40 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
     });
 
     if (!deck) {
-      return { error: "Deck not found" };
+      return { error: 'Deck not found' };
     }
 
     if (deck.userId !== session.user.id) {
-      return { error: "Forbidden" };
+      return { error: 'Forbidden' };
     }
 
     // Validierung
     const validatedData = batchOperationsSchema.parse(data);
 
-    const results: Array<{ success: boolean; operation: BatchOperation; error?: string; deckCard?: any }> = [];
+    const results: Array<{
+      success: boolean;
+      operation: BatchOperation;
+      error?: string;
+      deckCard?: any;
+    }> = [];
 
     // Führe alle Operationen in einer Transaktion aus
     await prisma.$transaction(async (tx) => {
       for (const operation of validatedData.operations) {
         try {
           switch (operation.type) {
-            case "add": {
+            case 'add': {
               const card = await tx.card.findUnique({ where: { id: operation.cardId } });
               if (!card) {
-                results.push({ success: false, operation, error: "Card not found" });
+                results.push({ success: false, operation, error: 'Card not found' });
                 continue;
               }
 
               let deckSection = operation.deckSection;
-              if (deckSection === "MAIN") {
+              if (deckSection === 'MAIN') {
                 const suggestedSection = determineDeckSection(card);
-                if (suggestedSection === "EXTRA") {
-                  deckSection = "EXTRA";
+                if (suggestedSection === 'EXTRA') {
+                  deckSection = 'EXTRA';
                 }
               }
 
@@ -910,7 +906,7 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
               }
               break;
             }
-            case "update": {
+            case 'update': {
               const existing = await tx.deckCard.findUnique({
                 where: {
                   deckId_cardId_deckSection: {
@@ -922,7 +918,7 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
               });
 
               if (!existing) {
-                results.push({ success: false, operation, error: "Card not found in deck" });
+                results.push({ success: false, operation, error: 'Card not found in deck' });
                 continue;
               }
 
@@ -949,7 +945,7 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
               results.push({ success: true, operation, deckCard: updated });
               break;
             }
-            case "remove": {
+            case 'remove': {
               const existing = await tx.deckCard.findUnique({
                 where: {
                   deckId_cardId_deckSection: {
@@ -977,7 +973,7 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
               });
 
               if (!existing) {
-                results.push({ success: false, operation, error: "Card not found in deck" });
+                results.push({ success: false, operation, error: 'Card not found in deck' });
                 continue;
               }
 
@@ -985,7 +981,7 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
               results.push({ success: true, operation, deckCard: existing });
               break;
             }
-            case "move": {
+            case 'move': {
               const existing = await tx.deckCard.findUnique({
                 where: {
                   deckId_cardId_deckSection: {
@@ -997,7 +993,7 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
               });
 
               if (!existing) {
-                results.push({ success: false, operation, error: "Card not found in deck" });
+                results.push({ success: false, operation, error: 'Card not found in deck' });
                 continue;
               }
 
@@ -1068,7 +1064,7 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
           results.push({
             success: false,
             operation,
-            error: opError instanceof Error ? opError.message : "Operation failed",
+            error: opError instanceof Error ? opError.message : 'Operation failed',
           });
         }
       }
@@ -1079,7 +1075,6 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
     if (error instanceof Error) {
       return { error: error.message };
     }
-    return { error: "Failed to execute batch operations" };
+    return { error: 'Failed to execute batch operations' };
   }
 }
-

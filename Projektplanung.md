@@ -1,4 +1,5 @@
 DuelPath – Projektplanung (Yu-Gi-Oh! Webtool)
+
 1. Überblick und Zielsetzung
 
 DuelPath ist eine geplante Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren und ausführen sowie eigene Decks verwalten möchten. Das Tool richtet sich an sowohl kompetitive Spieler (zur Optimierung komplexer Zugfolgen) als auch Casual-Spieler (zum Experimentieren mit Kartenkombinationen und Deck-Ideen). Die Kernziele sind Entwicklerfreundlichkeit, skalierbare Architektur und eine intuitive Benutzeroberfläche, um langfristig eine große Nutzerbasis bedienen zu können.
@@ -20,7 +21,7 @@ yourplaymat.com
 ). Nutzer können Filter einsetzen (Monster, Zauber, Fallen, Atk/Def-Werte, Level, Archetypes usw.), um Karten schnell zu finden. Die API bietet hierfür zahlreiche Filterparameter – z.B. Suche nach Namensteilen oder ATK-Werten
 ygoprodeck.com
 ygoprodeck.com
- – die im Tool via UI zugänglich gemacht werden.
+– die im Tool via UI zugänglich gemacht werden.
 
 Deckaufbau per Drag & Drop: Aus Suchergebnissen können Karten direkt dem Deck hinzugefügt werden (Drag-&-Drop oder per „Hinzufügen“-Button). Die UI zeigt dabei live die aktuelle Deck-Zusammenstellung an, getrennt nach Main/Extra/Side-Deck. Hinzugefügte Karten werden mit Anzahl angezeigt, Duplikate hochgezählt (max. 3 automatisch limitiert). Optisch werden Kartennamen und ggf. Vorschaubilder angezeigt, um den Deckinhalt klar darzustellen.
 
@@ -79,39 +80,48 @@ DuelPath wird mit einem modernen, skalierbaren Tech-Stack entwickelt, der auf de
 Nach Abschluss von Phase 2 (Deck-Verwaltung) stehen folgende Services und Infrastruktur-Komponenten zur Verfügung, die in den nachfolgenden Phasen (Kombo-Editor, Duellmodus) genutzt werden können:
 
 **Caching-Services:**
+
 - **Card-Cache Service** (`useCardCache`): Client-seitiger Cache für Kartendaten mit TTL-basiertem Caching und Batch-Loading. Ermöglicht schnellen Zugriff auf bereits geladene Karten ohne erneute API-Aufrufe.
 - **Backend In-Memory Cache**: Server-seitiger Cache für Autocomplete-Ergebnisse, reduziert Datenbankabfragen bei häufigen Suchanfragen.
 - **Service Worker Cache**: Mehrschichtiges Caching-System mit verschiedenen Strategien (Cache First, Network First, Stale-While-Revalidate) für statische Assets, Bilder und API-Responses.
 
 **Storage-Services:**
+
 - **Offline Storage** (`offline-storage.ts`): LocalStorage-basierte Offline-Speicherung für Deck-Daten und Synchronisations-Warteschlange. Ermöglicht Offline-Nutzung und automatische Synchronisation bei Wiederverbindung.
 - **Sync Queue**: Warteschlange für ausstehende Operationen, die bei Offline-Nutzung gesammelt und bei Wiederverbindung automatisch synchronisiert werden.
 
 **Performance-Services:**
+
 - **Card Prefetch Service** (`useCardPrefetch`): Prefetching von Kartendaten beim Hover, reduziert Latenz bei Kartenauswahl.
 - **Virtualisierung** (`@tanstack/react-virtual`): Effiziente Darstellung großer Listen durch Rendering nur sichtbarer Elemente. Bereits implementiert für Deck-Listen und kann für Kombo-Timelines und Duell-Logs genutzt werden.
 
 **Error-Handling Services:**
+
 - **Error Boundary System**: Granulare Error Boundaries (Global, Deck, CardSearch) mit Retry-Mechanismus und kontextbasierter Fehlerprotokollierung.
 - **Error Logger** (`error-logger.ts`): Zentrale Fehlerprotokollierung mit Kontext-Informationen, bereit für Integration mit externen Monitoring-Diensten (z.B. Sentry).
 
 **State Management Services:**
+
 - **Deck Operations Service** (`useDeckOperations`): Zentrale Service für Deck-Operationen mit Request-Deduplizierung, Debouncing und AbortController-Support. Kann als Vorlage für Combo- und Duel-Operationen dienen.
 - **History Service** (`useDeckHistory`): Undo/Redo-Funktionalität mit History-Timeline. Kann für Kombo-Editor und Duellmodus adaptiert werden.
 
 **Card Search Service:**
+
 - **CardSearchService** (`card-search.service.ts`): Server-seitiger Service für Kartensuche mit Filterung, Pagination, Sortierung und Backend-Caching. Bereits optimiert für Performance mit Indizes und Batch-Queries.
 
 **Utility Services:**
+
 - **Deck Utils** (`deck.utils.ts`): Wiederverwendbare Utility-Funktionen für Deck-Operationen (YDK Import/Export, Deck-Validierung, etc.).
 - **Validation Services** (`deck.schema.ts`): Zod-basierte Validierungsschemas, erweiterbar für Kombo- und Duel-Validierung.
 
 **Provider Services:**
+
 - **OfflineProvider**: Context Provider für Offline-Status und Synchronisation.
 - **PerformanceProvider**: Context Provider für Performance-Monitoring (Web Vitals, React Profiler).
 - **SWRProvider**: Konfigurierter SWR Provider für Data Fetching mit optimierten Cache-Einstellungen.
 
 **Custom Hooks:**
+
 - `useKeyboardShortcuts`: Globale Keyboard-Shortcuts, erweiterbar für Kombo-Editor und Duellmodus.
 - `useDebounce`: Debouncing für Suchfelder und Filter.
 - `useRetry`: Retry-Mechanismus mit exponential backoff für fehlgeschlagene Operationen.
@@ -131,7 +141,7 @@ UI-Komponenten mit shadcn/ui und Tailwind CSS – Für die Benutzeroberfläche s
 
 Icon-Bibliothek (lucide-react) – Für Icons in der Oberfläche (z.B. Bearbeiten, Löschen, verschiedene Kartentyp-Symbole) nutzen wir lucide-react. Lucide stellt über 1000 schlichte Icons bereit, die sich gut per CSS skalieren und einfärben lassen. Durch die React-Komponenten-Integration können Icons einfach eingebunden werden (z.B. <LucideIcon name="Plus" /> für ein Plus-Icon auf einem Button). So werden die UI-Elemente visuell ansprechender und besser verständlich (z.B. ein Deck-Icon neben dem Deck-Namen, ein Play-Icon für Kombo abspielen etc.).
 
-Architektur und Modularität: Die App ist in verschiedene Module unterteilt, entsprechend den Hauptdomänen: deck, combo, duel, auth, common. Jedes Modul hat eigene Komponenten, Seiten und ggf. API-Routen. Beispielsweise gibt es einen Routen- und Service-Bereich für Decks (/decks/* Seiten, API-Routen unter /api/decks/*, Prisma-Client-Aufrufe in einem Deck-Service). Diese Kapselung erleichtert die Wartung und ermöglicht ggf. späteres Herauslösen einzelner Teile (z.B. ein isoliertes Kombos-Feature als Library). Außerdem achten wir auf saubere Trennung von Frontend und Backend-Logik: komplexe Berechnungen (etwa Regellogik) laufen serverseitig in API-Routen oder speziellen Service-Klassen, während das Frontend primär die Darstellung und Benutzerinteraktion handhabt. Dank Next.js können wir aber auch vieles via React-Server-Components vorab berechnen (z.B. Decklisten SSR rendern) und somit schnelle Reaktionszeiten erzielen.
+Architektur und Modularität: Die App ist in verschiedene Module unterteilt, entsprechend den Hauptdomänen: deck, combo, duel, auth, common. Jedes Modul hat eigene Komponenten, Seiten und ggf. API-Routen. Beispielsweise gibt es einen Routen- und Service-Bereich für Decks (/decks/_ Seiten, API-Routen unter /api/decks/_, Prisma-Client-Aufrufe in einem Deck-Service). Diese Kapselung erleichtert die Wartung und ermöglicht ggf. späteres Herauslösen einzelner Teile (z.B. ein isoliertes Kombos-Feature als Library). Außerdem achten wir auf saubere Trennung von Frontend und Backend-Logik: komplexe Berechnungen (etwa Regellogik) laufen serverseitig in API-Routen oder speziellen Service-Klassen, während das Frontend primär die Darstellung und Benutzerinteraktion handhabt. Dank Next.js können wir aber auch vieles via React-Server-Components vorab berechnen (z.B. Decklisten SSR rendern) und somit schnelle Reaktionszeiten erzielen.
 
 Hosting und Deployment: Der Ziel-Deploy für DuelPath ist Vercel (passend zum Boilerplate). Vercel ermöglicht Continuous Deployment: jeder Push auf den Hauptbranch kann automatisch deployt werden. Das Boilerplate beinhaltet bereits CI/CL-Konfigurationen (GitHub Actions) für Linting, Tests und Build, was für Code-Qualität und Verlässlichkeit der Deploys sorgt. Vercel skaliert die Anwendung serverlos – d.h. bei hohem Traffic werden automatisch mehr Serverless Functions gestartet, ohne dass wir Instanzmanagement betreiben müssen. Die Global CDN von Vercel sorgt dafür, dass statische Assets (JS, CSS, Bilder) weltweit performant ausgeliefert werden. Für das Backend (API-Aufrufe) nutzen wir Vercel Functions, die ebenfalls global verteilt sind, und verbinden diese sicher mit der zentralen PostgreSQL-Datenbank.
 
@@ -309,7 +319,7 @@ Memory & Leaks: In einer Node-Umgebung müssen wir aufpassen, keine Memory Leaks
 
 YGOPRODeck API Limits: Ein Performance-Aspekt ist die externe Kartendaten-API. Wir umgehen Engpässe, indem wir nicht pro User-Anfrage die API kontaktieren, sondern einmal wöchentlich (Batch). Dies verhindert, dass wir ins Rate-Limit laufen oder verzögerte Antworten bekommen. YGOPRODeck hat ein Limit von 20 Requests/Sekunde
 ygoprodeck.com
- – sollten wir doch mal on-demand was laden (z.B. die allerneuesten Karten manuell), halten wir uns strikt daran und implementieren notfalls ein kleines Delay oder Zwischencache. So bleibt unsere Beziehung zur API gesund und die Performance für Nutzer hoch (lokale DB ist schneller als API-Aufruf).
+– sollten wir doch mal on-demand was laden (z.B. die allerneuesten Karten manuell), halten wir uns strikt daran und implementieren notfalls ein kleines Delay oder Zwischencache. So bleibt unsere Beziehung zur API gesund und die Performance für Nutzer hoch (lokale DB ist schneller als API-Aufruf).
 
 Skalierung der Community-Funktionen: Falls später viele User öffentliche Inhalte nutzen, müssen wir die Last im Blick behalten. Z.B. ein "Combo des Tages" Feature auf der Startseite könnte zu hoher DB-Last führen, wenn jeder Pageview die größte Kombodaten zieht. Hier würden wir rechtzeitig cachen (im Memory oder via statische Generierung).
 
@@ -393,6 +403,7 @@ Phase 3: Kombo-Editor (Monat 5-6)
 Ziel: Nutzer in der Lage versetzen, Kombos einzugeben und darzustellen.
 
 **Nutzung verfügbarer Services:**
+
 - **Card-Cache Service**: Nutzung des bestehenden `useCardCache` Hooks für schnellen Zugriff auf Kartendaten beim Erstellen von Kombo-Steps. Reduziert API-Aufrufe und verbessert Performance.
 - **CardSearchService**: Wiederverwendung des optimierten Card-Search-Services für die Kartenauswahl im Step-Editor. Nutzung des Backend-Caches für Autocomplete.
 - **Card Prefetch**: Integration von `useCardPrefetch` für bessere UX beim Hover über Karten in der Kombo-Timeline.
@@ -423,6 +434,7 @@ Phase 4: Duellmodus (Monat 7-9)
 Ziel: Einfache Duellsimulation (Solitärmodus) implementieren.
 
 **Nutzung verfügbarer Services:**
+
 - **Card-Cache Service**: Essentiell für schnellen Zugriff auf Kartendaten während des Duells. Alle Karten im Deck sollten beim Start gecacht werden.
 - **Card Prefetch**: Prefetching von Kartenbildern für nahtlose Animationen beim Ausspielen von Karten.
 - **OptimizedImage**: Nutzung für alle Kartenbilder im Duellmodus (Hand, Feld, Friedhof) mit Lazy Loading.
@@ -458,6 +470,7 @@ Phase 5: Feinschliff und Performance, Launch-Vorbereitung (Monat 10)
 Ziel: Vor dem öffentlichen Launch alle wichtigen Verbesserungen einpflegen, Bugs fixen und das System stabil skalierbar machen.
 
 **Nutzung und Erweiterung verfügbarer Services:**
+
 - **Performance Monitoring**: Vollständige Integration des PerformanceProviders mit Web Vitals Tracking, React Profiler und Slow Query Detection für alle Features.
 - **Error Monitoring**: Integration des Error-Loggers mit externen Services (z.B. Sentry) für Production-Monitoring.
 - **Service Worker**: Finalisierung des Service Workers mit vollständigem Caching aller Assets und Offline-Funktionalität.
@@ -486,6 +499,7 @@ Phase 6+: Post-Launch Erweiterungen
 Nach dem MVP-Launch stehen die in Abschnitt 8 beschriebenen Erweiterungen an. Je nach Nutzerfeedback priorisieren wir:
 
 **Nutzung verfügbarer Services für Erweiterungen:**
+
 - **Caching-Services**: Alle neuen Features können die bestehenden Caching-Services nutzen (Card-Cache, Backend-Cache, Service Worker).
 - **Offline Support**: Community-Features können Offline-Funktionalität nutzen (z.B. Offline-Erstellung von Kommentaren mit späterer Synchronisation).
 - **Performance Monitoring**: Alle neuen Features werden automatisch durch den PerformanceProvider überwacht.

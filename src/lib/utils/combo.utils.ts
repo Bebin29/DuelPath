@@ -1,5 +1,5 @@
-import type { ComboStep, Card } from "@prisma/client";
-import type { ComboWithSteps } from "@/types/combo.types";
+import type { ComboStep, Card } from '@prisma/client';
+import type { ComboWithSteps } from '@/types/combo.types';
 
 /**
  * Combo Step mit Card-Informationen
@@ -10,19 +10,17 @@ export type ComboStepWithCard = ComboStep & {
 
 /**
  * Sortiert Combo-Steps nach ihrer Reihenfolge (order)
- * 
+ *
  * @param steps - Array von Combo-Steps
  * @returns Sortiertes Array von Steps
  */
-export function sortComboSteps<T extends { order: number }>(
-  steps: T[]
-): T[] {
+export function sortComboSteps<T extends { order: number }>(steps: T[]): T[] {
   return [...steps].sort((a, b) => a.order - b.order);
 }
 
 /**
  * Ordnet Steps neu an (verschiebt einen Step von einer Position zu einer anderen)
- * 
+ *
  * @param steps - Array von Combo-Steps
  * @param fromIndex - Index des zu verschiebenden Steps
  * @param toIndex - Ziel-Index
@@ -47,7 +45,7 @@ export function reorderSteps<T extends { order: number }>(
 
 /**
  * Validiert Combo-Steps
- * 
+ *
  * @param steps - Array von Combo-Steps
  * @returns Validierungsergebnis
  */
@@ -63,12 +61,12 @@ export function validateComboSteps(
 
   // Prüfe Mindestanzahl
   if (steps.length < 1) {
-    errors.push("Eine Kombo muss mindestens einen Schritt haben");
+    errors.push('Eine Kombo muss mindestens einen Schritt haben');
   }
 
   // Prüfe Maximalanzahl
   if (steps.length > 100) {
-    errors.push("Eine Kombo darf maximal 100 Schritte haben");
+    errors.push('Eine Kombo darf maximal 100 Schritte haben');
   }
 
   // Prüfe ob order-Werte eindeutig und sequenziell sind
@@ -76,7 +74,7 @@ export function validateComboSteps(
   const uniqueOrders = new Set(orders);
 
   if (uniqueOrders.size !== orders.length) {
-    errors.push("Reihenfolge-Werte müssen eindeutig sein");
+    errors.push('Reihenfolge-Werte müssen eindeutig sein');
   }
 
   // Prüfe Sequenzialität
@@ -105,7 +103,7 @@ export function validateComboSteps(
 
 /**
  * Berechnet Statistiken für eine Kombo
- * 
+ *
  * @param combo - Kombo mit Steps
  * @returns Statistiken
  */
@@ -140,21 +138,18 @@ export function getComboStats(combo: ComboWithSteps): {
 
 /**
  * Prüft ob eine Karte in einem Deck vorhanden ist
- * 
+ *
  * @param cardId - ID der Karte
  * @param deckCards - Array von Deck-Karten
  * @returns true wenn Karte im Deck vorhanden ist
  */
-export function isCardInDeck(
-  cardId: string,
-  deckCards: Array<{ cardId: string }>
-): boolean {
+export function isCardInDeck(cardId: string, deckCards: Array<{ cardId: string }>): boolean {
   return deckCards.some((dc) => dc.cardId === cardId);
 }
 
 /**
  * Validiert ob alle in einer Kombo verwendeten Karten im zugeordneten Deck vorhanden sind
- * 
+ *
  * @param combo - Kombo mit Steps
  * @param deckCards - Array von Deck-Karten (optional)
  * @returns Validierungsergebnis
@@ -175,7 +170,7 @@ export function validateComboCardsInDeck(
     return {
       isValid: true,
       errors: [],
-      warnings: ["Kein Deck zugeordnet - Karten-Validierung nicht möglich"],
+      warnings: ['Kein Deck zugeordnet - Karten-Validierung nicht möglich'],
     };
   }
 
@@ -184,7 +179,7 @@ export function validateComboCardsInDeck(
     return {
       isValid: true,
       errors: [],
-      warnings: ["Deck-Karten nicht verfügbar - Karten-Validierung nicht möglich"],
+      warnings: ['Deck-Karten nicht verfügbar - Karten-Validierung nicht möglich'],
     };
   }
 
@@ -211,7 +206,7 @@ export function validateComboCardsInDeck(
 
 /**
  * Erstellt eine neue Step-ID (für optimistische Updates)
- * 
+ *
  * @returns Temporäre ID
  */
 export function createTemporaryStepId(): string {
@@ -220,12 +215,12 @@ export function createTemporaryStepId(): string {
 
 /**
  * Prüft ob eine Step-ID temporär ist
- * 
+ *
  * @param stepId - Step-ID
  * @returns true wenn temporär
  */
 export function isTemporaryStepId(stepId: string): boolean {
-  return stepId.startsWith("temp-");
+  return stepId.startsWith('temp-');
 }
 
 /**
@@ -233,7 +228,7 @@ export function isTemporaryStepId(stepId: string): boolean {
  */
 export function exportComboToJSON(combo: ComboWithSteps): string {
   const exportData = {
-    version: "1.0",
+    version: '1.0',
     title: combo.title,
     description: combo.description,
     deckId: combo.deckId,
@@ -257,14 +252,14 @@ export function exportComboToJSON(combo: ComboWithSteps): string {
 export function exportComboToText(combo: ComboWithSteps): string {
   const sortedSteps = sortComboSteps(combo.steps);
   let text = `${combo.title}\n`;
-  text += `${"=".repeat(combo.title.length)}\n\n`;
+  text += `${'='.repeat(combo.title.length)}\n\n`;
 
   if (combo.description) {
     text += `${combo.description}\n\n`;
   }
 
-  text += "Schritte:\n";
-  text += "-".repeat(50) + "\n\n";
+  text += 'Schritte:\n';
+  text += '-'.repeat(50) + '\n\n';
 
   sortedSteps.forEach((step, index) => {
     text += `${index + 1}. ${step.card.name}\n`;
@@ -278,10 +273,10 @@ export function exportComboToText(combo: ComboWithSteps): string {
         text += `   Zielkarte: ${targetCard.name}\n`;
       }
     }
-    text += "\n";
+    text += '\n';
   });
 
-  text += `\nExportiert am: ${new Date().toLocaleString("de-DE")}\n`;
+  text += `\nExportiert am: ${new Date().toLocaleString('de-DE')}\n`;
 
   return text;
 }
@@ -303,7 +298,7 @@ export function importComboFromJSON(jsonString: string): {
 } | null {
   try {
     const data = JSON.parse(jsonString);
-    
+
     // Validiere grundlegende Struktur
     if (!data.title || !Array.isArray(data.steps)) {
       return null;
@@ -325,4 +320,3 @@ export function importComboFromJSON(jsonString: string): {
     return null;
   }
 }
-

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { createDeck } from "@/server/actions/deck.actions";
-import { Button } from "@/components/components/ui/button";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { createDeck } from '@/server/actions/deck.actions';
+import { Button } from '@/components/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,17 +13,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/components/ui/dialog";
-import { Input } from "@/components/components/ui/input";
-import { Label } from "@/components/components/ui/label";
+} from '@/components/components/ui/dialog';
+import { Input } from '@/components/components/ui/input';
+import { Label } from '@/components/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/components/ui/select";
-import { Plus } from "lucide-react";
+} from '@/components/components/ui/select';
+import { Plus } from 'lucide-react';
 
 /**
  * Dialog zum Erstellen eines neuen Decks
@@ -35,9 +35,9 @@ export function CreateDeckDialog() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    format: "TCG" as "TCG" | "OCG" | "Casual",
+    name: '',
+    description: '',
+    format: 'TCG' as 'TCG' | 'OCG' | 'Casual',
   });
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -60,11 +60,11 @@ export function CreateDeckDialog() {
 
       // Erfolg: Dialog schließen und zum Deck-Editor navigieren
       setOpen(false);
-      setFormData({ name: "", description: "", format: "TCG" });
+      setFormData({ name: '', description: '', format: 'TCG' });
       router.push(`/decks/${result.deck?.id}`);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("deck.errors.createFailed"));
+      setError(err instanceof Error ? err.message : t('deck.errors.createFailed'));
       setIsLoading(false);
     }
   }
@@ -74,16 +74,14 @@ export function CreateDeckDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          {t("deck.createDeck")}
+          {t('deck.createDeck')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{t("deck.createDeck")}</DialogTitle>
-            <DialogDescription>
-              Erstelle ein neues Yu-Gi-Oh! Deck
-            </DialogDescription>
+            <DialogTitle>{t('deck.createDeck')}</DialogTitle>
+            <DialogDescription>Erstelle ein neues Yu-Gi-Oh! Deck</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -94,13 +92,11 @@ export function CreateDeckDialog() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="deck-name">{t("deck.deckName")}</Label>
+              <Label htmlFor="deck-name">{t('deck.deckName')}</Label>
               <Input
                 id="deck-name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="z.B. Dark Magician Deck"
                 required
                 maxLength={100}
@@ -108,23 +104,21 @@ export function CreateDeckDialog() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="deck-description">{t("deck.description")}</Label>
+              <Label htmlFor="deck-description">{t('deck.description')}</Label>
               <Input
                 id="deck-description"
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Optionale Beschreibung"
                 maxLength={500}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="deck-format">{t("deck.format")}</Label>
+              <Label htmlFor="deck-format">{t('deck.format')}</Label>
               <Select
                 value={formData.format}
-                onValueChange={(value: "TCG" | "OCG" | "Casual") =>
+                onValueChange={(value: 'TCG' | 'OCG' | 'Casual') =>
                   setFormData({ ...formData, format: value })
                 }
               >
@@ -132,9 +126,9 @@ export function CreateDeckDialog() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="TCG">{t("deck.formatTCG")}</SelectItem>
-                  <SelectItem value="OCG">{t("deck.formatOCG")}</SelectItem>
-                  <SelectItem value="Casual">{t("deck.formatCasual")}</SelectItem>
+                  <SelectItem value="TCG">{t('deck.formatTCG')}</SelectItem>
+                  <SelectItem value="OCG">{t('deck.formatOCG')}</SelectItem>
+                  <SelectItem value="Casual">{t('deck.formatCasual')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -147,10 +141,10 @@ export function CreateDeckDialog() {
               onClick={() => setOpen(false)}
               disabled={isLoading}
             >
-              {t("common.cancel")}
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? t("common.loading") : t("common.create")}
+              {isLoading ? t('common.loading') : t('common.create')}
             </Button>
           </DialogFooter>
         </form>
@@ -158,8 +152,3 @@ export function CreateDeckDialog() {
     </Dialog>
   );
 }
-
-
-
-
-

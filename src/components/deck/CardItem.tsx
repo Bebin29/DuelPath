@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useState, memo } from "react";
-import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
-import type { Card } from "@prisma/client";
-import { Button } from "@/components/components/ui/button";
-import { Plus } from "lucide-react";
-import Image from "next/image";
-import { CardDetailDialog } from "./CardDetailDialog";
-import { useCardPrefetch } from "@/lib/hooks/use-card-prefetch";
+import { useState, memo } from 'react';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
+import type { Card } from '@prisma/client';
+import { Button } from '@/components/components/ui/button';
+import { Plus } from 'lucide-react';
+import Image from 'next/image';
+import { CardDetailDialog } from './CardDetailDialog';
+import { useCardPrefetch } from '@/lib/hooks/use-card-prefetch';
 
 interface CardItemProps {
   card: Card;
@@ -23,16 +23,10 @@ function CardItemComponent({ card, onAdd, showAddButton = true }: CardItemProps)
   const [dialogOpen, setDialogOpen] = useState(false);
   const { prefetchCard, cancelPrefetch } = useCardPrefetch({ delay: 200 });
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    isDragging,
-  } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.id,
     data: {
-      type: "card",
+      type: 'card',
       card,
     },
   });
@@ -77,13 +71,14 @@ function CardItemComponent({ card, onAdd, showAddButton = true }: CardItemProps)
               {card.attribute && ` • ${card.attribute}`}
               {card.level && ` • Lv.${card.level}`}
               {card.atk !== null && card.def !== null && (
-                <> • {card.atk}/{card.def}</>
+                <>
+                  {' '}
+                  • {card.atk}/{card.def}
+                </>
               )}
             </p>
             {card.archetype && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {card.archetype}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">{card.archetype}</p>
             )}
           </div>
 
@@ -122,5 +117,3 @@ export const CardItem = memo(CardItemComponent, (prevProps, nextProps) => {
     prevProps.onAdd === nextProps.onAdd
   );
 });
-
-

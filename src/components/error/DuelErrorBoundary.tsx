@@ -1,13 +1,23 @@
-"use client";
+'use client';
 
-import { type ReactNode, useState, useCallback } from "react";
-import { ErrorBoundary } from "./ErrorBoundary";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/components/ui/card";
-import { Button } from "@/components/components/ui/button";
-import { AlertCircle, RefreshCw, Swords, Download, RotateCcw } from "lucide-react";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { useDuelErrorHandler, getRecoverySuggestion, type DuelError } from "@/lib/utils/error-handler";
-import { useToast } from "@/components/components/ui/toast";
+import { type ReactNode, useState, useCallback } from 'react';
+import { ErrorBoundary } from './ErrorBoundary';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/components/ui/card';
+import { Button } from '@/components/components/ui/button';
+import { AlertCircle, RefreshCw, Swords, Download, RotateCcw } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/hooks';
+import {
+  useDuelErrorHandler,
+  getRecoverySuggestion,
+  type DuelError,
+} from '@/lib/utils/error-handler';
+import { useToast } from '@/components/components/ui/toast';
 
 interface DuelErrorBoundaryProps {
   children: ReactNode;
@@ -16,7 +26,10 @@ interface DuelErrorBoundaryProps {
 /**
  * Erweiterte Error Recovery Komponente
  */
-function DuelErrorRecovery({ error, resetError }: {
+function DuelErrorRecovery({
+  error,
+  resetError,
+}: {
   error: Error & { duelError?: DuelError };
   resetError: () => void;
 }) {
@@ -28,14 +41,14 @@ function DuelErrorRecovery({ error, resetError }: {
   const recentErrors = getRecentErrors(3);
   const recoverySuggestion = error.duelError
     ? getRecoverySuggestion(error.duelError)
-    : "An unexpected error occurred. Please try reloading the page.";
+    : 'An unexpected error occurred. Please try reloading the page.';
 
   const handleExportLogs = useCallback(() => {
     try {
       const errorLogs = exportErrors();
-      const blob = new Blob([errorLogs], { type: "application/json" });
+      const blob = new Blob([errorLogs], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
       a.download = `duel-errors-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
@@ -43,15 +56,15 @@ function DuelErrorRecovery({ error, resetError }: {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       addToast({
-        title: "Success",
-        description: "Error logs exported successfully",
-        variant: "success",
+        title: 'Success',
+        description: 'Error logs exported successfully',
+        variant: 'success',
       });
     } catch (exportError) {
       addToast({
-        title: "Error",
-        description: "Failed to export error logs",
-        variant: "error",
+        title: 'Error',
+        description: 'Failed to export error logs',
+        variant: 'error',
       });
     }
   }, [exportErrors]);
@@ -59,9 +72,9 @@ function DuelErrorRecovery({ error, resetError }: {
   const handleRetry = useCallback(() => {
     resetError();
     addToast({
-      title: "Recovery",
-      description: "Attempting to recover...",
-      variant: "info",
+      title: 'Recovery',
+      description: 'Attempting to recover...',
+      variant: 'info',
     });
   }, [resetError]);
 
@@ -70,13 +83,13 @@ function DuelErrorRecovery({ error, resetError }: {
   }, []);
 
   const handleBackToDashboard = useCallback(() => {
-    window.location.href = "/";
+    window.location.href = '/';
   }, []);
 
   // Logge den Fehler
   if (error.duelError) {
     logError(error.duelError, {
-      component: "DuelErrorBoundary",
+      component: 'DuelErrorBoundary',
       userAgent: navigator.userAgent,
       url: window.location.href,
     });
@@ -88,11 +101,9 @@ function DuelErrorRecovery({ error, resetError }: {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
             <AlertCircle className="h-5 w-5" />
-            {t("duel.error.title")}
+            {t('duel.error.title')}
           </CardTitle>
-          <CardDescription>
-            {error.duelError?.message || error.message}
-          </CardDescription>
+          <CardDescription>{error.duelError?.message || error.message}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Recovery Suggestion */}
@@ -115,7 +126,7 @@ function DuelErrorRecovery({ error, resetError }: {
               <Swords className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
-            {process.env.NODE_ENV === "development" && (
+            {process.env.NODE_ENV === 'development' && (
               <Button onClick={handleExportLogs} variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
                 Export Logs
@@ -128,12 +139,8 @@ function DuelErrorRecovery({ error, resetError }: {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-sm">Recent Errors:</h4>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDetails(!showDetails)}
-                >
-                  {showDetails ? "Hide" : "Show"} Details
+                <Button variant="ghost" size="sm" onClick={() => setShowDetails(!showDetails)}>
+                  {showDetails ? 'Hide' : 'Show'} Details
                 </Button>
               </div>
               {showDetails && (
@@ -153,17 +160,13 @@ function DuelErrorRecovery({ error, resetError }: {
           )}
 
           {/* Help Text */}
-          <div className="text-sm text-muted-foreground">
-            {t("duel.error.help")}
-          </div>
+          <div className="text-sm text-muted-foreground">{t('duel.error.help')}</div>
 
           {/* Technical Details (Development only) */}
-          {process.env.NODE_ENV === "development" && (
+          {process.env.NODE_ENV === 'development' && (
             <details className="text-xs">
               <summary className="cursor-pointer font-medium">Technical Details</summary>
-              <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-x-auto">
-                {error.stack}
-              </pre>
+              <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-x-auto">{error.stack}</pre>
             </details>
           )}
         </CardContent>
@@ -180,8 +183,8 @@ function DuelErrorRecovery({ error, resetError }: {
 export function DuelErrorBoundary({ children }: DuelErrorBoundaryProps) {
   return (
     <ErrorBoundary
-      context={{ component: "Duel" }}
-      showDetails={process.env.NODE_ENV === "development"}
+      context={{ component: 'Duel' }}
+      showDetails={process.env.NODE_ENV === 'development'}
       fallback={({ error, resetError }) => (
         <DuelErrorRecovery error={error} resetError={resetError} />
       )}

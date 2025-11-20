@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { memo, useState } from "react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Button } from "@/components/components/ui/button";
-import { Badge } from "@/components/components/ui/badge";
-import { Edit, Trash2, GripVertical, Copy } from "lucide-react";
-import { Checkbox } from "@/components/components/ui/checkbox";
-import Image from "next/image";
-import type { ComboStepWithCard } from "@/lib/utils/combo.utils";
-import type { ActionType } from "@/types/combo.types";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { useIntersectionObserver } from "@/lib/hooks/use-intersection-observer";
+import { memo, useState } from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Button } from '@/components/components/ui/button';
+import { Badge } from '@/components/components/ui/badge';
+import { Edit, Trash2, GripVertical, Copy } from 'lucide-react';
+import { Checkbox } from '@/components/components/ui/checkbox';
+import Image from 'next/image';
+import type { ComboStepWithCard } from '@/lib/utils/combo.utils';
+import type { ActionType } from '@/types/combo.types';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { useIntersectionObserver } from '@/lib/hooks/use-intersection-observer';
 
 interface ComboStepItemProps {
   step: ComboStepWithCard;
@@ -25,7 +25,6 @@ interface ComboStepItemProps {
   onSelect?: (stepId: string, event: React.MouseEvent) => void;
   showCheckbox?: boolean;
 }
-
 
 /**
  * Einzelner Combo-Step in der Timeline
@@ -56,7 +55,7 @@ function ComboStepItemComponent({
     id: step.id,
     disabled: !showDragHandle,
     data: {
-      type: "comboStep",
+      type: 'comboStep',
       stepId: step.id,
     },
   });
@@ -64,7 +63,7 @@ function ComboStepItemComponent({
   // Intersection Observer für Lazy-Loading
   const { ref: imageRef, hasIntersected } = useIntersectionObserver({
     threshold: 0.1,
-    rootMargin: "50px",
+    rootMargin: '50px',
     enabled: !!step.card.imageSmall,
   });
 
@@ -89,12 +88,12 @@ function ComboStepItemComponent({
       style={style}
       {...(showDragHandle ? { ...listeners, ...attributes } : {})}
       className={`group relative rounded-lg border bg-card p-4 hover:shadow-md transition-shadow ${
-        isDragging ? "opacity-50 scale-95" : ""
-      } ${showDragHandle ? "cursor-grab active:cursor-grabbing" : ""} ${
-        isSelected ? "ring-2 ring-primary" : ""
+        isDragging ? 'opacity-50 scale-95' : ''
+      } ${showDragHandle ? 'cursor-grab active:cursor-grabbing' : ''} ${
+        isSelected ? 'ring-2 ring-primary' : ''
       }`}
       onClick={(e) => {
-        if (showCheckbox && onSelect && !(e.target as HTMLElement).closest("button")) {
+        if (showCheckbox && onSelect && !(e.target as HTMLElement).closest('button')) {
           onSelect(step.id, e);
         }
       }}
@@ -130,7 +129,7 @@ function ComboStepItemComponent({
                 alt={step.card.name}
                 fill
                 className={`object-cover transition-opacity duration-300 ${
-                  imageLoaded ? "opacity-100" : "opacity-0"
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
                 }`}
                 sizes="56px"
                 onLoad={() => setImageLoaded(true)}
@@ -152,9 +151,7 @@ function ComboStepItemComponent({
                   {t(`combo.actionTypes.${step.actionType}` as any) || step.actionType}
                 </Badge>
                 {step.card.type && (
-                  <span className="text-xs text-muted-foreground truncate">
-                    {step.card.type}
-                  </span>
+                  <span className="text-xs text-muted-foreground truncate">{step.card.type}</span>
                 )}
               </div>
               {step.description && (
@@ -172,7 +169,7 @@ function ComboStepItemComponent({
                   variant="ghost"
                   onClick={() => onEdit(step.id)}
                   className="h-8 w-8 p-0"
-                  title={t("common.edit")}
+                  title={t('common.edit')}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -183,7 +180,7 @@ function ComboStepItemComponent({
                   variant="ghost"
                   onClick={() => onDuplicate(step.id)}
                   className="h-8 w-8 p-0"
-                  title={t("common.duplicate") || "Duplizieren"}
+                  title={t('common.duplicate') || 'Duplizieren'}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -194,7 +191,7 @@ function ComboStepItemComponent({
                   variant="ghost"
                   onClick={() => onDelete(step.id)}
                   className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                  title={t("common.delete")}
+                  title={t('common.delete')}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -208,4 +205,3 @@ function ComboStepItemComponent({
 }
 
 export const ComboStepItem = memo(ComboStepItemComponent);
-

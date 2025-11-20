@@ -1,6 +1,6 @@
 /**
  * In-Memory Cache für Autocomplete-Ergebnisse
- * 
+ *
  * Reduziert Datenbank-Queries für häufig verwendete Autocomplete-Anfragen
  */
 
@@ -82,4 +82,3 @@ class AutocompleteCache<T> {
 export const cardNameCache = new AutocompleteCache<string[]>();
 export const archetypeCache = new AutocompleteCache<string[]>();
 export const raceCache = new AutocompleteCache<string[]>();
-

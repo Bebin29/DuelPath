@@ -1,10 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { DuelHand } from "@/components/duel/DuelHand";
-import type { DuelCardInstance } from "@/types/duel.types";
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { DuelHand } from '@/components/duel/DuelHand';
+import type { DuelCardInstance } from '@/types/duel.types';
 
 // Mock dependencies
-vi.mock("@dnd-kit/core", () => ({
+vi.mock('@dnd-kit/core', () => ({
   useDraggable: vi.fn(() => ({
     attributes: {},
     listeners: { onClick: vi.fn() },
@@ -14,7 +14,7 @@ vi.mock("@dnd-kit/core", () => ({
   })),
 }));
 
-vi.mock("@/lib/hooks/use-responsive-layout", () => ({
+vi.mock('@/lib/hooks/use-responsive-layout', () => ({
   useResponsiveLayout: vi.fn(() => ({
     adaptiveSizes: {
       cardWidth: 64,
@@ -22,73 +22,75 @@ vi.mock("@/lib/hooks/use-responsive-layout", () => ({
       handGap: 8,
       fieldGap: 12,
       sidebarWidth: 400,
-      fontSize: "base",
+      fontSize: 'base',
     },
-    fontSize: "base",
+    fontSize: 'base',
     isMobile: false,
   })),
 }));
 
-vi.mock("@/components/duel/DuelCard", () => ({
-  DuelCard: ({ cardInstance }: { cardInstance: DuelCardInstance }) =>
-    <div data-testid={`card-${cardInstance.instanceId}`}>Card {cardInstance.instanceId}</div>,
+vi.mock('@/components/duel/DuelCard', () => ({
+  DuelCard: ({ cardInstance }: { cardInstance: DuelCardInstance }) => (
+    <div data-testid={`card-${cardInstance.instanceId}`}>Card {cardInstance.instanceId}</div>
+  ),
 }));
 
-vi.mock("@/components/duel/DuelActionMenu", () => ({
-  DuelActionMenu: ({ children }: { children: React.ReactNode }) =>
-    <div data-testid="action-menu">{children}</div>,
+vi.mock('@/components/duel/DuelActionMenu', () => ({
+  DuelActionMenu: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="action-menu">{children}</div>
+  ),
 }));
 
-describe("DuelHand", () => {
+describe('DuelHand', () => {
   const mockHand: DuelCardInstance[] = [
     {
-      instanceId: "card-1",
-      cardId: "monster-1",
-      position: "FACE_UP_ATTACK",
-      zone: "HAND",
-      owner: "PLAYER",
+      instanceId: 'card-1',
+      cardId: 'monster-1',
+      position: 'FACE_UP_ATTACK',
+      zone: 'HAND',
+      owner: 'PLAYER',
     },
     {
-      instanceId: "card-2",
-      cardId: "spell-1",
-      position: "FACE_UP_ATTACK",
-      zone: "HAND",
-      owner: "PLAYER",
+      instanceId: 'card-2',
+      cardId: 'spell-1',
+      position: 'FACE_UP_ATTACK',
+      zone: 'HAND',
+      owner: 'PLAYER',
     },
     {
-      instanceId: "card-3",
-      cardId: "monster-2",
-      position: "FACE_UP_ATTACK",
-      zone: "HAND",
-      owner: "PLAYER",
+      instanceId: 'card-3',
+      cardId: 'monster-2',
+      position: 'FACE_UP_ATTACK',
+      zone: 'HAND',
+      owner: 'PLAYER',
     },
   ];
 
-  it("should render hand with correct count", () => {
+  it('should render hand with correct count', () => {
     render(<DuelHand hand={mockHand} />);
 
-    expect(screen.getByText("Hand (3)")).toBeInTheDocument();
+    expect(screen.getByText('Hand (3)')).toBeInTheDocument();
   });
 
-  it("should render all cards in hand", () => {
+  it('should render all cards in hand', () => {
     render(<DuelHand hand={mockHand} />);
 
-    expect(screen.getByTestId("card-card-1")).toBeInTheDocument();
-    expect(screen.getByTestId("card-card-2")).toBeInTheDocument();
-    expect(screen.getByTestId("card-card-3")).toBeInTheDocument();
+    expect(screen.getByTestId('card-card-1')).toBeInTheDocument();
+    expect(screen.getByTestId('card-card-2')).toBeInTheDocument();
+    expect(screen.getByTestId('card-card-3')).toBeInTheDocument();
   });
 
-  it("should wrap cards with action menu", () => {
+  it('should wrap cards with action menu', () => {
     render(<DuelHand hand={mockHand} />);
 
-    const actionMenus = screen.getAllByTestId("action-menu");
+    const actionMenus = screen.getAllByTestId('action-menu');
     expect(actionMenus).toHaveLength(3);
   });
 
-  it("should make cards draggable", () => {
-    const { useDraggable } = await import("@dnd-kit/core");
+  it('should make cards draggable', () => {
+    const { useDraggable } = await import('@dnd-kit/core');
     const mockUseDraggable = vi.fn(() => ({
-      attributes: { "aria-label": "draggable" },
+      attributes: { 'aria-label': 'draggable' },
       listeners: { onClick: vi.fn() },
       setNodeRef: vi.fn(),
       transform: null,
@@ -101,19 +103,19 @@ describe("DuelHand", () => {
     // useDraggable should be called for each card
     expect(mockUseDraggable).toHaveBeenCalledTimes(3);
     expect(mockUseDraggable).toHaveBeenCalledWith({
-      id: "card-1",
+      id: 'card-1',
       data: {
-        type: "card",
+        type: 'card',
         data: {
           cardInstance: mockHand[0],
-          zoneType: "hand",
+          zoneType: 'hand',
         },
       },
     });
   });
 
-  it("should apply adaptive sizing", () => {
-    const { useResponsiveLayout } = await import("@/lib/hooks/use-responsive-layout");
+  it('should apply adaptive sizing', () => {
+    const { useResponsiveLayout } = await import('@/lib/hooks/use-responsive-layout');
     useResponsiveLayout.mockReturnValue({
       adaptiveSizes: {
         cardWidth: 48,
@@ -121,26 +123,26 @@ describe("DuelHand", () => {
         handGap: 4,
         fieldGap: 6,
         sidebarWidth: 280,
-        fontSize: "xs",
+        fontSize: 'xs',
       },
-      fontSize: "xs",
+      fontSize: 'xs',
       isMobile: true,
     });
 
     render(<DuelHand hand={mockHand} />);
 
-    expect(screen.getByText("Hand (3)")).toBeInTheDocument();
+    expect(screen.getByText('Hand (3)')).toBeInTheDocument();
     // The gap styling would be applied through inline styles
   });
 
-  it("should handle empty hand", () => {
+  it('should handle empty hand', () => {
     render(<DuelHand hand={[]} />);
 
-    expect(screen.getByText("Hand (0)")).toBeInTheDocument();
+    expect(screen.getByText('Hand (0)')).toBeInTheDocument();
   });
 
-  it("should apply mobile-specific styling", () => {
-    const { useResponsiveLayout } = await import("@/lib/hooks/use-responsive-layout");
+  it('should apply mobile-specific styling', () => {
+    const { useResponsiveLayout } = await import('@/lib/hooks/use-responsive-layout');
     useResponsiveLayout.mockReturnValue({
       adaptiveSizes: {
         cardWidth: 48,
@@ -148,20 +150,20 @@ describe("DuelHand", () => {
         handGap: 4,
         fieldGap: 6,
         sidebarWidth: 280,
-        fontSize: "xs",
+        fontSize: 'xs',
       },
-      fontSize: "xs",
+      fontSize: 'xs',
       isMobile: true,
     });
 
     render(<DuelHand hand={mockHand} />);
 
     // Mobile styling should be applied (scale transform)
-    expect(screen.getByText("Hand (3)")).toBeInTheDocument();
+    expect(screen.getByText('Hand (3)')).toBeInTheDocument();
   });
 
-  it("should apply desktop-specific styling", () => {
-    const { useResponsiveLayout } = await import("@/lib/hooks/use-responsive-layout");
+  it('should apply desktop-specific styling', () => {
+    const { useResponsiveLayout } = await import('@/lib/hooks/use-responsive-layout');
     useResponsiveLayout.mockReturnValue({
       adaptiveSizes: {
         cardWidth: 64,
@@ -169,20 +171,20 @@ describe("DuelHand", () => {
         handGap: 8,
         fieldGap: 12,
         sidebarWidth: 400,
-        fontSize: "base",
+        fontSize: 'base',
       },
-      fontSize: "base",
+      fontSize: 'base',
       isMobile: false,
     });
 
     render(<DuelHand hand={mockHand} />);
 
     // Desktop styling should be applied (hover effects)
-    expect(screen.getByText("Hand (3)")).toBeInTheDocument();
+    expect(screen.getByText('Hand (3)')).toBeInTheDocument();
   });
 
-  it("should handle dragging state", () => {
-    const { useDraggable } = await import("@dnd-kit/core");
+  it('should handle dragging state', () => {
+    const { useDraggable } = await import('@dnd-kit/core');
     let callCount = 0;
     useDraggable.mockImplementation(() => {
       callCount++;
@@ -199,6 +201,6 @@ describe("DuelHand", () => {
 
     // The dragging state would affect opacity and transform
     // This is tested through the conditional styling in the component
-    expect(screen.getByTestId("card-card-1")).toBeInTheDocument();
+    expect(screen.getByTestId('card-card-1')).toBeInTheDocument();
   });
 });

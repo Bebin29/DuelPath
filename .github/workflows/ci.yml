@@ -71,4 +71,3 @@ jobs:
           DATABASE_URL: 'file:./prisma/test.db'
           NEXTAUTH_SECRET: 'test-secret-for-ci'
           NEXTAUTH_URL: 'http://localhost:3000'
-

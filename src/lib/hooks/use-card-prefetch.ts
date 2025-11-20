@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { useCardCache } from "./use-card-cache";
+import { useEffect, useRef } from 'react';
+import { useCardCache } from './use-card-cache';
 
 interface UseCardPrefetchOptions {
   cardIds: string[];
@@ -8,7 +8,7 @@ interface UseCardPrefetchOptions {
 
 /**
  * Hook für Prefetching von Cards
- * 
+ *
  * Lädt Cards im Hintergrund vor, um Latenz zu reduzieren
  */
 export function useCardPrefetch({ cardIds, enabled = true }: UseCardPrefetchOptions) {
@@ -22,7 +22,7 @@ export function useCardPrefetch({ cardIds, enabled = true }: UseCardPrefetchOpti
 
     // Prefetch Cards, die noch nicht geladen wurden
     const cardsToPrefetch = cardIds.filter(
-      (id) => id && id !== "00000000" && !prefetchedRef.current.has(id)
+      (id) => id && id !== '00000000' && !prefetchedRef.current.has(id)
     );
 
     if (cardsToPrefetch.length === 0) {
@@ -33,7 +33,7 @@ export function useCardPrefetch({ cardIds, enabled = true }: UseCardPrefetchOpti
     const batchSize = 5;
     for (let i = 0; i < cardsToPrefetch.length; i += batchSize) {
       const batch = cardsToPrefetch.slice(i, i + batchSize);
-      
+
       // Leichter Delay zwischen Batches, um Server nicht zu überlasten
       setTimeout(() => {
         batch.forEach((cardId) => {

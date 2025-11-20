@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback } from 'react';
 
 interface UseAutoSaveOptions<T> {
   /**
@@ -25,12 +25,12 @@ interface UseAutoSaveOptions<T> {
 
 /**
  * Custom Hook für Auto-Save mit Debouncing
- * 
+ *
  * Features:
  * - Automatisches Speichern nach Debounce-Zeit
  * - Vergleichsfunktion um unnötige Speicherungen zu vermeiden
  * - Aktivierung/Deaktivierung möglich
- * 
+ *
  * @example
  * ```tsx
  * const { isSaving, lastSaved } = useAutoSave({
@@ -102,7 +102,7 @@ export function useAutoSave<T>({
         await onSaveRef.current(data);
         lastSavedRef.current = data;
       } catch (error) {
-        console.error("Auto-save failed:", error);
+        console.error('Auto-save failed:', error);
       } finally {
         isSavingRef.current = false;
       }
@@ -130,4 +130,3 @@ export function useAutoSave<T>({
     isSaving: isSavingRef.current,
   };
 }
-

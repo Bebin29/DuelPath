@@ -1,4 +1,4 @@
-import type { Combo, ComboStep, Card } from "@prisma/client";
+import type { Combo, ComboStep, Card } from '@prisma/client';
 
 /**
  * Kombo mit allen Schritten
@@ -13,17 +13,17 @@ export type ComboWithSteps = Combo & {
  * Aktionstyp für Kombo-Schritte
  */
 export type ActionType =
-  | "SUMMON"
-  | "ACTIVATE"
-  | "SET"
-  | "ATTACK"
-  | "DRAW"
-  | "DISCARD"
-  | "SPECIAL_SUMMON"
-  | "TRIBUTE_SUMMON"
-  | "NORMAL_SUMMON"
-  | "FLIP_SUMMON"
-  | "OTHER";
+  | 'SUMMON'
+  | 'ACTIVATE'
+  | 'SET'
+  | 'ATTACK'
+  | 'DRAW'
+  | 'DISCARD'
+  | 'SPECIAL_SUMMON'
+  | 'TRIBUTE_SUMMON'
+  | 'NORMAL_SUMMON'
+  | 'FLIP_SUMMON'
+  | 'OTHER';
 
 /**
  * Kombo-Schritt Input (für Erstellung/Bearbeitung)
@@ -45,9 +45,3 @@ export interface ComboInput {
   deckId?: string;
   steps: ComboStepInput[];
 }
-
-
-
-
-
-

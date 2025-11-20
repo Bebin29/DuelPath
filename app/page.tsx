@@ -1,11 +1,17 @@
-"use client";
+'use client';
 
-import { useTranslation } from "@/lib/i18n/hooks";
-import { useSession } from "next-auth/react";
-import Link from "next/link";
-import { Button } from "@/components/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/components/ui/card";
-import { Library, Zap, Swords } from "lucide-react";
+import { useTranslation } from '@/lib/i18n/hooks';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { Button } from '@/components/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/components/ui/card';
+import { Library, Zap, Swords } from 'lucide-react';
 
 /**
  * Startseite mit Willkommensnachricht und Schnellzugriff auf Hauptfunktionen
@@ -19,12 +25,12 @@ export default function Home() {
       {/* Hero Section */}
       <section className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
-          {t("dashboard.welcome")}
+          {t('dashboard.welcome')}
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           {session
-            ? "Verwalte deine Decks, erstelle Kombos und teste sie im Duellmodus."
-            : "Melde dich an, um deine Yu-Gi-Oh! Decks zu verwalten und Kombos zu erstellen."}
+            ? 'Verwalte deine Decks, erstelle Kombos und teste sie im Duellmodus.'
+            : 'Melde dich an, um deine Yu-Gi-Oh! Decks zu verwalten und Kombos zu erstellen.'}
         </p>
       </section>
 
@@ -33,15 +39,13 @@ export default function Home() {
         <Card>
           <CardHeader>
             <Library className="w-8 h-8 text-primary mb-2" />
-            <CardTitle>{t("navigation.decks")}</CardTitle>
-            <CardDescription>
-              Erstelle und verwalte deine Yu-Gi-Oh! Decks
-            </CardDescription>
+            <CardTitle>{t('navigation.decks')}</CardTitle>
+            <CardDescription>Erstelle und verwalte deine Yu-Gi-Oh! Decks</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/decks">
               <Button variant="default" className="w-full">
-                {session ? t("deck.createDeck") : t("navigation.decks")}
+                {session ? t('deck.createDeck') : t('navigation.decks')}
               </Button>
             </Link>
           </CardContent>
@@ -50,15 +54,13 @@ export default function Home() {
         <Card>
           <CardHeader>
             <Zap className="w-8 h-8 text-primary mb-2" />
-            <CardTitle>{t("navigation.combos")}</CardTitle>
-            <CardDescription>
-              Erstelle und visualisiere Kombos Schritt für Schritt
-            </CardDescription>
+            <CardTitle>{t('navigation.combos')}</CardTitle>
+            <CardDescription>Erstelle und visualisiere Kombos Schritt für Schritt</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/combos">
               <Button variant="default" className="w-full">
-                {session ? t("combo.createCombo") : t("navigation.combos")}
+                {session ? t('combo.createCombo') : t('navigation.combos')}
               </Button>
             </Link>
           </CardContent>
@@ -67,15 +69,13 @@ export default function Home() {
         <Card>
           <CardHeader>
             <Swords className="w-8 h-8 text-primary mb-2" />
-            <CardTitle>{t("navigation.duel")}</CardTitle>
-            <CardDescription>
-              Teste deine Decks und Kombos im Duellmodus
-            </CardDescription>
+            <CardTitle>{t('navigation.duel')}</CardTitle>
+            <CardDescription>Teste deine Decks und Kombos im Duellmodus</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/duel">
               <Button variant="default" className="w-full">
-                {t("duel.startDuel")}
+                {t('duel.startDuel')}
               </Button>
             </Link>
           </CardContent>
@@ -85,15 +85,13 @@ export default function Home() {
       {/* Auth Section */}
       {!session && (
         <section className="text-center">
-          <p className="text-muted-foreground mb-4">
-            {t("auth.noAccount")}
-          </p>
+          <p className="text-muted-foreground mb-4">{t('auth.noAccount')}</p>
           <div className="flex gap-4 justify-center">
             <Link href="/auth/signin">
-              <Button variant="default">{t("auth.signIn")}</Button>
+              <Button variant="default">{t('auth.signIn')}</Button>
             </Link>
             <Link href="/auth/signup">
-              <Button variant="secondary">{t("auth.signUp")}</Button>
+              <Button variant="secondary">{t('auth.signUp')}</Button>
             </Link>
           </div>
         </section>

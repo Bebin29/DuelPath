@@ -2,7 +2,7 @@
  * Hook für Offline-Status und -Funktionalität
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from 'react';
 
 interface UseOfflineReturn {
   isOnline: boolean;
@@ -18,14 +18,14 @@ interface UseOfflineReturn {
  */
 export function useOffline(): UseOfflineReturn {
   const [isOnline, setIsOnline] = useState<boolean>(
-    typeof navigator !== "undefined" ? navigator.onLine : true
+    typeof navigator !== 'undefined' ? navigator.onLine : true
   );
   const [wasOffline, setWasOffline] = useState<boolean>(false);
   const [syncPending, setSyncPending] = useState<boolean>(false);
   const [syncQueueLength, setSyncQueueLength] = useState<number>(0);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
 
     const handleOnline = () => {
       setIsOnline(true);
@@ -38,15 +38,15 @@ export function useOffline(): UseOfflineReturn {
       setIsOnline(false);
     };
 
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     // Prüfe initialen Status
     setIsOnline(navigator.onLine);
 
     // Prüfe Sync-Queue-Länge
     const checkSyncQueue = () => {
-      const { getSyncQueue } = require("@/lib/storage/offline-storage");
+      const { getSyncQueue } = require('@/lib/storage/offline-storage');
       const queue = getSyncQueue();
       setSyncQueueLength(queue.length);
     };
@@ -55,8 +55,8 @@ export function useOffline(): UseOfflineReturn {
     const interval = setInterval(checkSyncQueue, 5000); // Alle 5 Sekunden prüfen
 
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       clearInterval(interval);
     };
   }, []);
@@ -66,7 +66,11 @@ export function useOffline(): UseOfflineReturn {
 
     setSyncPending(true);
     try {
-      const { getSyncQueue, removeFromSyncQueue, setLastSyncTime } = require("@/lib/storage/offline-storage");
+      const {
+        getSyncQueue,
+        removeFromSyncQueue,
+        setLastSyncTime,
+      } = require('@/lib/storage/offline-storage');
       const queue = getSyncQueue();
 
       // TODO: Implementiere tatsächliche Synchronisation mit Backend
@@ -77,7 +81,7 @@ export function useOffline(): UseOfflineReturn {
           // await syncOperation(operation);
           removeFromSyncQueue(operation.id);
         } catch (error) {
-          console.error("Failed to sync operation:", operation, error);
+          console.error('Failed to sync operation:', operation, error);
           // Behalte Operation in Queue für späteren Retry
         }
       }
@@ -85,7 +89,7 @@ export function useOffline(): UseOfflineReturn {
       setLastSyncTime();
       setSyncQueueLength(0);
     } catch (error) {
-      console.error("Failed to sync:", error);
+      console.error('Failed to sync:', error);
     } finally {
       setSyncPending(false);
     }
@@ -100,4 +104,3 @@ export function useOffline(): UseOfflineReturn {
     syncNow,
   };
 }
-

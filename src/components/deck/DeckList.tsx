@@ -1,14 +1,20 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { getUserDecks, deleteDeck } from "@/server/actions/deck.actions";
-import { Button } from "@/components/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/components/ui/card";
-import { Library, Edit, Trash2 } from "lucide-react";
-import type { Deck } from "@prisma/client";
-import { useToast } from "@/components/components/ui/toast";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { getUserDecks, deleteDeck } from '@/server/actions/deck.actions';
+import { Button } from '@/components/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/components/ui/card';
+import { Library, Edit, Trash2 } from 'lucide-react';
+import type { Deck } from '@prisma/client';
+import { useToast } from '@/components/components/ui/toast';
 
 type DeckWithCount = Deck & {
   _count?: {
@@ -39,14 +45,14 @@ export function DeckList() {
         setDecks(result.decks);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load decks");
+      setError(err instanceof Error ? err.message : 'Failed to load decks');
     } finally {
       setIsLoading(false);
     }
   }
 
   async function handleDelete(deckId: string) {
-    if (!confirm(t("deck.confirmDelete"))) {
+    if (!confirm(t('deck.confirmDelete'))) {
       return;
     }
 
@@ -54,24 +60,24 @@ export function DeckList() {
       const result = await deleteDeck(deckId);
       if (result.error) {
         addToast({
-          variant: "error",
-          title: t("deck.errors.deleteFailed"),
+          variant: 'error',
+          title: t('deck.errors.deleteFailed'),
           description: result.error,
         });
       } else {
         // Deck aus Liste entfernen
         setDecks(decks.filter((deck) => deck.id !== deckId));
         addToast({
-          variant: "success",
-          title: t("deck.deckDeleted"),
-          description: t("deck.deckDeletedDescription"),
+          variant: 'success',
+          title: t('deck.deckDeleted'),
+          description: t('deck.deckDeletedDescription'),
         });
       }
     } catch (err) {
       addToast({
-        variant: "error",
-        title: t("deck.errors.deleteFailed"),
-        description: err instanceof Error ? err.message : t("deck.errors.deleteFailed"),
+        variant: 'error',
+        title: t('deck.errors.deleteFailed'),
+        description: err instanceof Error ? err.message : t('deck.errors.deleteFailed'),
       });
     }
   }
@@ -83,7 +89,7 @@ export function DeckList() {
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">{t("common.loading")}</p>
+        <p className="text-muted-foreground">{t('common.loading')}</p>
       </div>
     );
   }
@@ -103,8 +109,8 @@ export function DeckList() {
           <div className="flex items-center gap-3">
             <Library className="w-8 h-8 text-primary" />
             <div>
-              <CardTitle>{t("deck.noDecks")}</CardTitle>
-              <CardDescription>{t("deck.createFirstDeck")}</CardDescription>
+              <CardTitle>{t('deck.noDecks')}</CardTitle>
+              <CardDescription>{t('deck.createFirstDeck')}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -140,13 +146,9 @@ export function DeckList() {
                 className="flex-1"
               >
                 <Edit className="mr-2 h-4 w-4" />
-                {t("common.edit")}
+                {t('common.edit')}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDelete(deck.id)}
-              >
+              <Button variant="outline" size="sm" onClick={() => handleDelete(deck.id)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -156,4 +158,3 @@ export function DeckList() {
     </div>
   );
 }
-

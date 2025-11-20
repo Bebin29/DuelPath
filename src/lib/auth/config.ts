@@ -1,12 +1,12 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import { prisma } from "@/lib/prisma/client";
-import bcrypt from "bcryptjs";
+import { PrismaAdapter } from '@auth/prisma-adapter';
+import type { NextAuthConfig } from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+import { prisma } from '@/lib/prisma/client';
+import bcrypt from 'bcryptjs';
 
 /**
  * NextAuth Konfiguration für DuelPath
- * 
+ *
  * Unterstützt:
  * - E-Mail/Passwort Authentifizierung (Credentials)
  * - OAuth Provider können später hinzugefügt werden
@@ -15,10 +15,10 @@ export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma) as any,
   providers: [
     Credentials({
-      name: "credentials",
+      name: 'credentials',
       credentials: {
-        email: { label: "E-Mail", type: "email" },
-        password: { label: "Passwort", type: "password" },
+        email: { label: 'E-Mail', type: 'email' },
+        password: { label: 'Passwort', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -35,10 +35,7 @@ export const authConfig: NextAuthConfig = {
           return null;
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password,
-        );
+        const isPasswordValid = await bcrypt.compare(credentials.password as string, user.password);
 
         if (!isPasswordValid) {
           return null;
@@ -54,11 +51,11 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
   },
   pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
+    signIn: '/auth/signin',
+    error: '/auth/error',
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -76,4 +73,3 @@ export const authConfig: NextAuthConfig = {
   },
   trustHost: true,
 };
-

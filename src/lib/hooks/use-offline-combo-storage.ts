@@ -1,6 +1,6 @@
-import { useEffect, useCallback } from "react";
-import { useOfflineStorage } from "./use-offline-storage";
-import type { ComboWithSteps } from "@/types/combo.types";
+import { useEffect, useCallback } from 'react';
+import { useOfflineStorage } from './use-offline-storage';
+import type { ComboWithSteps } from '@/types/combo.types';
 import {
   createCombo,
   updateCombo,
@@ -8,13 +8,13 @@ import {
   addComboStep,
   updateComboStep,
   deleteComboStep,
-} from "@/server/actions/combo.actions";
-import type { CreateComboInput, UpdateComboInput } from "@/lib/validations/combo.schema";
-import type { CreateComboStepInput, UpdateComboStepInput } from "@/lib/validations/combo.schema";
+} from '@/server/actions/combo.actions';
+import type { CreateComboInput, UpdateComboInput } from '@/lib/validations/combo.schema';
+import type { CreateComboStepInput, UpdateComboStepInput } from '@/lib/validations/combo.schema';
 
 /**
  * Hook für Offline-Storage von Combos
- * 
+ *
  * Speichert Combo-Operationen lokal wenn offline und synchronisiert sie wenn wieder online
  */
 export function useOfflineComboStorage() {
@@ -32,35 +32,35 @@ export function useOfflineComboStorage() {
    */
   const syncOperation = useCallback(async (operation: any): Promise<boolean> => {
     try {
-      if (operation.resource === "combo") {
-        if (operation.type === "create") {
+      if (operation.resource === 'combo') {
+        if (operation.type === 'create') {
           const result = await createCombo(operation.data as CreateComboInput);
-          return !("error" in result);
-        } else if (operation.type === "update") {
+          return !('error' in result);
+        } else if (operation.type === 'update') {
           const { comboId, ...data } = operation.data as { comboId: string } & UpdateComboInput;
           const result = await updateCombo(comboId, data);
-          return !("error" in result);
-        } else if (operation.type === "delete") {
+          return !('error' in result);
+        } else if (operation.type === 'delete') {
           const result = await deleteCombo(operation.data as string);
-          return !("error" in result);
+          return !('error' in result);
         }
-      } else if (operation.resource === "step") {
-        if (operation.type === "create") {
+      } else if (operation.resource === 'step') {
+        if (operation.type === 'create') {
           const { comboId, ...step } = operation.data as { comboId: string } & CreateComboStepInput;
           const result = await addComboStep(comboId, step);
-          return !("error" in result);
-        } else if (operation.type === "update") {
+          return !('error' in result);
+        } else if (operation.type === 'update') {
           const { stepId, ...data } = operation.data as { stepId: string } & UpdateComboStepInput;
           const result = await updateComboStep(stepId, data);
-          return !("error" in result);
-        } else if (operation.type === "delete") {
+          return !('error' in result);
+        } else if (operation.type === 'delete') {
           const result = await deleteComboStep(operation.data as string);
-          return !("error" in result);
+          return !('error' in result);
         }
       }
       return false;
     } catch (error) {
-      console.error("Failed to sync operation:", error);
+      console.error('Failed to sync operation:', error);
       return false;
     }
   }, []);
@@ -75,17 +75,14 @@ export function useOfflineComboStorage() {
   /**
    * Speichert eine Combo lokal (für Offline-Zugriff)
    */
-  const saveComboLocally = useCallback(
-    (combo: ComboWithSteps) => {
-      try {
-        const key = `combo_${combo.id}`;
-        localStorage.setItem(key, JSON.stringify(combo));
-      } catch (error) {
-        console.error("Failed to save combo locally:", error);
-      }
-    },
-    []
-  );
+  const saveComboLocally = useCallback((combo: ComboWithSteps) => {
+    try {
+      const key = `combo_${combo.id}`;
+      localStorage.setItem(key, JSON.stringify(combo));
+    } catch (error) {
+      console.error('Failed to save combo locally:', error);
+    }
+  }, []);
 
   /**
    * Lädt eine Combo aus lokalem Storage
@@ -98,7 +95,7 @@ export function useOfflineComboStorage() {
         return JSON.parse(stored) as ComboWithSteps;
       }
     } catch (error) {
-      console.error("Failed to load combo locally:", error);
+      console.error('Failed to load combo locally:', error);
     }
     return null;
   }, []);
@@ -111,7 +108,7 @@ export function useOfflineComboStorage() {
       const key = `combo_${comboId}`;
       localStorage.removeItem(key);
     } catch (error) {
-      console.error("Failed to remove combo locally:", error);
+      console.error('Failed to remove combo locally:', error);
     }
   }, []);
 
@@ -127,4 +124,3 @@ export function useOfflineComboStorage() {
     removeComboLocally,
   };
 }
-

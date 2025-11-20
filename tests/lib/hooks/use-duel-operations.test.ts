@@ -2,13 +2,13 @@
  * Unit-Tests für useDuelOperations Hook
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { useDuelOperations } from "@/lib/hooks/use-duel-operations";
-import type { DuelState } from "@/types/duel.types";
-import { DuelPhase } from "@/types/duel.types";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { useDuelOperations } from '@/lib/hooks/use-duel-operations';
+import type { DuelState } from '@/types/duel.types';
+import { DuelPhase } from '@/types/duel.types';
 
-describe("useDuelOperations", () => {
+describe('useDuelOperations', () => {
   let mockDuelState: DuelState;
   let mockSetDuelState: vi.MockedFunction<any>;
   let mockAddHistoryEntry: vi.MockedFunction<any>;
@@ -17,7 +17,7 @@ describe("useDuelOperations", () => {
 
   beforeEach(() => {
     mockDuelState = {
-      turnPlayer: "PLAYER",
+      turnPlayer: 'PLAYER',
       phase: DuelPhase.DRAW,
       turnCount: 1,
       player: {
@@ -48,7 +48,7 @@ describe("useDuelOperations", () => {
     mockOnSuccess = vi.fn();
   });
 
-  it("should initialize with correct state", () => {
+  it('should initialize with correct state', () => {
     const { result } = renderHook(() =>
       useDuelOperations({
         duelState: mockDuelState,
@@ -65,7 +65,7 @@ describe("useDuelOperations", () => {
     expect(result.current.loadingStates.isConvertingToCombo).toBe(false);
   });
 
-  it("should handle saveDuel operation", async () => {
+  it('should handle saveDuel operation', async () => {
     // Mock erfolgreichen Server-Call
     global.fetch = vi.fn(() =>
       Promise.resolve({
@@ -94,14 +94,12 @@ describe("useDuelOperations", () => {
       expect(result.current.loadingStates.isSavingDuel).toBe(false);
     });
 
-    expect(mockOnSuccess).toHaveBeenCalledWith("Duel gespeichert");
+    expect(mockOnSuccess).toHaveBeenCalledWith('Duel gespeichert');
   });
 
-  it("should handle saveDuel error", async () => {
+  it('should handle saveDuel error', async () => {
     // Mock fehlgeschlagenen Server-Call
-    global.fetch = vi.fn(() =>
-      Promise.reject(new Error("Network error"))
-    ) as any;
+    global.fetch = vi.fn(() => Promise.reject(new Error('Network error'))) as any;
 
     const { result } = renderHook(() =>
       useDuelOperations({
@@ -121,10 +119,10 @@ describe("useDuelOperations", () => {
       expect(result.current.loadingStates.isSavingDuel).toBe(false);
     });
 
-    expect(mockOnError).toHaveBeenCalledWith("Network error", expect.any(Function));
+    expect(mockOnError).toHaveBeenCalledWith('Network error', expect.any(Function));
   });
 
-  it("should handle convertDuelToCombo operation", async () => {
+  it('should handle convertDuelToCombo operation', async () => {
     // Mock erfolgreichen Server-Call
     global.fetch = vi.fn(() =>
       Promise.resolve({
@@ -144,7 +142,7 @@ describe("useDuelOperations", () => {
     );
 
     act(() => {
-      result.current.convertDuelToCombo(mockDuelState, "Test Combo");
+      result.current.convertDuelToCombo(mockDuelState, 'Test Combo');
     });
 
     expect(result.current.loadingStates.isConvertingToCombo).toBe(true);
@@ -153,10 +151,10 @@ describe("useDuelOperations", () => {
       expect(result.current.loadingStates.isConvertingToCombo).toBe(false);
     });
 
-    expect(mockOnSuccess).toHaveBeenCalledWith("Duel als Combo gespeichert");
+    expect(mockOnSuccess).toHaveBeenCalledWith('Duel als Combo gespeichert');
   });
 
-  it("should deduplicate operations", () => {
+  it('should deduplicate operations', () => {
     const { result } = renderHook(() =>
       useDuelOperations({
         duelState: mockDuelState,
@@ -175,7 +173,7 @@ describe("useDuelOperations", () => {
     expect(result.current.pendingOperations.size).toBe(1);
   });
 
-  it("should cancel operations", () => {
+  it('should cancel operations', () => {
     const { result } = renderHook(() =>
       useDuelOperations({
         duelState: mockDuelState,
@@ -193,7 +191,7 @@ describe("useDuelOperations", () => {
     expect(result.current.pendingOperations.size).toBe(1);
 
     act(() => {
-      result.current.cancelOperation("saveDuel");
+      result.current.cancelOperation('saveDuel');
     });
 
     expect(result.current.pendingOperations.size).toBe(0);

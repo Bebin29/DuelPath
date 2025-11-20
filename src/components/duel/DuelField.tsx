@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React, { useMemo } from "react";
-import { Card } from "@/components/components/ui/card";
-import { DuelCard } from "./DuelCard";
-import { useResponsiveLayout } from "@/lib/hooks/use-responsive-layout";
-import { useDroppable } from "@dnd-kit/core";
-import type { DuelCardInstance, PlayerId } from "@/types/duel.types";
+import React, { useMemo } from 'react';
+import { Card } from '@/components/components/ui/card';
+import { DuelCard } from './DuelCard';
+import { useResponsiveLayout } from '@/lib/hooks/use-responsive-layout';
+import { useDroppable } from '@dnd-kit/core';
+import type { DuelCardInstance, PlayerId } from '@/types/duel.types';
 
 interface DuelFieldProps {
   player: PlayerId;
@@ -25,7 +25,7 @@ function DroppableZone({
   id,
   children,
   isOccupied = false,
-  className = "",
+  className = '',
 }: {
   id: string;
   children: React.ReactNode;
@@ -42,9 +42,9 @@ function DroppableZone({
       className={`${className} ${
         isOver
           ? isOccupied
-            ? "ring-2 ring-red-500 bg-red-500/10"
-            : "ring-2 ring-green-500 bg-green-500/10"
-          : ""
+            ? 'ring-2 ring-red-500 bg-red-500/10'
+            : 'ring-2 ring-green-500 bg-green-500/10'
+          : ''
       } transition-all duration-200`}
     >
       {children}
@@ -72,9 +72,7 @@ export const DuelField = React.memo(function DuelField({
     <div className="space-y-4">
       {/* Monster-Zone */}
       <div>
-        <h4 className={`font-medium mb-2 text-muted-foreground text-${fontSize}`}>
-          Monster Zone
-        </h4>
+        <h4 className={`font-medium mb-2 text-muted-foreground text-${fontSize}`}>Monster Zone</h4>
         <div className="flex justify-center" style={{ gap: `${adaptiveSizes.fieldGap}px` }}>
           {monsterZone.map((card, index) => (
             <DroppableZone
@@ -90,11 +88,7 @@ export const DuelField = React.memo(function DuelField({
                 }}
               >
                 {card ? (
-                  <DuelCard
-                    cardInstance={card}
-                    size="small"
-                    readonly={readonly}
-                  />
+                  <DuelCard cardInstance={card} size="small" readonly={readonly} />
                 ) : (
                   <div className={`text-muted-foreground text-${fontSize}`}>Empty</div>
                 )}
@@ -124,11 +118,7 @@ export const DuelField = React.memo(function DuelField({
                 }}
               >
                 {card ? (
-                  <DuelCard
-                    cardInstance={card}
-                    size="small"
-                    readonly={readonly}
-                  />
+                  <DuelCard cardInstance={card} size="small" readonly={readonly} />
                 ) : (
                   <div className={`text-muted-foreground text-${fontSize}`}>Empty</div>
                 )}
@@ -166,7 +156,7 @@ export const DuelField = React.memo(function DuelField({
             }}
           >
             <div className={`text-muted-foreground text-${fontSize}`}>
-              {deck.length > 0 ? "Cards" : "Empty"}
+              {deck.length > 0 ? 'Cards' : 'Empty'}
             </div>
           </Card>
         </div>
@@ -184,7 +174,7 @@ export const DuelField = React.memo(function DuelField({
             }}
           >
             <div className={`text-muted-foreground text-${fontSize}`}>
-              {extraDeck.length > 0 ? "Cards" : "Empty"}
+              {extraDeck.length > 0 ? 'Cards' : 'Empty'}
             </div>
           </Card>
         </div>
@@ -202,7 +192,7 @@ export const DuelField = React.memo(function DuelField({
             }}
           >
             <div className={`text-muted-foreground text-${fontSize}`}>
-              {graveyard.length > 0 ? "Cards" : "Empty"}
+              {graveyard.length > 0 ? 'Cards' : 'Empty'}
             </div>
           </Card>
         </div>

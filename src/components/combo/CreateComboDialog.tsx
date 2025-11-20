@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslation } from "@/lib/i18n/hooks";
-import { createCombo } from "@/server/actions/combo.actions";
-import { getUserDecks } from "@/server/actions/deck.actions";
-import { Button } from "@/components/components/ui/button";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { createCombo } from '@/server/actions/combo.actions';
+import { getUserDecks } from '@/server/actions/deck.actions';
+import { Button } from '@/components/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -14,18 +14,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/components/ui/dialog";
-import { Input } from "@/components/components/ui/input";
-import { Label } from "@/components/components/ui/label";
+} from '@/components/components/ui/dialog';
+import { Input } from '@/components/components/ui/input';
+import { Label } from '@/components/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/components/ui/select";
-import { Plus } from "lucide-react";
-import type { Deck } from "@prisma/client";
+} from '@/components/components/ui/select';
+import { Plus } from 'lucide-react';
+import type { Deck } from '@prisma/client';
 
 /**
  * Dialog zum Erstellen einer neuen Kombo
@@ -39,9 +39,9 @@ export function CreateComboDialog() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [isLoadingDecks, setIsLoadingDecks] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    deckId: "" as string | undefined,
+    title: '',
+    description: '',
+    deckId: '' as string | undefined,
   });
 
   // Lade Decks beim Öffnen des Dialogs
@@ -59,7 +59,7 @@ export function CreateComboDialog() {
         setDecks(result.decks);
       }
     } catch (err) {
-      console.error("Failed to load decks:", err);
+      console.error('Failed to load decks:', err);
     } finally {
       setIsLoadingDecks(false);
     }
@@ -87,13 +87,13 @@ export function CreateComboDialog() {
 
       // Erfolg: Dialog schließen und zum Combo-Editor navigieren
       setOpen(false);
-      setFormData({ title: "", description: "", deckId: "" });
+      setFormData({ title: '', description: '', deckId: '' });
       if (result.combo) {
         router.push(`/combos/${result.combo.id}`);
         router.refresh();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create combo");
+      setError(err instanceof Error ? err.message : 'Failed to create combo');
       setIsLoading(false);
     }
   }
@@ -103,16 +103,14 @@ export function CreateComboDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          {t("combo.createCombo")}
+          {t('combo.createCombo')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{t("combo.createCombo")}</DialogTitle>
-            <DialogDescription>
-              {t("combo.createDescription")}
-            </DialogDescription>
+            <DialogTitle>{t('combo.createCombo')}</DialogTitle>
+            <DialogDescription>{t('combo.createDescription')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -123,46 +121,44 @@ export function CreateComboDialog() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="combo-title">{t("combo.title")}</Label>
+              <Label htmlFor="combo-title">{t('combo.title')}</Label>
               <Input
                 id="combo-title"
                 value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder={t("combo.titlePlaceholder")}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder={t('combo.titlePlaceholder')}
                 required
                 maxLength={200}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="combo-description">{t("combo.description")}</Label>
+              <Label htmlFor="combo-description">{t('combo.description')}</Label>
               <Input
                 id="combo-description"
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder={t("combo.descriptionPlaceholder")}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder={t('combo.descriptionPlaceholder')}
                 maxLength={2000}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="combo-deck">{t("combo.deck")} (Optional)</Label>
+              <Label htmlFor="combo-deck">{t('combo.deck')} (Optional)</Label>
               <Select
-                value={formData.deckId || "none"}
+                value={formData.deckId || 'none'}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, deckId: value === "none" ? undefined : value })
+                  setFormData({ ...formData, deckId: value === 'none' ? undefined : value })
                 }
                 disabled={isLoadingDecks}
               >
                 <SelectTrigger id="combo-deck">
-                  <SelectValue placeholder={isLoadingDecks ? t("common.loading") : t("combo.selectDeck")} />
+                  <SelectValue
+                    placeholder={isLoadingDecks ? t('common.loading') : t('combo.selectDeck')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">{t("combo.noDeck")}</SelectItem>
+                  <SelectItem value="none">{t('combo.noDeck')}</SelectItem>
                   {decks.map((deck) => (
                     <SelectItem key={deck.id} value={deck.id}>
                       {deck.name}
@@ -180,10 +176,10 @@ export function CreateComboDialog() {
               onClick={() => setOpen(false)}
               disabled={isLoading}
             >
-              {t("common.cancel")}
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? t("common.loading") : t("common.create")}
+              {isLoading ? t('common.loading') : t('common.create')}
             </Button>
           </DialogFooter>
         </form>
@@ -191,4 +187,3 @@ export function CreateComboDialog() {
     </Dialog>
   );
 }
-
