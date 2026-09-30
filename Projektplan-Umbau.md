@@ -266,3 +266,4 @@ interface RulingMechanic {
 ## 8. Offen
 
 - Unsichere Rulings aus der Recherche: Gelten „the turn you activate“-Einschränkungen auch bei negierter Aktivierung? Endet die Negierung durch Imperm oder Veiler, wenn das Monster das Feld verlässt? Viele Detail-Rulings stammen aus der OCG-Datenbank. Diese Fälle laufen vorerst als Jev-Kontext und über `optOverride`.
+- Bekannte Lücken der Effektzerlegung (landen in der Prüfliste): „This effect can only be used once while this card is face-up on the field.“ wird noch nicht als OPT-Klausel des vorherigen Effekts erkannt; Fortsetzungssätze wie „This ATK change lasts until the end of this turn.“ werden als eigener Effekt gezählt; bei „activate 1 of these effects“ sind Parser und Jev uneinig, ob die Optionen ein oder mehrere Effekte sind.
