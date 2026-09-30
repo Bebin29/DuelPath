@@ -37,8 +37,9 @@ describe('mapCard', () => {
     expect((card?.effects as { effects: unknown[] }).effects).toHaveLength(1);
   });
 
-  it('überspringt Karten ohne TCG-Release', () => {
+  it('überspringt Karten ohne TCG-Release und Speed-Duel-Skill-Cards', () => {
     expect(mapCard({ ...ASH, misc_info: [{}] })).toBeNull();
+    expect(mapCard({ ...ASH, type: 'Skill Card' })).toBeNull();
   });
 
   it('nimmt die Link-Zahl als Level und den TCG-Banlist-Status', () => {

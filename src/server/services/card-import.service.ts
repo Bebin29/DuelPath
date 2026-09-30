@@ -43,13 +43,15 @@ async function fetchCards(query: string): Promise<YGOPRODeckCard[]> {
   return json.data;
 }
 
-/** Wandelt eine YGOPRODeck-Karte in Card-Daten um; null für Karten ohne TCG-Release */
+/** Wandelt eine YGOPRODeck-Karte in Card-Daten um; null für Karten ohne TCG-Release und Skill Cards */
 export function mapCard(
   card: YGOPRODeckCard,
   german?: Pick<YGOPRODeckCard, 'name' | 'desc'>
 ): Prisma.CardCreateInput | null {
   const tcgDate = card.misc_info?.[0]?.tcg_date;
   if (!tcgDate) return null;
+  // Skill Cards gibt es nur im Speed Duel, nicht in TCG-Decks
+  if (card.type === 'Skill Card') return null;
 
   const passcode = String(card.id);
   const parsed = parseEffects(card.desc ?? '', card);
