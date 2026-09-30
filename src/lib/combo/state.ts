@@ -8,7 +8,16 @@ import type { CardEffect, EffectOpt } from '@/lib/cards/effects';
 
 export type Player = 'self' | 'opponent';
 export type Zone =
-  'HAND' | 'DECK' | 'EXTRA' | 'MONSTER' | 'SPELL_TRAP' | 'FIELD' | 'GY' | 'BANISHED';
+  | 'HAND'
+  | 'DECK'
+  | 'EXTRA'
+  | 'MONSTER'
+  | 'SPELL_TRAP'
+  | 'FIELD'
+  | 'GY'
+  | 'BANISHED'
+  /** Xyz-Material unter einem Monster (attachedTo) */
+  | 'MATERIAL';
 /** SET = verdeckt (Monster in Verteidigung oder gesetzte Spell/Trap); ATK bei Spell/Trap = offen */
 export type Position = 'ATK' | 'DEF' | 'SET';
 
@@ -18,6 +27,8 @@ export interface CardData {
   type: string;
   race?: string | null;
   effects: CardEffect[];
+  /** Link-Pfeile, etwa ["Top", "Bottom-Left"] */
+  linkMarkers?: string[] | null;
 }
 
 export interface PlacedCard {
@@ -30,6 +41,10 @@ export interface PlacedCard {
   position?: Position;
   /** Zählt Ortswechsel und Verdecken; Soft OPT und Effekt-Negierung gelten pro Epoche */
   epoch: number;
+  /** Xyz-Material: das Monster, unter dem die Karte liegt */
+  attachedTo?: string;
+  /** Spielmarke: verschwindet, sobald sie das Feld verlässt */
+  token?: boolean;
 }
 
 export interface CardMove {
@@ -42,6 +57,10 @@ export interface CardMove {
   slot?: number;
   position?: Position;
   controller?: Player;
+  /** Bei to = MATERIAL: das Xyz-Monster, unter das die Karte kommt */
+  attachTo?: string;
+  /** Legt eine Spielmarke an (UX-Plan 16) */
+  token?: boolean;
 }
 
 export type NodeKind = 'ACTION' | 'ACTIVATE' | 'OPPONENT' | 'RESOLVE' | 'END';
@@ -121,7 +140,11 @@ export interface GameState {
   negatedCards: Record<string, number>;
   negatedNames: string[];
   warnings: Warning[];
+  /** Lebenspunkte, für Kosten wie „Pay 1500 LP“ und das Endboard */
+  lp: Record<Player, number>;
 }
+
+export const START_LP = 8000;
 
 export function initialState(start: StartState): GameState {
   const cards: Record<string, PlacedCard> = {};
@@ -136,6 +159,7 @@ export function initialState(start: StartState): GameState {
     negatedCards: {},
     negatedNames: [],
     warnings: [],
+    lp: { self: START_LP, opponent: START_LP },
   };
 }
 
@@ -212,7 +236,7 @@ export function applyNode(
         if (state.normalSummonUsed) warn('Normal Summon in diesem Zug bereits verbraucht');
         state.normalSummonUsed = true;
       }
-      applyMoves(state, node.resolveMoves ?? [], warn);
+      applyMoves(state, node.resolveMoves ?? [], warn, cards);
       break;
     }
     case 'ACTIVATE':
@@ -229,7 +253,12 @@ export function applyNode(
   return state;
 }
 
-function applyMoves(state: GameState, moves: CardMove[], warn: (m: string) => void) {
+function applyMoves(
+  state: GameState,
+  moves: CardMove[],
+  warn: (m: string) => void,
+  cards?: Map<string, CardData>
+) {
   for (const move of moves) {
     let card = state.cards[move.instanceId];
     if (!card) {
@@ -245,12 +274,28 @@ function applyMoves(state: GameState, moves: CardMove[], warn: (m: string) => vo
         controller: move.owner ?? 'self',
         zone: move.from,
         epoch: 0,
+        ...(move.token && { token: true }),
       };
     }
     if (card.zone !== move.from) {
       warn(`${move.instanceId} liegt in ${card.zone}, nicht in ${move.from}`);
     }
 
+    // Link-Monster aus dem Extra Deck brauchen eine Extra Monster Zone oder eine Zone mit Link-Pfeil
+    const data = cards?.get(card.cardId);
+    if (
+      move.to === 'MONSTER' &&
+      card.zone === 'EXTRA' &&
+      move.slot !== undefined &&
+      move.slot < 5 &&
+      data &&
+      /Link/.test(data.type) &&
+      !linkedZones(state, move.controller ?? card.controller, cards).has(move.slot)
+    ) {
+      warn(`${data.name}: Zone ${move.slot + 1} hat keinen Link-Pfeil`);
+    }
+
+    const leavesMonster = card.zone === 'MONSTER' && move.to !== 'MONSTER';
     const flipsDown = move.position === 'SET' && card.position !== 'SET';
     if (card.zone !== move.to || flipsDown) {
       card.epoch++;
@@ -261,7 +306,48 @@ function applyMoves(state: GameState, moves: CardMove[], warn: (m: string) => vo
     card.position = onField(move.to) ? (move.position ?? card.position) : undefined;
     // Wer die Karte kontrolliert, ändert sich nur auf dem Feld; sonst gehört sie wieder dem Besitzer
     card.controller = onField(move.to) ? (move.controller ?? card.controller) : card.owner;
+    if (move.to === 'MATERIAL') card.attachedTo = move.attachTo;
+    else delete card.attachedTo;
+
+    // Verlässt ein Xyz-Monster das Feld, gehen seine Materialien auf den Friedhof
+    if (leavesMonster) {
+      for (const m of Object.values(state.cards)) {
+        if (m.attachedTo !== card.instanceId) continue;
+        m.zone = 'GY';
+        m.epoch++;
+        delete m.attachedTo;
+      }
+    }
+    // Spielmarken hören auf zu existieren, sobald sie das Feld verlassen
+    if (card.token && !onField(move.to)) delete state.cards[card.instanceId];
   }
+}
+
+const EMZ_OF: Record<number, number> = { 5: 1, 6: 3 };
+
+/**
+ * Hauptzonen, auf die eigene Link-Pfeile zeigen (Master Rule 2020). Die Extra Monster Zones
+ * liegen über den Zonen 2 und 4; aus ihnen zeigen die unteren Pfeile auf die Hauptzonen.
+ */
+export function linkedZones(
+  state: GameState,
+  player: Player,
+  cards?: Map<string, CardData>
+): Set<number> {
+  const linked = new Set<number>();
+  for (const c of Object.values(state.cards)) {
+    if (c.zone !== 'MONSTER' || c.controller !== player || c.slot === undefined) continue;
+    const markers = cards?.get(c.cardId)?.linkMarkers ?? [];
+    const col = c.slot >= 5 ? EMZ_OF[c.slot] : c.slot;
+    const fromEmz = c.slot >= 5;
+    for (const m of markers) {
+      const target = fromEmz
+        ? { 'Bottom-Left': col - 1, Bottom: col, 'Bottom-Right': col + 1 }[m]
+        : { Left: col - 1, Right: col + 1 }[m];
+      if (target !== undefined && target >= 0 && target < 5) linked.add(target);
+    }
+  }
+  return linked;
 }
 
 export function onField(zone: Zone): boolean {
@@ -300,7 +386,15 @@ function activate(
 
   // OPT-Schlüssel vor den Kosten bestimmen: "diese Karte abwerfen" würde sonst die Epoche verschieben
   const optKeys = card && effect?.opt ? optKeysFor(node, card, effect.opt, state) : [];
-  applyMoves(state, node.costMoves ?? [], warn);
+  applyMoves(state, node.costMoves ?? [], warn, cards);
+
+  // Lebenspunkte als Kosten: „Pay 1500 LP“ vor dem Semikolon
+  const pay = effect ? /\bpay (\d+) LP\b/i.exec(effect.text.split(';')[0] ?? '') : null;
+  if (pay && effect && effect.text.includes(';')) {
+    const amount = Number(pay[1]);
+    if (state.lp[node.player] < amount) warn(`Nicht genug Lebenspunkte für ${amount} LP`);
+    state.lp[node.player] -= amount;
+  }
 
   // Kartenaktivierung: die Spell/Trap liegt nach den Aktivierungsbewegungen auf dem Feld.
   // Erst danach prüfen, weil die Instanz auch erst durch diese Bewegung entstehen kann.
@@ -408,7 +502,7 @@ function resolveChain(
       continue;
     }
 
-    applyMoves(state, node.resolveMoves ?? [], warn);
+    applyMoves(state, node.resolveMoves ?? [], warn, cards);
     if (node.negates) applyNegation(state, node.negates, i, byId, warn);
   }
 

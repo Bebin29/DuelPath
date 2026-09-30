@@ -308,7 +308,8 @@
       "SPELL_TRAP": "Zauber/Falle",
       "FIELD": "Spielfeld",
       "GY": "Friedhof",
-      "BANISHED": "Verbannt"
+      "BANISHED": "Verbannt",
+      "MATERIAL": "Xyz-Material"
     },
     "state": {
       "title": "Zustand",
@@ -466,7 +467,8 @@
       "toDeck": "Ins Deck",
       "toExtra": "Ins Extra Deck",
       "hoptFree": "frei",
-      "hoptUsed": "genutzt"
+      "hoptUsed": "genutzt",
+      "detach": "Material abhängen"
     },
     "drop": {
       "normalSummon": "Normal Summon",
@@ -489,7 +491,8 @@
       "allCards": "Alle Karten",
       "later": "Später",
       "confirm": "Bestätigen",
-      "none": "Keine passende Karte. „Alle Karten“ zeigt alles."
+      "none": "Keine passende Karte. „Alle Karten“ zeigt alles.",
+      "discardEffect": "Welche Karte wirfst du ab?"
     },
     "offer": {
       "branch": "Als Branch angelegt",
@@ -513,7 +516,10 @@
     "promote": "{{label}} zur Hauptline machen",
     "promoteThis": "Zur Hauptline machen",
     "announce": "Schritt {{n}}: {{label}}. {{chain}}",
-    "tooNarrow": "Für die Workbench bitte mindestens 1280 px breit."
+    "tooNarrow": "Für die Workbench bitte mindestens 1280 px breit.",
+    "tokenHere": "Spielmarke hier",
+    "tokenPick": "Spielmarke wählen …",
+    "tokenHint": "Name tippen, Enter legt die Spielmarke in Verteidigung in diese Zone"
   },
   "preview": {
     "effects": "Effekte",
@@ -582,7 +588,8 @@
     "cardCombo": "{{count}}-Card-Combo",
     "hopts": "HOPT-Namen gesperrt",
     "weaknesses": "Schwachstellen",
-    "noWeaknesses": "Keine Treffer der gewählten Staples."
+    "noWeaknesses": "Keine Treffer der gewählten Staples.",
+    "lp": "Lebenspunkte"
   },
   "library": {
     "untitled": "Neue Combo",
@@ -718,7 +725,10 @@
     "remove": "Von der Hand nehmen",
     "exists": "Gibt es schon: {{title}}",
     "random": "Zufallshand",
-    "go": "Los"
+    "go": "Los",
+    "opponentBoard": "Gegnerboard",
+    "opponentText": "Monster liegen offen, Zauber und Fallen gesetzt. Klick auf eine Karte nimmt sie wieder weg.",
+    "opponentHint": "Klick legt die Karte aufs Gegnerboard"
   },
   "cardSheet": {
     "text": "Kartentext",
@@ -734,7 +744,18 @@
     "split": "An der Schreibmarke teilen",
     "merge": "Mit nächstem zusammenlegen",
     "remove": "Entfernen",
-    "view": "Karte ansehen"
+    "view": "Karte ansehen",
+    "arrows": "Pfeile",
+    "arrow": {
+      "Top": "oben",
+      "Bottom": "unten",
+      "Left": "links",
+      "Right": "rechts",
+      "Top-Left": "oben links",
+      "Top-Right": "oben rechts",
+      "Bottom-Left": "unten links",
+      "Bottom-Right": "unten rechts"
+    }
   },
   "palette": {
     "title": "Suche und Befehle",

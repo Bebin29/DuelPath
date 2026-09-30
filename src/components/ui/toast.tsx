@@ -92,7 +92,7 @@ function ToastComponent({
       await onRetry();
       // Schließe Toast nach erfolgreichem Retry
       closeToast();
-    } catch (error) {
+    } catch {
       // Toast bleibt offen bei Fehler
       setIsRetrying(false);
     }

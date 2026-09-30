@@ -10,7 +10,7 @@ import {
 } from '@/lib/combo/state';
 import { boardOf, EMZ_LEFT, EMZ_RIGHT, MAIN_ZONES } from '@/lib/combo/board';
 import { childrenOf, nextRank } from '@/lib/combo/lines';
-import { newNode } from '@/lib/combo/tree';
+import { newInstanceId, newNode } from '@/lib/combo/tree';
 
 /**
  * Vom Handgriff am Board zum Schritt (UX-Plan 6.3 und 6.5).
@@ -32,6 +32,8 @@ export type PlayIntent =
   | { kind: 'setSpellTrap'; instanceId: string; slot?: number }
   | { kind: 'move'; instanceId: string; to: Zone; slot?: number; controller?: Player }
   | { kind: 'changePosition'; instanceId: string }
+  /** Spielmarke in eine freie Monsterzone (Scapegoat, Nibiru) */
+  | { kind: 'token'; cardId: string; player: Player; slot?: number; position?: Position }
   | { kind: 'resolve' }
   | { kind: 'end' };
 
@@ -41,6 +43,13 @@ export const isTrap = (card: CardData | undefined) => !!card && /Trap/.test(card
 export const isFieldSpell = (card: CardData | undefined) => isSpell(card) && card?.race === 'Field';
 export const isExtraDeckMonster = (card: CardData | undefined) =>
   !!card && /Fusion|Synchro|XYZ|Link/.test(card.type);
+export const isXyz = (card: CardData | undefined) => !!card && /XYZ/.test(card.type);
+
+/** Xyz-Materialien unter einem Monster */
+export const materialsOf = (state: GameState, instanceId: string) =>
+  Object.values(state.cards)
+    .filter((c) => c.zone === 'MATERIAL' && c.attachedTo === instanceId)
+    .sort((a, b) => a.instanceId.localeCompare(b.instanceId));
 
 /** Erste freie Monster- bzw. Zauber/Fallen-Zone des Spielers */
 export function freeSlot(
@@ -140,9 +149,15 @@ export function buildStep(intent: PlayIntent, ctx: StepContext): ComboNodeData[]
         position: intent.position ?? 'ATK',
       });
       if (!move) return nodes;
-      // Materialien zuerst: Fusion, Synchro und Link schicken sie auf den Friedhof
+      // Materialien zuerst: Fusion, Synchro und Link schicken sie auf den Friedhof,
+      // beim Xyz liegen sie danach unter dem Monster
+      const xyz = isXyz(data);
       const materials = (intent.materials ?? [])
-        .map((id) => moveOf(state, id, 'GY'))
+        .map((id) =>
+          xyz
+            ? moveOf(state, id, 'MATERIAL', { attachTo: intent.instanceId })
+            : moveOf(state, id, 'GY')
+        )
         .filter((m): m is CardMove => m !== null);
       push({
         ...base('ACTION'),
@@ -214,6 +229,28 @@ export function buildStep(intent: PlayIntent, ctx: StepContext): ComboNodeData[]
       });
       break;
     }
+    case 'token': {
+      const slot = intent.slot ?? freeSlot(state, intent.player, 'MONSTER');
+      push({
+        ...newNode(parent, 'ACTION'),
+        player: intent.player,
+        action: 'SPECIAL_SUMMON',
+        cardId: intent.cardId,
+        resolveMoves: [
+          {
+            instanceId: newInstanceId(intent.cardId),
+            cardId: intent.cardId,
+            owner: intent.player,
+            from: 'MONSTER',
+            to: 'MONSTER',
+            ...(slot !== undefined && { slot }),
+            position: intent.position ?? 'DEF',
+            token: true,
+          },
+        ],
+      });
+      break;
+    }
     case 'resolve':
       if (state.chain.length > 0) push(newNode(parent, 'RESOLVE'));
       break;
@@ -238,6 +275,18 @@ export function costMovesFor(
   const cost = costPart(text);
   if (!cost) return [];
   if (/\bbanish this card\b/i.test(cost)) return compact([moveOf(state, instanceId, 'BANISHED')]);
+  const detach = /\bdetach (\d+|one|two) (?:Xyz )?materials? from this card\b/i.exec(cost);
+  if (detach) {
+    const n = Number(detach[1]) || (detach[1].toLowerCase() === 'two' ? 2 : 1);
+    return materialsOf(state, instanceId)
+      .slice(0, n)
+      .map((m) => ({
+        instanceId: m.instanceId,
+        cardId: m.cardId,
+        from: 'MATERIAL' as const,
+        to: 'GY' as const,
+      }));
+  }
   if (/\b(?:Tribute|discard|send) this card\b/i.test(cost))
     return compact([moveOf(state, instanceId, 'GY')]);
   return [];
@@ -251,10 +300,21 @@ export function costPart(text: string): string | null {
   return text.slice(colon + 1, semi).trim();
 }
 
-/** Muss der Nutzer für die Kosten eine Karte abwerfen? */
-export function needsDiscard(card: CardData | undefined, effectIndex: number): boolean {
-  const cost = costPart(card?.effects[effectIndex]?.text ?? '');
-  return !!cost && /\bdiscard (?:1|one|a) card\b/i.test(cost);
+/**
+ * Muss der Nutzer eine Karte abwerfen? Als Kosten (vor dem Semikolon) oder als Teil der Wirkung,
+ * etwa Branded Opening: „Discard 1 card, then take 1 …“.
+ */
+export function needsDiscard(
+  card: CardData | undefined,
+  effectIndex: number
+): 'cost' | 'effect' | null {
+  const text = card?.effects[effectIndex]?.text ?? '';
+  const cost = costPart(text);
+  const DISCARD = /\bdiscard (?:1|one|a) card\b/i;
+  if (cost && DISCARD.test(cost)) return 'cost';
+  const effect =
+    cost === null ? text.slice(text.indexOf(':') + 1) : text.slice(text.indexOf(';') + 1);
+  return DISCARD.test(effect) ? 'effect' : null;
 }
 
 const compact = <T>(list: (T | null)[]) => list.filter((x): x is T => x !== null);
@@ -333,6 +393,7 @@ export function triggerOffers(
     if (!card) continue;
     card.effects.forEach((effect, i) => {
       if (!effect.activated || !isTrigger(card, i) || !isAvailable(id, i, card)) return;
+      if (now.zone === 'MONSTER' && !summonFits(effect.text, prev?.zone, before, after)) return;
       const summoned = now.zone === 'MONSTER' && /\bSummoned\b/.test(effect.text);
       const sent =
         (now.zone === 'GY' || now.zone === 'BANISHED') &&
@@ -341,6 +402,31 @@ export function triggerOffers(
     });
   }
   return offers.slice(0, 3);
+}
+
+/**
+ * Passt die Beschwörung zur Bedingung des Triggers? „If this card is Fusion Summoned“ nur aus dem
+ * Extra Deck, „Normal Summoned“ ohne „or Special“ nur, wenn der Schritt den Normal Summon verbraucht.
+ */
+function summonFits(
+  text: string,
+  from: Zone | undefined,
+  before: GameState,
+  after: GameState
+): boolean {
+  const condition = text.split(':')[0];
+  if (
+    /\b(?:Fusion|Synchro|Xyz|Link) Summoned\b/i.test(condition) &&
+    !/\bSpecial Summoned\b/.test(condition)
+  )
+    return from === 'EXTRA';
+  if (/\bRitual Summoned\b/.test(condition) && !/\bSpecial Summoned\b/.test(condition))
+    return from === 'HAND';
+  if (/\bNormal Summoned\b/.test(condition) && !/\bSpecial Summoned\b/.test(condition))
+    return after.normalSummonUsed && !before.normalSummonUsed;
+  if (/\bSpecial Summoned\b/.test(condition) && !/\bNormal\b/.test(condition))
+    return !(after.normalSummonUsed && !before.normalSummonUsed);
+  return true;
 }
 
 export interface DropTarget {

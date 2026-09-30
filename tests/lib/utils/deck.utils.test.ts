@@ -11,7 +11,6 @@ import {
   parseYDKFile,
 } from '@/lib/utils/deck.utils';
 import type { DeckWithCards } from '@/lib/hooks/use-deck-history';
-import type { DeckSection } from '@/lib/validations/deck.schema';
 
 describe('deck.utils', () => {
   const mockDeck: DeckWithCards = {

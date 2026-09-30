@@ -79,6 +79,8 @@ model Card {
   race            String? // Monster-Typ oder Spell/Trap-Kategorie
   attribute       String? // LIGHT, DARK, EARTH, etc. (nur bei Monstern)
   level           Int? // Level/Rang/Linkzahl
+  linkMarkers     String[]  @default([]) // Link-Pfeile, etwa "Top", "Bottom-Left"
+  scale           Int? // Pendel-Scale
   atk             Int? // Angriffspunkte
   def             Int? // Verteidigungspunkte
   desc            String? // Kartentext (englisch, Grundlage für die Effektzerlegung)

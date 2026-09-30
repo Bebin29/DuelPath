@@ -22,7 +22,13 @@ import { CardView } from '@/components/cards/CardView';
 import { boardOf, EMZ_LEFT, EMZ_RIGHT } from '@/lib/combo/board';
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import type { DropTarget } from '@/lib/combo/play';
-import type { GameState, PlacedCard, Player, Zone } from '@/lib/combo/state';
+import {
+  START_LP,
+  type GameState,
+  type PlacedCard,
+  type Player,
+  type Zone,
+} from '@/lib/combo/state';
 
 /** Auswahl am Board, etwa Materialien für eine Extra-Deck-Beschwörung */
 export interface BoardPicking {
@@ -44,6 +50,8 @@ interface BoardViewProps {
   /** Klick auf eine Karte; der Punkt ist die rechte obere Ecke für das Aktionsmenü */
   onCardClick?: (instanceId: string, at: { x: number; y: number }) => void;
   picking?: BoardPicking | null;
+  /** Klick auf eine leere Monsterzone, etwa um eine Spielmarke anzulegen */
+  onEmptyZone?: (target: DropTarget, at: { x: number; y: number }) => void;
 }
 
 const dropId = (player: Player, zone: Zone, slot?: number) =>
@@ -71,6 +79,9 @@ interface CardEnv {
   picking?: BoardPicking | null;
   /** Nach einem Ablegen bekommt die Karte eine neue Motion-ID: sie liegt schon, wo sie hin soll */
   layoutIdOf: (id: string) => string;
+  /** Xyz-Materialien unter der Karte */
+  materialCount: (id: string) => number;
+  onEmptyZone?: (id: string, el: HTMLElement) => void;
 }
 
 /**
@@ -87,6 +98,7 @@ export function BoardView({
   describeDrop,
   onCardClick,
   picking,
+  onEmptyZone,
 }: BoardViewProps) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
@@ -155,6 +167,14 @@ export function BoardView({
     draggable: Boolean(onDrop),
     picking,
     layoutIdOf: (id) => `card-${id}-${generations[id] ?? 0}`,
+    materialCount: (id) =>
+      Object.values(state.cards).filter((c) => c.zone === 'MATERIAL' && c.attachedTo === id).length,
+    onEmptyZone: onEmptyZone
+      ? (id, el) => {
+          const rect = el.getBoundingClientRect();
+          onEmptyZone(parseDropId(id), { x: rect.right + 4, y: rect.top });
+        }
+      : undefined,
   };
   const active = drag ? state.cards[drag.id] : undefined;
 
@@ -242,7 +262,7 @@ export function BoardView({
       >
         <div className="relative flex h-full items-center justify-center gap-6 overflow-auto bg-felt p-6">
           <div className="flex flex-col items-center gap-3">
-            <SideLabel player="opponent" label={t('workbench.opponent')}>
+            <SideLabel player="opponent" label={t('workbench.opponent')} lp={state.lp.opponent}>
               <Hand
                 player="opponent"
                 list={opp.hand}
@@ -281,7 +301,7 @@ export function BoardView({
               {pileCell('self', 'DECK', me.deck, t('workbench.deck'))}
             </div>
 
-            <SideLabel player="self" label={t('workbench.self')}>
+            <SideLabel player="self" label={t('workbench.self')} lp={state.lp.self}>
               <Hand
                 player="self"
                 list={me.hand}
@@ -342,10 +362,13 @@ function DropPreview({ label }: { label: string | null }) {
 function SideLabel({
   player,
   label,
+  lp,
   children,
 }: {
   player: Player;
   label: string;
+  /** Lebenspunkte (UX-Plan 16) */
+  lp: number;
   children: React.ReactNode;
 }) {
   return (
@@ -360,7 +383,14 @@ function SideLabel({
         {label}
       </span>
       <div className="flex flex-1 justify-center">{children}</div>
-      <span className="w-16" />
+      <span
+        className={cn(
+          'w-16 text-right font-mono text-[10.5px]',
+          lp < START_LP ? 'text-ink' : 'text-text-subtle'
+        )}
+      >
+        LP {lp}
+      </span>
     </div>
   );
 }
@@ -431,7 +461,19 @@ function ZoneCell({
       )}
     >
       <DropPreview label={preview} />
-      {!card && <span className="font-mono text-[9.5px] text-text-subtle">{short}</span>}
+      {!card && id.includes(':MONSTER') && env.onEmptyZone ? (
+        <button
+          type="button"
+          onClick={(e) => env.onEmptyZone?.(id, e.currentTarget)}
+          aria-label={`${label}: ${t('workbench.tokenHere')}`}
+          title={t('workbench.tokenHere')}
+          className="grid size-full place-items-center font-mono text-[9.5px] text-text-subtle hover:bg-ink/5"
+        >
+          {short}
+        </button>
+      ) : (
+        !card && <span className="font-mono text-[9.5px] text-text-subtle">{short}</span>
+      )}
       {card && (
         <DraggableCard
           placed={card}
@@ -602,6 +644,8 @@ function DraggableCard({
         dimmed={Boolean(picking) && !pickable && placed.zone === 'MONSTER'}
         faceDown={placed.position === 'SET' ? placed.controller : undefined}
         defense={placed.position === 'DEF'}
+        materials={env.materialCount(placed.instanceId)}
+        linkMarkers={placed.zone === 'MONSTER' ? card?.linkMarkers : undefined}
       />
     </motion.div>
   );

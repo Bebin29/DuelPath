@@ -62,6 +62,7 @@ export interface EndboardSummary {
   normalSummonLeft: boolean;
   /** Karten der Starthand, die die Line gebraucht hat („1-Card-Combo“) */
   startHandUsed: number;
+  lp: number;
 }
 
 export function endboardSummary(
@@ -93,6 +94,7 @@ export function endboardSummary(
     ).length,
     normalSummonLeft: !state.normalSummonUsed,
     startHandUsed: startHand.filter((c) => state.cards[c.instanceId]?.zone !== 'HAND').length,
+    lp: state.lp.self,
   };
 }
 

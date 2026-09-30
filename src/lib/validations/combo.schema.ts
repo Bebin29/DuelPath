@@ -7,7 +7,17 @@ import { z } from 'zod';
 
 const id = z.string().min(1).max(64);
 const player = z.enum(['self', 'opponent']);
-const zone = z.enum(['HAND', 'DECK', 'EXTRA', 'MONSTER', 'SPELL_TRAP', 'FIELD', 'GY', 'BANISHED']);
+const zone = z.enum([
+  'HAND',
+  'DECK',
+  'EXTRA',
+  'MONSTER',
+  'SPELL_TRAP',
+  'FIELD',
+  'GY',
+  'BANISHED',
+  'MATERIAL',
+]);
 const position = z.enum(['ATK', 'DEF', 'SET']);
 
 export const cardMoveSchema = z.object({
@@ -19,6 +29,8 @@ export const cardMoveSchema = z.object({
   slot: z.number().int().min(0).max(6).optional(),
   position: position.optional(),
   controller: player.optional(),
+  attachTo: id.optional(),
+  token: z.boolean().optional(),
 });
 
 const negationSchema = z.discriminatedUnion('type', [

@@ -98,7 +98,11 @@ function CardSheetBody({
     card.level
       ? `${/Link/.test(card.type) ? 'Link' : /XYZ/.test(card.type) ? 'Rank' : 'Lv.'} ${card.level}`
       : null,
-    card.atk != null ? `${card.atk} / ${card.def ?? '-'}` : null,
+    card.scale != null ? `Scale ${card.scale}` : null,
+    card.linkMarkers.length
+      ? `${t('cardSheet.arrows')} ${card.linkMarkers.map((m) => t(`cardSheet.arrow.${m}`)).join(', ')}`
+      : null,
+    card.atk != null ? `${card.atk} / ${/Link/.test(card.type) ? '-' : (card.def ?? '-')}` : null,
   ].filter(Boolean);
 
   const save = async () => {

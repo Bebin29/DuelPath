@@ -16,7 +16,7 @@ import {
   type Player,
   type StartState,
 } from '@/lib/combo/state';
-import { displayName, type ComboCard } from '@/lib/combo/cards';
+import { displayName, toComboCard, type ComboCard } from '@/lib/combo/cards';
 import { START_ID, newNode, removeSubtree, updateNode } from '@/lib/combo/tree';
 import {
   childrenOf,
@@ -271,6 +271,19 @@ export function Workbench({
   const [menu, setMenu] = useState<MenuAnchor | null>(null);
   const [quick, setQuick] = useState(false);
   const [staplePicker, setStaplePicker] = useState(false);
+  // Spielmarke in eine leere Monsterzone (UX-Plan 16): Ziel und die Token-Karten aus der Datenbank
+  const [tokenTarget, setTokenTarget] = useState<DropTarget | null>(null);
+  const [tokens, setTokens] = useState<ComboCard[] | null>(null);
+  const openTokenPicker = (target: DropTarget) => {
+    setTokenTarget(target);
+    if (tokens) return;
+    void fetch('/api/cards?type=Token&limit=100')
+      .then((res) => res.json())
+      .then((data: { cards?: Parameters<typeof toComboCard>[0][] }) =>
+        setTokens((data.cards ?? []).map(toComboCard))
+      )
+      .catch(() => setTokens([]));
+  };
   const [stressOn, setStressOn] = useState(false);
   const [stressRun, setStressRun] = useState(0);
   const [railHover, setRailHover] = useState<string | null>(null);
@@ -505,6 +518,13 @@ export function Workbench({
         return;
       }
       if (mod || e.altKey || isTyping(e.target)) return;
+      // In der Line-Liste führen die Pfeiltasten den Fokus im Baum, nicht die Schritte
+      if (
+        e.key.startsWith('Arrow') &&
+        e.target instanceof HTMLElement &&
+        e.target.closest('[role="tree"]')
+      )
+        return;
       // Das offene Aktionsmenü führt selbst mit Pfeilen, Enter und Esc
       if (
         menu &&
@@ -1022,6 +1042,7 @@ export function Workbench({
                 onDrop={playing ? undefined : handleDrop}
                 describeDrop={describeDrop}
                 onCardClick={handleCardClick}
+                onEmptyZone={playing ? undefined : (target) => openTokenPicker(target)}
                 picking={
                   prompt
                     ? {
@@ -1094,6 +1115,31 @@ export function Workbench({
               branches={steps[position - 1]?.branches ?? []}
               onBranch={select}
             />
+            {tokenTarget && (
+              <PickList
+                items={(tokens ?? []).map((c) => ({
+                  id: c.id,
+                  label: displayName(c, cardLanguage),
+                  image: c.imageSmall,
+                  keywords: [c.name, c.nameDe ?? ''],
+                }))}
+                max={12}
+                placeholder={t('workbench.tokenPick')}
+                hint={t('workbench.tokenHint')}
+                onPick={(cardId) => {
+                  const card = tokens?.find((c) => c.id === cardId);
+                  if (card) registerCard(card);
+                  flow.play({
+                    kind: 'token',
+                    cardId,
+                    player: tokenTarget.player,
+                    slot: tokenTarget.slot,
+                  });
+                  setTokenTarget(null);
+                }}
+                onClose={() => setTokenTarget(null)}
+              />
+            )}
             {staplePicker && (
               <PickList
                 items={[...stress.chosen]
@@ -1206,7 +1252,9 @@ function questionOf(
 ): string {
   switch (prompt.kind) {
     case 'discard':
-      return t('workbench.prompt.discard');
+      return t(
+        prompt.key === 'costMoves' ? 'workbench.prompt.discard' : 'workbench.prompt.discardEffect'
+      );
     case 'result':
       return t(`workbench.prompt.${prompt.spec.verb}`);
     case 'fusion':

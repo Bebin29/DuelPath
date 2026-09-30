@@ -144,6 +144,7 @@ const ZONE_LABEL: Record<Zone, string> = {
   FIELD: 'field zone',
   GY: 'graveyard',
   BANISHED: 'banished',
+  MATERIAL: 'xyz material',
 };
 const PLAYER_LABEL: Record<Player, string> = { self: 'Player A', opponent: 'Player B' };
 

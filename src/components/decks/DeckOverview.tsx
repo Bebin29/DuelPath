@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MoreHorizontal, Plus, Upload } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { relativeTime } from '@/lib/utils/relative-time';
+import { usePendingDelete } from '@/lib/hooks/use-pending-delete';
 import { parseYDKFile } from '@/lib/utils/deck.utils';
 import { Button } from '@/components/ui/button';
 import { TimedNotice } from '@/components/ui/timed-notice';
@@ -31,16 +32,7 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<DeckSummary | null>(null);
 
-  const pendingRef = useRef(pending);
-  useEffect(() => {
-    pendingRef.current = pending;
-  }, [pending]);
-  useEffect(
-    () => () => {
-      if (pendingRef.current) void deleteDeck(pendingRef.current.id);
-    },
-    []
-  );
+  usePendingDelete('deck', pending?.id ?? null, (id) => void deleteDeck(id));
 
   const create = async (name: string) => {
     const result = await createDeck({ name, format: 'TCG' });
@@ -109,7 +101,7 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
           {visible.map((d) => (
             <li
               key={d.id}
-              className="relative flex h-20 items-center gap-5 border-b border-line px-2 transition-colors duration-(--motion-fast) hover:bg-surface-1"
+              className="relative flex h-20 items-center gap-5 border-b [contain-intrinsic-size:auto_80px] [content-visibility:auto] border-line px-2 transition-colors duration-(--motion-fast) hover:bg-surface-1"
             >
               <span className="flex -space-x-5">
                 {d.cover.map((img, i) => (

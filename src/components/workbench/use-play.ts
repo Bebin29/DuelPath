@@ -34,7 +34,14 @@ import type { CardAction } from './card-actions';
 
 /** Offene Frage der Schrittleiste; `at` ist der Schritt, zu dem sie gehört */
 export type Prompt =
-  | { kind: 'discard'; at: string; player: Player; exclude: string }
+  | {
+      kind: 'discard';
+      at: string;
+      player: Player;
+      exclude: string;
+      /** Kosten beim Aktivieren oder Teil der Wirkung beim Auflösen */
+      key: 'costMoves' | 'resolveMoves';
+    }
   | { kind: 'result'; at: string; player: Player; spec: ResultSpec; picked: string[]; all: boolean }
   | {
       kind: 'fusion';
@@ -89,8 +96,15 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
         const placed = state.cards[intent.instanceId];
         const data = placed ? cards.get(placed.cardId) : undefined;
         const player = placed?.controller ?? 'self';
-        if (needsDiscard(data, intent.effectIndex)) {
-          next.push({ kind: 'discard', at: last.id, player, exclude: intent.instanceId });
+        const discard = needsDiscard(data, intent.effectIndex);
+        if (discard) {
+          next.push({
+            kind: 'discard',
+            at: last.id,
+            player,
+            exclude: intent.instanceId,
+            key: discard === 'cost' ? 'costMoves' : 'resolveMoves',
+          });
         }
         const spec = resultSpec(data, intent.effectIndex);
         if (spec?.verb === 'fusion') {
@@ -183,7 +197,7 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
       if (!prompt) return;
       switch (prompt.kind) {
         case 'discard':
-          addMoves(prompt.at, 'costMoves', resultMoves('GY', [id], state, prompt.player));
+          addMoves(prompt.at, prompt.key, resultMoves('GY', [id], state, prompt.player));
           return shift();
         case 'result':
           if (prompt.spec.count === 1) return confirm([id]);

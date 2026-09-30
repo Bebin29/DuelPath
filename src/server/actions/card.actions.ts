@@ -17,6 +17,8 @@ export interface CardDetail {
   race: string | null;
   attribute: string | null;
   level: number | null;
+  scale: number | null;
+  linkMarkers: string[];
   atk: number | null;
   def: number | null;
   desc: string | null;
@@ -47,6 +49,8 @@ export async function getCardDetail(cardId: string): Promise<Result<CardDetail>>
       race: card.race,
       attribute: card.attribute,
       level: card.level,
+      scale: card.scale,
+      linkMarkers: card.linkMarkers,
       atk: card.atk,
       def: card.def,
       desc: card.desc,

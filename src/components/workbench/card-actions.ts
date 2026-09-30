@@ -5,6 +5,7 @@ import {
   isMonster,
   isSpell,
   isTrap,
+  materialsOf,
   type PlayIntent,
 } from '@/lib/combo/play';
 
@@ -90,6 +91,14 @@ export function cardActions(
       label: 'changePosition',
       key: 'P',
       intent: { kind: 'changePosition', instanceId },
+    });
+  }
+  const attached = materialsOf(state, instanceId);
+  if (zone === 'MONSTER' && attached.length > 0) {
+    other.push({
+      id: 'detach',
+      label: 'detach',
+      intent: { kind: 'move', instanceId: attached[0].instanceId, to: 'GY' },
     });
   }
   if (zone === 'EXTRA' && isExtraDeckMonster(card)) {

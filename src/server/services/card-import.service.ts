@@ -21,6 +21,8 @@ export interface YGOPRODeckCard {
   attribute?: string;
   level?: number;
   linkval?: number;
+  linkmarkers?: string[];
+  scale?: number;
   atk?: number;
   def?: number;
   desc?: string;
@@ -67,6 +69,8 @@ export function mapCard(
     race: card.race ?? null,
     attribute: card.attribute ?? null,
     level: card.level ?? card.linkval ?? null,
+    linkMarkers: card.linkmarkers ?? [],
+    scale: card.scale ?? null,
     atk: card.atk ?? null,
     def: card.def ?? null,
     desc: card.desc ?? null,

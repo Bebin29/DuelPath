@@ -33,10 +33,26 @@ export interface CardViewProps {
   chainLink?: number;
   /** Anzahl Xyz-Materialien, unten links */
   materials?: number;
+  /** Link-Pfeile als kleine Dreiecke am Rand, ab Größe „board“ */
+  linkMarkers?: string[] | null;
   className?: string;
 }
 
 const fullImage = (src: string) => src.replace('_small.jpg', '.jpg');
+
+/** Position und Richtung der Link-Pfeile, als CSS-Dreiecke in der Selbst-Farbe */
+const LINK_ARROW: Record<string, string> = {
+  Top: 'left-1/2 -top-1.5 -translate-x-1/2 border-x-[5px] border-b-[6px] border-b-primary',
+  Bottom: 'left-1/2 -bottom-1.5 -translate-x-1/2 border-x-[5px] border-t-[6px] border-t-primary',
+  Left: 'top-1/2 -left-1.5 -translate-y-1/2 border-y-[5px] border-r-[6px] border-r-primary',
+  Right: 'top-1/2 -right-1.5 -translate-y-1/2 border-y-[5px] border-l-[6px] border-l-primary',
+  'Top-Left': '-left-1 -top-1 border-l-[7px] border-t-[7px] border-l-primary border-t-primary',
+  'Top-Right': '-right-1 -top-1 border-r-[7px] border-t-[7px] border-r-primary border-t-primary',
+  'Bottom-Left':
+    '-bottom-1 -left-1 border-b-[7px] border-l-[7px] border-b-primary border-l-primary',
+  'Bottom-Right':
+    '-bottom-1 -right-1 border-b-[7px] border-r-[7px] border-b-primary border-r-primary',
+};
 
 /**
  * Karte in allen Größen und Zuständen (UI-Plan 5). Plaketten in festen Ecken und
@@ -55,6 +71,7 @@ export function CardView({
   dimmed,
   chainLink,
   materials,
+  linkMarkers,
   className,
 }: CardViewProps) {
   const width = CARD_SIZES[size];
@@ -125,6 +142,14 @@ export function CardView({
           )}
         </span>
       )}
+      {plaques &&
+        linkMarkers?.map((m) => (
+          <span
+            key={m}
+            aria-hidden
+            className={cn('absolute size-0 border-transparent', LINK_ARROW[m])}
+          />
+        ))}
       {plaques && materials !== undefined && materials > 0 && (
         <span className="absolute -bottom-1.5 -left-1.5 rounded-sm bg-bg px-1 font-mono text-[9.5px] text-ink">
           {materials}

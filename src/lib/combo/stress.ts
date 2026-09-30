@@ -96,12 +96,16 @@ function phraseIn(text: string, patterns: RegExp[]): string | null {
 }
 
 /** Monster, die der Schritt auf die eigene Seite beschworen hat, mit Herkunft */
-function summonsOf(before: GameState, after: GameState): { instanceId: string; from: Zone }[] {
+function summonsOf(
+  before: GameState,
+  after: GameState
+): { instanceId: string; from: Zone | 'TOKEN' }[] {
   return Object.values(after.cards)
     .filter((c) => c.zone === 'MONSTER' && c.controller === 'self')
     .flatMap((c) => {
       const prev = before.cards[c.instanceId];
-      const from = prev?.zone ?? 'DECK';
+      // Spielmarken zählen für Nibiru, aber nicht als Beschwörung aus Deck oder Hand
+      const from = prev?.zone ?? (c.token ? 'TOKEN' : 'DECK');
       return from === 'MONSTER' ? [] : [{ instanceId: c.instanceId, from }];
     });
 }
@@ -177,7 +181,8 @@ export function stressTest(
     for (const pattern of staple.hits ?? []) {
       // Muster über die ganze Line
       if (pattern === 'TURN_START_DECK_SUMMONS' || pattern === 'TURN_START_HAND_SUMMONS') {
-        const zones: Zone[] = pattern === 'TURN_START_DECK_SUMMONS' ? ['DECK', 'EXTRA'] : ['HAND'];
+        const zones: (Zone | 'TOKEN')[] =
+          pattern === 'TURN_START_DECK_SUMMONS' ? ['DECK', 'EXTRA'] : ['HAND'];
         const count = summons.flat().filter((s) => zones.includes(s.from)).length;
         if (count > 0 && firstVisible)
           add({ staple: staple.name, pattern, stepId: firstVisible, anchorId: null, count });

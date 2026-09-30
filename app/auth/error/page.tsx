@@ -2,7 +2,6 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslation } from '@/lib/i18n/hooks';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

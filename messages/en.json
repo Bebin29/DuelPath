@@ -308,7 +308,8 @@
       "SPELL_TRAP": "Spell/Trap",
       "FIELD": "Field Zone",
       "GY": "Graveyard",
-      "BANISHED": "Banished"
+      "BANISHED": "Banished",
+      "MATERIAL": "Xyz material"
     },
     "state": {
       "title": "State",
@@ -466,7 +467,8 @@
       "toDeck": "Shuffle into Deck",
       "toExtra": "Return to Extra Deck",
       "hoptFree": "free",
-      "hoptUsed": "used"
+      "hoptUsed": "used",
+      "detach": "Detach material"
     },
     "drop": {
       "normalSummon": "Normal Summon",
@@ -489,7 +491,8 @@
       "allCards": "All cards",
       "later": "Later",
       "confirm": "Confirm",
-      "none": "No matching card. “All cards” shows everything."
+      "none": "No matching card. “All cards” shows everything.",
+      "discardEffect": "Which card do you discard?"
     },
     "offer": {
       "branch": "Added as branch",
@@ -513,7 +516,10 @@
     "promote": "Make {{label}} the main line",
     "promoteThis": "Make main line",
     "announce": "Step {{n}}: {{label}}. {{chain}}",
-    "tooNarrow": "The workbench needs a window at least 1280 px wide."
+    "tooNarrow": "The workbench needs a window at least 1280 px wide.",
+    "tokenHere": "Token here",
+    "tokenPick": "Pick a token …",
+    "tokenHint": "Type a name, Enter puts the token in this zone in defense"
   },
   "preview": {
     "effects": "Effects",
@@ -582,7 +588,8 @@
     "cardCombo": "{{count}}-card combo",
     "hopts": "HOPT names locked",
     "weaknesses": "Weak points",
-    "noWeaknesses": "No hits from the chosen staples."
+    "noWeaknesses": "No hits from the chosen staples.",
+    "lp": "Life points"
   },
   "library": {
     "untitled": "New combo",
@@ -718,7 +725,10 @@
     "remove": "Take back",
     "exists": "Already exists: {{title}}",
     "random": "Random hand",
-    "go": "Start"
+    "go": "Start",
+    "opponentBoard": "Opponent board",
+    "opponentText": "Monsters are face-up, spells and traps are set. Click a card to take it back.",
+    "opponentHint": "Click puts the card on the opponent board"
   },
   "cardSheet": {
     "text": "Card text",
@@ -734,7 +744,18 @@
     "split": "Split at cursor",
     "merge": "Merge with next",
     "remove": "Remove",
-    "view": "View card"
+    "view": "View card",
+    "arrows": "Arrows",
+    "arrow": {
+      "Top": "top",
+      "Bottom": "bottom",
+      "Left": "left",
+      "Right": "right",
+      "Top-Left": "top left",
+      "Top-Right": "top right",
+      "Bottom-Left": "bottom left",
+      "Bottom-Right": "bottom right"
+    }
   },
   "palette": {
     "title": "Search and commands",

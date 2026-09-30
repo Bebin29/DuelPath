@@ -112,6 +112,36 @@ export function LineList({
     listRef.current?.querySelector('[aria-current="step"]')?.scrollIntoView({ block: 'nearest' });
   }, [selectedId]);
 
+  /**
+   * Tastatur im Baum (UI-Plan 7.2.1, ARIA tree): ↑ ↓ bewegen den Fokus, → springt in den ersten
+   * Branch eines Schritts, ← zurück zum Schritt, Home und End an Anfang und Ende. Enter wählt.
+   */
+  const treeKeys = (e: React.KeyboardEvent<HTMLOListElement>) => {
+    const items = [...(listRef.current?.querySelectorAll<HTMLElement>('[role="treeitem"]') ?? [])];
+    const current = document.activeElement as HTMLElement | null;
+    const i = current ? items.indexOf(current) : -1;
+    if (i < 0) return;
+    const level = (el: HTMLElement | undefined) => Number(el?.getAttribute('aria-level') ?? 1);
+    let next: HTMLElement | undefined;
+    if (e.key === 'ArrowDown') next = items[i + 1];
+    else if (e.key === 'ArrowUp') next = items[i - 1];
+    else if (e.key === 'Home') next = items[0];
+    else if (e.key === 'End') next = items.at(-1);
+    else if (e.key === 'ArrowRight' && level(items[i + 1]) > level(current!)) next = items[i + 1];
+    else if (e.key === 'ArrowLeft' && level(current!) > 1)
+      next = items
+        .slice(0, i)
+        .reverse()
+        .find((el) => level(el) === 1);
+    else return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (!next) return;
+    for (const el of items) el.tabIndex = -1;
+    next.tabIndex = 0;
+    next.focus();
+  };
+
   const image = (node: ComboNodeData) => {
     const id = cardOf(node);
     return id ? (cards.get(id)?.imageSmall ?? null) : null;
@@ -128,9 +158,19 @@ export function LineList({
           </Button>
         )}
       </div>
-      <ol ref={listRef} className="min-h-0 flex-1 overflow-y-auto pb-4">
-        <li>
+      <ol
+        ref={listRef}
+        role="tree"
+        aria-label={title}
+        onKeyDown={treeKeys}
+        className="min-h-0 flex-1 overflow-y-auto pb-4"
+      >
+        <li role="none">
           <button
+            role="treeitem"
+            aria-level={1}
+            aria-selected={startSelected}
+            tabIndex={startSelected ? 0 : -1}
             type="button"
             aria-current={startSelected ? 'step' : undefined}
             onClick={onSelectStart}
@@ -154,10 +194,13 @@ export function LineList({
           const img = image(step.node);
           const hits = chokes?.byStep.get(step.node.id) ?? [];
           return (
-            <li key={step.node.id}>
+            <li key={step.node.id} role="none">
               <div
-                role="button"
-                tabIndex={0}
+                role="treeitem"
+                aria-level={1}
+                aria-selected={selected}
+                aria-expanded={step.branches.length ? true : undefined}
+                tabIndex={selected ? 0 : -1}
                 aria-current={selected ? 'step' : undefined}
                 onClick={() => onSelect(step.node.id)}
                 onDoubleClick={() => onOpen?.(step.node.id)}
@@ -277,9 +320,14 @@ export function LineList({
               {step.branches.map((b) => (
                 <div
                   key={b.nodeId}
+                  role="none"
                   className="group/branch flex items-center hover:bg-surface-3/60"
                 >
                   <button
+                    role="treeitem"
+                    aria-level={2}
+                    aria-selected={false}
+                    tabIndex={-1}
                     type="button"
                     onClick={() => onSelect(b.nodeId)}
                     className="flex h-[30px] min-w-0 flex-1 items-center gap-2 pl-11 text-left text-[12.5px] text-text-muted"
@@ -323,9 +371,13 @@ export function LineList({
           );
         })}
         {alternatives.length > 0 && (
-          <li className="mt-4 border-t border-line pt-2">
+          <li role="none" className="mt-4 border-t border-line pt-2">
             {alternatives.map((alt, i) => (
               <button
+                role="treeitem"
+                aria-level={1}
+                aria-selected={false}
+                tabIndex={-1}
                 key={alt.id}
                 type="button"
                 onClick={() => onSelect(alt.id)}

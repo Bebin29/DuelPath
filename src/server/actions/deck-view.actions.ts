@@ -41,6 +41,7 @@ const CARD_SELECT = {
   imageSmall: true,
   effects: true,
   effectsOverride: true,
+  linkMarkers: true,
   banTcg: true,
   passcode: true,
   archetype: true,

@@ -2,7 +2,7 @@
  * Unit-Tests für useDeckHistory Hook
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useDeckHistory } from '@/lib/hooks/use-deck-history';
 import type { DeckWithCards } from '@/lib/hooks/use-deck-history';

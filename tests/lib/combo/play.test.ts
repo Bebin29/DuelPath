@@ -155,8 +155,15 @@ describe('Kosten und Trigger', () => {
     expect(costMovesFor(state, 'ash', ASH, 0)).toEqual([
       { instanceId: 'ash', cardId: 'ASH', from: 'HAND', to: 'GY' },
     ]);
-    expect(needsDiscard(DISCARDER, 0)).toBe(true);
-    expect(needsDiscard(ASH, 0)).toBe(false);
+    expect(needsDiscard(DISCARDER, 0)).toBe('cost');
+    expect(needsDiscard(ASH, 0)).toBeNull();
+    const opening: CardData = {
+      id: 'BO',
+      name: 'Branded Opening',
+      type: 'Spell Card',
+      effects: [eff('Discard 1 card, then take 1 "Despia" monster from your Deck.')],
+    };
+    expect(needsDiscard(opening, 0)).toBe('effect');
   });
 
   it('bietet den Beschwörungs-Trigger der frisch beschworenen Karte an', () => {
@@ -245,5 +252,114 @@ describe('Abfrage-Ergebnisse', () => {
       ],
     });
     expect(freeEmz(taken)).toBe(6);
+  });
+});
+
+describe('Xyz, Spielmarken, Lebenspunkte und Link-Pfeile', () => {
+  const XYZ: CardData = {
+    id: 'XYZ',
+    name: 'Xyz',
+    type: 'XYZ Monster',
+    effects: [eff('You can detach 1 material from this card; draw 1 card.')],
+  };
+  const LINK: CardData = {
+    id: 'LNK',
+    name: 'Link',
+    type: 'Link Monster',
+    effects: [],
+    linkMarkers: ['Bottom-Left'],
+  };
+  const PAYER: CardData = {
+    id: 'PAY',
+    name: 'Payer',
+    type: 'Spell Card',
+    race: 'Normal',
+    effects: [eff('Pay 1000 LP; draw 1 card.')],
+  };
+  const TOKEN: CardData = { id: 'TOK', name: 'Sheep Token', type: 'Token', effects: [] };
+  const all = new Map([...cards, ...[XYZ, LINK, PAYER, TOKEN].map((c) => [c.id, c] as const)]);
+  const board: StartState = {
+    cards: [
+      { instanceId: 'm1', cardId: 'DIS', owner: 'self', zone: 'MONSTER', slot: 1 },
+      { instanceId: 'm2', cardId: 'DIS', owner: 'self', zone: 'MONSTER', slot: 2 },
+      { instanceId: 'xyz', cardId: 'XYZ', owner: 'self', zone: 'EXTRA' },
+      { instanceId: 'lnk', cardId: 'LNK', owner: 'self', zone: 'EXTRA' },
+      { instanceId: 'pay', cardId: 'PAY', owner: 'self', zone: 'HAND' },
+    ],
+  };
+  const run = (steps: Parameters<typeof buildStep>[0][]) => {
+    let nodes: ComboNodeData[] = [];
+    for (const intent of steps) {
+      const parent = nodes.at(-1) ?? null;
+      const state = parent ? statesForTree(nodes, board, all).get(parent.id)! : initialState(board);
+      nodes = [...nodes, ...buildStep(intent, { nodes, parent, state, cards: all })];
+    }
+    return { nodes, state: statesForTree(nodes, board, all).get(nodes.at(-1)!.id)! };
+  };
+
+  it('legt Xyz-Materialien unter das Monster und hängt sie als Kosten ab', () => {
+    const summoned = run([
+      { kind: 'specialSummon', instanceId: 'xyz', slot: 5, materials: ['m1', 'm2'] },
+    ]);
+    expect(summoned.state.cards.m1).toMatchObject({ zone: 'MATERIAL', attachedTo: 'xyz' });
+    const detached = run([
+      { kind: 'specialSummon', instanceId: 'xyz', slot: 5, materials: ['m1', 'm2'] },
+      { kind: 'activate', instanceId: 'xyz', effectIndex: 0 },
+    ]);
+    expect(detached.state.cards.m1.zone).toBe('GY');
+    expect(detached.state.cards.m2.zone).toBe('MATERIAL');
+    const gone = run([
+      { kind: 'specialSummon', instanceId: 'xyz', slot: 5, materials: ['m1', 'm2'] },
+      { kind: 'move', instanceId: 'xyz', to: 'GY' },
+    ]);
+    expect([gone.state.cards.m1.zone, gone.state.cards.m2.zone]).toEqual(['GY', 'GY']);
+  });
+
+  it('legt Spielmarken an, die beim Verlassen des Felds verschwinden', () => {
+    const { nodes, state } = run([{ kind: 'token', cardId: 'TOK', player: 'self' }]);
+    const token = Object.values(state.cards).find((c) => c.token)!;
+    expect(token).toMatchObject({ zone: 'MONSTER', slot: 0, position: 'DEF' });
+    const gone = run([
+      { kind: 'token', cardId: 'TOK', player: 'self' },
+      { kind: 'move', instanceId: token.instanceId, to: 'GY' },
+    ]);
+    expect(gone.state.cards[token.instanceId]).toBeUndefined();
+    expect(nodes[0].action).toBe('SPECIAL_SUMMON');
+  });
+
+  it('zieht Lebenspunkte als Kosten ab', () => {
+    const { state } = run([{ kind: 'activate', instanceId: 'pay', effectIndex: 0 }]);
+    expect(state.lp.self).toBe(7000);
+  });
+
+  it('warnt bei einem Link-Monster in einer Zone ohne Link-Pfeil', () => {
+    const bad = run([{ kind: 'specialSummon', instanceId: 'lnk', slot: 4 }]);
+    expect(bad.state.warnings.some((w) => w.message.includes('Link-Pfeil'))).toBe(true);
+    const emz = run([{ kind: 'specialSummon', instanceId: 'lnk', slot: 5 }]);
+    expect(emz.state.warnings).toEqual([]);
+  });
+});
+
+describe('Trigger nach passender Beschwörung', () => {
+  const FUSION_TRIGGER: CardData = {
+    id: 'ALB',
+    name: 'Albion',
+    type: 'Fusion Monster',
+    effects: [eff('If this card is Fusion Summoned: You can draw 1 card.', ['TRIGGER_IF_OPT'])],
+  };
+  const all = new Map([['ALB', FUSION_TRIGGER]]);
+  const offers = (from: 'EXTRA' | 'GY') => {
+    const before = initialState({
+      cards: [{ instanceId: 'a', cardId: 'ALB', owner: 'self', zone: from }],
+    });
+    const after = initialState({
+      cards: [{ instanceId: 'a', cardId: 'ALB', owner: 'self', zone: 'MONSTER', slot: 5 }],
+    });
+    return triggerOffers(before, after, all, () => true, () => true);
+  };
+
+  it('bietet „Fusion Summoned“ nur nach der Beschwörung aus dem Extra Deck an', () => {
+    expect(offers('EXTRA')).toHaveLength(1);
+    expect(offers('GY')).toHaveLength(0);
   });
 });

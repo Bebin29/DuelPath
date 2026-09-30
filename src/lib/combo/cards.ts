@@ -17,6 +17,7 @@ export function toComboCard(row: {
   imageSmall?: string | null;
   effects?: unknown;
   effectsOverride?: unknown;
+  linkMarkers?: string[] | null;
 }): ComboCard {
   return {
     id: row.id,
@@ -26,6 +27,7 @@ export function toComboCard(row: {
     race: row.race ?? null,
     imageSmall: row.imageSmall ?? null,
     effects: effectsOf(row),
+    ...(row.linkMarkers?.length && { linkMarkers: row.linkMarkers }),
   };
 }
 

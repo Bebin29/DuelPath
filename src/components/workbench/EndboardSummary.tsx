@@ -115,6 +115,7 @@ export function EndboardSummary({
     ],
     [t('endboard.startHand'), t('endboard.cardCombo', { count: summary.startHandUsed })],
     [t('endboard.hopts'), hopts],
+    [t('endboard.lp'), summary.lp],
   ];
 
   return (

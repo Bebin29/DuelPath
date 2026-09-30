@@ -15,8 +15,17 @@ import type { LibraryEntry } from '@/lib/combo/library';
 import type { DeckViewCard, DeckViewEntry } from '@/server/actions/deck-view.actions';
 import { createCombo } from '@/server/actions/combo.actions';
 import { CardTile } from './CardTile';
+import { CardSearchPanel } from './CardSearchPanel';
+import { Segmented } from '@/components/ui/segmented';
 
 const MAX_HAND = 6;
+type OppZone = 'MONSTER' | 'SPELL_TRAP' | 'FIELD';
+const oppZoneOf = (type: string, race?: string | null): OppZone =>
+  /Monster/.test(type)
+    ? 'MONSTER'
+    : /Spell/.test(type) && race === 'Field'
+      ? 'FIELD'
+      : 'SPELL_TRAP';
 
 /**
  * Neue Combo (UX-Plan 7.1, UI-Plan 7.5.3): Deck als Bildraster, Starter aus vorhandenen Combos
@@ -39,6 +48,8 @@ export function StartHandPicker({
   const [hand, setHand] = useState<string[]>([]);
   const [title, setTitle] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [going, setGoing] = useState<'first' | 'second'>('first');
+  const [opponent, setOpponent] = useState<DeckViewCard[]>([]);
 
   const count = (id: string) => hand.filter((h) => h === id).length;
   const toggle = (e: DeckViewEntry) =>
@@ -59,15 +70,22 @@ export function StartHandPicker({
   const start = async () => {
     if (!hand.length || busy) return;
     setBusy(true);
-    const result = await createCombo(shownTitle || t('library.untitled'), deck.id, hand);
+    const result = await createCombo(
+      shownTitle || t('library.untitled'),
+      deck.id,
+      hand,
+      going === 'second'
+        ? opponent.map((c) => ({ cardId: c.id, zone: oppZoneOf(c.type, c.race) }))
+        : []
+    );
     if (result.data) router.push(`/combos/${result.data.id}`);
     else setBusy(false);
   };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Enter' || (e.target instanceof HTMLElement && e.target.closest('button')))
-        return;
+      const el = e.target instanceof HTMLElement ? e.target : null;
+      if (e.key !== 'Enter' || el?.closest('button, input, textarea')) return;
       e.preventDefault();
       void start();
     };
@@ -108,7 +126,52 @@ export function StartHandPicker({
         <p className="font-mono text-2xs text-text-subtle">{deck.name}</p>
         <h1 className="font-display text-[40px] leading-none">{t('newCombo.title')}</h1>
         <p className="mt-2 text-text-muted">{t('newCombo.text')}</p>
+        <Segmented<'first' | 'second'>
+          className="mt-4"
+          label={t('decks.going')}
+          value={going}
+          onChange={setGoing}
+          options={[
+            { value: 'first', label: t('decks.first') },
+            { value: 'second', label: t('decks.second') },
+          ]}
+        />
       </header>
+
+      {going === 'second' && (
+        <section className="grid grid-cols-[minmax(0,1fr)_300px] gap-6 rounded-lg border border-opponent/40 p-4">
+          <div className="flex flex-col gap-2">
+            <h2 className="font-display text-xl text-opponent">{t('newCombo.opponentBoard')}</h2>
+            <p className="text-sm text-text-muted">{t('newCombo.opponentText')}</p>
+            <ul className="flex flex-wrap gap-2">
+              {opponent.map((c, i) => (
+                <li key={`${c.id}-${i}`} className="flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setOpponent((o) => o.filter((_, k) => k !== i))}
+                    aria-label={`${displayName(c, cardLanguage)}: ${t('newCombo.remove')}`}
+                  >
+                    <CardView
+                      image={c.imageSmall}
+                      label=""
+                      size="sm"
+                      faceDown={oppZoneOf(c.type, c.race) === 'MONSTER' ? undefined : 'self'}
+                    />
+                  </button>
+                  <span className="font-mono text-[9.5px] text-text-subtle">
+                    {t(`combo.zones.${oppZoneOf(c.type, c.race)}`)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <CardSearchPanel
+            label={t('newCombo.opponentBoard')}
+            hint={t('newCombo.opponentHint')}
+            onAdd={(card) => setOpponent((o) => (o.length < 11 ? [...o, card] : o))}
+          />
+        </section>
+      )}
 
       {groups.map((g) => (
         <section key={g.key} className="flex flex-col gap-3">
@@ -169,6 +232,7 @@ export function StartHandPicker({
           <input
             value={shownTitle}
             onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && void start()}
             placeholder={t('library.untitled')}
             aria-label={t('combo.titlePlaceholder')}
             className="h-8 w-56 rounded-md border border-line bg-transparent px-2.5 text-sm outline-none focus:border-line-strong"
@@ -176,7 +240,7 @@ export function StartHandPicker({
           <Button
             variant="line"
             onClick={() => {
-              setHand(drawHand(expandDeck(main), 5));
+              setHand(drawHand(expandDeck(main), going === 'second' ? 6 : 5));
               setTitle(null);
             }}
           >

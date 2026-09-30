@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -15,6 +15,7 @@ import {
 import { useTranslation } from '@/lib/i18n/hooks';
 import { cn } from '@/lib/utils';
 import { relativeTime } from '@/lib/utils/relative-time';
+import { usePendingDelete } from '@/lib/hooks/use-pending-delete';
 import { Button } from '@/components/ui/button';
 import { TimedNotice } from '@/components/ui/timed-notice';
 import {
@@ -141,17 +142,8 @@ export function ComboLibrary({
     router.replace(`${pathname}${filterQuery(next)}`, { scroll: false });
   };
 
-  // Ein vorgemerktes Löschen wird beim Verlassen der Seite ausgeführt
-  const pendingRef = useRef(pending);
-  useEffect(() => {
-    pendingRef.current = pending;
-  }, [pending]);
-  useEffect(
-    () => () => {
-      if (pendingRef.current) void deleteCombo(pendingRef.current.id);
-    },
-    []
-  );
+  // Ein vorgemerktes Löschen läuft auch beim Verlassen der Seite oder Schließen des Tabs
+  usePendingDelete('combo', pending?.id ?? null, (id) => void deleteCombo(id));
   const commitDelete = async (entry: LibraryEntry) => {
     setPending((p) => (p?.id === entry.id ? null : p));
     await deleteCombo(entry.id);
@@ -327,7 +319,7 @@ export function ComboLibrary({
               key={e.id}
               role="row"
               className={cn(
-                'group relative grid h-15 items-center gap-4 border-b border-line px-2 transition-colors duration-(--motion-fast) hover:bg-surface-1',
+                'group relative grid h-15 items-center gap-4 border-b [contain-intrinsic-size:auto_60px] [content-visibility:auto] border-line px-2 transition-colors duration-(--motion-fast) hover:bg-surface-1',
                 COLUMNS
               )}
             >

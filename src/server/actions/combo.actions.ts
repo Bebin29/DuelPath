@@ -8,6 +8,7 @@ import { toComboCard, type ComboCard } from '@/lib/combo/cards';
 import { nodeRows } from '@/lib/prisma/node-rows';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
 import { drawFromDeck, startStateFromDeck, type DeckEntry } from '@/lib/combo/deck';
+import { newInstanceId } from '@/lib/combo/tree';
 import { saveComboSchema, type SaveComboInput } from '@/lib/validations/combo.schema';
 import { comboStats } from '@/lib/combo/summary';
 import { deckCounts, missingFromDeck } from '@/lib/deck/deck-check';
@@ -111,6 +112,7 @@ export async function listLibrary(
       imageSmall: true,
       effects: true,
       effectsOverride: true,
+      linkMarkers: true,
     },
   });
   const full = new Map(rows.map((r) => [r.id, toComboCard(r)]));
@@ -195,7 +197,9 @@ export async function createCombo(
   title: string,
   deckId?: string,
   /** Passcodes der Starthand; werden aus dem Deck gezogen (UX-Plan 7.1 und 7.3) */
-  startHand: string[] = []
+  startHand: string[] = [],
+  /** Going Second: Karten auf dem Gegnerboard, Fallen und Zauber gesetzt (UX-Plan 7.1) */
+  opponent: { cardId: string; zone: 'MONSTER' | 'SPELL_TRAP' | 'FIELD' }[] = []
 ): Promise<Result<{ id: string }>> {
   const userId = await currentUserId();
   if (!userId) return { error: 'Unauthorized' };
@@ -208,6 +212,25 @@ export async function createCombo(
     if (!deck.data) return { error: deck.error };
     startState = startStateFromDeck(startState, deck.data.entries);
     for (const cardId of startHand) startState = drawFromDeck(startState, cardId);
+  }
+  const slots = { MONSTER: 0, SPELL_TRAP: 0, FIELD: 0 };
+  for (const o of opponent.slice(0, 11)) {
+    if (!['MONSTER', 'SPELL_TRAP', 'FIELD'].includes(o.zone)) continue;
+    const slot = o.zone === 'FIELD' ? undefined : slots[o.zone]++;
+    if (slot !== undefined && slot > 4) continue;
+    startState = {
+      cards: [
+        ...startState.cards,
+        {
+          instanceId: newInstanceId(o.cardId),
+          cardId: o.cardId,
+          owner: 'opponent',
+          zone: o.zone,
+          ...(slot !== undefined && { slot }),
+          position: o.zone === 'MONSTER' ? 'ATK' : 'SET',
+        },
+      ],
+    };
   }
 
   const combo = await prisma.combo.create({
@@ -264,6 +287,7 @@ export async function getCombo(comboId: string): Promise<Result<LoadedCombo>> {
       imageSmall: true,
       effects: true,
       effectsOverride: true,
+      linkMarkers: true,
     },
   });
 
@@ -332,6 +356,7 @@ export async function getStaples(): Promise<StapleCard[]> {
       imageSmall: true,
       effects: true,
       effectsOverride: true,
+      linkMarkers: true,
     },
   });
   const byName = new Map(rows.map((r) => [r.name, toComboCard(r)]));
@@ -377,6 +402,7 @@ export async function getDeckForCombo(
               imageSmall: true,
               effects: true,
               effectsOverride: true,
+              linkMarkers: true,
             },
           },
         },
