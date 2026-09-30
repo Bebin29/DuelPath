@@ -47,3 +47,6 @@ next-env.d.ts
 
 # prisma client (generated)
 /src/generated/
+
+# Kartenbilder für Entwürfe (urheberrechtlich geschützt, nicht versionieren)
+design/assets/
