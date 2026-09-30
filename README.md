@@ -90,10 +90,6 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
 - **Undo/Redo**: Vollständige History mit Undo/Redo-Funktionalität
 - **Virtualisierung**: Effiziente Darstellung bei vielen Steps (ab 50 Steps)
 
-### Duellmodus
-
-- Teste deine Decks und Kombos in einer simulierten Duell-Umgebung (in Entwicklung)
-
 ## Tech Stack
 
 ### Frontend
@@ -110,7 +106,7 @@ DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren 
 
 ### Backend
 
-- **Datenbank**: Prisma ORM mit SQLite (Development) / PostgreSQL (Production)
+- **Datenbank**: Prisma ORM 7 mit PostgreSQL (lokal per Docker, siehe [SETUP.md](SETUP.md))
 - **Authentifizierung**: NextAuth.js v5
 - **Server Actions**: Next.js Server Actions für Datenbank-Operationen
 - **API Routes**: RESTful API für Karten-Suche
@@ -159,15 +155,15 @@ cp .env.example .env
 
 Bearbeite `.env` und setze die benötigten Werte:
 
-- `DATABASE_URL`: SQLite-Datenbank-Pfad (Standard: `file:./prisma/dev.db`)
+- `DATABASE_URL`: Postgres-Verbindung (Standard aus `.env.example`, Port 5433)
 - `AUTH_SECRET`: Generiere einen Secret mit `openssl rand -base64 32` (NextAuth v5 verwendet AUTH_SECRET statt NEXTAUTH_SECRET)
 - `AUTH_URL`: URL der Anwendung (Standard: `http://localhost:3000`)
 
 4. Datenbank einrichten:
 
 ```bash
-# Prisma Client generieren
-npm run db:generate
+# Postgres starten
+npm run db:up
 
 # Migrationen ausführen
 npm run db:migrate
@@ -354,8 +350,6 @@ Das Projekt ist für Deployment auf Vercel optimiert:
 1. Repository mit Vercel verbinden
 2. Environment Variables in Vercel setzen
 3. Automatisches Deployment bei Push auf `main` Branch
-
-Für Production sollte PostgreSQL als Datenbank verwendet werden (nicht SQLite).
 
 ## Lizenz
 

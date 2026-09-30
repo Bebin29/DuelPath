@@ -1,58 +1,44 @@
 # DuelPath Setup Anleitung
 
+Voraussetzungen: Node 24 und Docker Desktop.
+
 ## Environment Variables
 
-Erstelle eine `.env` Datei im Root-Verzeichnis mit folgenden Variablen:
+Kopiere `.env.example` nach `.env` und trage ein `AUTH_SECRET` ein:
 
 ```env
-# Database
-# SQLite für lokale Entwicklung
-DATABASE_URL="file:./dev.db"
-
-# PostgreSQL für Produktion (Beispiel)
-# DATABASE_URL="postgresql://user:password@localhost:5432/duelpath?schema=public"
-
-# NextAuth v5
-# WICHTIG: In NextAuth v5 wird AUTH_SECRET statt NEXTAUTH_SECRET verwendet
-AUTH_SECRET="your-secret-key-here-generate-with-openssl-rand-base64-32"
-AUTH_URL="http://localhost:3000"
-
-# Optional: YGOPRODeck API (für später)
-# YGOPRODECK_API_URL="https://db.ygoprodeck.com/api/v7"
-
-# Node Environment
-NODE_ENV="development"
+# Lokale Postgres-Instanz aus docker-compose.yml
+DATABASE_URL="postgresql://duelpath:duelpath@localhost:5433/duelpath"
+# Erzeugen mit: npx auth secret
+AUTH_SECRET=""
+# Für Jev-Vorschläge (OpenRouter), optional
+OPENROUTER_API_KEY=""
 ```
 
-### AUTH_SECRET generieren
-
-Um einen sicheren Secret zu generieren, führe folgenden Befehl aus:
-
-```bash
-openssl rand -base64 32
-```
-
-Oder verwende einen Online-Generator für Base64-Strings.
+Postgres läuft auf Port **5433**, damit es nicht mit anderen lokalen Postgres-Instanzen auf 5432 kollidiert.
 
 ## Installation
 
-1. Dependencies installieren:
+1. Dependencies installieren (erzeugt auch den Prisma Client nach `src/generated/prisma`):
 
 ```bash
 npm install
 ```
 
-2. Prisma Client generieren:
+2. Datenbank starten:
 
 ```bash
-npm run db:generate
+npm run db:up
 ```
 
-3. Datenbank-Migration ausführen:
+3. Migrationen ausführen und Test-User anlegen:
 
 ```bash
 npm run db:migrate
+npm run db:seed
 ```
+
+Test-User: `test@duelpath.local` / `Test1234!`
 
 4. Development Server starten:
 
@@ -60,27 +46,22 @@ npm run db:migrate
 npm run dev
 ```
 
-## Datenbank
-
-Die Anwendung nutzt SQLite für die lokale Entwicklung. Die Datenbank-Datei `dev.db` wird automatisch erstellt.
-
-Für Produktion sollte PostgreSQL verwendet werden. Ändere dazu die `DATABASE_URL` in der `.env` Datei und passe das `provider` in `prisma/schema.prisma` von `sqlite` auf `postgresql` an.
-
 ## Kartenimport
 
 Nach dem ersten Setup müssen die Yu-Gi-Oh! Karten von der YGOPRODeck API importiert werden:
 
 ```bash
-npx tsx prisma/scripts/import-cards.ts
+npx tsx --env-file=.env prisma/scripts/import-cards.ts
 ```
 
-Dieser Befehl importiert alle verfügbaren Karten (ca. 13.992 Karten) in die lokale Datenbank. Der Import kann einige Minuten dauern, da die API Rate-Limiting hat (20 Requests/Sekunde).
+Der Import kann einige Minuten dauern, da die API Rate-Limiting hat (20 Requests/Sekunde).
 
 **Hinweis:** Der Import kann auch über die API-Route `/api/cards/import` (POST) ausgeführt werden, erfordert jedoch eine authentifizierte Session.
 
 ## Nützliche Befehle
 
-- `npm run db:studio` - Öffnet Prisma Studio zur Datenbank-Inspektion
-- `npm run db:push` - Synchronisiert Schema ohne Migration (nur für Development)
-- `npm run db:migrate` - Erstellt und führt Migrationen aus
-- `npx tsx prisma/scripts/import-cards.ts` - Importiert alle Karten von YGOPRODeck API
+- `npm run db:up`: Startet Postgres per Docker
+- `npm run db:studio`: Öffnet Prisma Studio zur Datenbank-Inspektion
+- `npm run db:migrate`: Erstellt und führt Migrationen aus
+- `npm run db:seed`: Legt den Test-User an
+- `npm run db:generate`: Erzeugt den Prisma Client neu
