@@ -13,6 +13,7 @@ export type CardForDeck = Pick<
   | 'def'
   | 'archetype'
   | 'imageSmall'
+  | 'passcode'
 >;
 
 export interface DeckWithCards extends Deck {

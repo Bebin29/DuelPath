@@ -54,6 +54,7 @@ export function useCardCache() {
         def: card.def ?? null,
         archetype: card.archetype ?? null,
         imageSmall: card.imageSmall ?? null,
+        passcode: card.passcode ?? null,
       };
       cacheRef.current.set(card.id, {
         card: cardForDeck,
@@ -150,6 +151,7 @@ export function useCardCache() {
               def: data.card.def ?? null,
               archetype: data.card.archetype ?? null,
               imageSmall: data.card.imageSmall ?? null,
+              passcode: data.card.passcode ?? null,
             };
           }
         }
@@ -193,6 +195,7 @@ export function useCardCache() {
                 def: card.def ?? null,
                 archetype: card.archetype ?? null,
                 imageSmall: card.imageSmall ?? null,
+                passcode: card.passcode ?? null,
               };
               cached.set(card.id, cardForDeck);
             });
