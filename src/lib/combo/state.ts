@@ -156,6 +156,39 @@ export function stateAt(
   return path.reduce((state, node) => applyNode(state, node, cards, byId), initialState(start));
 }
 
+/**
+ * Zustand nach jedem Knoten des Baums in einem Durchlauf (für den Canvas).
+ * Knoten mit parentId null sind die ersten Schritte nach dem Startzustand.
+ */
+export function statesForTree(
+  nodes: ComboNodeData[],
+  start: StartState,
+  cards: Map<string, CardData>
+): Map<string, GameState> {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const children = new Map<string | null, ComboNodeData[]>();
+  for (const node of nodes) {
+    const key = node.parentId ?? null;
+    children.set(key, [...(children.get(key) ?? []), node]);
+  }
+
+  const states = new Map<string, GameState>();
+  const visit = (parent: GameState, node: ComboNodeData) => {
+    if (states.has(node.id)) return; // Schutz gegen Zyklen
+    const state = applyNode(parent, node, cards, byId);
+    states.set(node.id, state);
+    for (const child of children.get(node.id) ?? []) visit(state, child);
+  };
+  const initial = initialState(start);
+  for (const root of children.get(null) ?? []) visit(initial, root);
+  return states;
+}
+
+/** Warnungen, die ein Knoten selbst ausgelöst hat */
+export function warningsOf(state: GameState | undefined, nodeId: string): string[] {
+  return state?.warnings.filter((w) => w.nodeId === nodeId).map((w) => w.message) ?? [];
+}
+
 export function applyNode(
   prev: GameState,
   node: ComboNodeData,

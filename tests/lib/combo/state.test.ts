@@ -3,6 +3,8 @@ import { describe, it, expect } from 'vitest';
 import type { CardEffect, EffectOpt } from '@/lib/cards/effects';
 import {
   stateAt,
+  statesForTree,
+  warningsOf,
   cardsIn,
   type CardData,
   type ComboNodeData,
@@ -284,6 +286,24 @@ describe('stateAt', () => {
     const nodes = chain({ resolveMoves: [{ instanceId: 'starter-1', from: 'GY', to: 'MONSTER' }] });
     expect(messages(nodes)).toEqual(['starter-1 liegt in HAND, nicht in GY']);
     expect(cardsIn(at(nodes), 'self', 'MONSTER').map((c) => c.instanceId)).toContain('starter-1');
+  });
+
+  it('statesForTree liefert für jeden Knoten denselben Zustand wie stateAt', () => {
+    const nodes = chain(activate('activator', { id: 'x' }), { id: 'opp', kind: 'OPPONENT' });
+    nodes.push(...chain({ ...resolve('a'), parentId: 'opp' }));
+    nodes.push(
+      ...chain({
+        ...activate('strike', { player: 'opponent', negates: { type: 'ACTIVATION', nodeId: 'x' } }),
+        id: 'b1',
+        parentId: 'opp',
+      }),
+      ...chain(resolve('b2'))
+    );
+    nodes.find((n) => n.id === 'b2')!.parentId = 'b1';
+
+    const all = statesForTree(nodes, START, CARDS);
+    for (const node of nodes) expect(all.get(node.id)).toEqual(at(nodes, node.id));
+    expect(warningsOf(all.get('a'), 'a')).toEqual([]);
   });
 
   it('erkennt Zyklen im Baum', () => {
