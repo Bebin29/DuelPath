@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>08 · Mikro-Interaktionen</title>
+    <link rel="stylesheet" href="shared/tokens.css" />
+    <script src="shared/helpers.js"></script>
+    <style>
+      .scene {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: 1fr 1fr;
+        gap: 14px;
+        padding: 18px 18px 40px;
+      }
+      .cell {
+        background: var(--surface-1);
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+      }
+      .cell h3 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 19px;
+      }
+      .cell .spec {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text-subtle);
+        margin-top: 2px;
+      }
+      .stage {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+      /* Tabs */
+      .tabs {
+        display: flex;
+        gap: 22px;
+        position: relative;
+        padding: 6px 0;
+      }
+      .tabs span {
+        font-size: 14px;
+        color: var(--text-subtle);
+      }
+      .tabs span.on {
+        color: var(--ink);
+      }
+      .tabs .ind {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 1.5px;
+        background: var(--ink);
+      }
+      /* Speichern */
+      .save {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 13px;
+      }
+      .shimmer {
+        background: linear-gradient(
+          90deg,
+          var(--text-subtle) 0%,
+          var(--text-subtle) 40%,
+          var(--ink) 50%,
+          var(--text-subtle) 60%,
+          var(--text-subtle) 100%
+        );
+        background-size: 250% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: sweep 1.2s linear infinite;
+      }
+      @keyframes sweep {
+        from {
+          background-position: 100% 0;
+        }
+        to {
+          background-position: -50% 0;
+        }
+      }
+      .err {
+        color: var(--opponent);
+      }
+      .err u {
+        text-underline-offset: 3px;
+      }
+      /* Warnung */
+      .warnchip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: var(--r-md);
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--warning);
+      }
+      .tipw {
+        position: absolute;
+        top: calc(50% + 22px);
+        left: 50%;
+        translate: -50% 0;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+        padding: 6px 9px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        box-shadow: 0 8px 20px rgb(0 0 0 / 0.4);
+      }
+      /* Schalter */
+      .toggle {
+        width: 46px;
+        height: 26px;
+        border-radius: 13px;
+        background: var(--surface-3);
+        position: relative;
+      }
+      .toggle i {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+      /* Rückgängig */
+      .undo {
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        position: relative;
+      }
+      .undo .zone {
+        width: 70px;
+        height: 70px;
+      }
+      .undo .card {
+        width: 42px;
+        height: 61px;
+      }
+      .undo .hand {
+        width: 42px;
+        height: 61px;
+        border: 1px dashed var(--line-strong);
+        border-radius: var(--r-sm);
+        font-family: var(--hand);
+        font-size: 13px;
+        color: var(--text-subtle);
+        display: grid;
+        place-items: center;
+      }
+      .trail {
+        position: absolute;
+        width: 42px;
+        height: 61px;
+        border-radius: var(--r-sm);
+        background-size: cover;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .keys {
+        position: absolute;
+        top: 6px;
+        right: 0;
+        display: flex;
+        gap: 4px;
+      }
+      .keys .keycap,
+      .num .keycap {
+        opacity: 1;
+        background: var(--surface-2);
+      }
+      .stepline {
+        position: absolute;
+        bottom: 4px;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .stepline .t {
+        position: relative;
+      }
+      .stepline svg {
+        position: absolute;
+        left: -2px;
+        top: 50%;
+        overflow: visible;
+      }
+      /* Zahl */
+      .num {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .num .n {
+        font-family: var(--font-display);
+        font-size: 64px;
+        line-height: 1;
+        display: inline-block;
+        min-width: 36px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scene" id="scene">
+      <div class="cell">
+        <h3>Tabs</h3>
+        <p class="spec">Feder 0,2 s · Unterstrich gleitet, Farbe folgt</p>
+        <div class="stage">
+          <div class="tabs" id="tabs">
+            <span class="on">Deckliste</span><span>Combos</span><span>Hand-Tester</span
+            ><i class="ind" id="ind"></i>
+          </div>
+        </div>
+      </div>
+      <div class="cell">
+        <h3>Speichern</h3>
+        <p class="spec">Schimmer beim Speichern · Häkchen zeichnet sich · Fehler wackelt</p>
+        <div class="stage">
+          <div class="save" id="save">
+            <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
+              <path
+                id="tick"
+                d="M2 6.5 L4.8 9 L10 3"
+                stroke="#958F86"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                pathLength="1"
+              />
+            </svg>
+            <span id="saveT">gespeichert</span>
+          </div>
+        </div>
+      </div>
+      <div class="cell">
+        <h3>Warnung</h3>
+        <p class="spec">Zahl springt · leises Wackeln · Grund im Tooltip</p>
+        <div class="stage">
+          <div class="warnchip" id="warn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 3 L22 20 H2 Z"
+                stroke="#E8B04B"
+                stroke-width="2"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M12 10 V14 M12 17 V17.5"
+                stroke="#E8B04B"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span id="wn">0</span>
+          </div>
+          <div class="tipw" id="tipw">
+            HOPT von <b style="font-weight: 600">Aluber</b> schon verbraucht
+          </div>
+        </div>
+      </div>
+      <div class="cell">
+        <h3>Schalter</h3>
+        <p class="spec">Daumen mit doppeltem Nachfedern · Fläche wechselt die Farbe</p>
+        <div class="stage">
+          <div class="toggle" id="tg"><i id="tgk"></i></div>
+        </div>
+      </div>
+      <div class="cell">
+        <h3>Rückgängig</h3>
+        <p class="spec">Strg+Z · Karte fliegt mit Spur zurück · Schritt wird gestrichen</p>
+        <div class="stage">
+          <div class="keys">
+            <span class="keycap" id="k1">Strg</span><span class="keycap" id="k2">Z</span>
+          </div>
+          <div class="undo" id="undo">
+            <div class="hand" id="handSlot">Hand</div>
+            <div class="zone" id="uz">
+              <span class="lbl">MZ</span>
+              <div
+                class="card"
+                id="uc"
+                style="background-image: url(../assets/62962630_small.jpg)"
+              ></div>
+            </div>
+          </div>
+          <div class="stepline">
+            <span class="mono">1</span
+            ><span class="t" id="stepT"
+              >NS Aluber<svg width="72" height="6" viewBox="0 0 72 6" fill="none">
+                <path
+                  id="ustrike"
+                  d="M 1 3 C 20 1 50 4 71 2"
+                  stroke="#FF5A36"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  pathLength="1"
+                /></svg
+            ></span>
+          </div>
+        </div>
+      </div>
+      <div class="cell">
+        <h3>Zahl</h3>
+        <p class="spec">alte Ziffer nach oben, neue von unten · Unschärfe · 0,22 s</p>
+        <div class="stage">
+          <div class="num">
+            <span class="mono">Endboard</span><span class="n" id="nn">2</span
+            ><span class="keycap" id="ke">E</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <b>08 · Mikro-Interaktionen</b> · kurz, unterbrechbar, nie die einzige Rückmeldung
+      </div>
+    </div>
+
+    <script type="module">
+      const dp = DPMotion(await import(MOTION_URL));
+      const { m, t, d, animate, draw, hide, wait, $, $$, swapText } = dp;
+      await document.fonts.ready;
+
+      const press = async (k) => {
+        await animate(k, { y: [0, 2], borderBottomWidth: ['3px', '1px'] }, { duration: d(0.07) });
+        await animate(k, { y: [2, 0], borderBottomWidth: ['1px', '3px'] }, { duration: d(0.12) });
+      };
+      const forever = async (fn) => {
+        for (;;) await fn();
+      };
+
+      // Tabs
+      forever(async () => {
+        const tabs = $$('#tabs span');
+        for (const tb of [1, 2, 0]) {
+          await wait(1100);
+          tabs.forEach((s, i) => s.classList.toggle('on', i === tb));
+          const r = tabs[tb].getBoundingClientRect();
+          const p = $('#tabs').getBoundingClientRect();
+          await animate($('#ind'), { x: r.left - p.left, width: r.width }, t.snappy);
+        }
+      });
+      {
+        const r = $$('#tabs span')[0].getBoundingClientRect();
+        m.animate($('#ind'), { x: 0, width: r.width }, { duration: 0 });
+      }
+
+      // Speichern
+      forever(async () => {
+        const T = $('#saveT');
+        const save = $('#save');
+        for (const fail of [false, true]) {
+          await wait(900);
+          hide($('#tick'));
+          await swapText(T, 'speichert …');
+          T.classList.add('shimmer');
+          await wait(1300);
+          T.classList.remove('shimmer');
+          if (!fail) {
+            swapText(T, 'gespeichert');
+            await draw($('#tick'), { duration: d(0.32), ease: t.smooth });
+          } else {
+            save.classList.add('err');
+            await swapText(T, 'Nicht gespeichert · erneut versuchen');
+            await animate(save, { x: [0, -5, 5, -3, 3, 0] }, { duration: d(0.35), ease: 'linear' });
+            await wait(1500);
+            save.classList.remove('err');
+            await swapText(T, 'gespeichert');
+            $('#tick').style.opacity = 1;
+            $('#tick').setAttribute('stroke-dashoffset', '0');
+          }
+          await wait(900);
+        }
+      });
+
+      // Warnung
+      forever(async () => {
+        const w = $('#warn');
+        await wait(1000);
+        await swapText($('#wn'), '1');
+        animate(
+          w,
+          { backgroundColor: ['rgb(53 40 18 / 0)', 'rgb(53 40 18 / 1)', 'rgb(53 40 18 / 0.6)'] },
+          { duration: d(0.5) }
+        );
+        await animate(w, { rotate: [0, -4, 4, -2, 2, 0] }, { duration: d(0.4), ease: 'linear' });
+        await wait(300);
+        await animate(
+          $('#tipw'),
+          { opacity: [0, 1], y: [-4, 0], scale: [0.96, 1] },
+          { duration: d(0.18), ease: t.out }
+        );
+        await wait(1600);
+        animate($('#tipw'), { opacity: 0 }, { duration: d(0.1) });
+        await swapText($('#wn'), '0', { dir: -1 });
+        animate(w, { backgroundColor: 'rgb(53 40 18 / 0)' }, { duration: d(0.3) });
+        await wait(600);
+      });
+
+      // Schalter: doppeltes Nachfedern
+      forever(async () => {
+        const tg = $('#tg');
+        const k = $('#tgk');
+        await wait(1000);
+        animate(tg, { backgroundColor: ['#24221F', '#F2EFE8'] }, { duration: d(0.2) });
+        animate(k, { backgroundColor: ['#A19D94', '#121110'] }, { duration: d(0.2) });
+        await animate(
+          k,
+          { x: [0, 23, 18, 21, 20], scaleX: [1, 1.25, 0.95, 1.02, 1] },
+          { duration: d(0.5), ease: t.out }
+        );
+        await wait(1400);
+        animate(tg, { backgroundColor: ['#F2EFE8', '#24221F'] }, { duration: d(0.2) });
+        animate(k, { backgroundColor: ['#121110', '#A19D94'] }, { duration: d(0.2) });
+        await animate(
+          k,
+          { x: [20, -3, 2, -1, 0], scaleX: [1, 1.25, 0.95, 1.02, 1] },
+          { duration: d(0.5), ease: t.out }
+        );
+        await wait(400);
+      });
+
+      // Rückgängig
+      forever(async () => {
+        const card = $('#uc');
+        const zone = $('#uz');
+        const slot = $('#handSlot');
+        hide($('#ustrike'));
+        zone.append(card);
+        card.style.transform = 'none';
+        $('#stepT').style.opacity = 1;
+        await wait(1200);
+        press($('#k1'));
+        await wait(80);
+        await press($('#k2'));
+        const a = card.getBoundingClientRect();
+        const b = slot.getBoundingClientRect();
+        const stage = $('#undo').getBoundingClientRect();
+        // Spur: drei verblassende Kopien entlang der Flugbahn
+        const trails = [0.3, 0.55, 0.8].map((f) => {
+          const tr = document.createElement('div');
+          tr.className = 'trail';
+          tr.style.backgroundImage = card.style.backgroundImage;
+          tr.style.left = a.left - stage.left + (b.left - a.left) * f + 'px';
+          tr.style.top = a.top - stage.top + (b.top - a.top) * f + 'px';
+          $('#undo').append(tr);
+          return tr;
+        });
+        const dx = b.left - a.left;
+        const dy = b.top - a.top;
+        trails.forEach((tr, i) =>
+          animate(
+            tr,
+            { opacity: [0, 0.35 - i * 0.08, 0] },
+            { duration: d(0.45), delay: d(0.05 + i * 0.05) }
+          )
+        );
+        draw($('#ustrike'), { duration: d(0.3), ease: t.smooth });
+        await animate(
+          card,
+          { x: [0, dx], y: [0, dy - 8, dy], rotate: [0, -8, 0] },
+          { duration: d(0.38), ease: [0.6, 0, 0.3, 1] }
+        );
+        animate($('#stepT'), { opacity: [1, 0.35] }, { duration: d(0.2) });
+        trails.forEach((tr) => setTimeout(() => tr.remove(), 700));
+        await wait(1600);
+      });
+
+      // Zahl
+      forever(async () => {
+        await wait(1100);
+        press($('#ke'));
+        await swapText($('#nn'), '3', { duration: 0.22 });
+        await wait(1500);
+        await swapText($('#nn'), '2', { dir: -1, duration: 0.22 });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>06 · Endboard</title>
+    <link rel="stylesheet" href="shared/tokens.css" />
+    <script src="shared/helpers.js"></script>
+    <style>
+      .scene {
+        display: grid;
+        grid-template-columns: 1fr 270px;
+      }
+      .main {
+        position: relative;
+        padding: 30px 40px;
+      }
+      .head {
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+      }
+      .head h1 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 38px;
+        line-height: 1;
+      }
+      .big {
+        margin-left: auto;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .big .n {
+        font-family: var(--font-display);
+        font-size: 84px;
+        line-height: 0.85;
+        display: inline-block;
+        min-width: 44px;
+        text-align: right;
+      }
+      .big svg {
+        position: absolute;
+        overflow: visible;
+      }
+      .table {
+        position: absolute;
+        left: 40px;
+        right: 40px;
+        top: 150px;
+        height: 290px;
+      }
+      .group {
+        position: absolute;
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text-subtle);
+      }
+      .deal {
+        position: absolute;
+        width: 76px;
+        height: 111px;
+        transform-style: preserve-3d;
+        perspective: 800px;
+      }
+      .deal .face,
+      .deal .back {
+        position: absolute;
+        inset: 0;
+        border-radius: 3px;
+        background-size: cover;
+        backface-visibility: hidden;
+        box-shadow:
+          inset 0 0 0 1px rgb(255 255 255 / 0.1),
+          0 10px 22px rgb(0 0 0 / 0.45);
+      }
+      .deal .back {
+        transform: rotateY(180deg);
+        background-image: url(../assets/back.jpg);
+      }
+      .deal svg {
+        position: absolute;
+        left: -14px;
+        top: -12px;
+        overflow: visible;
+        pointer-events: none;
+      }
+      .deal .lab {
+        position: absolute;
+        left: 50%;
+        top: calc(100% + 12px);
+        translate: -50% 0;
+        white-space: nowrap;
+        font-size: 15px;
+        opacity: 0;
+      }
+      .pile {
+        position: absolute;
+        left: 4px;
+        top: 214px;
+      }
+      .pile div {
+        position: absolute;
+        width: 60px;
+        height: 88px;
+        border-radius: 3px;
+        background: url(../assets/back.jpg) center / cover;
+        box-shadow: 0 6px 14px rgb(0 0 0 / 0.5);
+      }
+      aside {
+        background: var(--surface-1);
+        border-left: 1px solid var(--line);
+        padding: 30px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      aside h2 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 22px;
+      }
+      .col {
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        opacity: 0;
+      }
+      .col .row1 {
+        display: flex;
+        align-items: baseline;
+      }
+      .col .nm {
+        flex: 1;
+      }
+      .col .v {
+        font-family: var(--font-display);
+        font-size: 28px;
+        line-height: 1;
+      }
+      .col .minis {
+        display: flex;
+        gap: 4px;
+      }
+      .col .mini {
+        width: 26px;
+        height: 38px;
+        border-radius: 2px;
+        background-size: cover;
+        position: relative;
+      }
+      .col .miss {
+        width: 26px;
+        height: 38px;
+        position: relative;
+      }
+      .col .miss svg {
+        position: absolute;
+        inset: 0;
+        overflow: visible;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scene" id="scene">
+      <div class="main">
+        <div class="head">
+          <div>
+            <p class="mono">Goldfish · 9 Schritte · 1-Card</p>
+            <h1>Endboard</h1>
+          </div>
+          <div class="big" style="position: relative">
+            <span class="n" id="n">0</span><span class="mono">Unterbrechungen</span>
+            <svg
+              id="ulSvg"
+              width="150"
+              height="14"
+              viewBox="0 0 140 14"
+              fill="none"
+              style="left: -6px; top: 80px"
+            >
+              <path
+                id="ul"
+                d="M 3 8 C 34 3 80 2 137 5 M 14 12 C 50 9 92 9 128 10"
+                stroke="#FF5A36"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                pathLength="1"
+              />
+            </svg>
+          </div>
+        </div>
+        <div class="table" id="table">
+          <span class="group" style="left: 0; top: -22px">FELD</span>
+          <span class="group" style="left: 236px; top: -22px">HAND</span>
+          <span class="group" style="left: 472px; top: -22px">FRIEDHOF</span>
+          <div class="pile" id="pile">
+            <div style="left: 0; top: 0"></div>
+            <div style="left: 3px; top: -3px"></div>
+            <div style="left: 6px; top: -6px"></div>
+          </div>
+        </div>
+      </div>
+      <aside>
+        <h2>Im Vergleich</h2>
+        <div class="col" id="c1">
+          <div class="row1"><span class="nm">Goldfish</span><span class="v">3</span></div>
+          <div class="minis">
+            <div class="mini" style="background-image: url(../assets/44146295_small.jpg)"></div>
+            <div class="mini" style="background-image: url(../assets/14558127_small.jpg)"></div>
+            <div class="mini" style="background-image: url(../assets/10045474_small.jpg)"></div>
+          </div>
+        </div>
+        <div class="col" id="c2">
+          <div class="row1">
+            <span class="nm">B · Ash auf 2</span
+            ><span class="v" style="color: var(--opponent)" id="v2">3</span>
+          </div>
+          <div class="minis">
+            <div class="miss"></div>
+            <div class="mini" style="background-image: url(../assets/14558127_small.jpg)"></div>
+            <div class="miss"></div>
+          </div>
+          <span class="mono">fehlt: Mirrorjade, Imperm verbraucht</span>
+        </div>
+        <div class="col" id="c3">
+          <div class="row1">
+            <span class="nm">C · Imperm auf 2</span><span class="v" id="v3">3</span>
+          </div>
+          <div class="minis">
+            <div class="mini" style="background-image: url(../assets/44146295_small.jpg)"></div>
+            <div class="mini" style="background-image: url(../assets/14558127_small.jpg)"></div>
+            <div class="miss"></div>
+          </div>
+          <span class="mono">fehlt: Imperm verbraucht</span>
+        </div>
+      </aside>
+      <div class="caption">
+        <b>06 · Endboard</b> · seltene Fläche · Karten werden gegeben, Unterbrecher eingekreist,
+        Branches im Vergleich
+      </div>
+    </div>
+
+    <script type="module">
+      const dp = DPMotion(await import(MOTION_URL));
+      const { m, t, d, animate, draw, hide, wait, $, $$, swapText, write, unwrite } = dp;
+      const CIRCLE =
+        'M 14 30 C 4 20 12 8 40 5 C 72 1 104 7 107 21 C 110 35 76 42 46 41 C 20 40 4 33 7 22 C 9 14 22 9 36 8';
+      const cards = [
+        { id: '44146295', x: 0, label: 'Quick Effect', hit: true },
+        { id: '70534340', x: 96, label: '' },
+        { id: '14558127', x: 236, label: 'Handtrap', hit: true },
+        { id: '10045474', x: 332, label: 'Handtrap', hit: true },
+        { id: '87746184', x: 472, label: '' },
+      ];
+      const table = $('#table');
+      cards.forEach((c, i) => {
+        const el = document.createElement('div');
+        el.className = 'deal';
+        el.innerHTML = `<div class="face" style="background-image:url(../assets/${c.id}_small.jpg)"></div><div class="back"></div>${
+          c.hit
+            ? `<svg width="104" height="136" viewBox="0 0 112 46" preserveAspectRatio="none" fill="none"><path d="${CIRCLE}" stroke="#FF5A36" stroke-width="2" stroke-linecap="round" pathLength="1" vector-effect="non-scaling-stroke"/></svg><span class="lab hand">${c.label}</span>`
+            : ''
+        }`;
+        table.append(el);
+        c.el = el;
+      });
+      // gestrichelte Umrisse für fehlende Karten
+      $$('.miss').forEach((mEl) => {
+        mEl.innerHTML =
+          '<svg width="26" height="38" viewBox="0 0 26 38" fill="none"><rect x="0.5" y="0.5" width="25" height="37" rx="2" stroke="#7E786F" stroke-dasharray="3 3" pathLength="1"/></svg>';
+      });
+
+      function reset() {
+        cards.forEach((c) => {
+          Object.assign(c.el.style, {
+            left: '-4px',
+            top: '200px',
+            transform: 'rotateY(180deg) rotate(-8deg)',
+            opacity: 0,
+          });
+          const p = $('svg path', c.el);
+          if (p) hide(p);
+          const lab = $('.lab', c.el);
+          if (lab) {
+            unwrite(lab);
+            lab.style.opacity = 0;
+          }
+        });
+        $('#n').textContent = '0';
+        hide($('#ul'));
+        $$('.col').forEach((c) => Object.assign(c.style, { opacity: 0, transform: 'none' }));
+        $('#v2').textContent = '3';
+        $('#v3').textContent = '3';
+        $$('.miss rect').forEach((r) => (r.style.opacity = 0));
+      }
+
+      async function run() {
+        await wait(400);
+        // 1 · Karten geben: Bogen, Drehung, Umdrehen im Flug
+        for (const [i, c] of cards.entries()) {
+          c.el.style.opacity = 1;
+          animate(
+            c.el,
+            { left: [-4, c.x], top: [200, -40, 10] },
+            { duration: d(0.62), ease: [0.3, 0, 0.2, 1] }
+          );
+          animate(
+            c.el,
+            { rotateY: [180, 0], rotate: [-8, 0] },
+            dp.reduced ? { duration: 0 } : { type: m.spring, bounce: 0.25, visualDuration: 0.6 }
+          );
+          await wait(170);
+        }
+        await wait(700);
+
+        // 2 · Unterbrecher einkreisen, Zähler läuft mit
+        let n = 0;
+        for (const c of cards.filter((x) => x.hit)) {
+          const p = $('svg path', c.el);
+          p.style.opacity = 1;
+          animate(p, { strokeWidth: [1.2, 2.8, 2, 1.4] }, { duration: d(0.5), ease: 'linear' });
+          await draw(p, { duration: d(0.5), ease: t.ink });
+          n++;
+          swapText($('#n'), n);
+          write($('.lab', c.el), { speed: 0.04 });
+          await wait(250);
+        }
+        await draw($('#ul'), { duration: d(0.45) });
+        await wait(500);
+
+        // 3 · Vergleich: Branches gleiten herein, Werte fallen, Lücken zeichnen sich
+        for (const [i, col] of $$('.col').entries()) {
+          await animate(
+            col,
+            { opacity: [0, 1], x: [24, 0] },
+            dp.reduced ? { duration: 0 } : { type: m.spring, bounce: 0.15, visualDuration: 0.4 }
+          );
+          const rects = $$('.miss rect', col);
+          rects.forEach((r) => (r.style.opacity = 1));
+          rects.forEach((r) => {
+            r.setAttribute('stroke-dasharray', '0.06 0.04');
+          });
+          await Promise.all(
+            rects.map((r) =>
+              animate(r, { strokeDashoffset: [1, 0] }, { duration: d(0.4), ease: t.smooth })
+            )
+          );
+          if (col.id === 'c2') for (const v of [2, 1]) await swapText($('#v2'), v, { dir: -1 });
+          if (col.id === 'c3') await swapText($('#v3'), 2, { dir: -1 });
+          await wait(120);
+        }
+        await wait(2400);
+      }
+
+      await document.fonts.ready;
+      dp.loop(reset, run, { pause: 400 });
+    </script>
+  </body>
+</html>

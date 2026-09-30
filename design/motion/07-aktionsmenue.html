@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>07 · Aktionsmenü an der Karte</title>
+    <link rel="stylesheet" href="shared/tokens.css" />
+    <script src="shared/helpers.js"></script>
+    <style>
+      .scene {
+        background: var(--felt);
+      }
+      .board {
+        position: absolute;
+        left: 50%;
+        top: 46%;
+        translate: -50% -50%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .zrow {
+        display: flex;
+        gap: 8px;
+      }
+      .zone {
+        width: 92px;
+        height: 92px;
+      }
+      .zone .card {
+        width: 56px;
+        height: 82px;
+      }
+      .zone.dim {
+        opacity: 0.5;
+      }
+      .sel {
+        box-shadow:
+          0 0 0 1.5px var(--primary),
+          0 0 0 4px var(--felt),
+          0 0 0 5.5px rgb(242 239 232 / 0.25);
+      }
+      .menu {
+        position: absolute;
+        width: 250px;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        box-shadow: 0 18px 40px rgb(0 0 0 / 0.55);
+        padding: 6px;
+        z-index: 20;
+        transform-origin: 0% 50%;
+        opacity: 0;
+      }
+      .menu h5 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 16px;
+        padding: 6px 8px 8px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 4px;
+      }
+      .mi {
+        position: relative;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 0 8px;
+        border-radius: var(--r-md);
+        font-size: 12.5px;
+        z-index: 1;
+      }
+      .mi .ic {
+        width: 14px;
+        color: var(--text-subtle);
+        display: grid;
+        place-items: center;
+      }
+      .mi .grow {
+        flex: 1;
+      }
+      .mi .hopt {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--jev);
+      }
+      .mi .hopt.used {
+        color: var(--text-subtle);
+      }
+      .mi.fx .t {
+        color: var(--ink);
+      }
+      .mi:not(.fx) .t {
+        color: var(--text-muted);
+      }
+      .sepl {
+        height: 1px;
+        background: var(--line);
+        margin: 4px 2px;
+      }
+      .hl {
+        position: absolute;
+        left: 6px;
+        right: 6px;
+        height: 30px;
+        border-radius: var(--r-md);
+        background: rgb(242 239 232 / 0.09);
+        box-shadow: inset 2px 0 0 var(--ink);
+        z-index: 0;
+        opacity: 0;
+      }
+      .link {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 9px;
+        border: 1px solid var(--chain);
+        border-radius: var(--r-sm);
+        background: var(--felt);
+        font-size: 12px;
+        z-index: 30;
+        opacity: 0;
+      }
+      .link .n {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--chain);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scene" id="scene">
+      <div class="board">
+        <div class="zrow" id="r1"></div>
+        <div class="zrow" id="r2"></div>
+      </div>
+      <div class="menu" id="menu">
+        <h5>Aluber the Jester of Despia</h5>
+        <div class="hl" id="hl"></div>
+        <div class="mi fx" id="e1">
+          <span class="ic">↯</span><span class="t">① Suche Branded</span><span class="grow"></span
+          ><span class="hopt" id="h1">frei</span><span class="k">1</span>
+        </div>
+        <div class="mi fx">
+          <span class="ic">↯</span><span class="t">② Special Summon</span><span class="grow"></span
+          ><span class="hopt">frei</span><span class="k">2</span>
+        </div>
+        <div class="sepl"></div>
+        <div class="mi">
+          <span class="ic">⤾</span><span class="t">Position ändern</span><span class="grow"></span
+          ><span class="k">P</span>
+        </div>
+        <div class="mi">
+          <span class="ic">↓</span><span class="t">Auf den Friedhof</span><span class="grow"></span
+          ><span class="k">G</span>
+        </div>
+        <div class="mi">
+          <span class="ic">⊘</span><span class="t">Verbannen</span><span class="grow"></span
+          ><span class="k">B</span>
+        </div>
+        <div class="mi">
+          <span class="ic">↩</span><span class="t">Auf die Hand</span><span class="grow"></span
+          ><span class="k">H</span>
+        </div>
+      </div>
+      <div class="link" id="link"><span class="n">CL1</span><span>Aluber · Suche</span></div>
+      <div class="caption">
+        <b>07 · Aktionsmenü</b> · wächst aus der Karte · Hervorhebung folgt · zieht sich beim Wählen
+        in die Karte zurück
+      </div>
+    </div>
+
+    <script type="module">
+      const dp = DPMotion(await import(MOTION_URL));
+      const { m, t, d, animate, wait, $, $$, swapText, cursor } = dp;
+      const scene = $('#scene');
+      const zone = (dim) => {
+        const z = document.createElement('div');
+        z.className = 'zone' + (dim ? ' dim' : '');
+        z.innerHTML = '<span class="lbl">MZ</span>';
+        return z;
+      };
+      for (let i = 0; i < 5; i++) $('#r1').append(zone(true));
+      const my = [...Array(5)].map(() => zone());
+      my.forEach((z) => $('#r2').append(z));
+      my[1].insertAdjacentHTML(
+        'beforeend',
+        '<div class="card" id="alu" style="background-image:url(../assets/62962630_small.jpg)"></div>'
+      );
+      my[3].insertAdjacentHTML(
+        'beforeend',
+        '<div class="card" style="background-image:url(../assets/87746184_small.jpg)"></div>'
+      );
+      const alu = $('#alu');
+      const menu = $('#menu');
+      const hl = $('#hl');
+      const cur = cursor(scene);
+      const rel = (el) => {
+        const r = el.getBoundingClientRect();
+        const s = scene.getBoundingClientRect();
+        return { x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height };
+      };
+
+      function reset() {
+        alu.classList.remove('sel');
+        Object.assign(menu.style, { opacity: 0, transform: 'none', clipPath: 'none' });
+        hl.style.opacity = 0;
+        $('#h1').textContent = 'frei';
+        $('#h1').classList.remove('used');
+        $('#link').style.opacity = 0;
+        m.animate(cur.el, { x: 900, y: 520 }, { duration: 0 });
+      }
+
+      async function hover(item) {
+        const ir = item.offsetTop;
+        const first = hl.style.opacity !== '1';
+        hl.style.opacity = 1;
+        if (first) m.animate(hl, { top: ir }, { duration: 0 });
+        else await animate(hl, { top: ir }, t.snappy);
+      }
+
+      async function run() {
+        await wait(400);
+        // 1 · Klick auf Aluber
+        await cur.to(alu, { duration: 0.9, dx: 6, dy: 10 });
+        animate(alu, { scale: [1, 1.04] }, t.snappy);
+        await cur.click();
+        alu.classList.add('sel');
+        animate(alu, { scale: 1 }, t.snappy);
+
+        // 2 · Menü wächst aus der Karte (Ursprung an der Kartenkante)
+        const ar = rel(alu);
+        Object.assign(menu.style, { left: ar.x + ar.w + 14 + 'px', top: ar.y - 70 + 'px' });
+        const items = $$('.mi, .sepl, h5', menu);
+        items.forEach((i) => (i.style.opacity = 0));
+        await animate(
+          menu,
+          {
+            opacity: [0, 1],
+            scale: [0.9, 1],
+            x: [-10, 0],
+            clipPath: ['inset(40% 100% 40% 0 round 4px)', 'inset(0% 0% 0% 0 round 4px)'],
+          },
+          dp.reduced ? { duration: 0 } : { duration: 0.26, ease: t.out }
+        );
+        animate(
+          items,
+          { opacity: [0, 1], x: [-6, 0] },
+          { duration: d(0.2), delay: m.stagger(0.025), ease: t.out }
+        );
+        await wait(250);
+
+        // 3 · Hervorhebung folgt dem Cursor über die Einträge
+        const targets = [$$('.mi', menu)[3], $$('.mi', menu)[1], $('#e1')];
+        for (const it of targets) {
+          await cur.to(it, { duration: 0.42, dx: -60 });
+          await hover(it);
+          await wait(260);
+        }
+        await wait(350);
+
+        // 4 · Wählen: HOPT wechselt, Menü zieht sich in die Karte zurück, Chain Link entsteht
+        await cur.click();
+        $('#h1').classList.add('used');
+        await swapText($('#h1'), 'genutzt');
+        await wait(150);
+        await animate(
+          menu,
+          {
+            opacity: [1, 0],
+            scale: [1, 0.85],
+            x: [0, -24],
+            clipPath: ['inset(0% 0% 0% 0 round 4px)', 'inset(40% 100% 40% 0 round 4px)'],
+          },
+          dp.reduced ? { duration: 0 } : { duration: 0.2, ease: t.smooth }
+        );
+        animate(alu, { scale: [1, 1.08, 1] }, { duration: d(0.35), ease: t.bounce });
+        const link = $('#link');
+        Object.assign(link.style, { left: ar.x - 6 + 'px', top: ar.y - 36 + 'px' });
+        await animate(
+          link,
+          { opacity: [0, 1], y: [16, 0], scale: [0.8, 1] },
+          dp.reduced ? { duration: 0 } : { type: m.spring, bounce: 0.3, visualDuration: 0.35 }
+        );
+        cur.to({ x: 900, y: 520 }, { duration: 0.9 });
+        await wait(2000);
+      }
+
+      dp.loop(reset, run, { pause: 400 });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>05 · Moduswechsel Board und Baum</title>
+    <link rel="stylesheet" href="shared/tokens.css" />
+    <script src="shared/helpers.js"></script>
+    <style>
+      header {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        background: var(--surface-1);
+        border-bottom: 1px solid var(--line);
+        position: relative;
+        z-index: 5;
+      }
+      header .title {
+        font-family: var(--font-display);
+        font-size: 19px;
+      }
+      .grow {
+        flex: 1;
+      }
+      .tabs {
+        display: flex;
+        gap: 16px;
+        position: relative;
+        padding: 6px 0;
+      }
+      .tabs span {
+        font-size: 12.5px;
+        color: var(--text-subtle);
+        transition: color 150ms;
+      }
+      .tabs span.on {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .tabs .ind {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 1.5px;
+        background: var(--ink);
+        border-radius: 1px;
+      }
+      .stage {
+        position: absolute;
+        inset: 44px 0 0 0;
+      }
+      .listbg {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 236px;
+        background: var(--surface-1);
+        border-right: 1px solid var(--line);
+      }
+      .board {
+        position: absolute;
+        left: 236px;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background: var(--felt);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .zrow {
+        display: flex;
+        gap: 6px;
+      }
+      .zone.opp {
+        opacity: 0.55;
+      }
+      .dots {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(var(--line) 1px, transparent 1px);
+        background-size: 18px 18px;
+        opacity: 0;
+      }
+      .item {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 14px;
+        border: 1px solid transparent;
+        border-radius: var(--r-lg);
+        overflow: hidden;
+        white-space: nowrap;
+        z-index: 3;
+      }
+      .item .nr {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--text-subtle);
+        width: 18px;
+      }
+      .item .txt {
+        color: var(--text-muted);
+      }
+      .item.sel .txt,
+      .item.sel .nr {
+        color: var(--ink);
+      }
+      .item.br .txt {
+        font-size: 12.5px;
+      }
+      .edges {
+        position: absolute;
+        inset: 0;
+        overflow: visible;
+        z-index: 2;
+      }
+      .hud {
+        position: absolute;
+        right: 18px;
+        bottom: 18px;
+        z-index: 60;
+      }
+      .hud .keycap {
+        font-size: 13px;
+        padding: 5px 11px 3px;
+        background: var(--surface-2);
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scene" id="scene">
+      <header>
+        <span class="title">Aluber 1-Card</span
+        ><span class="muted" style="font-size: 12px">Branded Despia</span>
+        <span class="grow"></span>
+        <div class="tabs" id="tabs">
+          <span class="on" id="tBoard">Board</span><span id="tTree">Baum</span
+          ><i class="ind" id="ind"></i>
+        </div>
+        <span class="k">V</span>
+        <span class="grow"></span>
+        <span class="mono">gespeichert</span>
+      </header>
+      <div class="stage" id="stage">
+        <div class="listbg" id="listbg"></div>
+        <div class="board" id="board">
+          <div class="zrow" id="r1"></div>
+          <div class="zrow" id="r2"></div>
+          <div class="zrow" id="r3"></div>
+        </div>
+        <div class="dots" id="dots"></div>
+        <svg class="edges" id="edges" fill="none"></svg>
+      </div>
+      <div class="hud"><span class="keycap" id="key">V</span></div>
+      <div class="caption">
+        <b>05 · Moduswechsel</b> · dieselben Schritte wandern vom Board in den Baum · Feder, Kanten
+        nach Tiefe
+      </div>
+    </div>
+
+    <script type="module">
+      const dp = DPMotion(await import(MOTION_URL));
+      const { m, t, d, animate, draw, wait, $, $$ } = dp;
+      const A = (id) => `background-image:url(../assets/${id}_small.jpg)`;
+      const stage = $('#stage');
+
+      const zone = (opp) => {
+        const z = document.createElement('div');
+        z.className = 'zone' + (opp ? ' opp' : '');
+        z.innerHTML = '<span class="lbl">MZ</span>';
+        return z;
+      };
+      for (let i = 0; i < 5; i++) $('#r1').append(zone(true));
+      for (let i = 0; i < 5; i++) $('#r2').append(zone(false));
+      for (let i = 0; i < 5; i++) $('#r3').append(zone(false));
+      const aluZone = $$('#r2 .zone')[2];
+      aluZone.insertAdjacentHTML('beforeend', `<div class="card" style="${A('62962630')}"></div>`);
+
+      // Schritte: Position in der Liste und im Baum
+      const W = 200;
+      const H = 50;
+      const cx = [260, 520, 760];
+      const items = [
+        {
+          id: 'n1',
+          nr: '1',
+          art: '62962630',
+          txt: 'NS Aluber',
+          list: 0,
+          tree: [cx[0], 34],
+          depth: 0,
+        },
+        {
+          id: 'n2',
+          nr: '2',
+          art: '62962630',
+          txt: 'Aluber · Suche',
+          list: 1,
+          tree: [cx[0], 118],
+          depth: 1,
+          sel: true,
+        },
+        {
+          id: 'nB',
+          nr: 'B',
+          art: '14558127',
+          txt: 'B · Ash auf 2',
+          list: 2,
+          tree: [cx[1], 222],
+          depth: 2,
+          br: 'opp',
+        },
+        {
+          id: 'nC',
+          nr: 'C',
+          art: '10045474',
+          txt: 'C · Imperm auf 2',
+          list: 3,
+          tree: [cx[2], 222],
+          depth: 2,
+          br: 'opp',
+        },
+        {
+          id: 'n3',
+          nr: '3',
+          art: '44362883',
+          txt: 'Branded Fusion',
+          list: 4,
+          tree: [cx[0], 222],
+          depth: 2,
+        },
+        {
+          id: 'n4',
+          nr: '4',
+          art: '87746184',
+          txt: 'Albion → Lubellion',
+          list: 5,
+          tree: [cx[0], 306],
+          depth: 3,
+        },
+        { id: 'nE', nr: '', art: null, txt: 'Endboard · 3', list: 6, tree: [cx[0], 390], depth: 4 },
+      ];
+      items.forEach((it) => {
+        const el = document.createElement('div');
+        el.className = 'item' + (it.sel ? ' sel' : '') + (it.br ? ' br' : '');
+        el.id = it.id;
+        el.innerHTML = `<span class="nr">${it.nr}</span>${it.art ? `<div class="art" style="${A(it.art)}"></div>` : '<div class="art" style="background:none"></div>'}<span class="txt">${it.txt}</span>`;
+        stage.append(el);
+        it.el = el;
+      });
+      const edgeDefs = [
+        ['n1', 'n2', 1],
+        ['n2', 'n3', 2],
+        ['n2', 'nB', 2, true],
+        ['n2', 'nC', 2, true],
+        ['n3', 'n4', 3],
+        ['n4', 'nE', 4],
+      ];
+      const byId = Object.fromEntries(items.map((i) => [i.id, i]));
+      const edges = edgeDefs.map(([a, b, depth, opp]) => {
+        const A2 = byId[a].tree;
+        const B2 = byId[b].tree;
+        const x1 = A2[0];
+        const y1 = A2[1] + H;
+        const x2 = B2[0];
+        const y2 = B2[1];
+        const my = y1 + (y2 - y1) / 2;
+        const dPath =
+          x1 === x2
+            ? `M ${x1} ${y1} L ${x2} ${y2}`
+            : `M ${x1} ${y1} L ${x1} ${my} L ${x2} ${my} L ${x2} ${y2}`;
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', dPath);
+        p.setAttribute('pathLength', '1');
+        p.setAttribute('stroke', opp ? '#FF5A36' : '#7E786F');
+        p.setAttribute('stroke-width', a === 'n1' || (a === 'n2' && b === 'n3') ? '2' : '1.5');
+        p.setAttribute('stroke-linecap', 'round');
+        p.setAttribute('stroke-linejoin', 'round');
+        $('#edges').append(p);
+        return { p, depth };
+      });
+
+      const listPos = (it) => {
+        const indent = it.br ? 26 : 0;
+        return { left: indent, top: 14 + it.list * 34, width: 236 - indent, height: 34 };
+      };
+      const treePos = (it) => ({ left: it.tree[0] - W / 2, top: it.tree[1], width: W, height: H });
+      const listLook = (it) => ({
+        backgroundColor: it.sel ? 'rgb(36 34 31 / 1)' : 'rgb(36 34 31 / 0)',
+        borderColor: 'rgb(43 41 38 / 0)',
+        boxShadow: it.sel ? 'inset 2px 0 0 #F2EFE8' : 'inset 0 0 0 transparent',
+      });
+      const treeLook = (it) => ({
+        backgroundColor: 'rgb(29 28 25 / 1)',
+        borderColor: it.br
+          ? 'rgb(255 90 54 / 1)'
+          : it.sel
+            ? 'rgb(242 239 232 / 1)'
+            : 'rgb(43 41 38 / 1)',
+        boxShadow: it.br ? 'inset 3px 0 0 #FF5A36' : 'inset 0 0 0 transparent',
+      });
+
+      function place(mode) {
+        items.forEach((it) => {
+          const p = mode === 'list' ? listPos(it) : treePos(it);
+          const l = mode === 'list' ? listLook(it) : treeLook(it);
+          Object.assign(it.el.style, {
+            left: p.left + 'px',
+            top: p.top + 'px',
+            width: p.width + 'px',
+            height: p.height + 'px',
+            ...l,
+          });
+        });
+      }
+
+      function indicator(el, instant) {
+        const r = el.getBoundingClientRect();
+        const pr = $('#tabs').getBoundingClientRect();
+        const kf = { x: r.left - pr.left, width: r.width };
+        return instant
+          ? m.animate($('#ind'), kf, { duration: 0 })
+          : animate($('#ind'), kf, t.snappy);
+      }
+
+      async function key() {
+        const k = $('#key');
+        await animate(k, { opacity: [0, 1], y: [8, 0] }, { duration: d(0.18), ease: t.out });
+        await animate(k, { y: [0, 2], borderBottomWidth: ['3px', '1px'] }, { duration: d(0.07) });
+        await animate(k, { y: [2, 0], borderBottomWidth: ['1px', '3px'] }, { duration: d(0.12) });
+        animate(k, { opacity: 0 }, { duration: d(0.3), delay: d(0.4) });
+      }
+
+      async function toTree() {
+        await key();
+        $('#tBoard').classList.remove('on');
+        $('#tTree').classList.add('on');
+        indicator($('#tTree'));
+        animate(
+          $('#board'),
+          { opacity: 0, scale: 0.97, filter: 'blur(6px)' },
+          { duration: d(0.3), ease: t.smooth }
+        );
+        animate($('#listbg'), { x: -236, opacity: 0 }, { duration: d(0.3), ease: t.smooth });
+        animate($('#dots'), { opacity: 1 }, { duration: d(0.4), delay: d(0.1) });
+        const order = [...items].sort((a, b) => a.depth - b.depth);
+        await Promise.all(
+          order.map((it, i) => {
+            const p = treePos(it);
+            return animate(
+              it.el,
+              { left: p.left, top: p.top, width: p.width, height: p.height, ...treeLook(it) },
+              dp.reduced
+                ? { duration: 0 }
+                : { type: m.spring, bounce: 0.18, visualDuration: 0.5, delay: i * 0.04 }
+            );
+          })
+        );
+        for (const depth of [1, 2, 3, 4]) {
+          await Promise.all(
+            edges
+              .filter((e) => e.depth === depth)
+              .map((e) => draw(e.p, { duration: d(0.22), ease: t.smooth }))
+          );
+        }
+      }
+
+      async function toBoard() {
+        await key();
+        $('#tTree').classList.remove('on');
+        $('#tBoard').classList.add('on');
+        indicator($('#tBoard'));
+        animate(
+          edges.map((e) => e.p),
+          { opacity: 0 },
+          { duration: d(0.15) }
+        );
+        animate($('#dots'), { opacity: 0 }, { duration: d(0.2) });
+        animate(
+          $('#board'),
+          { opacity: 1, scale: 1, filter: 'blur(0px)' },
+          { duration: d(0.35), delay: d(0.1), ease: t.out }
+        );
+        animate($('#listbg'), { x: 0, opacity: 1 }, { duration: d(0.3), ease: t.smooth });
+        await Promise.all(
+          [...items].reverse().map((it, i) => {
+            const p = listPos(it);
+            return animate(
+              it.el,
+              { left: p.left, top: p.top, width: p.width, height: p.height, ...listLook(it) },
+              dp.reduced
+                ? { duration: 0 }
+                : { type: m.spring, bounce: 0.12, visualDuration: 0.45, delay: i * 0.03 }
+            );
+          })
+        );
+      }
+
+      function reset() {
+        place('list');
+        edges.forEach((e) => {
+          e.p.setAttribute('stroke-dasharray', '1 1');
+          e.p.setAttribute('stroke-dashoffset', '1');
+          e.p.style.opacity = 0;
+        });
+        Object.assign($('#board').style, { opacity: 1, transform: 'none', filter: 'none' });
+        Object.assign($('#listbg').style, { opacity: 1, transform: 'none' });
+        $('#dots').style.opacity = 0;
+        $('#tTree').classList.remove('on');
+        $('#tBoard').classList.add('on');
+        indicator($('#tBoard'), true);
+      }
+
+      async function run() {
+        await wait(1400);
+        await toTree();
+        await wait(2400);
+        await toBoard();
+        await wait(1500);
+      }
+
+      await document.fonts.ready;
+      dp.loop(reset, run, { pause: 200 });
+    </script>
+  </body>
+</html>

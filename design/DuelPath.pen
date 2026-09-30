@@ -18641,32 +18641,1489 @@
     },
     {
       "type": "frame",
-      "id": "Zkbbx",
+      "id": "uOewS",
       "x": 0,
-      "y": 5161,
-      "name": "Motion-Prototypen (live, motion.dev)",
-      "width": 1340,
+      "y": 5181,
+      "name": "Motion-System · Tinte und Rotstift",
+      "theme": {
+        "mode": "dark"
+      },
+      "width": 2120,
+      "fill": "$bg",
+      "cornerRadius": 6,
       "layout": "vertical",
-      "gap": 12,
+      "gap": 40,
+      "padding": 56,
       "children": [
         {
-          "type": "text",
-          "id": "nLC1u",
-          "name": "Titel",
-          "fill": "#F2EFE8",
-          "content": "Motion-Prototypen · live aus design/motion/prototypen.html",
-          "fontFamily": "Instrument Serif",
-          "fontSize": 26,
-          "fontWeight": "normal"
+          "type": "frame",
+          "id": "trWYN",
+          "name": "Kopf",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "children": [
+            {
+              "type": "text",
+              "id": "IXa1v",
+              "name": "Titel",
+              "fill": "$ink",
+              "content": "Motion-System",
+              "fontFamily": "$font-display",
+              "fontSize": 56,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "Y1lsC",
+              "name": "Untertitel",
+              "fill": "$text-muted",
+              "content": "Tinte zeichnet, Rotstift korrigiert, Karten haben Gewicht. Alle Szenen laufen live aus design/motion/ mit motion.dev.",
+              "fontFamily": "$font",
+              "fontSize": 16,
+              "fontWeight": "normal"
+            }
+          ]
         },
         {
-          "type": "browser",
-          "id": "p8kxmL",
-          "name": "Prototyp",
-          "width": 1340,
-          "height": 410,
-          "url": "file:///home/bkoch/repos/personal/DuelPath/design/motion/prototypen.html",
-          "cornerRadius": 4
+          "type": "frame",
+          "id": "X5FSV7",
+          "name": "Prinzipien",
+          "width": "fill_container",
+          "gap": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "oCkeB",
+              "name": "Prinzip 1",
+              "width": "fill_container",
+              "cornerRadius": 4,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "t20so",
+                  "name": "Nr",
+                  "fill": "$opponent",
+                  "content": "1",
+                  "fontFamily": "$mono",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "fgEfe",
+                  "name": "Name",
+                  "fill": "$ink",
+                  "content": "Tinte zeichnet",
+                  "fontFamily": "$font-display",
+                  "fontSize": 22,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "wNsA7",
+                  "name": "Text",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Neues entsteht als Strich, der sich zieht. Illustration, Kanten, Häkchen, Unterstriche.",
+                  "lineHeight": 1.45,
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "g3RtB",
+              "name": "Prinzip 2",
+              "width": "fill_container",
+              "cornerRadius": 4,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "AFMzY",
+                  "name": "Nr",
+                  "fill": "$opponent",
+                  "content": "2",
+                  "fontFamily": "$mono",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "lOVmT",
+                  "name": "Name",
+                  "fill": "$ink",
+                  "content": "Rotstift korrigiert",
+                  "fontFamily": "$font-display",
+                  "fontSize": 22,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "y66RZ",
+                  "name": "Text",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Was der Gegner tut oder wo die Line bricht, markiert die Hand: Kreis, Strich, Stempel, Notiz.",
+                  "lineHeight": 1.45,
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "E8rC9",
+              "name": "Prinzip 3",
+              "width": "fill_container",
+              "cornerRadius": 4,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "xEG7m",
+                  "name": "Nr",
+                  "fill": "$opponent",
+                  "content": "3",
+                  "fontFamily": "$mono",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "fXqNN",
+                  "name": "Name",
+                  "fill": "$ink",
+                  "content": "Karten haben Gewicht",
+                  "fontFamily": "$font-display",
+                  "fontSize": 22,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "ukeRY",
+                  "name": "Text",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Federn statt Kurven. Karten heben sich, neigen sich im Zug und rasten ein.",
+                  "lineHeight": 1.45,
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "gBp2Q",
+              "name": "Prinzip 4",
+              "width": "fill_container",
+              "cornerRadius": 4,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "fdO7k",
+                  "name": "Nr",
+                  "fill": "$opponent",
+                  "content": "4",
+                  "fontFamily": "$mono",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "l69nF",
+                  "name": "Name",
+                  "fill": "$ink",
+                  "content": "Chains lesen sich",
+                  "fontFamily": "$font-display",
+                  "fontSize": 22,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "kigeX",
+                  "name": "Text",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Links stapeln sich sichtbar und lösen rückwärts auf, in der Reihenfolge der Regeln.",
+                  "lineHeight": 1.45,
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "P86GaP",
+              "name": "Prinzip 5",
+              "width": "fill_container",
+              "cornerRadius": 4,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "dzZHy",
+                  "name": "Nr",
+                  "fill": "$opponent",
+                  "content": "5",
+                  "fontFamily": "$mono",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "rsboI",
+                  "name": "Name",
+                  "fill": "$ink",
+                  "content": "Werkzeug ruhig, Ergebnis feiert",
+                  "fontFamily": "$font-display",
+                  "fontSize": 22,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "bi5k3",
+                  "name": "Text",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Workbench höchstens 250 ms und ohne Choreografie. Start, Stresstest und Endboard dürfen inszenieren.",
+                  "lineHeight": 1.45,
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ER65Z",
+              "name": "Prinzip 6",
+              "width": "fill_container",
+              "cornerRadius": 4,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Kl6pc",
+                  "name": "Nr",
+                  "fill": "$opponent",
+                  "content": "6",
+                  "fontFamily": "$mono",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "TuqiX",
+                  "name": "Name",
+                  "fill": "$ink",
+                  "content": "Nie allein",
+                  "fontFamily": "$font-display",
+                  "fontSize": 22,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "cufNE",
+                  "name": "Text",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Bewegung ist nie die einzige Rückmeldung. Bei reduzierter Bewegung steht sofort der Endzustand.",
+                  "lineHeight": 1.45,
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "uy4Qy",
+          "name": "Tokens",
+          "width": "fill_container",
+          "gap": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "nJxWI",
+              "name": "Tokens Dauer",
+              "width": "fill_container",
+              "fill": "$surface-1",
+              "cornerRadius": 4,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "VXHEB",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "Dauer",
+                  "fontFamily": "$font-display",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "IF0kA",
+                  "name": "fast",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Gjd2d",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "fast",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "lX7Ta",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "100 ms",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "r4wp5I",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Hover, Fokus",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "c9Rt4y",
+                  "name": "base",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "i6fG6l",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "base",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RQjWJ",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "150 ms",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "sGVQv",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Zonenwechsel, Menüs",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "oDhbA",
+                  "name": "slow",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "L0jVMf",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "slow",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "gllQm",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "240 ms",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "fj3ke",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Moduswechsel, Wechselwort",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "JzaZV",
+                  "name": "draw",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "b7T0gZ",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "draw",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "eomnx",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "500 ms",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "sagk0",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Kreis, Unterstrich",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "KUnoC",
+                  "name": "flash",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "VQtGn",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "flash",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "kjTyX",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "600 ms",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "H0cs7",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Aufleuchten nach dem Schritt",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "a4zQz3",
+              "name": "Tokens Kurven",
+              "width": "fill_container",
+              "fill": "$surface-1",
+              "cornerRadius": 4,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "HwhSt",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "Kurven",
+                  "fontFamily": "$font-display",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "U6hCW",
+                  "name": "smooth",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "m7Gwq",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "smooth",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "QuEH9",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "0.2, 0, 0, 1",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "a8y4KB",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Standard für UI",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "bEoB2",
+                  "name": "out",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "KbxrZ",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "out",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "J5iHX",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "0.16, 1, 0.3, 1",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "kgwm7",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Einblenden, Aufsteigen",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "sK884",
+                  "name": "ink",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Uc8qJ",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "ink",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YPYFI",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "0.65, 0, 0.35, 1",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "FuGTU",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Striche ziehen",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "X3dYSj",
+                  "name": "bounce",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Dg1OU",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "bounce",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "tmaLi",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "0.34, 1.36, 0.64, 1",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "LwGqa",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Chips, Stempel, Punkte",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "dJltX",
+              "name": "Tokens Federn",
+              "width": "fill_container",
+              "fill": "$surface-1",
+              "cornerRadius": 4,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BDLUN",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "Federn",
+                  "fontFamily": "$font-display",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "iplWf",
+                  "name": "card",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fGTwN",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "card",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "eU6Hx",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "Bounce 0,28 · 0,32 s",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "u1BPW",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Karte rastet ein",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "pXr1L",
+                  "name": "soft",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "hHS4E",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "soft",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "pOi6q",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "Bounce 0 · 0,30 s",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "P6Y6Fz",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Parallaxe, ruhige Wege",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "dWrgi",
+                  "name": "snappy",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "J95wW",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "snappy",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "vdgCL",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "Bounce 0,15 · 0,20 s",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "MqUnE",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Tabs, Hover-Lift",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "BORMr",
+              "name": "Tokens Staffelung",
+              "width": "fill_container",
+              "fill": "$surface-1",
+              "cornerRadius": 4,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ro0NY",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "Staffelung",
+                  "fontFamily": "$font-display",
+                  "fontSize": 20,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "kFdQx",
+                  "name": "Einträge",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "akFhQ",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "Einträge",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "xi0Xf",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "25 bis 40 ms",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "UWmz3",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Menüs, Chips",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "R8wgED",
+                  "name": "Zeilen",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "EcZ71",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "Zeilen",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "n0qhR",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "60 bis 90 ms",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ieKLS",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Listen, Headline-Wörter",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wkq65",
+                  "name": "Karten",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "MAPvx",
+                      "name": "Token",
+                      "fill": "$ink",
+                      "textGrowth": "fixed-width",
+                      "width": 70,
+                      "content": "Karten",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ewVk4",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": 150,
+                      "content": "170 ms",
+                      "fontFamily": "$mono",
+                      "fontSize": 11.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "M5qAS",
+                      "name": "Einsatz",
+                      "fill": "$text-subtle",
+                      "content": "Endboard geben",
+                      "fontFamily": "$font",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "LsLIQ",
+          "name": "Reihe 1",
+          "width": "fill_container",
+          "gap": 40,
+          "children": [
+            {
+              "type": "frame",
+              "id": "f8vme",
+              "name": "Szene 01 · Start",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "GDez8",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "01 · Start",
+                  "fontFamily": "$font-display",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "fvQgJ",
+                  "name": "Zweck",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Seltene Fläche. Die Illustration zeichnet sich mit Tusche, die Linien leben, das Wechselwort wird mit Rotstift gestrichen.",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "browser",
+                  "id": "N4eelW",
+                  "name": "Live 01-start",
+                  "width": 976,
+                  "height": 572,
+                  "url": "file:///home/bkoch/repos/personal/DuelPath/design/motion/01-start.html",
+                  "cornerRadius": 4,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Mv1Up",
+              "name": "Szene 02 · Karte spielen",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "B9K67",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "02 · Karte spielen",
+                  "fontFamily": "$font-display",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "L94FN",
+                  "name": "Zweck",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Kern der Workbench. Anheben, Ziehen mit Neigung, Einrasten per Feder, Schritt entsteht, Trigger und Suchziel.",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "browser",
+                  "id": "TakEX",
+                  "name": "Live 02-karte-spielen",
+                  "width": 976,
+                  "height": 572,
+                  "url": "file:///home/bkoch/repos/personal/DuelPath/design/motion/02-karte-spielen.html",
+                  "cornerRadius": 4,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "ANd3t",
+          "name": "Reihe 2",
+          "width": "fill_container",
+          "gap": 40,
+          "children": [
+            {
+              "type": "frame",
+              "id": "KOJ0v",
+              "name": "Szene 03 · Handtrap auf einen Schritt",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "xf9q6",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "03 · Handtrap auf einen Schritt",
+                  "fontFamily": "$font-display",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "sksQR",
+                  "name": "Zweck",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Ash auf Schritt 2 ziehen, Branch klappt auf, CL2 kommt vom Gegner, Chain löst rückwärts, Rotstift negiert.",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "browser",
+                  "id": "GPurY",
+                  "name": "Live 03-handtrap",
+                  "width": 976,
+                  "height": 572,
+                  "url": "file:///home/bkoch/repos/personal/DuelPath/design/motion/03-handtrap.html",
+                  "cornerRadius": 4,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "kGRBU",
+              "name": "Szene 04 · Stresstest",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "pJaWn",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "04 · Stresstest",
+                  "fontFamily": "$font-display",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "u0ilb",
+                  "name": "Zweck",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Seltene Fläche. Der Rotstift liest Korrektur, Kreise mit Stiftdruck, Zähler und Auswertung wachsen.",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "browser",
+                  "id": "qcZHl",
+                  "name": "Live 04-stresstest",
+                  "width": 976,
+                  "height": 572,
+                  "url": "file:///home/bkoch/repos/personal/DuelPath/design/motion/04-stresstest.html",
+                  "cornerRadius": 4,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "tuWnI",
+          "name": "Reihe 3",
+          "width": "fill_container",
+          "gap": 40,
+          "children": [
+            {
+              "type": "frame",
+              "id": "PXnY5",
+              "name": "Szene 05 · Moduswechsel",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ocnfY",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "05 · Moduswechsel",
+                  "fontFamily": "$font-display",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Y2qGs",
+                  "name": "Zweck",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Taste V. Dieselben Schritte wandern vom Board in den Baum, Kanten zeichnen sich nach Tiefe.",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "browser",
+                  "id": "PYzsf",
+                  "name": "Live 05-moduswechsel",
+                  "width": 976,
+                  "height": 572,
+                  "url": "file:///home/bkoch/repos/personal/DuelPath/design/motion/05-moduswechsel.html",
+                  "cornerRadius": 4,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "q6OOt",
+              "name": "Szene 06 · Endboard",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Atss7",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "06 · Endboard",
+                  "fontFamily": "$font-display",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "jdRaB",
+                  "name": "Zweck",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Seltene Fläche. Karten werden gegeben, Unterbrecher eingekreist, Branches im Vergleich.",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "browser",
+                  "id": "rT3at",
+                  "name": "Live 06-endboard",
+                  "width": 976,
+                  "height": 572,
+                  "url": "file:///home/bkoch/repos/personal/DuelPath/design/motion/06-endboard.html",
+                  "cornerRadius": 4,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "FX4v0",
+          "name": "Reihe 4",
+          "width": "fill_container",
+          "gap": 40,
+          "children": [
+            {
+              "type": "frame",
+              "id": "FFWaJ",
+              "name": "Szene 07 · Aktionsmenü",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "S7QjJV",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "07 · Aktionsmenü",
+                  "fontFamily": "$font-display",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "s7ghb",
+                  "name": "Zweck",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Wächst aus der Karte, Hervorhebung gleitet, zieht sich beim Wählen in die Karte zurück.",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "browser",
+                  "id": "D1VU2",
+                  "name": "Live 07-aktionsmenue",
+                  "width": 976,
+                  "height": 572,
+                  "url": "file:///home/bkoch/repos/personal/DuelPath/design/motion/07-aktionsmenue.html",
+                  "cornerRadius": 4,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "UIAyU",
+              "name": "Szene 08 · Mikro-Interaktionen",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 10,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "mopgS",
+                  "name": "Titel",
+                  "fill": "$ink",
+                  "content": "08 · Mikro-Interaktionen",
+                  "fontFamily": "$font-display",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "E1fVv",
+                  "name": "Zweck",
+                  "fill": "$text-muted",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Tabs, Speichern, Warnung, Schalter, Rückgängig, Zahl. Kurz und unterbrechbar.",
+                  "fontFamily": "$font",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "browser",
+                  "id": "q6kKRT",
+                  "name": "Live 08-mikro",
+                  "width": 976,
+                  "height": 572,
+                  "url": "file:///home/bkoch/repos/personal/DuelPath/design/motion/08-mikro.html",
+                  "cornerRadius": 4,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                }
+              ]
+            }
+          ]
         }
       ]
     }
