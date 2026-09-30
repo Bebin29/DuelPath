@@ -8,8 +8,6 @@ import { Navigation } from '@/components/common/Navigation';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { ToastProvider } from '@/components/components/ui/toast';
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
-import { OfflineProvider } from '@/components/providers/OfflineProvider';
-import { PerformanceProvider } from '@/components/providers/PerformanceProvider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -40,19 +38,15 @@ export default function RootLayout({
             <GlobalErrorBoundary>
               <SWRProvider>
                 <ToastProvider>
-                  <PerformanceProvider>
-                    <OfflineProvider>
-                      <div className="min-h-screen flex flex-col">
-                        <header>
-                          <Navigation />
-                          <div className="container mx-auto px-4 py-2 flex justify-end">
-                            <LanguageSwitcher />
-                          </div>
-                        </header>
-                        <main className="flex-1">{children}</main>
+                  <div className="min-h-screen flex flex-col">
+                    <header>
+                      <Navigation />
+                      <div className="container mx-auto px-4 py-2 flex justify-end">
+                        <LanguageSwitcher />
                       </div>
-                    </OfflineProvider>
-                  </PerformanceProvider>
+                    </header>
+                    <main className="flex-1">{children}</main>
+                  </div>
                 </ToastProvider>
               </SWRProvider>
             </GlobalErrorBoundary>

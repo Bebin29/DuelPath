@@ -189,13 +189,6 @@
     },
     "backToCombos": "Zurück zu Kombos"
   },
-  "offline": {
-    "status": "Offline",
-    "syncing": "Synchronisiere...",
-    "pending": "{{count}} Änderung(en) ausstehend",
-    "syncSuccess": "Synchronisation erfolgreich",
-    "syncError": "Synchronisation fehlgeschlagen"
-  },
   "common": {
     "justNow": "Gerade eben",
     "minutesAgo": "vor {{count}} Minute(n)",
@@ -226,8 +219,6 @@
     "redo": "Wiederholen",
     "back": "Zurück",
     "selected": "ausgewählt",
-    "offline": "Offline",
-    "syncing": "Synchronisiere...",
     "cards": "Karten",
     "toast": {
       "close": "Schließen"

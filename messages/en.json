@@ -187,8 +187,6 @@
     "redo": "Redo",
     "back": "Back",
     "selected": "selected",
-    "offline": "Offline",
-    "syncing": "Syncing...",
     "cards": "cards",
     "toast": {
       "close": "Close"
