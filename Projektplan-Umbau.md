@@ -166,7 +166,7 @@ function stateAt(nodes, nodeId, start: StartState, cards: Map<string, CardData>)
 2. Bewegungen über **Schnellaktionen** festlegen (Suchen, Beschwören, Senden, Verbannen, Abwerfen, Zurück ins Deck).
 3. Alles, was die Schnellaktionen nicht abdecken, per **Drag & Drop** im Zustandspanel.
 
-**Gegnerreaktionen:** Am `OPPONENT`-Knoten gibt es eine Schnellauswahl gängiger TCG-Handtraps und Unterbrechungen (`src/lib/staples.ts`, fest hinterlegt, erweiterbar) und zusätzlich die freie Kartensuche.
+**Gegnerreaktionen:** Am `OPPONENT`-Knoten gibt es eine Schnellauswahl gängiger TCG-Handtraps und Unterbrechungen und zusätzlich die freie Kartensuche; an einer gegnerischen Aktivierung die Antworten der eigenen Seite (Called by the Grave, Crossout Designator, Forbidden Droplet). Die Liste steht in `src/lib/combo/reactions.ts` (`STAPLES`) und legt pro Karte fest, wie sie aktiviert wird (abwerfen, sich selbst beschwören, Falle von der Hand, gesetzte Falle, Quick-Play) und welches Negierungsziel voreingestellt ist (z. B. Ash: Effekt des obersten gegnerischen Links; Solemn: Aktivierung oder, ohne Chain, die letzte Beschwörung). Eine vorhandene Karteninstanz (Hand oder gesetzte Falle im Gegnerboard) wird wiederverwendet, sonst entsteht sie durch die Aktivierungsbewegung. Im TCG verbotene Karten (aktuell Dimension Shifter) fallen beim Laden heraus. Im Startzustand liegen Karten in der Zauber/Fallen-Zone standardmäßig verdeckt.
 
 ### 4.5 Effektvorschläge mit Jev
 
@@ -224,7 +224,7 @@ interface RulingMechanic {
 | **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder (**erledigt**)             | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
 | **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking (**erledigt**)                                                         | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
 | **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop (**erledigt**, Chain-Gruppen als Markierung) | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
-| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand                                                                                    | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
+| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand (**erledigt**)                                                                     | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
 | **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert                                                                               | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
 | **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen, YDK-Import fertigstellen (bisher nur ein Platzhalter)                          | Combo aus einem Deck heraus starten                                                    |
 
