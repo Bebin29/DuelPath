@@ -11,8 +11,12 @@ Kopiere `.env.example` nach `.env` und trage ein `AUTH_SECRET` ein:
 DATABASE_URL="postgresql://duelpath:duelpath@localhost:5433/duelpath"
 # Erzeugen mit: npx auth secret
 AUTH_SECRET=""
-# Für Jev-Vorschläge (OpenRouter), optional
+# Für Jev (OpenRouter), optional: https://openrouter.ai/keys
 OPENROUTER_API_KEY=""
+# Leer = typesafe/jev-1.13-20260917 (fest gepinnt)
+JEV_MODEL=""
+# Leer = ~/.duelpath/card-images (bewusst außerhalb des Repos)
+CARD_IMAGE_DIR=""
 ```
 
 Postgres läuft auf Port **5433**, damit es nicht mit anderen lokalen Postgres-Instanzen auf 5432 kollidiert.
@@ -48,15 +52,22 @@ npm run dev
 
 ## Kartenimport
 
-Nach dem ersten Setup müssen die Yu-Gi-Oh! Karten von der YGOPRODeck API importiert werden:
+Nach dem ersten Setup die TCG-Karten von YGOPRODeck importieren (englische und deutsche Texte, OCG-only-Karten werden übersprungen):
 
 ```bash
-npx tsx --env-file=.env prisma/scripts/import-cards.ts
+npm run cards:import
 ```
 
-Der Import kann einige Minuten dauern, da die API Rate-Limiting hat (20 Requests/Sekunde).
+Der Import dauert etwa zwei Minuten. Dabei wird jeder Kartentext in einzelne Effekte zerlegt und OPT-Klauseln zugeordnet. Unsichere Zerlegungen werden mit `effectsReview` markiert.
 
-**Hinweis:** Der Import kann auch über die API-Route `/api/cards/import` (POST) ausgeführt werden, erfordert jedoch eine authentifizierte Session.
+Optional prüft Jev die Zerlegung (braucht `OPENROUTER_API_KEY`, kostet für alle Karten etwa 0,40 US-Dollar):
+
+```bash
+npm run cards:check-effects          # nur noch nicht bewertete Karten
+npm run cards:check-effects -- --all # alle Karten neu, z. B. nach Parser-Änderungen
+```
+
+Kartenbilder werden beim ersten Abruf von YGOPRODeck geladen und in `CARD_IMAGE_DIR` (Standard: `~/.duelpath/card-images`) zwischengespeichert. YGOPRODeck erlaubt kein Hotlinking.
 
 ## Nützliche Befehle
 
@@ -65,3 +76,5 @@ Der Import kann einige Minuten dauern, da die API Rate-Limiting hat (20 Requests
 - `npm run db:migrate`: Erstellt und führt Migrationen aus
 - `npm run db:seed`: Legt den Test-User an
 - `npm run db:generate`: Erzeugt den Prisma Client neu
+- `npm run cards:import`: Importiert bzw. aktualisiert alle TCG-Karten
+- `npm run cards:check-effects`: Lässt Jev die Effektzerlegung bewerten
