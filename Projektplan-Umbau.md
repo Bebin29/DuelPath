@@ -232,7 +232,7 @@ model RulingMechanic {
 |---|---|
 | Zugumfang | ein eigener Zug pro Combo |
 | Auth | bleibt |
-| Gegnerreaktionen | Staple-Liste plus freie Suche |
+| Gegnerreaktionen | Staple-Liste plus freie Suche. Handtraps: Ash Blossom, Imperm, Nibiru, Veiler, Ghost Belle, Ghost Ogre, Ghost Mourner, Droll, D.D. Crow, PSY-Framegear Gamma, Mulcharmy Fuwalos, Mulcharmy Purulia, Dimension Shifter. Feld: Solemn Judgment, Solemn Strike, Solemn Warning, Skill Drain, Evenly Matched. Eigene Seite: Called by the Grave, Crossout Designator, Forbidden Droplet. Verbotene Karten fallen über `ban_tcg` raus. |
 | Eingabe der Bewegungen | Schnellaktionen plus Drag & Drop |
 | Starthand | aus dem Deck wählen |
 | Going Second | Gegnerboard im Startzustand möglich |
@@ -246,5 +246,4 @@ model RulingMechanic {
 
 ## 8. Offen
 
-- Staple-Liste für Gegnerreaktionen: Vorschlag liegt vor, Rückmeldung ausstehend.
 - Unsichere Rulings aus der Recherche: Gelten „the turn you activate“-Einschränkungen auch bei negierter Aktivierung? Endet die Negierung durch Imperm oder Veiler, wenn das Monster das Feld verlässt? Viele Detail-Rulings stammen aus der OCG-Datenbank. Diese Fälle laufen vorerst als Jev-Kontext und über `optOverride`.
