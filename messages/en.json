@@ -428,5 +428,14 @@
     "overflow": "No free zone",
     "endboard": "Endboard",
     "summary": "Summary"
+  },
+  "preview": {
+    "effects": "Effects",
+    "ban": {
+      "Forbidden": "Forbidden",
+      "Limited": "Limited · 1",
+      "Semi-Limited": "Semi-Limited · 2",
+      "Unlimited": "Unlimited"
+    }
   }
 }

@@ -211,6 +211,12 @@ export async function getUserDecks() {
                 def: true,
                 archetype: true,
                 imageSmall: true,
+
+                nameDe: true,
+
+                banTcg: true,
+
+                effects: true,
                 passcode: true,
               },
             },
@@ -292,6 +298,12 @@ export async function getDeckById(deckId: string, options?: { skip?: number; tak
             def: true,
             archetype: true,
             imageSmall: true,
+
+            nameDe: true,
+
+            banTcg: true,
+
+            effects: true,
             passcode: true,
             // desc wird nicht geladen, da es für Deck-Liste nicht benötigt wird
           },
@@ -410,6 +422,12 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
                     def: true,
                     archetype: true,
                     imageSmall: true,
+
+                    nameDe: true,
+
+                    banTcg: true,
+
+                    effects: true,
                     passcode: true,
                   },
                 },
@@ -456,6 +474,12 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
               def: true,
               archetype: true,
               imageSmall: true,
+
+              nameDe: true,
+
+              banTcg: true,
+
+              effects: true,
               passcode: true,
             },
           },
@@ -485,6 +509,12 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
               def: true,
               archetype: true,
               imageSmall: true,
+
+              nameDe: true,
+
+              banTcg: true,
+
+              effects: true,
               passcode: true,
             },
           },
@@ -564,6 +594,12 @@ export async function updateCardQuantity(deckId: string, data: UpdateCardQuantit
             def: true,
             archetype: true,
             imageSmall: true,
+
+            nameDe: true,
+
+            banTcg: true,
+
+            effects: true,
             passcode: true,
           },
         },
@@ -654,6 +690,12 @@ export async function moveCardBetweenSections(
               def: true,
               archetype: true,
               imageSmall: true,
+
+              nameDe: true,
+
+              banTcg: true,
+
+              effects: true,
               passcode: true,
             },
           },
@@ -689,6 +731,12 @@ export async function moveCardBetweenSections(
               def: true,
               archetype: true,
               imageSmall: true,
+
+              nameDe: true,
+
+              banTcg: true,
+
+              effects: true,
               passcode: true,
             },
           },
@@ -749,6 +797,12 @@ export async function removeCardFromDeck(deckId: string, data: RemoveCardFromDec
               def: true,
               archetype: true,
               imageSmall: true,
+
+              nameDe: true,
+
+              banTcg: true,
+
+              effects: true,
               passcode: true,
             },
           },
@@ -867,6 +921,12 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                         def: true,
                         archetype: true,
                         imageSmall: true,
+
+                        nameDe: true,
+
+                        banTcg: true,
+
+                        effects: true,
                         passcode: true,
                       },
                     },
@@ -894,6 +954,12 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                         def: true,
                         archetype: true,
                         imageSmall: true,
+
+                        nameDe: true,
+
+                        banTcg: true,
+
+                        effects: true,
                         passcode: true,
                       },
                     },
@@ -935,6 +1001,12 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                       def: true,
                       archetype: true,
                       imageSmall: true,
+
+                      nameDe: true,
+
+                      banTcg: true,
+
+                      effects: true,
                       passcode: true,
                     },
                   },
@@ -965,6 +1037,12 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                       def: true,
                       archetype: true,
                       imageSmall: true,
+
+                      nameDe: true,
+
+                      banTcg: true,
+
+                      effects: true,
                       passcode: true,
                     },
                   },
@@ -1028,6 +1106,12 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                         def: true,
                         archetype: true,
                         imageSmall: true,
+
+                        nameDe: true,
+
+                        banTcg: true,
+
+                        effects: true,
                         passcode: true,
                       },
                     },
@@ -1051,6 +1135,12 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                         def: true,
                         archetype: true,
                         imageSmall: true,
+
+                        nameDe: true,
+
+                        banTcg: true,
+
+                        effects: true,
                         passcode: true,
                       },
                     },

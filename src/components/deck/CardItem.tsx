@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import Image from 'next/image';
 import { CardDetailDialog } from './CardDetailDialog';
+import { CardPreview } from '@/components/cards/CardPreview';
 
 interface CardItemProps {
   card: Card;
@@ -47,16 +48,18 @@ function CardItemComponent({ card, onAdd, showAddButton = true }: CardItemProps)
         <div className="flex gap-3">
           {/* Kartenbild */}
           {card.imageSmall && (
-            <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded border">
-              <Image
-                src={card.imageSmall}
-                alt={card.name}
-                fill
-                className="object-cover"
-                sizes="56px"
-                loading="lazy"
-              />
-            </div>
+            <CardPreview card={card}>
+              <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded border">
+                <Image
+                  src={card.imageSmall}
+                  alt={card.name}
+                  fill
+                  className="object-cover"
+                  sizes="56px"
+                  loading="lazy"
+                />
+              </div>
+            </CardPreview>
           )}
 
           {/* Karteninfo */}

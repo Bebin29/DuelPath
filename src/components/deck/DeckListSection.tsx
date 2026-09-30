@@ -15,6 +15,7 @@ import type { DeckSection } from '@/lib/validations/deck.schema';
 import type { CardForDeck } from '@/lib/hooks/use-deck-history';
 import Image from 'next/image';
 import { CardDetailDialog } from './CardDetailDialog';
+import { CardPreview } from '@/components/cards/CardPreview';
 import {
   VIRTUALIZATION_THRESHOLD_DECK_LIST,
   ESTIMATED_DECK_CARD_HEIGHT,
@@ -165,16 +166,18 @@ const SortableDeckCardItem = memo(function SortableDeckCardItem({
       )}
       {/* Kartenbild */}
       {deckCard.card.imageSmall && (
-        <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded border">
-          <Image
-            src={deckCard.card.imageSmall}
-            alt={deckCard.card.name}
-            fill
-            className="object-cover"
-            sizes="44px"
-            loading="lazy"
-          />
-        </div>
+        <CardPreview card={deckCard.card}>
+          <div className="relative h-16 w-11 shrink-0 overflow-hidden rounded border">
+            <Image
+              src={deckCard.card.imageSmall}
+              alt={deckCard.card.name}
+              fill
+              className="object-cover"
+              sizes="44px"
+              loading="lazy"
+            />
+          </div>
+        </CardPreview>
       )}
 
       {/* Karteninfo */}

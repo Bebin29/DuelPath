@@ -1,3 +1,4 @@
+import { initialsOf } from '@/lib/cards/nicknames';
 import { prisma } from '@/lib/prisma/client';
 import { parseEffects } from '@/lib/cards/effects';
 import type { Prisma } from '@/generated/prisma/client';
@@ -61,6 +62,7 @@ export function mapCard(
     passcode,
     name: card.name,
     nameDe: german?.name ?? null,
+    initials: initialsOf(card.name),
     type: card.type,
     race: card.race ?? null,
     attribute: card.attribute ?? null,

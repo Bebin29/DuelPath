@@ -74,6 +74,7 @@ model Card {
   id            String    @id @default(cuid())
   name          String
   nameDe        String?
+  initials      String? // Kürzel aus Anfangsbuchstaben für die Suche, „bewd“ (src/lib/cards/nicknames.ts)
   type          String // z.B. "Normal Monster", "Effect Monster", "Spell Card", etc.
   race          String? // Monster-Typ oder Spell/Trap-Kategorie
   attribute     String? // LIGHT, DARK, EARTH, etc. (nur bei Monstern)
@@ -98,6 +99,7 @@ model Card {
 
   // ponytail: Namenssuche per ILIKE ohne Trigramm-Index; bei ~14k Karten schnell genug, pg_trgm-GIN-Index wenn die Suche spürbar langsam wird
   @@index([name])
+  @@index([initials])
   @@index([type])
   @@index([archetype])
 }
