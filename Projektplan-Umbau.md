@@ -79,66 +79,56 @@ Quelle bleibt die YGOPRODeck-API (`cardinfo.php?misc=yes`).
 
 Kernentscheidung: **Der Gamestate wird nicht gespeichert, sondern berechnet.** Jeder Knoten speichert nur, was er auslöst. Der Zustand an einem Knoten ist der Startzustand plus alle Knoten auf dem Pfad von der Wurzel bis dorthin.
 
-```prisma
-model Combo {
-  id         String      @id @default(cuid())
-  title      String
-  userId     String
-  deckId     String?
-  startState Json        // Starthand, optional Gegnerboard
-  nodes      ComboNode[]
-}
-
-model ComboNode {
-  id           String      @id @default(cuid())
-  comboId      String
-  parentId     String?     // null = Wurzel
-  kind         String      // ACTION | ACTIVATE | OPPONENT | RESOLVE | END
-  player       String      // SELF | OPPONENT
-  edgeLabel    String?     // "Keine Reaktion", "Ash Blossom", ...
-  cardId       String?
-  effectIndex  Int?
-  costMoves    Json        // CardMove[], bei Aktivierung
-  resolveMoves Json        // CardMove[], bei Auflösung
-  negates      Json?       // { nodeId, type: 'ACTIVATION' | 'EFFECT' | 'SUMMON' }
-  optOverride  Boolean?    // manueller Eingriff, falls die Regel nicht passt
-  note         String?
-  combo        Combo       @relation(fields: [comboId], references: [id], onDelete: Cascade)
-  parent       ComboNode?  @relation("Tree", fields: [parentId], references: [id], onDelete: Cascade)
-  children     ComboNode[] @relation("Tree")
-}
-```
+Umgesetzt in `src/lib/combo/state.ts` (Logik) und den Tabellen `Combo` / `ComboNode` in `prisma/schema.prisma`.
 
 ```ts
 type Zone = 'HAND' | 'DECK' | 'EXTRA' | 'MONSTER' | 'SPELL_TRAP' | 'FIELD' | 'GY' | 'BANISHED';
 type CardMove = {
   instanceId: string;
+  cardId?: string;
   from: Zone;
   to: Zone;
   slot?: number;
-  position?: CardPosition;
+  position?: 'ATK' | 'DEF' | 'SET';
+  controller?: Player;
 };
+
+type Negation =
+  | { type: 'ACTIVATION'; nodeId: string } // Solemn Strike, Counter Traps
+  | { type: 'EFFECT'; nodeId: string } // Ash Blossom
+  | { type: 'SUMMON'; nodeId: string } // Solemn Judgment, zielt auf den ACTION-Knoten der Beschwörung
+  | { type: 'CARD'; instanceId: string } // Imperm, Veiler: Effekte der Karte bis Zugende negiert
+  | { type: 'NAME'; cardId: string }; // Called by the Grave, Crossout Designator
 
 type GameState = {
-  self: PlayerState;
-  opponent: PlayerState;
+  cards: Record<string, PlacedCard>; // jede Instanz mit Zone, Kontrolleur, Position und Epoche
   chain: ChainLink[]; // offene Chain, CL1 zuerst
-  usedEffects: OptUsage[]; // für OPT-Tracking
+  optUsage: Record<string, number>; // OPT-Schlüssel -> Nutzungen
   normalSummonUsed: boolean;
+  negatedCards: Record<string, number>; // instanceId -> Epoche der Negierung
+  negatedNames: string[];
+  warnings: { nodeId: string; message: string }[];
 };
 
-function stateAt(combo: Combo, nodeId: string): GameState; // reine Funktion, voll getestet
+function stateAt(nodes, nodeId, start: StartState, cards: Map<string, CardData>): GameState;
 ```
+
+- `stateAt` ist eine reine Funktion; die Kartendaten (Name, Typ, zerlegte Effekte) werden übergeben, damit sie ohne Datenbank testbar bleibt.
+- **Epoche:** Jede Karteninstanz zählt Ortswechsel und Verdecken. Soft OPT und Negierungen wie Imperm gelten pro Epoche und enden damit automatisch, wenn die Karte das Feld verlässt.
+- **OPT-Schlüssel:** Soft `soft:<instanz>:<epoche>:<effekt>`, Hard `hard:<spieler>:<name>#<effekt>` bzw. die Gruppe bei gemeinsamen Zählern, „activate 1 X per turn“ `card:<spieler>:<name>`.
+- **Karten aus dem Deck:** Eine Bewegung mit `cardId` legt die Instanz an, wenn sie im Startzustand fehlt (z. B. gesuchte Karten ohne vollständige Deckliste).
+- **Warnungen statt Verbote:** verbrauchter OPT, zweite Normal Summon, Bewegung aus der falschen Zone, zu niedriger Spell Speed (nicht bei Triggern), Aktivierung negierter Karten. Der Nutzer kann bewusst abweichen.
+- **Noch nicht modelliert:** wartende Trigger und Missing the Timing (Trigger legt der Nutzer als `ACTIVATE`-Knoten an), Zonenkapazität, Lebenspunkte.
 
 **Knotentypen:**
 
-| Typ        | Bedeutung                                                                            | Wirkung in `stateAt`                                                             |
-| ---------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `ACTION`   | Handlung ohne Chain: Normal Summon, Special Summon per Beschwörungsverfahren, Setzen | `resolveMoves` sofort anwenden                                                   |
-| `ACTIVATE` | Effekt aktivieren, bildet einen Chain Link                                           | `costMoves` sofort, Link auf die Chain legen, OPT eintragen                      |
-| `OPPONENT` | Verzweigungspunkt: Gegner kann reagieren                                             | keine; Kinder sind die Eventualitäten, beschriftet über `edgeLabel`              |
-| `RESOLVE`  | Chain wird aufgelöst                                                                 | Links rückwärts auflösen, `resolveMoves` je Link, negierte Links gemäß `negates` |
-| `END`      | Endboard                                                                             | keine                                                                            |
+| Typ        | Bedeutung                                                                            | Wirkung in `stateAt`                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `ACTION`   | Handlung ohne Chain: Normal Summon, Special Summon per Beschwörungsverfahren, Setzen | `resolveMoves` sofort anwenden                                                                                                        |
+| `ACTIVATE` | Effekt aktivieren, bildet einen Chain Link                                           | `costMoves` sofort (Kosten, Karte aufs Feld), Link auf die Chain legen, OPT eintragen                                                 |
+| `OPPONENT` | Verzweigungspunkt: Gegner kann reagieren                                             | keine; Kinder sind die Eventualitäten, beschriftet über `edgeLabel`                                                                   |
+| `RESOLVE`  | Chain wird aufgelöst                                                                 | Links rückwärts auflösen, `resolveMoves` je Link, Negierungen anwenden, danach aufräumen (Normal/Quick-Play/Counter auf den Friedhof) |
+| `END`      | Endboard                                                                             | keine                                                                                                                                 |
 
 **Chains explizit:** Aktivierungen stapeln sich als Chain Links (CL1, CL2, ...), bis ein `RESOLVE`-Knoten kommt. Auf dem Canvas wird eine offene Chain als Gruppe dargestellt. Gegnerische Reaktionen (Ash Blossom, Imperm, Nibiru, ...) sind `ACTIVATE`-Knoten mit `player = OPPONENT` und `negates`.
 
@@ -229,7 +219,7 @@ interface RulingMechanic {
 | **M1** | PostgreSQL per Docker, Prisma 7 und Provider umstellen, Migrationen neu anlegen (**erledigt**)                                               | App startet gegen lokales Postgres                                                     |
 | **M2** | `RULING_MECHANICS` und PSCT-Muster aus `docs/research/rulings.md` übernehmen (**erledigt**)                                                  | alle Mechaniken aus der Recherche im Code, Test grün                                   |
 | **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder (**erledigt**) | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
-| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking                                                            | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
+| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking (**erledigt**)                                             | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
 | **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop                                  | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
 | **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand                                                                        | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
 | **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert                                                                   | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
