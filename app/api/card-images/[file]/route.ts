@@ -8,7 +8,7 @@ import path from 'node:path';
  * YGOPRODeck erlaubt kein Hotlinking. Bilder werden beim ersten Abruf heruntergeladen und lokal
  * zwischengespeichert, standardmäßig außerhalb des Repos (der Ordner liegt sonst in OneDrive).
  */
-const CACHE_DIR = process.env.CARD_IMAGE_DIR ?? path.join(homedir(), '.duelpath', 'card-images');
+const CACHE_DIR = process.env.CARD_IMAGE_DIR || path.join(homedir(), '.duelpath', 'card-images');
 
 export async function GET(_request: Request, { params }: { params: Promise<{ file: string }> }) {
   const { file } = await params;
