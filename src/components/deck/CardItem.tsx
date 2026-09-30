@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import Image from 'next/image';
 import { CardDetailDialog } from './CardDetailDialog';
-import { useCardPrefetch } from '@/lib/hooks/use-card-prefetch';
 
 interface CardItemProps {
   card: Card;
@@ -21,7 +20,6 @@ interface CardItemProps {
  */
 function CardItemComponent({ card, onAdd, showAddButton = true }: CardItemProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { prefetchCard, cancelPrefetch } = useCardPrefetch({ delay: 200 });
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.id,
@@ -45,8 +43,6 @@ function CardItemComponent({ card, onAdd, showAddButton = true }: CardItemProps)
         {...attributes}
         className="group relative rounded-lg border bg-card p-3 hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
         onClick={() => setDialogOpen(true)}
-        onMouseEnter={() => prefetchCard(card.id)}
-        onMouseLeave={() => cancelPrefetch(card.id)}
       >
         <div className="flex gap-3">
           {/* Kartenbild */}

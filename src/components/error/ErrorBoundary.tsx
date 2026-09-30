@@ -106,7 +106,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       if (this.props.fallback) {
         if (typeof this.props.fallback === 'function') {
           const error = this.state.error || new Error('An unknown error occurred');
-          return this.props.fallback({ error, resetError: this.resetErrorBoundary });
+          return this.props.fallback(error, this.resetErrorBoundary);
         }
         return this.props.fallback;
       }

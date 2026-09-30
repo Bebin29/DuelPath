@@ -79,8 +79,6 @@ function ToastComponent({
     };
   }, [duration, isRetrying, closeToast]);
 
-  // handleClose is now closeToast
-
   async function handleRetry() {
     if (!onRetry) return;
 
@@ -144,7 +142,7 @@ function ToastComponent({
         )}
       </div>
       <button
-        onClick={handleClose}
+        onClick={closeToast}
         className="shrink-0 rounded-md p-1 opacity-70 hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
         aria-label="Toast schließen"
         disabled={isRetrying}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, startTransition } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import {
   Dialog,
@@ -73,25 +73,27 @@ export function CardDetailDialog({ card, open, onOpenChange, onAddToDeck }: Card
     return null;
   }
 
+  const shown: CardForDeck & Partial<Card> = displayCard;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{card.name}</DialogTitle>
+          <DialogTitle className="text-2xl">{shown.name}</DialogTitle>
           <DialogDescription>
-            {card.type}
-            {card.archetype && ` • ${card.archetype}`}
+            {shown.type}
+            {shown.archetype && ` • ${shown.archetype}`}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex gap-6 flex-1 overflow-hidden">
           {/* Linke Spalte: Kartenbild */}
           <div className="flex-shrink-0">
-            {card.imageUrl ? (
+            {shown.imageUrl ? (
               <div className="relative w-64 h-[89.6%] rounded-lg overflow-hidden border-2 border-border">
                 <Image
-                  src={card.imageUrl}
-                  alt={card.name}
+                  src={shown.imageUrl}
+                  alt={shown.name}
                   fill
                   className="object-contain"
                   sizes="256px"
@@ -114,48 +116,48 @@ export function CardDetailDialog({ card, open, onOpenChange, onAddToDeck }: Card
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="font-medium text-muted-foreground">Typ:</span>{' '}
-                    <span>{card.type}</span>
+                    <span>{shown.type}</span>
                   </div>
-                  {card.race && (
+                  {shown.race && (
                     <div>
                       <span className="font-medium text-muted-foreground">Kategorie:</span>{' '}
-                      <span>{card.race}</span>
+                      <span>{shown.race}</span>
                     </div>
                   )}
-                  {card.attribute && (
+                  {shown.attribute && (
                     <div>
                       <span className="font-medium text-muted-foreground">Attribut:</span>{' '}
-                      <Badge variant="outline">{card.attribute}</Badge>
+                      <Badge variant="outline">{shown.attribute}</Badge>
                     </div>
                   )}
-                  {card.level !== null && (
+                  {shown.level !== null && (
                     <div>
                       <span className="font-medium text-muted-foreground">Level/Rang:</span>{' '}
-                      <span>{card.level}</span>
+                      <span>{shown.level}</span>
                     </div>
                   )}
-                  {card.atk !== null && (
+                  {shown.atk !== null && (
                     <div>
                       <span className="font-medium text-muted-foreground">ATK:</span>{' '}
-                      <span>{card.atk === -1 ? '?' : card.atk}</span>
+                      <span>{shown.atk === -1 ? '?' : shown.atk}</span>
                     </div>
                   )}
-                  {card.def !== null && (
+                  {shown.def !== null && (
                     <div>
                       <span className="font-medium text-muted-foreground">DEF:</span>{' '}
-                      <span>{card.def === -1 ? '?' : card.def}</span>
+                      <span>{shown.def === -1 ? '?' : shown.def}</span>
                     </div>
                   )}
-                  {card.archetype && (
+                  {shown.archetype && (
                     <div className="col-span-2">
                       <span className="font-medium text-muted-foreground">Archetype:</span>{' '}
-                      <Badge variant="secondary">{card.archetype}</Badge>
+                      <Badge variant="secondary">{shown.archetype}</Badge>
                     </div>
                   )}
-                  {card.passcode && (
+                  {shown.passcode && (
                     <div>
                       <span className="font-medium text-muted-foreground">Passcode:</span>{' '}
-                      <span className="font-mono text-xs">{card.passcode}</span>
+                      <span className="font-mono text-xs">{shown.passcode}</span>
                     </div>
                   )}
                 </div>
@@ -164,17 +166,17 @@ export function CardDetailDialog({ card, open, onOpenChange, onAddToDeck }: Card
               <Separator />
 
               {/* Effekttext */}
-              {card.desc && (
+              {shown.desc && (
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold">Kartentext</h3>
                   <div className="text-sm leading-relaxed whitespace-pre-wrap bg-muted/50 p-4 rounded-lg">
-                    {card.desc}
+                    {shown.desc}
                   </div>
                 </div>
               )}
 
               {/* Banlist-Info */}
-              {card.banlistInfo && (
+              {shown.banlistInfo && (
                 <>
                   <Separator />
                   <div className="space-y-2">
@@ -182,7 +184,7 @@ export function CardDetailDialog({ card, open, onOpenChange, onAddToDeck }: Card
                     <div className="text-sm">
                       {(() => {
                         try {
-                          const banlist = JSON.parse(card.banlistInfo);
+                          const banlist = JSON.parse(shown.banlistInfo);
                           return (
                             <div className="space-y-1">
                               {Object.entries(banlist).map(([format, status]) => (
@@ -204,7 +206,7 @@ export function CardDetailDialog({ card, open, onOpenChange, onAddToDeck }: Card
                             </div>
                           );
                         } catch {
-                          return <Badge variant="secondary">{card.banlistInfo}</Badge>;
+                          return <Badge variant="secondary">{shown.banlistInfo}</Badge>;
                         }
                       })()}
                     </div>
@@ -217,7 +219,7 @@ export function CardDetailDialog({ card, open, onOpenChange, onAddToDeck }: Card
                 <>
                   <Separator />
                   <div className="flex justify-end">
-                    <Button onClick={() => onAddToDeck(card.id)}>{t('deck.addCard')}</Button>
+                    <Button onClick={() => onAddToDeck(shown.id)}>{t('deck.addCard')}</Button>
                   </div>
                 </>
               )}

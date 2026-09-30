@@ -1034,7 +1034,7 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                     },
                   },
                 });
-                results.push({ success: true, operation, deckCard: updated });
+                results.push({ success: true, operation, deckCard: updated ?? undefined });
               } else {
                 const updated = await tx.deckCard.update({
                   where: { id: existing.id },

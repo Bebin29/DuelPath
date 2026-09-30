@@ -19,7 +19,7 @@ export interface DeckWithCards extends Deck {
   deckCards: Array<DeckCard & { card: CardForDeck }>;
 }
 
-type HistoryAction =
+export type HistoryAction =
   | { type: 'addCard'; cardId: string; section: string }
   | { type: 'removeCard'; cardId: string; section: string }
   | {
