@@ -110,6 +110,37 @@
       "cardAdded": "Card added successfully",
       "cardRemoved": "Card removed successfully",
       "quantityUpdated": "Quantity updated successfully"
+    },
+    "import": {
+      "ydk": "Import YDK",
+      "success": "Deck imported",
+      "successDescription": "{{count}} cards were imported",
+      "warning": "Import warning",
+      "error": "Import error",
+      "errorDescription": "Failed to import the YDK file",
+      "confirmReplace": "The import replaces the entire content of this deck. Continue?",
+      "missing": "{{count}} passcodes without a matching TCG card: {{passcodes}}"
+    },
+    "enableRegex": "Enable regex search",
+    "regexEnabled": "Regex search enabled",
+    "history": {
+      "timeline": "History",
+      "empty": "No history entries",
+      "initialState": "Initial state",
+      "addCard": "Card added ({{section}})",
+      "removeCard": "Card removed ({{section}})",
+      "updateQuantity": "Quantity changed ({{old}} → {{new}})",
+      "moveCard": "Card moved ({{from}} → {{to}})",
+      "limit": "Limit"
+    },
+    "bulk": {
+      "remove": "Remove selected",
+      "move": "Move to"
+    },
+    "export": {
+      "ydk": "Export YDK",
+      "success": "Deck exported",
+      "successDescription": "The deck was exported as a YDK file"
     }
   },
   "dashboard": {
@@ -190,7 +221,10 @@
     "cards": "cards",
     "toast": {
       "close": "Close"
-    }
+    },
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} minute(s) ago",
+    "hoursAgo": "{{count}} hour(s) ago"
   },
   "combo": {
     "title": "Combos",

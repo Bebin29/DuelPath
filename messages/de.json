@@ -102,10 +102,10 @@
       "timeline": "Verlauf",
       "empty": "Keine Verlaufseinträge",
       "initialState": "Ausgangszustand",
-      "addCard": "Karte hinzugefügt ({section})",
-      "removeCard": "Karte entfernt ({section})",
-      "updateQuantity": "Anzahl geändert ({old} → {new})",
-      "moveCard": "Karte verschoben ({from} → {to})",
+      "addCard": "Karte hinzugefügt ({{section}})",
+      "removeCard": "Karte entfernt ({{section}})",
+      "updateQuantity": "Anzahl geändert ({{old}} → {{new}})",
+      "moveCard": "Karte verschoben ({{from}} → {{to}})",
       "limit": "Limit"
     },
     "bulk": {
@@ -123,7 +123,9 @@
       "successDescription": "{{count}} Karten wurden erfolgreich importiert",
       "warning": "Import-Warnung",
       "error": "Import-Fehler",
-      "errorDescription": "Fehler beim Importieren der YDK-Datei"
+      "errorDescription": "Fehler beim Importieren der YDK-Datei",
+      "confirmReplace": "Der Import ersetzt den kompletten Inhalt dieses Decks. Fortfahren?",
+      "missing": "{{count}} Passcodes ohne passende TCG-Karte: {{passcodes}}"
     },
     "cardAdded": "Karte hinzugefügt",
     "cardAddedDescription": "{{name}} wurde zum Deck hinzugefügt",
