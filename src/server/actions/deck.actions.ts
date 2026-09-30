@@ -28,26 +28,9 @@ import type { Card } from '@/generated/prisma/client';
  * @returns Deck-Sektion (MAIN, EXTRA oder SIDE)
  */
 function determineDeckSection(card: Card): DeckSection {
-  const extraDeckTypes = [
-    'Fusion Monster',
-    'Synchro Monster',
-    'XYZ Monster',
-    'Link Monster',
-    'Pendulum Effect Fusion Monster',
-    'Pendulum Effect Synchro Monster',
-    'Pendulum Effect XYZ Monster',
-    'Pendulum Effect Link Monster',
-    'Ritual Effect Monster',
-    'Ritual Monster',
-  ];
-
-  // Prüfe ob der Kartentyp Extra Deck Karten enthält
-  if (extraDeckTypes.some((type) => card.type.includes(type))) {
-    return 'EXTRA';
-  }
-
-  // Standard: Main Deck
-  return 'MAIN';
+  // Extra Deck: Fusion, Synchro, Xyz und Link, auch als Pendel ("Synchro Pendulum Effect Monster").
+  // Ritualmonster gehören ins Main Deck.
+  return /Fusion|Synchro|XYZ|Link/.test(card.type) ? 'EXTRA' : 'MAIN';
 }
 
 /**
