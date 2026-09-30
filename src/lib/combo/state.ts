@@ -282,8 +282,11 @@ function activate(
   // Spell Speed: ab Chain Link 2 mindestens 2 und nicht niedriger als der vorherige Link
   const spellSpeed = card ? spellSpeedOf(card, node.effectIndex ?? 0, effect) : 1;
   const top = state.chain.at(-1);
-  const isTrigger = effect?.patterns.some((p) => p.startsWith('TRIGGER_')) ?? false;
-  if (top && !isTrigger && (spellSpeed < 2 || spellSpeed < top.spellSpeed)) {
+  if (
+    top &&
+    !(effect && isTriggerEffect(effect)) &&
+    (spellSpeed < 2 || spellSpeed < top.spellSpeed)
+  ) {
     warn(`Spell Speed ${spellSpeed} kann nicht auf Spell Speed ${top.spellSpeed} gechaint werden`);
   }
 
@@ -339,6 +342,16 @@ function optKeysFor(
   // "activate 1 X per turn" zählt pro Kartenname, gemeinsame Klauseln pro Gruppe, sonst pro Effekt
   if (opt.wording === 'activateCard') return [`card:${node.player}:${card.name}`];
   return [`hard:${node.player}:${opt.group ?? `${card.name}#${node.effectIndex}`}`];
+}
+
+/**
+ * Trigger-Effekt ("If/When ...: You can"), aber kein Quick Effect: Ash Blossom beginnt mit
+ * "When a card or effect is activated", ist aber ein Quick Effect (siehe rulings.md, TRIGGER_MANDATORY).
+ */
+export function isTriggerEffect(effect: CardEffect): boolean {
+  return (
+    !effect.patterns.includes('QUICK') && effect.patterns.some((p) => p.startsWith('TRIGGER_'))
+  );
 }
 
 export function spellSpeedOf(card: CardData, effectIndex: number, effect?: CardEffect): 1 | 2 | 3 {
