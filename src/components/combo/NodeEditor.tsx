@@ -18,6 +18,8 @@ import type {
 } from '@/lib/combo/state';
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import { newInstanceId } from '@/lib/combo/tree';
+import type { Staple } from '@/lib/combo/reactions';
+import type { StapleCard } from '@/server/actions/combo.actions';
 import { CardSearchBox } from './CardSearchBox';
 
 export type MoveTarget = 'costMoves' | 'resolveMoves';
@@ -58,6 +60,8 @@ interface NodeEditorProps {
   onAddChild: (kind: NodeKind) => void;
   onDelete: () => void;
   onRegisterCard: (card: ComboCard) => void;
+  staples: StapleCard[];
+  onReact: (card: ComboCard, staple: Staple | null) => void;
 }
 
 export function NodeEditor(props: NodeEditorProps) {
@@ -81,6 +85,9 @@ export function NodeEditor(props: NodeEditorProps) {
       c.zone !== 'EXTRA' &&
       (['MONSTER', 'SPELL_TRAP', 'FIELD'].includes(c.zone) ? c.controller : c.owner) === node.player
   );
+  // Instanz, die erst durch diesen Knoten entsteht (Reaktion aus der Schnellauswahl), trotzdem anzeigen
+  const own = node.instanceId ? after.cards[node.instanceId] : undefined;
+  if (own && !activatable.some((c) => c.instanceId === own.instanceId)) activatable.push(own);
   const card = node.cardId ? cards.get(node.cardId) : undefined;
 
   const negationOptions: { value: string; label: string }[] = [
@@ -314,7 +321,58 @@ export function NodeEditor(props: NodeEditorProps) {
         </div>
       )}
 
+      {node.kind === 'OPPONENT' && (
+        <ReactionPicker
+          title={t('combo.reactions.opponent')}
+          staples={props.staples.filter((s) => s.staple.side === 'opponent')}
+          onReact={props.onReact}
+        />
+      )}
+      {node.kind === 'ACTIVATE' && node.player === 'opponent' && (
+        <ReactionPicker
+          title={t('combo.reactions.answer')}
+          staples={props.staples.filter((s) => s.staple.side === 'self')}
+          onReact={props.onReact}
+        />
+      )}
+
       <AddChildButtons onAdd={props.onAddChild} />
+    </div>
+  );
+}
+
+/** Schnellauswahl gängiger Reaktionen plus freie Kartensuche */
+function ReactionPicker({
+  title,
+  staples,
+  onReact,
+}: {
+  title: string;
+  staples: StapleCard[];
+  onReact: (card: ComboCard, staple: Staple | null) => void;
+}) {
+  const { t, i18n } = useTranslation();
+  return (
+    <div className="space-y-2 rounded-md border border-red-300 p-2">
+      <span className="text-xs font-semibold">{title}</span>
+      <div className="grid grid-cols-2 gap-1">
+        {staples.map(({ card, staple }) => (
+          <button
+            key={card.id}
+            type="button"
+            onClick={() => onReact(card, staple)}
+            className="flex items-center gap-1 rounded border bg-card p-1 text-left text-xs hover:bg-accent"
+          >
+            {card.imageSmall && (
+              // eslint-disable-next-line @next/next/no-img-element -- kleine Vorschau aus dem lokalen Bild-Cache
+              <img src={card.imageSmall} alt="" className="h-8 w-6 shrink-0 object-cover" />
+            )}
+            <span className="truncate">{displayName(card, i18n.language)}</span>
+          </button>
+        ))}
+      </div>
+      <span className="text-xs text-muted-foreground">{t('combo.reactions.other')}</span>
+      <CardSearchBox onPick={(card) => onReact(card, null)} />
     </div>
   );
 }
@@ -373,6 +431,8 @@ export function StartStateEditor({
                 owner: player,
                 zone,
                 ...(zone === 'MONSTER' && { position: 'ATK' as const }),
+                // Fallen und Zauber des Gegnerboards liegen in der Regel verdeckt
+                ...(zone === 'SPELL_TRAP' && { position: 'SET' as const }),
               },
             ],
           });

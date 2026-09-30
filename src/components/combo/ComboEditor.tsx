@@ -16,9 +16,10 @@ import {
   type StartState,
   type Zone,
 } from '@/lib/combo/state';
-import type { ComboCard } from '@/lib/combo/cards';
+import { displayName, type ComboCard } from '@/lib/combo/cards';
 import { START_ID, newNode, removeSubtree, updateNode } from '@/lib/combo/tree';
-import { saveCombo, type LoadedCombo } from '@/server/actions/combo.actions';
+import { reactionNode, type Staple } from '@/lib/combo/reactions';
+import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/combo.actions';
 import { ComboCanvas } from './ComboCanvas';
 import { NodeEditor, StartStateEditor, type MoveTarget } from './NodeEditor';
 import { StatePanel } from './StatePanel';
@@ -27,8 +28,8 @@ type SaveStatus = 'saved' | 'saving' | 'error';
 
 const FIELD_ZONES: Zone[] = ['MONSTER', 'SPELL_TRAP', 'FIELD'];
 
-export function ComboEditor({ initial }: { initial: LoadedCombo }) {
-  const { t } = useTranslation();
+export function ComboEditor({ initial, staples }: { initial: LoadedCombo; staples: StapleCard[] }) {
+  const { t, i18n } = useTranslation();
   const [title, setTitle] = useState(initial.title);
   const [startState, setStartState] = useState<StartState>(initial.startState);
   const [nodes, setNodes] = useState<ComboNodeData[]>(initial.nodes);
@@ -68,6 +69,21 @@ export function ComboEditor({ initial }: { initial: LoadedCombo }) {
     setNodes((prev) => [...prev, child]);
     setSelectedId(child.id);
     setMoveTarget(kind === 'ACTIVATE' ? 'costMoves' : 'resolveMoves');
+  };
+
+  /** Reaktion als neuer Aktivierungs-Knoten unter dem gewählten Knoten */
+  const addReaction = (card: ComboCard, staple: Staple | null) => {
+    if (!selected) return;
+    registerCard(card);
+    // Unter einem Gegner-Knoten reagiert der Gegner, unter einer gegnerischen Aktivierung die eigene Seite
+    const player: Player = selected.kind === 'OPPONENT' ? 'opponent' : 'self';
+    const child = {
+      ...reactionNode(selected, card, staple, player, after, [...ancestors, selected]),
+      edgeLabel: displayName(card, i18n.language),
+    };
+    setNodes((prev) => [...prev, child]);
+    setSelectedId(child.id);
+    setMoveTarget('costMoves');
   };
 
   const handleDrop = (instanceId: string, to: Zone, player: Player) => {
@@ -150,6 +166,8 @@ export function ComboEditor({ initial }: { initial: LoadedCombo }) {
                 setSelectedId(parentId ?? START_ID);
               }}
               onRegisterCard={registerCard}
+              staples={staples}
+              onReact={addReaction}
             />
           ) : (
             <StartStateEditor

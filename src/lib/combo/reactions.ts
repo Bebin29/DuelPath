@@ -87,18 +87,20 @@ export const STAPLES: Staple[] = [
 export function reactionNode(
   parent: ComboNodeData,
   card: CardData,
-  reaction: Pick<Staple, 'kind' | 'negation'>,
+  /** null: freie Karte ohne voreingestellte Bewegungen und Negierung */
+  reaction: Pick<Staple, 'kind' | 'negation'> | null,
   player: Player,
   before: GameState,
   ancestors: ComboNodeData[]
 ): ComboNodeData {
-  const instanceId = findInstance(before, card.id, player, reaction.kind) ?? newInstanceId(card.id);
+  const instanceId =
+    findInstance(before, card.id, player, reaction?.kind ?? 'discard') ?? newInstanceId(card.id);
   const firstActivated = card.effects.findIndex((e) => e.activated);
   const base = { instanceId, cardId: card.id, owner: player };
 
   const costMoves: CardMove[] = [];
   const resolveMoves: CardMove[] = [];
-  switch (reaction.kind) {
+  switch (reaction?.kind) {
     case 'discard':
       costMoves.push({ ...base, from: 'HAND', to: 'GY' });
       break;
@@ -126,7 +128,7 @@ export function reactionNode(
     effectIndex: firstActivated >= 0 ? firstActivated : 0,
     costMoves,
     resolveMoves,
-    negates: defaultNegation(reaction.negation, player, before, ancestors),
+    negates: defaultNegation(reaction?.negation, player, before, ancestors),
   };
 }
 

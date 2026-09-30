@@ -5,7 +5,8 @@ import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
 import type { ParsedEffects } from '@/lib/cards/effects';
 import type { CardMove, ComboNodeData, StartState } from '@/lib/combo/state';
-import { sortByDepth, type ComboCard } from '@/lib/combo/cards';
+import { sortByDepth, toComboCard, type ComboCard } from '@/lib/combo/cards';
+import { STAPLES, type Staple } from '@/lib/combo/reactions';
 import { saveComboSchema, type SaveComboInput } from '@/lib/validations/combo.schema';
 
 type Result<T> = { data: T; error?: undefined } | { data?: undefined; error: string };
@@ -159,4 +160,33 @@ export async function saveCombo(comboId: string, input: SaveComboInput): Promise
     }),
   ]);
   return { data: true };
+}
+
+export interface StapleCard {
+  card: ComboCard;
+  staple: Staple;
+}
+
+/** Staple-Karten für die Schnellauswahl; im TCG verbotene Karten fallen heraus */
+export async function getStaples(): Promise<StapleCard[]> {
+  const rows = await prisma.card.findMany({
+    where: {
+      name: { in: STAPLES.map((s) => s.name) },
+      OR: [{ banTcg: null }, { banTcg: { not: 'Forbidden' } }],
+    },
+    select: {
+      id: true,
+      name: true,
+      nameDe: true,
+      type: true,
+      race: true,
+      imageSmall: true,
+      effects: true,
+    },
+  });
+  const byName = new Map(rows.map((r) => [r.name, toComboCard(r)]));
+  return STAPLES.flatMap((staple) => {
+    const card = byName.get(staple.name);
+    return card ? [{ card, staple }] : [];
+  });
 }

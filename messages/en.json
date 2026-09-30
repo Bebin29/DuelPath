@@ -284,6 +284,11 @@
     "startEditor": {
       "add": "Add card to starting state",
       "hint": "Set the starting hand and the opponent board. Drag cards between zones in the state panel."
+    },
+    "reactions": {
+      "opponent": "Quick pick: opponent responds with",
+      "answer": "Quick pick: respond with",
+      "other": "Other card"
     }
   }
 }

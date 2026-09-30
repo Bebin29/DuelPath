@@ -316,6 +316,11 @@
     "startEditor": {
       "add": "Karte in den Startzustand",
       "hint": "Starthand und Gegnerboard festlegen. Karten lassen sich im Zustandspanel zwischen Zonen ziehen."
+    },
+    "reactions": {
+      "opponent": "Schnellauswahl: Gegner reagiert mit",
+      "answer": "Schnellauswahl: Antwort darauf",
+      "other": "Andere Karte"
     }
   }
 }
