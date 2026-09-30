@@ -18,6 +18,8 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', '.next', 'out', 'build', 'dist'],
+    // ponytail: capped because workers time out on start in the OneDrive folder; raise when the repo moves off OneDrive
+    maxWorkers: 4,
   },
   resolve: {
     alias: {
