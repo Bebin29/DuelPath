@@ -41,6 +41,8 @@ import { SuggestionPanel } from '@/components/combo/SuggestionPanel';
 import { Button } from '@/components/ui/button';
 import { OneTimeHint } from '@/components/ui/one-time-hint';
 import { useCardSheet } from '@/components/cards/CardSheet';
+import { AnimatePresence, motion } from 'motion/react';
+import { EASE } from '@/lib/motion';
 import { usePaletteSource, type PaletteItem } from '@/components/command/CommandPalette';
 import { matchCards, parseCommand, PREFERRED_ZONES } from '@/lib/combo/command';
 import { nicknameMap } from '@/lib/settings';
@@ -86,6 +88,13 @@ function changedCards(before: GameState, after: GameState): Set<string> {
   }
   return changed;
 }
+
+const MODE_TRANSITION = {
+  initial: { opacity: 0, scale: 0.985 },
+  animate: { opacity: 1, scale: 1, filter: 'blur(0px)' },
+  exit: { opacity: 0, scale: 0.97, filter: 'blur(6px)' },
+  transition: { duration: 0.24, ease: EASE.smooth },
+} as const;
 
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
@@ -269,6 +278,15 @@ export function Workbench({
     [clearPrompts, focus]
   );
   const [menu, setMenu] = useState<MenuAnchor | null>(null);
+  // Zuletzt angeklickte oder per „/“ gewählte Karte; Kürzel wirken auf sie, bis Esc
+  const [pickedCard, setPickedCard] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashHint = (text: string) => {
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    setHint(text);
+    hintTimer.current = setTimeout(() => setHint(null), 2600);
+  };
   const [quick, setQuick] = useState(false);
   const [staplePicker, setStaplePicker] = useState(false);
   // Spielmarke in eine leere Monsterzone (UX-Plan 16): Ziel und die Token-Karten aus der Datenbank
@@ -455,14 +473,30 @@ export function Workbench({
     return meaning ? t(`workbench.drop.${meaning.label}`) : null;
   };
 
+  // Links der offenen Chain, die ein höherer Link negiert (Ash auf Aluber): Rotstift-Strich
+  const negatedLinks = useMemo(() => {
+    const set = new Set<string>();
+    for (const link of after.chain) {
+      const n = nodes.find((x) => x.id === link.nodeId)?.negates;
+      if (n?.type === 'EFFECT' || n?.type === 'ACTIVATION') set.add(n.nodeId);
+      if (n?.type === 'CARD')
+        after.chain.filter((l) => l.instanceId === n.instanceId).forEach((l) => set.add(l.nodeId));
+      if (n?.type === 'NAME')
+        after.chain.filter((l) => l.cardId === n.cardId).forEach((l) => set.add(l.nodeId));
+    }
+    return set;
+  }, [after.chain, nodes]);
+
   const { prompt, candidates: promptCards } = flow;
   const pickable = useMemo(() => new Set(promptCards.map((c) => c.instanceId)), [promptCards]);
   const handleCardClick = (instanceId: string, at: { x: number; y: number }) => {
-    if (prompt && pickable.has(instanceId)) flow.pick(instanceId);
-    else setMenu({ instanceId, ...at });
+    if (prompt && pickable.has(instanceId)) return flow.pick(instanceId);
+    setPickedCard(instanceId);
+    setMenu({ instanceId, ...at });
   };
   const openMenuFor = (instanceId: string) => {
     setQuick(false);
+    setPickedCard(instanceId);
     const placed = after.cards[instanceId];
     // Karten in Stapeln haben kein eigenes Element; dann sitzt das Menü am Stapel
     const el =
@@ -548,10 +582,17 @@ export function Workbench({
           return;
         }
       }
+      // Karten sind fokussierbar, zählen für Leertaste und Enter aber nicht als Knopf
       const onControl =
-        e.target instanceof HTMLElement && e.target.closest('button, a, [role="button"]');
+        e.target instanceof HTMLElement &&
+        !e.target.closest('[data-instance]') &&
+        e.target.closest('button, a, [role="button"]');
       if (key === 'Escape' && flow.chainMode) {
         flow.setChainMode(false);
+        return;
+      }
+      if (key === 'Escape' && pickedCard) {
+        setPickedCard(null);
         return;
       }
       if (key === ' ' && !onControl) {
@@ -597,17 +638,42 @@ export function Workbench({
         flow.play({ kind: 'end' });
         return;
       }
-      // Kürzel wirken auf die Karte im Menü oder unter dem Zeiger (UX-Plan 9)
-      const target = menu?.instanceId ?? hovered.current;
-      if (target && /^[1-9NSAPGBHD]$/.test(key)) {
-        const { effects, other } = cardActions(after, cards, target);
-        const action = [...effects, ...other].find((a) => a.key === key);
-        if (action) {
-          e.preventDefault();
-          setMenu(null);
-          flow.run(action, target);
+      // Kürzel wirken auf die Karte im Menü, unter dem Zeiger oder die zuletzt gewählte (UX-Plan 9)
+      const target =
+        menu?.instanceId ??
+        hovered.current ??
+        (pickedCard && after.cards[pickedCard] ? pickedCard : null);
+      if (/^[1-9NSAPGBHD]$/.test(key)) {
+        if (!target) {
+          flashHint(t('workbench.keys.pickFirst', { key }));
           return;
         }
+        const { effects, other } = cardActions(after, cards, target);
+        // A aktiviert den ersten Effekt, dessen OPT noch frei ist, sonst die Kartenaktivierung
+        const action =
+          [...effects, ...other].find((a) => a.key === key) ??
+          (key === 'A' ? (effects.find((a) => a.free) ?? effects[0]) : undefined);
+        e.preventDefault();
+        if (!action) {
+          const name = displayName(cards.get(after.cards[target].cardId), cardLanguage);
+          flashHint(t('workbench.keys.notPossible', { key, name }));
+          return;
+        }
+        setMenu(null);
+        setPickedCard(target);
+        flow.run(action, target);
+        return;
+      }
+      // Enter, Kontextmenütaste oder Umschalt+F10 auf einer Karte öffnen ihr Aktionsmenü
+      const cardEl =
+        e.target instanceof HTMLElement ? e.target.closest<HTMLElement>('[data-instance]') : null;
+      if (
+        (key === 'ContextMenu' || (key === 'F10' && e.shiftKey) || (key === 'Enter' && cardEl)) &&
+        (cardEl?.dataset.instance ?? target)
+      ) {
+        e.preventDefault();
+        openMenuFor((cardEl?.dataset.instance ?? target)!);
+        return;
       }
       if (e.key === 'v' || e.key === 'V') {
         setMode((m) => (m === 'board' ? 'tree' : 'board'));
@@ -951,293 +1017,310 @@ export function Workbench({
         onTags={(value) => setDoc((d) => ({ ...d, tags: value }))}
       />
 
-      {mode === 'board' ? (
-        <div className="grid min-h-0 flex-1 grid-cols-[220px_48px_1fr_288px] min-[1440px]:grid-cols-[248px_56px_1fr_320px] min-[1920px]:grid-cols-[280px_56px_1fr_360px]">
-          <div className="min-h-0 border-r border-line bg-surface-1">
-            <LineList
-              chokes={
-                stressOn
-                  ? {
-                      byStep: stress.byStep,
-                      run: stressRun,
-                      imageOf: (name) =>
-                        staples.find((s) => s.staple.name === name)?.card.imageSmall ?? null,
-                      describe: (hit) => describeHit(hit, stress.shortOf(hit.staple), t),
-                      onPick: openStressBranch,
-                      onHover: hoverChoke,
-                      onDismiss: dismissHit,
-                    }
-                  : null
-              }
-              marked={
-                railHover
-                  ? new Set(stress.hits.filter((h) => h.staple === railHover).map((h) => h.stepId))
-                  : undefined
-              }
-              onDropStaple={(name, nodeId) => dropStaple(name, nodeId)}
-              endCountOf={endCountOf}
-              pairCountOf={
-                stressOn && pairsOn
-                  ? (nodeId) => stress.pairsIn(lineThrough(nodes, nodeId))
-                  : undefined
-              }
-              onCompare={ends.length > 1 ? () => setComparing(true) : undefined}
-              onOpen={(id) => {
-                select(id);
-                setEditOpen(true);
-              }}
-              onPromote={promote}
-              warningTextOf={(id) => allWarnings(id).join('\n')}
-              title={lineTitle}
-              steps={steps}
-              selectedId={selectedId}
-              startSelected={!selected}
-              alternatives={rootAlternatives(nodes)}
-              cards={cards}
-              labelOf={labelOf}
-              cardOf={cardOf}
-              warningsOf={warningCount}
-              onSelect={select}
-              onSelectStart={() => select(START_ID)}
-            />
-          </div>
-          <StapleRail
-            staples={stress.rail}
-            onHover={setRailHover}
-            onPick={(name) => dropStaple(name, selected?.id ?? null)}
-          />
-          <div
-            className="relative flex min-h-0 min-w-0 flex-col"
-            onMouseLeave={() => inspect(null)}
+      {/* Moduswechsel (Szene „Moduswechsel“): das Board tritt mit Unschärfe zurück, der Baum wächst */}
+      <AnimatePresence mode="popLayout" initial={false}>
+        {mode === 'board' ? (
+          <motion.div
+            key="board"
+            {...MODE_TRANSITION}
+            className="grid min-h-0 flex-1 grid-cols-[220px_48px_1fr_288px] min-[1440px]:grid-cols-[248px_56px_1fr_320px] min-[1920px]:grid-cols-[280px_56px_1fr_360px]"
           >
-            <OneTimeHint id="staple-rail" className="absolute left-3 top-3">
-              {t('hints.stapleRail')}
-            </OneTimeHint>
-            {stressOn && (
-              <OneTimeHint id="stress" className="absolute right-3 top-3">
-                {t('hints.stress')}
-              </OneTimeHint>
-            )}
-            <div
-              className="min-h-0 flex-1"
-              onDragOver={(e) => {
-                if (!e.dataTransfer.types.includes(STAPLE_MIME)) return;
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'copy';
-              }}
-              onDrop={(e) => {
-                const name = e.dataTransfer.getData(STAPLE_MIME);
-                if (!name) return;
-                e.preventDefault();
-                const card = (e.target as HTMLElement).closest<HTMLElement>('[data-instance]');
-                dropStaple(name, selected?.id ?? null, card?.dataset.instance);
-              }}
-            >
-              <BoardView
-                state={after}
-                cards={cards}
-                changed={changed}
-                inspectedId={inspectedId}
-                onInspect={inspect}
-                onDrop={playing ? undefined : handleDrop}
-                describeDrop={describeDrop}
-                onCardClick={handleCardClick}
-                onEmptyZone={playing ? undefined : (target) => openTokenPicker(target)}
-                picking={
-                  prompt
+            <div className="min-h-0 border-r border-line bg-surface-1">
+              <LineList
+                chokes={
+                  stressOn
                     ? {
-                        pickable,
-                        picked: new Set(
-                          'picked' in prompt
-                            ? [
-                                ...prompt.picked,
-                                ...(prompt.kind === 'fusion' && prompt.fusionId
-                                  ? [prompt.fusionId]
-                                  : []),
-                              ]
-                            : []
-                        ),
+                        byStep: stress.byStep,
+                        run: stressRun,
+                        imageOf: (name) =>
+                          staples.find((s) => s.staple.name === name)?.card.imageSmall ?? null,
+                        describe: (hit) => describeHit(hit, stress.shortOf(hit.staple), t),
+                        onPick: openStressBranch,
+                        onHover: hoverChoke,
+                        onDismiss: dismissHit,
                       }
                     : null
                 }
+                marked={
+                  railHover
+                    ? new Set(
+                        stress.hits.filter((h) => h.staple === railHover).map((h) => h.stepId)
+                      )
+                    : undefined
+                }
+                onDropStaple={(name, nodeId) => dropStaple(name, nodeId)}
+                endCountOf={endCountOf}
+                pairCountOf={
+                  stressOn && pairsOn
+                    ? (nodeId) => stress.pairsIn(lineThrough(nodes, nodeId))
+                    : undefined
+                }
+                onCompare={ends.length > 1 ? () => setComparing(true) : undefined}
+                onOpen={(id) => {
+                  select(id);
+                  setEditOpen(true);
+                }}
+                onPromote={promote}
+                warningTextOf={(id) => allWarnings(id).join('\n')}
+                title={lineTitle}
+                steps={steps}
+                selectedId={selectedId}
+                startSelected={!selected}
+                alternatives={rootAlternatives(nodes)}
+                cards={cards}
+                labelOf={labelOf}
+                cardOf={cardOf}
+                warningsOf={warningCount}
+                onSelect={select}
+                onSelectStart={() => select(START_ID)}
               />
             </div>
-            <StepBar
-              position={position}
-              total={steps.length}
-              onPrev={() => goTo(position - 1)}
-              onNext={() => goTo(position + 1)}
-              cards={cards}
-              onInspect={inspect}
-              prompt={
-                prompt && {
-                  question: questionOf(prompt, after, cards, cardLanguage, t),
-                  candidates: promptCards,
-                  picked: 'picked' in prompt ? prompt.picked : [],
-                  multi:
-                    prompt.kind === 'materials' ||
-                    (prompt.kind === 'fusion' && Boolean(prompt.fusionId)) ||
-                    (prompt.kind === 'result' && prompt.spec.count > 1),
-                  all: prompt.kind === 'result' ? prompt.all : undefined,
-                }
-              }
-              onPick={flow.pick}
-              onConfirm={() => flow.confirm()}
-              onAll={prompt?.kind === 'result' ? flow.showAll : undefined}
-              onLater={flow.later}
-              chainLength={after.chain.length}
-              chainMode={flow.chainMode}
-              onResolve={() => flow.play({ kind: 'resolve' })}
-              onChain={() => flow.setChainMode((on) => !on)}
-              onOpponent={() => setStaplePicker(true)}
-              answers={answers}
-              onAnswer={(offer) => {
-                const entry = staples.find((s) => s.staple.name === offer.staple);
-                if (entry) addReaction(entry.card, entry.staple);
-              }}
-              triggers={flow.triggers}
-              onTrigger={(offer) =>
-                flow.play({
-                  kind: 'activate',
-                  instanceId: offer.instanceId,
-                  effectIndex: offer.effectIndex,
-                })
-              }
-              offer={flow.offer}
-              onInsert={() => flow.accept('insert')}
-              onReplace={() => flow.accept('replace')}
-              onDismissOffer={flow.dismissOffer}
-              onAdd={addChild}
-              playing={playing}
-              onPlay={togglePlay}
-              speed={settings.autoplaySpeed}
-              onSpeed={(autoplaySpeed) => updateSettings({ autoplaySpeed })}
-              branches={steps[position - 1]?.branches ?? []}
-              onBranch={select}
+            <StapleRail
+              staples={stress.rail}
+              onHover={setRailHover}
+              onPick={(name) => dropStaple(name, selected?.id ?? null)}
             />
-            {tokenTarget && (
-              <PickList
-                items={(tokens ?? []).map((c) => ({
-                  id: c.id,
-                  label: displayName(c, cardLanguage),
-                  image: c.imageSmall,
-                  keywords: [c.name, c.nameDe ?? ''],
-                }))}
-                max={12}
-                placeholder={t('workbench.tokenPick')}
-                hint={t('workbench.tokenHint')}
-                onPick={(cardId) => {
-                  const card = tokens?.find((c) => c.id === cardId);
-                  if (card) registerCard(card);
-                  flow.play({
-                    kind: 'token',
-                    cardId,
-                    player: tokenTarget.player,
-                    slot: tokenTarget.slot,
-                  });
-                  setTokenTarget(null);
+            <div
+              className="relative flex min-h-0 min-w-0 flex-col"
+              onMouseLeave={() => inspect(null)}
+            >
+              <OneTimeHint id="staple-rail" className="absolute left-3 top-3">
+                {t('hints.stapleRail')}
+              </OneTimeHint>
+              {stressOn && (
+                <OneTimeHint id="stress" className="absolute right-3 top-3">
+                  {t('hints.stress')}
+                </OneTimeHint>
+              )}
+              <div
+                className="min-h-0 flex-1"
+                onDragOver={(e) => {
+                  if (!e.dataTransfer.types.includes(STAPLE_MIME)) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'copy';
                 }}
-                onClose={() => setTokenTarget(null)}
-              />
-            )}
-            {staplePicker && (
-              <PickList
-                items={[...stress.chosen]
-                  .sort((a, b) => Number(hitsHere(b.staple.name)) - Number(hitsHere(a.staple.name)))
-                  .map((s) => ({
-                    id: s.staple.name,
-                    label: displayName(s.card, cardLanguage),
-                    image: s.card.imageSmall,
-                    hint: hitsHere(s.staple.name) ? t('stress.hitsHere') : undefined,
-                    strong: hitsHere(s.staple.name),
-                    keywords: [s.staple.short, s.card.name, s.card.nameDe ?? ''],
-                  }))}
-                max={12}
-                placeholder={t('stress.pickStaple')}
-                hint={t('stress.pickStapleHint')}
-                onPick={(name) => {
-                  setStaplePicker(false);
-                  dropStaple(name, selected?.id ?? null);
+                onDrop={(e) => {
+                  const name = e.dataTransfer.getData(STAPLE_MIME);
+                  if (!name) return;
+                  e.preventDefault();
+                  const card = (e.target as HTMLElement).closest<HTMLElement>('[data-instance]');
+                  dropStaple(name, selected?.id ?? null, card?.dataset.instance);
                 }}
-                onClose={() => setStaplePicker(false)}
-              />
-            )}
-            {comparing && (
-              <CompareView
-                columns={compareColumns}
+              >
+                <BoardView
+                  state={after}
+                  cards={cards}
+                  changed={changed}
+                  inspectedId={inspectedId ?? pickedCard}
+                  onInspect={inspect}
+                  onDrop={playing ? undefined : handleDrop}
+                  describeDrop={describeDrop}
+                  onCardClick={handleCardClick}
+                  onEmptyZone={playing ? undefined : (target) => openTokenPicker(target)}
+                  negatedLinks={negatedLinks}
+                  picking={
+                    prompt
+                      ? {
+                          pickable,
+                          picked: new Set(
+                            'picked' in prompt
+                              ? [
+                                  ...prompt.picked,
+                                  ...(prompt.kind === 'fusion' && prompt.fusionId
+                                    ? [prompt.fusionId]
+                                    : []),
+                                ]
+                              : []
+                          ),
+                        }
+                      : null
+                  }
+                />
+              </div>
+              <StepBar
+                position={position}
+                total={steps.length}
+                onPrev={() => goTo(position - 1)}
+                onNext={() => goTo(position + 1)}
                 cards={cards}
-                onOpen={(leafId) => {
-                  setComparing(false);
-                  select(leafId);
+                onInspect={inspect}
+                prompt={
+                  prompt && {
+                    question: questionOf(prompt, after, cards, cardLanguage, t),
+                    candidates: promptCards,
+                    picked: 'picked' in prompt ? prompt.picked : [],
+                    multi:
+                      prompt.kind === 'materials' ||
+                      (prompt.kind === 'fusion' && Boolean(prompt.fusionId)) ||
+                      (prompt.kind === 'result' && prompt.spec.count > 1),
+                    all: prompt.kind === 'result' ? prompt.all : undefined,
+                  }
+                }
+                onPick={flow.pick}
+                onConfirm={() => flow.confirm()}
+                onAll={prompt?.kind === 'result' ? flow.showAll : undefined}
+                onLater={flow.later}
+                chainLength={after.chain.length}
+                chainMode={flow.chainMode}
+                onResolve={() => flow.play({ kind: 'resolve' })}
+                onChain={() => flow.setChainMode((on) => !on)}
+                onOpponent={() => setStaplePicker(true)}
+                answers={answers}
+                onAnswer={(offer) => {
+                  const entry = staples.find((s) => s.staple.name === offer.staple);
+                  if (entry) addReaction(entry.card, entry.staple);
                 }}
-                onClose={() => setComparing(false)}
+                triggers={flow.triggers}
+                onTrigger={(offer) =>
+                  flow.play({
+                    kind: 'activate',
+                    instanceId: offer.instanceId,
+                    effectIndex: offer.effectIndex,
+                  })
+                }
+                offer={flow.offer}
+                onInsert={() => flow.accept('insert')}
+                onReplace={() => flow.accept('replace')}
+                onDismissOffer={flow.dismissOffer}
+                onAdd={addChild}
+                hint={hint}
+                playing={playing}
+                onPlay={togglePlay}
+                speed={settings.autoplaySpeed}
+                onSpeed={(autoplaySpeed) => updateSettings({ autoplaySpeed })}
+                branches={steps[position - 1]?.branches ?? []}
+                onBranch={select}
               />
-            )}
-            {quick && (
-              <QuickSelect
+              {tokenTarget && (
+                <PickList
+                  items={(tokens ?? []).map((c) => ({
+                    id: c.id,
+                    label: displayName(c, cardLanguage),
+                    image: c.imageSmall,
+                    keywords: [c.name, c.nameDe ?? ''],
+                  }))}
+                  max={12}
+                  placeholder={t('workbench.tokenPick')}
+                  hint={t('workbench.tokenHint')}
+                  onPick={(cardId) => {
+                    const card = tokens?.find((c) => c.id === cardId);
+                    if (card) registerCard(card);
+                    flow.play({
+                      kind: 'token',
+                      cardId,
+                      player: tokenTarget.player,
+                      slot: tokenTarget.slot,
+                    });
+                    setTokenTarget(null);
+                  }}
+                  onClose={() => setTokenTarget(null)}
+                />
+              )}
+              {staplePicker && (
+                <PickList
+                  items={[...stress.chosen]
+                    .sort(
+                      (a, b) => Number(hitsHere(b.staple.name)) - Number(hitsHere(a.staple.name))
+                    )
+                    .map((s) => ({
+                      id: s.staple.name,
+                      label: displayName(s.card, cardLanguage),
+                      image: s.card.imageSmall,
+                      hint: hitsHere(s.staple.name) ? t('stress.hitsHere') : undefined,
+                      strong: hitsHere(s.staple.name),
+                      keywords: [s.staple.short, s.card.name, s.card.nameDe ?? ''],
+                    }))}
+                  max={12}
+                  placeholder={t('stress.pickStaple')}
+                  hint={t('stress.pickStapleHint')}
+                  onPick={(name) => {
+                    setStaplePicker(false);
+                    dropStaple(name, selected?.id ?? null);
+                  }}
+                  onClose={() => setStaplePicker(false)}
+                />
+              )}
+              {comparing && (
+                <CompareView
+                  columns={compareColumns}
+                  cards={cards}
+                  onOpen={(leafId) => {
+                    setComparing(false);
+                    select(leafId);
+                  }}
+                  onClose={() => setComparing(false)}
+                />
+              )}
+              {quick && (
+                <QuickSelect
+                  state={after}
+                  cards={cards}
+                  onPick={openMenuFor}
+                  onClose={() => setQuick(false)}
+                />
+              )}
+              <CardMenu
+                anchor={menu}
                 state={after}
                 cards={cards}
-                onPick={openMenuFor}
-                onClose={() => setQuick(false)}
+                onRun={(action) => menu && flow.run(action, menu.instanceId)}
+                onOpenCard={(cardId) => cardSheet.open(cardId, updateCardEffects)}
+                onClose={() => setMenu(null)}
               />
-            )}
-            <CardMenu
-              anchor={menu}
-              state={after}
-              cards={cards}
-              onRun={(action) => menu && flow.run(action, menu.instanceId)}
-              onOpenCard={(cardId) => cardSheet.open(cardId, updateCardEffects)}
-              onClose={() => setMenu(null)}
-            />
-          </div>
-          <div
-            className="min-h-0 border-l border-line bg-surface-1"
-            onMouseEnter={() => inspectedId && inspect(inspectedId)}
-            onMouseLeave={() => inspect(null)}
-          >
-            <Inspector
-              state={after}
-              cards={cards}
-              inspected={inspected}
-              highlight={chokeHover?.phrase}
-              onOpenCard={(cardId) => cardSheet.open(cardId, updateCardEffects)}
+            </div>
+            <div
+              className="min-h-0 border-l border-line bg-surface-1"
+              onMouseEnter={() => inspectedId && inspect(inspectedId)}
+              onMouseLeave={() => inspect(null)}
             >
-              {stepPanel}
-            </Inspector>
-          </div>
-        </div>
-      ) : (
-        <div className="relative grid min-h-0 flex-1 grid-cols-[1fr_320px]">
-          <OneTimeHint id="tree" className="absolute left-4 top-4">
-            {t('hints.tree')}
-          </OneTimeHint>
-          <div className="min-h-0">
-            <TreeCanvas
-              nodes={nodes}
-              selectedId={selected ? selected.id : START_ID}
-              path={path}
-              labelOf={labelOf}
-              detailOf={(n) => n.edgeLabel ?? t(`combo.kind.${n.kind}`)}
-              imageOf={(n) => {
-                const id = cardOf(n);
-                return id ? (cards.get(id)?.imageSmall ?? null) : null;
-              }}
-              warningsOf={warningCount}
-              startLabel={t('workbench.startHand')}
-              onSelect={select}
-              onOpen={(id) => {
-                select(id);
-                setMode('board');
-              }}
-            />
-          </div>
-          <div className="min-h-0 border-l border-line bg-surface-1">
-            <Inspector state={after} cards={cards} inspected={null}>
-              {stepPanel}
-            </Inspector>
-          </div>
-        </div>
-      )}
+              <Inspector
+                state={after}
+                cards={cards}
+                inspected={inspected}
+                highlight={chokeHover?.phrase}
+                onOpenCard={(cardId) => cardSheet.open(cardId, updateCardEffects)}
+              >
+                {stepPanel}
+              </Inspector>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="tree"
+            {...MODE_TRANSITION}
+            className="relative grid min-h-0 flex-1 grid-cols-[1fr_320px]"
+          >
+            <OneTimeHint id="tree" className="absolute left-4 top-4">
+              {t('hints.tree')}
+            </OneTimeHint>
+            <div className="min-h-0">
+              <TreeCanvas
+                nodes={nodes}
+                selectedId={selected ? selected.id : START_ID}
+                path={path}
+                labelOf={labelOf}
+                detailOf={(n) => n.edgeLabel ?? t(`combo.kind.${n.kind}`)}
+                imageOf={(n) => {
+                  const id = cardOf(n);
+                  return id ? (cards.get(id)?.imageSmall ?? null) : null;
+                }}
+                warningsOf={warningCount}
+                startLabel={t('workbench.startHand')}
+                onSelect={select}
+                onOpen={(id) => {
+                  select(id);
+                  setMode('board');
+                }}
+              />
+            </div>
+            <div className="min-h-0 border-l border-line bg-surface-1">
+              <Inspector state={after} cards={cards} inspected={null}>
+                {stepPanel}
+              </Inspector>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

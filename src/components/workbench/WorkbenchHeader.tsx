@@ -1,17 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  Check,
-  CloudOff,
-  Crosshair,
-  Loader2,
-  Redo2,
-  Search,
-  TriangleAlert,
-  Undo2,
-} from 'lucide-react';
+import { ArrowLeft, Crosshair, Redo2, Search, TriangleAlert, Undo2 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -28,11 +18,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { StatusChip } from '@/components/library/StatusChip';
+import { SaveIndicator, type SaveStatus } from '@/components/ui/save-indicator';
+import { RollingNumber } from '@/components/motion/RollingNumber';
+import { useAnimate } from 'motion/react';
+import { useEffect, useRef } from 'react';
 import { usePalette } from '@/components/command/CommandPalette';
 import { COMBO_STATUSES, SUGGESTED_TAGS, type ComboStatus } from '@/lib/combo/library';
 
 export type WorkbenchMode = 'board' | 'tree';
-export type SaveStatus = 'saved' | 'saving' | 'error';
+export type { SaveStatus } from '@/components/ui/save-indicator';
 
 /** Kopfzeile der Workbench (UI-Plan 7.1): ersetzt dort die App-Kopfzeile */
 export function WorkbenchHeader({
@@ -169,7 +163,13 @@ export function WorkbenchHeader({
         className={cn(stress && 'border-opponent text-opponent')}
       >
         <Crosshair className={cn(stress && 'text-opponent')} />
-        {stress ? t('stress.chokePoints', { count: chokePoints }) : t('stress.run')}
+        {stress ? (
+          <>
+            {t('stress.run')} · <RollingNumber value={chokePoints} />
+          </>
+        ) : (
+          t('stress.run')
+        )}
         <Kbd>T</Kbd>
       </Button>
       {stress && (
@@ -184,49 +184,8 @@ export function WorkbenchHeader({
           {t('stress.pairs')}
         </Button>
       )}
-      <button
-        type="button"
-        onClick={onWarnings}
-        disabled={warnings === 0}
-        aria-label={
-          warnings ? t('workbench.warnings', { count: warnings }) : t('workbench.noWarnings')
-        }
-        className={cn(
-          'flex items-center gap-1 rounded-md px-1.5 py-1 font-mono text-xs',
-          warnings ? 'text-warning hover:bg-warning-tint' : 'text-text-subtle'
-        )}
-      >
-        <TriangleAlert className="size-3.5" />
-        {warnings}
-      </button>
-      <span
-        role="status"
-        aria-live="polite"
-        className="flex min-w-28 items-center justify-end gap-1.5 font-mono text-[11px]"
-      >
-        {status === 'saved' && (
-          <>
-            <Check className="size-3 text-text-subtle" />
-            <span className="text-text-subtle">{t('combo.saved')}</span>
-          </>
-        )}
-        {status === 'saving' && (
-          <>
-            <Loader2 className="size-3 animate-spin text-text-subtle" />
-            <span className="text-text-subtle">{t('combo.saving')}</span>
-          </>
-        )}
-        {status === 'error' && (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="flex items-center gap-1.5 text-opponent hover:underline"
-          >
-            <CloudOff className="size-3" />
-            {t('combo.saveError')}
-          </button>
-        )}
-      </span>
+      <WarningCount count={warnings} onClick={onWarnings} />
+      <SaveIndicator status={status} onRetry={onRetry} className="min-w-28" />
     </header>
   );
 }
@@ -304,5 +263,42 @@ function MetaMenu({
         />
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/**
+ * Warnungen in der Kopfzeile (Motion-Szene „Mikro“, Warnung): die Zahl rollt, bei einer neuen
+ * Warnung wackelt das Symbol kurz und die Fläche leuchtet auf.
+ */
+function WarningCount({ count, onClick }: { count: number; onClick: () => void }) {
+  const { t } = useTranslation();
+  const [scope, animate] = useAnimate();
+  const prev = useRef(count);
+  useEffect(() => {
+    if (count > prev.current && scope.current) {
+      animate(scope.current, { rotate: [0, -4, 4, -2, 2, 0] }, { duration: 0.4, ease: 'linear' });
+      animate(
+        scope.current,
+        { backgroundColor: ['rgb(0 0 0 / 0)', 'var(--warning-tint)', 'rgb(0 0 0 / 0)'] },
+        { duration: 0.5 }
+      );
+    }
+    prev.current = count;
+  }, [count, animate, scope]);
+  return (
+    <button
+      ref={scope}
+      type="button"
+      onClick={onClick}
+      disabled={count === 0}
+      aria-label={count ? t('workbench.warnings', { count }) : t('workbench.noWarnings')}
+      className={cn(
+        'flex items-center gap-1 rounded-md px-1.5 py-1 font-mono text-xs',
+        count ? 'text-warning hover:bg-warning-tint' : 'text-text-subtle'
+      )}
+    >
+      <TriangleAlert className="size-3.5" />
+      <RollingNumber value={count} />
+    </button>
   );
 }

@@ -32,6 +32,7 @@ export const SHORTCUT_GROUPS: { id: string; items: Shortcut[] }[] = [
     items: [
       { id: 'quick', keys: ['/'] },
       { id: 'menu', keys: ['M'] },
+      { id: 'menuFocused', keys: ['Enter'] },
       { id: 'summon', keys: ['N'] },
       { id: 'set', keys: ['S'] },
       { id: 'activate', keys: ['A'] },
@@ -48,6 +49,7 @@ export const SHORTCUT_GROUPS: { id: string; items: Shortcut[] }[] = [
       { id: 'chain', keys: ['C'] },
       { id: 'opponent', keys: ['O'] },
       { id: 'cancel', keys: ['Esc'] },
+      { id: 'unpick', keys: ['Esc'] },
     ],
   },
   {

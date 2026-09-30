@@ -4,6 +4,7 @@ import { AppHeader } from '@/components/common/AppHeader';
 import { SettingsProvider } from '@/components/providers/SettingsProvider';
 import { CardSheetProvider } from '@/components/cards/CardSheet';
 import { CommandPaletteProvider } from '@/components/command/CommandPalette';
+import { MotionProvider } from '@/components/motion/MotionProvider';
 import { getSettings } from '@/server/actions/settings.actions';
 
 /**
@@ -17,16 +18,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <SettingsProvider initial={settings}>
-      <CardSheetProvider>
-        <CommandPaletteProvider>
-          <div className="flex min-h-dvh flex-col">
-            <AppHeader />
-            <main id="main" className="mx-auto w-full max-w-[1280px] flex-1 px-8 pb-16 pt-10">
-              {children}
-            </main>
-          </div>
-        </CommandPaletteProvider>
-      </CardSheetProvider>
+      <MotionProvider>
+        <CardSheetProvider>
+          <CommandPaletteProvider>
+            <div className="flex min-h-dvh flex-col">
+              <AppHeader />
+              <main id="main" className="mx-auto w-full max-w-[1280px] flex-1 px-8 pb-16 pt-10">
+                {children}
+              </main>
+            </div>
+          </CommandPaletteProvider>
+        </CardSheetProvider>
+      </MotionProvider>
     </SettingsProvider>
   );
 }

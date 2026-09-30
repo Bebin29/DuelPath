@@ -196,6 +196,10 @@
   .notice-timer {
     animation-duration: var(--notice-duration) !important;
   }
+  /* Aufleuchten bleibt auch bei reduzierter Bewegung, es ist keine Bewegung */
+  .card-flash {
+    animation-duration: var(--motion-flash) !important;
+  }
 }
 
 /* Restzeit eines Hinweises (TimedNotice); läuft auch bei reduzierter Bewegung, weil sie eine Frist zeigt */
@@ -206,4 +210,54 @@
   to {
     transform: scaleX(0);
   }
+}
+
+/* „speichert …“ schimmert, solange gespeichert wird (Motion-Szene „Mikro“) */
+@keyframes shimmer {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.animate-shimmer {
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+/* Aufleuchten einer Karte nach dem Schritt (UI-Plan 4.7): hell, dann ein feiner Ring */
+@keyframes card-flash-self {
+  from {
+    box-shadow:
+      0 0 0 2.5px var(--self),
+      0 0 26px var(--self);
+  }
+}
+@keyframes card-flash-opponent {
+  from {
+    box-shadow:
+      0 0 0 2.5px var(--opponent),
+      0 0 26px var(--opponent);
+  }
+}
+.card-flash-self {
+  animation: card-flash-self var(--motion-flash) ease-out;
+}
+.card-flash-opponent {
+  animation: card-flash-opponent var(--motion-flash) ease-out;
+}
+
+/* Kanten im Baum zeichnen sich nach Tiefe (Szene „Moduswechsel“) */
+@keyframes edge-draw {
+  from {
+    stroke-dashoffset: 2400;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.edge-draw .react-flow__edge-path {
+  stroke-dasharray: 2400;
+  animation: edge-draw 0.5s cubic-bezier(0.65, 0, 0.35, 1) both;
 }

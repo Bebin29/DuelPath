@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth/auth';
 import { SettingsProvider } from '@/components/providers/SettingsProvider';
 import { CardSheetProvider } from '@/components/cards/CardSheet';
 import { CommandPaletteProvider } from '@/components/command/CommandPalette';
+import { MotionProvider } from '@/components/motion/MotionProvider';
 import { getSettings } from '@/server/actions/settings.actions';
 
 /**
@@ -16,13 +17,15 @@ export default async function WorkbenchLayout({ children }: { children: React.Re
 
   return (
     <SettingsProvider initial={settings}>
-      <CardSheetProvider>
-        <CommandPaletteProvider>
-          <main id="main" className="h-dvh overflow-hidden bg-bg">
-            {children}
-          </main>
-        </CommandPaletteProvider>
-      </CardSheetProvider>
+      <MotionProvider>
+        <CardSheetProvider>
+          <CommandPaletteProvider>
+            <main id="main" className="h-dvh overflow-hidden bg-bg">
+              {children}
+            </main>
+          </CommandPaletteProvider>
+        </CardSheetProvider>
+      </MotionProvider>
     </SettingsProvider>
   );
 }

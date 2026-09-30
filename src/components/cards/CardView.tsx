@@ -94,8 +94,10 @@ export function CardView({
         negated && 'saturate-[0.35]',
         selected && 'outline-[1.5px] outline-offset-2 outline-primary outline',
         warning && !selected && 'shadow-[0_0_0_1px_var(--warning)]',
-        isNew === 'self' && 'shadow-[0_0_0_2px_var(--self),0_0_18px_var(--self)]',
-        isNew === 'opponent' && 'shadow-[0_0_0_2px_var(--opponent),0_0_18px_var(--opponent)]',
+        // Aufleuchten nach dem Schritt (UI-Plan 4.7, 600 ms), danach bleibt ein feiner Ring
+        isNew === 'self' && 'card-flash card-flash-self shadow-[0_0_0_1.5px_var(--self)]',
+        isNew === 'opponent' &&
+          'card-flash card-flash-opponent shadow-[0_0_0_1.5px_var(--opponent)]',
         className
       )}
       style={{ width, height }}

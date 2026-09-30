@@ -3,21 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  ArrowLeft,
-  Check,
-  Download,
-  Loader2,
-  Redo2,
-  TriangleAlert,
-  Undo2,
-  Upload,
-} from 'lucide-react';
+import { ArrowLeft, Download, Redo2, TriangleAlert, Undo2, Upload } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useHistory } from '@/lib/hooks/use-history';
 import { Button } from '@/components/ui/button';
 import { Tabs } from '@/components/ui/tabs';
 import { TimedNotice } from '@/components/ui/timed-notice';
+import { SaveIndicator } from '@/components/ui/save-indicator';
 import { useCardSheet } from '@/components/cards/CardSheet';
 import {
   deckIssues,
@@ -224,22 +216,7 @@ export function DeckPage({
           >
             <Redo2 />
           </Button>
-          <span
-            role="status"
-            aria-live="polite"
-            className="mr-2 flex w-24 items-center justify-end gap-1.5 font-mono text-[11px] text-text-subtle"
-          >
-            {status === 'saving' ? (
-              <Loader2 className="size-3 animate-spin" />
-            ) : status === 'saved' ? (
-              <Check className="size-3" />
-            ) : null}
-            {status === 'error' ? (
-              <span className="text-opponent">{t('combo.saveError')}</span>
-            ) : (
-              t(status === 'saving' ? 'combo.saving' : 'combo.saved')
-            )}
-          </span>
+          <SaveIndicator status={status} className="mr-2 w-24" />
           <input
             ref={fileRef}
             type="file"

@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import { motion } from 'motion/react';
+import { SPRING } from '@/lib/motion';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
@@ -43,6 +46,7 @@ export function CardMenu({
 }) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
+  const [highlight, setHighlight] = useState<string | null>(null);
   const placed = anchor ? state.cards[anchor.instanceId] : undefined;
   const { effects, other } = anchor
     ? cardActions(state, cards, anchor.instanceId)
@@ -57,7 +61,12 @@ export function CardMenu({
           style={{ left: anchor?.x ?? 0, top: anchor?.y ?? 0 }}
         />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" side="right" className="w-80">
+      {/* Menü wächst aus der Kartenkante (Szene „Aktionsmenü“), Hervorhebung gleitet mit */}
+      <DropdownMenuContent
+        align="start"
+        side="right"
+        className="w-80 duration-200 data-[state=closed]:zoom-out-50 data-[state=open]:zoom-in-50"
+      >
         {placed && (
           <DropdownMenuLabel className="font-display text-base text-ink">
             {displayName(cards.get(placed.cardId), cardLanguage)}
@@ -67,8 +76,10 @@ export function CardMenu({
           <DropdownMenuItem
             key={action.id}
             onSelect={() => onRun(action)}
-            className="h-auto flex-col items-stretch gap-0.5 py-1.5"
+            onFocus={() => setHighlight(action.id)}
+            className="relative isolate h-auto flex-col items-stretch gap-0.5 py-1.5 data-[highlighted]:bg-transparent data-[highlighted]:shadow-none"
           >
+            <Highlight on={highlight === action.id} />
             <span className="flex items-center gap-2">
               <span>{t('workbench.actions.effect', { n: action.key })}</span>
               {action.opt && (
@@ -98,12 +109,30 @@ export function CardMenu({
         )}
         {placed && onOpenCard && <DropdownMenuSeparator />}
         {other.map((action) => (
-          <DropdownMenuItem key={action.id} onSelect={() => onRun(action)}>
+          <DropdownMenuItem
+            key={action.id}
+            onSelect={() => onRun(action)}
+            onFocus={() => setHighlight(action.id)}
+            className="relative isolate data-[highlighted]:bg-transparent data-[highlighted]:shadow-none"
+          >
+            <Highlight on={highlight === action.id} />
             <span className="flex-1">{t(`workbench.actions.${action.label}`)}</span>
             {action.key && <Kbd>{action.key}</Kbd>}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** Gleitende Hervorhebung hinter dem gewählten Eintrag */
+function Highlight({ on }: { on: boolean }) {
+  if (!on) return null;
+  return (
+    <motion.span
+      layoutId="card-menu-highlight"
+      transition={SPRING.snappy}
+      className="absolute inset-0 -z-10 rounded-md bg-ink/9 shadow-[inset_2px_0_0_var(--ink)]"
+    />
   );
 }

@@ -2,6 +2,7 @@
 
 import { Columns3, Flag } from 'lucide-react';
 import { motion } from 'motion/react';
+import { CountTo } from '@/components/motion/CountTo';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
@@ -75,11 +76,12 @@ export function EndboardSummary({
     const next = (entry.count + 1) % 3;
     return (
       <li key={entry.placed.instanceId} className="flex flex-col items-center gap-1">
+        {/* Karten geben: Bogen, Drehung, Umdrehen im Flug (Szene „Endboard“) */}
         <motion.div
-          className="relative"
-          initial={{ opacity: 0, y: 14, rotate: -6 }}
-          animate={{ opacity: 1, y: 0, rotate: 0 }}
-          transition={{ type: 'spring', bounce: 0.25, visualDuration: 0.45, delay: i * 0.06 }}
+          className="relative [perspective:600px]"
+          initial={{ opacity: 0, x: -30, y: -36, rotate: -10, rotateY: 90 }}
+          animate={{ opacity: 1, x: 0, y: 0, rotate: 0, rotateY: 0 }}
+          transition={{ type: 'spring', bounce: 0.25, visualDuration: 0.6, delay: i * 0.08 }}
         >
           <CardView
             image={data?.imageSmall}
@@ -137,14 +139,12 @@ export function EndboardSummary({
       </header>
 
       <div className="flex items-end gap-3">
-        <motion.span
-          key={summary.interruptions}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="font-display text-[56px] leading-[0.85]"
-        >
-          {summary.interruptions}
-        </motion.span>
+        <CountTo
+          to={summary.interruptions}
+          delay={0.35}
+          duration={Math.max(0.3, summary.interruptions * 0.25)}
+          className="font-display text-[56px] leading-[0.85] tabular-nums"
+        />
         <span className="pb-1 text-text-muted">
           {t('endboard.interruptions', { count: summary.interruptions })}
         </span>

@@ -1,6 +1,10 @@
 // Aus design/DuelPath.pen (Illustration / Am Spieltisch), erzeugt aus design/motion/shared/illustration.js.
 // Tusche folgt --ink, Bewegungslinien --text-subtle, damit die Illustration mit dem Design kippt.
-import type { SVGProps } from 'react';
+'use client';
+
+import { useEffect, useState, type SVGProps } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
+import { EASE } from '@/lib/motion';
 
 type Stroke = { kind: 'ink' | 'sketch'; d: string; transform: string };
 
@@ -322,23 +326,74 @@ const PATHS: Stroke[] = [
   },
 ];
 
-export function AmSpieltisch({ title, ...props }: SVGProps<SVGSVGElement> & { title: string }) {
+/**
+ * Illustration „Am Spieltisch“. Mit `animated` zeichnet sie sich wie in der Motion-Szene „Start“:
+ * Tinte zieht die Umrisse, dann setzt sich die Fläche; die Skizzenlinien leben leicht nach
+ * (line boil). Bei reduzierter Bewegung steht sofort das fertige Bild.
+ */
+export function AmSpieltisch({
+  title,
+  animated = false,
+  ...props
+}: SVGProps<SVGSVGElement> & { title: string; animated?: boolean }) {
+  const reduced = useReducedMotion();
+  const [boil, setBoil] = useState(0);
+  const live = animated && !reduced;
+  useEffect(() => {
+    if (!live) return;
+    const timer = setInterval(() => setBoil((b) => (b + 1) % 3), 180);
+    return () => clearInterval(timer);
+  }, [live]);
+
+  let inkIndex = 0;
+  const inkCount = PATHS.filter((p) => p.kind === 'ink').length;
+  const drawEnd = inkCount * 0.035 + 0.6;
+
   return (
     <svg viewBox="0 0 340 250" fill="none" role="img" aria-label={title} {...props}>
-      {PATHS.map((p, i) =>
-        p.kind === 'ink' ? (
-          <path key={i} d={p.d} transform={p.transform} fill="var(--ink)" />
-        ) : (
-          <path
+      {PATHS.map((p, i) => {
+        if (p.kind === 'ink') {
+          const at = inkIndex++ * 0.035;
+          if (!live) return <path key={i} d={p.d} transform={p.transform} fill="var(--ink)" />;
+          return (
+            <motion.path
+              key={i}
+              d={p.d}
+              transform={p.transform}
+              fill="var(--ink)"
+              stroke="var(--ink)"
+              strokeWidth={0.6}
+              initial={{ pathLength: 0, fillOpacity: 0, opacity: 0 }}
+              animate={{ pathLength: 1, fillOpacity: 1, opacity: 1 }}
+              transition={{
+                pathLength: { duration: 0.5, delay: at, ease: EASE.ink },
+                opacity: { duration: 0.01, delay: at },
+                fillOpacity: { duration: 0.25, delay: at + 0.35 },
+              }}
+            />
+          );
+        }
+        const jitter = live
+          ? [
+              [0, 0],
+              [0.4, -0.3],
+              [-0.3, 0.35],
+            ][(boil + i) % 3]
+          : [0, 0];
+        return (
+          <motion.path
             key={i}
             d={p.d}
-            transform={p.transform}
+            transform={`translate(${jitter[0]} ${jitter[1]}) ${p.transform}`}
             stroke="var(--text-subtle)"
             strokeWidth={1.05}
             strokeLinecap="round"
+            initial={live ? { pathLength: 0 } : false}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.35, delay: drawEnd + (i % 8) * 0.05, ease: EASE.smooth }}
           />
-        )
-      )}
+        );
+      })}
     </svg>
   );
 }

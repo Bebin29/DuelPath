@@ -15,6 +15,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { TriangleAlert } from 'lucide-react';
+import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { layoutTree } from '@/lib/combo/layout';
@@ -33,6 +34,8 @@ interface TreeNodeData extends Record<string, unknown> {
   selected: boolean;
   onPath: boolean;
   start: boolean;
+  /** Tiefe im Baum: Knoten und Kanten erscheinen danach gestaffelt (Szene „Moduswechsel“) */
+  depth: number;
 }
 
 type TreeNode = Node<TreeNodeData, 'step'>;
@@ -74,6 +77,12 @@ export function TreeCanvas({
       ...ordered.map((n) => ({ id: n.id, parentId: n.parentId ?? START_ID })),
     ]);
     const onPath = (id: string) => id === START_ID || path.has(id);
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const depthOf = (id: string) => {
+      let d = 1;
+      for (let n = byId.get(id); n?.parentId; n = byId.get(n.parentId)) d++;
+      return d;
+    };
 
     const flowNodes: TreeNode[] = [
       {
@@ -89,6 +98,7 @@ export function TreeCanvas({
           selected: selectedId === START_ID,
           onPath: true,
           start: true,
+          depth: 0,
         },
       },
       ...ordered.map((n): TreeNode => ({
@@ -104,6 +114,7 @@ export function TreeCanvas({
           selected: n.id === selectedId,
           onPath: onPath(n.id),
           start: false,
+          depth: depthOf(n.id),
         },
       })),
     ];
@@ -119,6 +130,7 @@ export function TreeCanvas({
         source: n.parentId ?? START_ID,
         target: n.id,
         type: 'smoothstep',
+        className: 'edge-draw',
         label: main ? undefined : (n.edgeLabel ?? undefined),
         labelStyle: {
           fill: opponent ? 'var(--opponent)' : 'var(--text-muted)',
@@ -130,6 +142,7 @@ export function TreeCanvas({
           stroke: opponent ? 'var(--opponent)' : main ? 'var(--text-muted)' : 'var(--line-strong)',
           strokeWidth: main ? 2 : 1.5,
           opacity: onPath(n.id) ? 1 : 0.6,
+          animationDelay: `${80 + depthOf(n.id) * 45}ms`,
         },
       };
     });
@@ -170,14 +183,21 @@ export function TreeCanvas({
 
 function TreeNodeView({ data }: NodeProps<TreeNode>) {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 12, scale: 0.96 }}
+      animate={{ opacity: data.onPath ? 1 : 0.6, y: 0, scale: 1 }}
+      transition={{
+        type: 'spring',
+        bounce: 0.18,
+        visualDuration: 0.4,
+        delay: 0.05 + data.depth * 0.03,
+      }}
       style={{ width: TREE_NODE_WIDTH }}
       className={cn(
         'flex h-14 items-center gap-2.5 rounded-lg border bg-surface-2 px-3 text-left transition-opacity duration-(--motion-base)',
         data.opponent ? 'border-opponent shadow-[inset_3px_0_0_var(--opponent)]' : 'border-line',
         data.start && 'border-dashed',
-        data.selected && 'outline-[1.5px] outline-offset-2 outline-primary outline',
-        !data.onPath && 'opacity-60'
+        data.selected && 'outline-[1.5px] outline-offset-2 outline-primary outline'
       )}
     >
       <Handle type="target" position={Position.Top} className="!opacity-0" />
@@ -204,6 +224,6 @@ function TreeNodeView({ data }: NodeProps<TreeNode>) {
       </div>
       {data.warnings > 0 && <TriangleAlert className="size-3.5 shrink-0 text-warning" />}
       <Handle type="source" position={Position.Bottom} className="!opacity-0" />
-    </div>
+    </motion.div>
   );
 }

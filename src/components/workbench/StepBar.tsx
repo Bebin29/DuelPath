@@ -1,12 +1,15 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, GitBranch, Pause, Play, Plus, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useTranslation } from '@/lib/i18n/hooks';
+import { EASE } from '@/lib/motion';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 import { Segmented } from '@/components/ui/segmented';
+import { RollingNumber } from '@/components/motion/RollingNumber';
 import { AUTOPLAY_SPEEDS, speedLabel, type AutoplaySpeed } from '@/lib/settings';
 import type { LineBranch } from '@/lib/combo/lines';
 import { TimedNotice } from '@/components/ui/timed-notice';
@@ -79,6 +82,8 @@ interface StepBarProps {
   onDismissOffer: () => void;
 
   onAdd: (kind: NodeKind) => void;
+  /** Kurze Rückmeldung auf ein Kürzel, das gerade nicht geht */
+  hint?: string | null;
 
   /** Nachspielen (UX-Plan 6.10): Leertaste spielt ab, Tempo 0,5× bis 2× */
   playing: boolean;
@@ -110,7 +115,7 @@ export function StepBar(props: StepBarProps) {
           <ChevronLeft />
         </Button>
         <span className="min-w-12 text-center font-mono text-xs text-text-muted" aria-live="polite">
-          {t('workbench.stepCounter', { n: position, total })}
+          <RollingNumber value={position} /> / {total}
         </span>
         <Button
           variant="ghost"
@@ -134,16 +139,42 @@ export function StepBar(props: StepBarProps) {
         </Button>
       </div>
       <span className="h-5 w-px shrink-0 bg-line" />
-      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto" aria-live="polite">
-        {props.playing ? (
-          <PlayRow {...props} />
-        ) : prompt ? (
-          <PromptRow {...props} prompt={prompt} />
-        ) : chainLength > 0 ? (
-          <ChainRow {...props} />
-        ) : (
-          <IdleRow {...props} />
-        )}
+      {/* Der Zustand der Leiste wechselt mit kurzem Aufsteigen (Szene „Karte spielen“: Abfrage steigt auf) */}
+      <div className="relative flex min-w-0 flex-1 items-center overflow-hidden" aria-live="polite">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={
+              props.playing
+                ? 'play'
+                : prompt
+                  ? `prompt:${prompt.question}`
+                  : props.hint
+                    ? 'hint'
+                    : chainLength > 0
+                      ? 'chain'
+                      : 'idle'
+            }
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15, ease: EASE.out }}
+            className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto"
+          >
+            {props.playing ? (
+              <PlayRow {...props} />
+            ) : prompt ? (
+              <PromptRow {...props} prompt={prompt} />
+            ) : props.hint ? (
+              <span role="status" className="truncate text-warning">
+                {props.hint}
+              </span>
+            ) : chainLength > 0 ? (
+              <ChainRow {...props} />
+            ) : (
+              <IdleRow {...props} />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
       {props.offer ? (
         <OfferNotice key={props.offer} {...props} />

@@ -1,6 +1,8 @@
 'use client';
 
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
+import { motion } from 'motion/react';
+import { SPRING } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 export interface SegmentedOption<T extends string> {
@@ -26,6 +28,8 @@ export function Segmented<T extends string>({
   className?: string;
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  // Der Unterstrich gleitet zum gewählten Wert (Motion-Szene „Mikro“, Tabs)
+  const indicator = useId();
   const current = options.findIndex((o) => o.value === value);
 
   const move = (delta: number) => {
@@ -59,13 +63,18 @@ export function Segmented<T extends string>({
               }
             }}
             className={cn(
-              'py-1 text-sm transition-[color,box-shadow] duration-(--motion-base)',
-              checked
-                ? 'font-semibold text-ink shadow-[inset_0_-1.5px_0_var(--ink)]'
-                : 'text-text-subtle hover:text-ink'
+              'relative py-1 text-sm transition-colors duration-(--motion-base)',
+              checked ? 'font-semibold text-ink' : 'text-text-subtle hover:text-ink'
             )}
           >
             {o.label}
+            {checked && (
+              <motion.span
+                layoutId={indicator}
+                transition={SPRING.snappy}
+                className="absolute inset-x-0 bottom-0 h-[1.5px] bg-ink"
+              />
+            )}
           </button>
         );
       })}

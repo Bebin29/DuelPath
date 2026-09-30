@@ -369,7 +369,8 @@
     "stepPlay": "Play your first step",
     "progress": "{{steps}} steps · endboard {{endboard}}",
     "lines_one": "{{count}} line",
-    "lines_other": "{{count}} lines"
+    "lines_other": "{{count}} lines",
+    "words": "Ash?|Imperm?|Nibiru?|Droll?"
   },
   "settings": {
     "title": "Settings",
@@ -519,7 +520,12 @@
     "tooNarrow": "The workbench needs a window at least 1280 px wide.",
     "tokenHere": "Token here",
     "tokenPick": "Pick a token …",
-    "tokenHint": "Type a name, Enter puts the token in this zone in defense"
+    "tokenHint": "Type a name, Enter puts the token in this zone in defense",
+    "keys": {
+      "pickFirst": "{{key}} acts on a card: hover, click or pick one with / first.",
+      "notPossible": "{{key}} is not possible for {{name}} here."
+    },
+    "negatedLink": "will be negated"
   },
   "preview": {
     "effects": "Effects",
@@ -570,7 +576,8 @@
     "pairs": "Pairs",
     "pairsHint": "In a branch with an interruption the stress test shows what still hits afterwards (“Ash, then Imperm”)",
     "pairsInBranch_one": "{{count}} more interruption in this branch",
-    "pairsInBranch_other": "{{count}} more interruptions in this branch"
+    "pairsInBranch_other": "{{count}} more interruptions in this branch",
+    "scanning": "Stress test · step {{n}} of {{total}}"
   },
   "endboard": {
     "interruptions_one": "interruption",
@@ -806,10 +813,10 @@
       "play": "Play and pause the line",
       "stress": "Stress test on and off",
       "quick": "Pick a card by name",
-      "menu": "Card action menu",
-      "summon": "Normal Summon",
+      "menu": "Action menu of the chosen card (also right-click, context menu key)",
+      "summon": "Normal Summon the chosen card",
       "set": "Set",
-      "activate": "Activate",
+      "activate": "Activate the first free effect",
       "effect": "Effect 1 to 9",
       "position": "Change position",
       "move": "GY, banish, hand, deck",
@@ -820,7 +827,9 @@
       "cancel": "Cancel prompt or menu",
       "delete": "Delete step and what follows",
       "edit": "Edit step",
-      "command": "Type a command"
+      "command": "Type a command",
+      "menuFocused": "Action menu of the focused card",
+      "unpick": "Clear the chosen card, shortcuts then act on hover only"
     }
   },
   "hints": {

@@ -369,7 +369,8 @@
     "stepPlay": "Ersten Schritt spielen",
     "progress": "{{steps}} Schritte · Endboard {{endboard}}",
     "lines_one": "{{count}} Line",
-    "lines_other": "{{count}} Lines"
+    "lines_other": "{{count}} Lines",
+    "words": "Ash?|Imperm?|Nibiru?|Droll?"
   },
   "settings": {
     "title": "Einstellungen",
@@ -519,7 +520,12 @@
     "tooNarrow": "Für die Workbench bitte mindestens 1280 px breit.",
     "tokenHere": "Spielmarke hier",
     "tokenPick": "Spielmarke wählen …",
-    "tokenHint": "Name tippen, Enter legt die Spielmarke in Verteidigung in diese Zone"
+    "tokenHint": "Name tippen, Enter legt die Spielmarke in Verteidigung in diese Zone",
+    "keys": {
+      "pickFirst": "{{key}} wirkt auf eine Karte: erst überfahren, anklicken oder mit / wählen.",
+      "notPossible": "{{key}} geht für {{name}} hier nicht."
+    },
+    "negatedLink": "wird negiert"
   },
   "preview": {
     "effects": "Effekte",
@@ -570,7 +576,8 @@
     "pairs": "Paare",
     "pairsHint": "In einem Branch mit Unterbrechung zeigt der Stresstest, was danach noch trifft („Ash und dann Imperm“)",
     "pairsInBranch_one": "{{count}} weitere Unterbrechung in diesem Branch",
-    "pairsInBranch_other": "{{count}} weitere Unterbrechungen in diesem Branch"
+    "pairsInBranch_other": "{{count}} weitere Unterbrechungen in diesem Branch",
+    "scanning": "Stresstest · Schritt {{n}} von {{total}}"
   },
   "endboard": {
     "interruptions_one": "Unterbrechung",
@@ -806,10 +813,10 @@
       "play": "Line abspielen und anhalten",
       "stress": "Stresstest an und aus",
       "quick": "Karte per Name wählen",
-      "menu": "Aktionsmenü der Karte",
-      "summon": "Normal Summon",
+      "menu": "Aktionsmenü der gewählten Karte (auch Rechtsklick, Kontextmenütaste)",
+      "summon": "Normal Summon der gewählten Karte",
       "set": "Setzen",
-      "activate": "Aktivieren",
+      "activate": "Ersten freien Effekt aktivieren",
       "effect": "Effekt 1 bis 9",
       "position": "Position ändern",
       "move": "Friedhof, Verbannen, Hand, Deck",
@@ -820,7 +827,9 @@
       "cancel": "Abfrage oder Menü abbrechen",
       "delete": "Schritt mit Folgeschritten löschen",
       "edit": "Schritt bearbeiten",
-      "command": "Befehl eingeben"
+      "command": "Befehl eingeben",
+      "menuFocused": "Aktionsmenü der fokussierten Karte",
+      "unpick": "Kartenwahl aufheben, Kürzel wirken dann nur beim Überfahren"
     }
   },
   "hints": {

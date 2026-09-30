@@ -3,6 +3,8 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { motion } from 'motion/react';
+import { EASE } from '@/lib/motion';
+import { CountTo } from '@/components/motion/CountTo';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
@@ -37,6 +39,7 @@ export function CompareView({
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
   const best = Math.max(...columns.map((c) => c.summary.interruptions));
+  const main = columns[0]?.summary;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -84,9 +87,25 @@ export function CompareView({
               </p>
               <dl className="grid grid-cols-[1fr_auto] items-baseline gap-y-0.5 text-sm">
                 <dt className="text-text-muted">{t('endboard.interruptionsLabel')}</dt>
-                <dd className="font-display text-3xl leading-none">{s.interruptions}</dd>
+                {/* Werte fallen vom Stand der Hauptline auf den des Branches */}
+                <dd className="font-display text-3xl leading-none">
+                  <CountTo
+                    from={main?.interruptions ?? s.interruptions}
+                    to={s.interruptions}
+                    delay={0.2 + i * 0.12}
+                    duration={0.4}
+                    className="tabular-nums"
+                  />
+                </dd>
                 <dt className="text-text-muted">{t('endboard.hand')}</dt>
-                <dd className="font-mono text-xs">{s.hand.length}</dd>
+                <dd className="font-mono text-xs">
+                  <CountTo
+                    from={main?.hand.length ?? s.hand.length}
+                    to={s.hand.length}
+                    delay={0.2 + i * 0.12}
+                    duration={0.3}
+                  />
+                </dd>
               </dl>
               <ul className="flex min-h-12 flex-wrap gap-1">
                 {field.map((c) => {
@@ -105,16 +124,38 @@ export function CompareView({
                 {col.missing.map((cardId, k) => {
                   const card = cards.get(cardId);
                   return (
-                    <li
+                    <motion.li
                       key={`missing-${cardId}-${k}`}
-                      className="rounded-sm opacity-40 outline-dashed outline-1 outline-offset-1 outline-text-subtle"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.4 }}
+                      transition={{ delay: 0.45 + i * 0.12 + k * 0.05 }}
+                      className="relative rounded-sm"
                     >
+                      <svg
+                        aria-hidden
+                        viewBox="0 0 34 49"
+                        className="pointer-events-none absolute -inset-0.5 z-10 overflow-visible"
+                      >
+                        <motion.rect
+                          x="0.5"
+                          y="0.5"
+                          width="33"
+                          height="48"
+                          rx="3"
+                          fill="none"
+                          stroke="var(--text-subtle)"
+                          strokeDasharray="3 3"
+                          initial={{ pathLength: 0 }}
+                          animate={{ pathLength: 1 }}
+                          transition={{ duration: 0.4, ease: EASE.smooth, delay: 0.45 + i * 0.12 }}
+                        />
+                      </svg>
                       <CardView
                         image={card?.imageSmall}
                         label={`${displayName(card, cardLanguage)} (${t('stress.missingLabel')})`}
                         size="xs"
                       />
-                    </li>
+                    </motion.li>
                   );
                 })}
               </ul>

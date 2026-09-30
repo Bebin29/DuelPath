@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
+import { EASE, SPRING, prefersReducedMotion } from '@/lib/motion';
 import { ArrowUpToLine, Columns3, GitBranch, StickyNote, TriangleAlert } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { cn } from '@/lib/utils';
@@ -86,6 +87,28 @@ export function LineList({
   const listRef = useRef<HTMLOListElement>(null);
   const [dropOn, setDropOn] = useState<string | null>(null);
 
+  // Stresstest-Lauf (Motion-Szene „Stresstest“): der Scan wandert Schritt für Schritt nach unten,
+  // Treffer erscheinen dort, wo er vorbeikommt. Danach bleiben alle Chips stehen.
+  const run = chokes?.run ?? 0;
+  const [scan, setScan] = useState<{ run: number; at: number | null }>({ run: 0, at: null });
+  useEffect(() => {
+    if (!run) return;
+    const timers = steps.map((_, i) =>
+      setTimeout(() => setScan({ run, at: i }), prefersReducedMotion() ? 0 : i * 130)
+    );
+    timers.push(
+      setTimeout(
+        () => setScan({ run, at: null }),
+        prefersReducedMotion() ? 0 : steps.length * 130 + 200
+      )
+    );
+    return () => timers.forEach(clearTimeout);
+    // Neu starten nur, wenn der Stresstest neu läuft
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [run]);
+  const scanning = scan.run === run && scan.at !== null;
+  const reached = (index: number) => scan.run === run && (scan.at === null || scan.at >= index);
+
   // Staples aus der Leiste landen auf einem Schritt; Zeilen heben sich beim Überfahren hervor
   const dropTarget = (key: string, nodeId: string | null) =>
     onDropStaple
@@ -150,7 +173,14 @@ export function LineList({
   return (
     <nav aria-label={t('workbench.lines')} className="flex h-full min-h-0 flex-col">
       <div className="flex items-end gap-2 px-4 pb-2 pt-3">
-        <h2 className="flex-1 truncate font-display text-lg leading-tight">{title}</h2>
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate font-display text-lg leading-tight">{title}</h2>
+          {chokes && scanning && (
+            <p className="font-mono text-2xs text-opponent" aria-live="polite">
+              {t('stress.scanning', { n: (scan.at ?? 0) + 1, total: steps.length })}
+            </p>
+          )}
+        </div>
         {onCompare && (
           <Button variant="text" size="sm" onClick={onCompare} className="-mr-2">
             <Columns3 />
@@ -187,189 +217,221 @@ export function LineList({
             <span>{t('workbench.startHand')}</span>
           </button>
         </li>
-        {steps.map((step, index) => {
-          const selected = step.node.id === selectedId;
-          const opponent = step.node.player === 'opponent';
-          const warnings = warningsOf(step.node.id);
-          const img = image(step.node);
-          const hits = chokes?.byStep.get(step.node.id) ?? [];
-          return (
-            <li key={step.node.id} role="none">
-              <div
-                role="treeitem"
-                aria-level={1}
-                aria-selected={selected}
-                aria-expanded={step.branches.length ? true : undefined}
-                tabIndex={selected ? 0 : -1}
-                aria-current={selected ? 'step' : undefined}
-                onClick={() => onSelect(step.node.id)}
-                onDoubleClick={() => onOpen?.(step.node.id)}
-                onKeyDown={(e) => {
-                  if (e.key !== 'Enter' && e.key !== ' ') return;
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onSelect(step.node.id);
-                }}
-                {...dropTarget(step.node.id, step.node.id)}
-                style={{ paddingLeft: 16 + step.chainDepth * 12 }}
-                className={cn(
-                  'relative flex h-[34px] w-full cursor-pointer items-center gap-2.5 pr-4 text-left outline-none focus-visible:bg-surface-3/60',
-                  selected
-                    ? 'bg-surface-3 text-ink shadow-[inset_2px_0_0_var(--ink)]'
-                    : 'text-text-muted hover:bg-surface-3/60',
-                  opponent && !selected && 'shadow-[inset_2px_0_0_var(--opponent)]',
-                  dropOn === step.node.id && 'bg-opponent-tint'
-                )}
+        <AnimatePresence initial={false}>
+          {steps.map((step, index) => {
+            const selected = step.node.id === selectedId;
+            const opponent = step.node.player === 'opponent';
+            const warnings = warningsOf(step.node.id);
+            const img = image(step.node);
+            const hits = chokes?.byStep.get(step.node.id) ?? [];
+            return (
+              <motion.li
+                key={step.node.id}
+                role="none"
+                layout="position"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0, x: -10 }}
+                transition={SPRING.soft}
+                className="overflow-hidden"
               >
-                {marked?.has(step.node.id) && (
-                  <span
-                    aria-hidden
-                    className="absolute left-1.5 top-1/2 size-1.5 -translate-y-1/2 rounded-full bg-opponent"
-                  />
-                )}
-                {step.chainDepth > 0 && (
-                  <span
-                    aria-hidden
-                    className="absolute bottom-1.5 top-1.5 w-[1.5px] rounded-[1px] bg-chain"
-                    style={{ left: 8 + step.chainDepth * 12 }}
-                  />
-                )}
-                <span
-                  className={cn(
-                    'w-4 font-mono text-sm',
-                    selected ? 'text-ink' : 'text-text-subtle'
-                  )}
-                >
-                  {step.number}
-                </span>
-                {img ? <CardView image={img} label="" size="art" /> : <span className="size-6" />}
-                <span
-                  className={cn(
-                    'flex-1 truncate',
-                    selected && 'font-medium',
-                    opponent && 'text-opponent'
-                  )}
-                >
-                  {labelOf(step.node)}
-                </span>
-                {chokes && hits.length > 0 && (
-                  <span className="flex shrink-0 items-center gap-0.5">
-                    {hits.slice(0, 3).map((hit, i) => (
-                      <motion.button
-                        key={`${chokes.run}:${hit.staple}`}
-                        type="button"
-                        initial={{ opacity: 0, scale: 0.4, y: 6 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        transition={{
-                          type: 'spring',
-                          bounce: 0.45,
-                          visualDuration: 0.3,
-                          delay: index * 0.06 + i * 0.05,
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          chokes.onPick(hit);
-                        }}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          chokes.onDismiss(hit);
-                        }}
-                        onMouseEnter={() => chokes.onHover(hit)}
-                        onMouseLeave={() => chokes.onHover(null)}
-                        aria-label={chokes.describe(hit)}
-                        title={chokes.describe(hit)}
-                        className="rounded-[3px] ring-1 ring-opponent ring-offset-1 ring-offset-surface-1 hover:ring-2"
-                      >
-                        <CardView image={chokes.imageOf(hit.staple)} label="" size="dot" />
-                      </motion.button>
-                    ))}
-                    {hits.length > 3 && (
-                      <span
-                        className="pl-0.5 font-mono text-[10px] text-opponent"
-                        title={hits
-                          .slice(3)
-                          .map((h) => chokes.describe(h))
-                          .join('\n')}
-                      >
-                        +{hits.length - 3}
-                      </span>
-                    )}
-                  </span>
-                )}
-                {step.node.note && (
-                  <StickyNote
-                    aria-label={t('workbench.note')}
-                    className="size-3.5 text-text-subtle"
-                  />
-                )}
-                {warnings > 0 && (
-                  <span title={warningTextOf?.(step.node.id)} className="flex">
-                    <TriangleAlert
-                      aria-label={t('workbench.warnings', { count: warnings })}
-                      className="size-3.5 text-warning"
-                    />
-                  </span>
-                )}
-              </div>
-              {selected && step.node.note && (
-                <p className="pb-1.5 pl-[58px] pr-4 font-hand text-[14px] leading-snug text-opponent">
-                  {step.node.note}
-                </p>
-              )}
-              {step.branches.map((b) => (
                 <div
-                  key={b.nodeId}
-                  role="none"
-                  className="group/branch flex items-center hover:bg-surface-3/60"
-                >
-                  <button
-                    role="treeitem"
-                    aria-level={2}
-                    aria-selected={false}
-                    tabIndex={-1}
-                    type="button"
-                    onClick={() => onSelect(b.nodeId)}
-                    className="flex h-[30px] min-w-0 flex-1 items-center gap-2 pl-11 text-left text-[12.5px] text-text-muted"
-                  >
-                    <GitBranch className="size-3.5 shrink-0 text-text-subtle" />
-                    <span className="flex-1 truncate">
-                      {b.letter} · {b.label}
-                    </span>
-                    {pairCountOf && pairCountOf(b.nodeId) > 0 && (
-                      <span
-                        className="font-mono text-2xs text-opponent"
-                        title={t('stress.pairsInBranch', { count: pairCountOf(b.nodeId) })}
-                      >
-                        ! {pairCountOf(b.nodeId)}
-                      </span>
-                    )}
-                    {endCountOf?.(b.nodeId) != null && (
-                      <span
-                        className="font-mono text-2xs text-text-subtle"
-                        title={t('stress.endboardCount')}
-                      >
-                        {endCountOf(b.nodeId)}
-                      </span>
-                    )}
-                  </button>
-                  {onPromote && (
-                    <button
-                      type="button"
-                      onClick={() => onPromote(b.nodeId)}
-                      aria-label={t('workbench.promote', { label: b.label })}
-                      title={t('workbench.promote', { label: b.label })}
-                      className="mr-2 grid size-6 place-items-center rounded-sm text-text-subtle opacity-0 hover:text-ink focus-visible:opacity-100 group-hover/branch:opacity-100"
-                    >
-                      <ArrowUpToLine className="size-3.5" />
-                    </button>
+                  role="treeitem"
+                  aria-level={1}
+                  aria-selected={selected}
+                  aria-expanded={step.branches.length ? true : undefined}
+                  tabIndex={selected ? 0 : -1}
+                  aria-current={selected ? 'step' : undefined}
+                  onClick={() => onSelect(step.node.id)}
+                  onDoubleClick={() => onOpen?.(step.node.id)}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onSelect(step.node.id);
+                  }}
+                  {...dropTarget(step.node.id, step.node.id)}
+                  style={{ paddingLeft: 16 + step.chainDepth * 12 }}
+                  className={cn(
+                    'relative flex h-[34px] w-full cursor-pointer items-center gap-2.5 pr-4 text-left outline-none focus-visible:bg-surface-3/60',
+                    selected
+                      ? 'bg-surface-3 text-ink shadow-[inset_2px_0_0_var(--ink)]'
+                      : 'text-text-muted hover:bg-surface-3/60',
+                    opponent && !selected && 'shadow-[inset_2px_0_0_var(--opponent)]',
+                    dropOn === step.node.id && 'bg-opponent-tint'
                   )}
-                  {!onPromote && <span className="w-4" />}
+                >
+                  {chokes && scanning && scan.at === index && (
+                    <motion.span
+                      aria-hidden
+                      layoutId="stress-scan"
+                      transition={SPRING.snappy}
+                      className="pointer-events-none absolute inset-0 bg-opponent/10 shadow-[inset_2px_0_0_var(--opponent)]"
+                    />
+                  )}
+                  {marked?.has(step.node.id) && (
+                    <span
+                      aria-hidden
+                      className="absolute left-1.5 top-1/2 size-1.5 -translate-y-1/2 rounded-full bg-opponent"
+                    />
+                  )}
+                  {step.chainDepth > 0 && (
+                    <span
+                      aria-hidden
+                      className="absolute bottom-1.5 top-1.5 w-[1.5px] rounded-[1px] bg-chain"
+                      style={{ left: 8 + step.chainDepth * 12 }}
+                    />
+                  )}
+                  <span
+                    className={cn(
+                      'relative w-4 font-mono text-sm',
+                      selected ? 'text-ink' : 'text-text-subtle'
+                    )}
+                  >
+                    {step.number}
+                    {chokes && hits.length > 0 && reached(index) && <PressureCircle />}
+                  </span>
+                  {img ? <CardView image={img} label="" size="art" /> : <span className="size-6" />}
+                  <span
+                    className={cn(
+                      'flex-1 truncate',
+                      selected && 'font-medium',
+                      opponent && 'text-opponent'
+                    )}
+                  >
+                    {labelOf(step.node)}
+                  </span>
+                  {chokes && hits.length > 0 && reached(index) && (
+                    <span className="flex shrink-0 items-center gap-0.5">
+                      <motion.span
+                        aria-hidden
+                        initial={{ opacity: 0, scale: 1.8, rotate: -20 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 8 }}
+                        transition={{ duration: 0.3, ease: EASE.bounce, delay: 0.25 }}
+                        className="mr-0.5 font-hand text-sm font-bold leading-none text-opponent"
+                      >
+                        !
+                      </motion.span>
+                      {hits.slice(0, 3).map((hit, i) => (
+                        <motion.button
+                          key={`${chokes.run}:${hit.staple}`}
+                          type="button"
+                          initial={{ opacity: 0, scale: 0.4, y: 6 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          transition={{
+                            type: 'spring',
+                            bounce: 0.45,
+                            visualDuration: 0.3,
+                            delay: i * 0.06,
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            chokes.onPick(hit);
+                          }}
+                          onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            chokes.onDismiss(hit);
+                          }}
+                          onMouseEnter={() => chokes.onHover(hit)}
+                          onMouseLeave={() => chokes.onHover(null)}
+                          aria-label={chokes.describe(hit)}
+                          title={chokes.describe(hit)}
+                          className="rounded-[3px] ring-1 ring-opponent ring-offset-1 ring-offset-surface-1 hover:ring-2"
+                        >
+                          <CardView image={chokes.imageOf(hit.staple)} label="" size="dot" />
+                        </motion.button>
+                      ))}
+                      {hits.length > 3 && (
+                        <span
+                          className="pl-0.5 font-mono text-[10px] text-opponent"
+                          title={hits
+                            .slice(3)
+                            .map((h) => chokes.describe(h))
+                            .join('\n')}
+                        >
+                          +{hits.length - 3}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  {step.node.note && (
+                    <StickyNote
+                      aria-label={t('workbench.note')}
+                      className="size-3.5 text-text-subtle"
+                    />
+                  )}
+                  {warnings > 0 && (
+                    <span title={warningTextOf?.(step.node.id)} className="flex">
+                      <TriangleAlert
+                        aria-label={t('workbench.warnings', { count: warnings })}
+                        className="size-3.5 text-warning"
+                      />
+                    </span>
+                  )}
                 </div>
-              ))}
-            </li>
-          );
-        })}
+                {selected && step.node.note && (
+                  <p className="pb-1.5 pl-[58px] pr-4 font-hand text-[14px] leading-snug text-opponent">
+                    {step.node.note}
+                  </p>
+                )}
+                {step.branches.map((b) => (
+                  <motion.div
+                    key={b.nodeId}
+                    role="none"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    transition={SPRING.soft}
+                    className="group/branch flex items-center overflow-hidden hover:bg-surface-3/60"
+                  >
+                    <button
+                      role="treeitem"
+                      aria-level={2}
+                      aria-selected={false}
+                      tabIndex={-1}
+                      type="button"
+                      onClick={() => onSelect(b.nodeId)}
+                      className="flex h-[30px] min-w-0 flex-1 items-center gap-2 pl-11 text-left text-[12.5px] text-text-muted"
+                    >
+                      <GitBranch className="size-3.5 shrink-0 text-text-subtle" />
+                      <span className="flex-1 truncate">
+                        {b.letter} · {b.label}
+                      </span>
+                      {pairCountOf && pairCountOf(b.nodeId) > 0 && (
+                        <span
+                          className="font-mono text-2xs text-opponent"
+                          title={t('stress.pairsInBranch', { count: pairCountOf(b.nodeId) })}
+                        >
+                          ! {pairCountOf(b.nodeId)}
+                        </span>
+                      )}
+                      {endCountOf?.(b.nodeId) != null && (
+                        <span
+                          className="font-mono text-2xs text-text-subtle"
+                          title={t('stress.endboardCount')}
+                        >
+                          {endCountOf(b.nodeId)}
+                        </span>
+                      )}
+                    </button>
+                    {onPromote && (
+                      <button
+                        type="button"
+                        onClick={() => onPromote(b.nodeId)}
+                        aria-label={t('workbench.promote', { label: b.label })}
+                        title={t('workbench.promote', { label: b.label })}
+                        className="mr-2 grid size-6 place-items-center rounded-sm text-text-subtle opacity-0 hover:text-ink focus-visible:opacity-100 group-hover/branch:opacity-100"
+                      >
+                        <ArrowUpToLine className="size-3.5" />
+                      </button>
+                    )}
+                    {!onPromote && <span className="w-4" />}
+                  </motion.div>
+                ))}
+              </motion.li>
+            );
+          })}
+        </AnimatePresence>
         {alternatives.length > 0 && (
           <li role="none" className="mt-4 border-t border-line pt-2">
             {alternatives.map((alt, i) => (
@@ -392,5 +454,26 @@ export function LineList({
         )}
       </ol>
     </nav>
+  );
+}
+
+/** Rotstift-Kreis um die Schrittnummer, dünn angesetzt, kräftig in der Kurve (Szene „Stresstest“) */
+function PressureCircle() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 40 30"
+      className="pointer-events-none absolute -inset-x-2 -inset-y-1.5 overflow-visible"
+    >
+      <motion.path
+        d="M22 3 C34 3 38 11 37 16 C35 25 24 28 16 27 C7 26 2 20 3 13 C4 6 12 2 24 4"
+        fill="none"
+        stroke="var(--opponent)"
+        strokeLinecap="round"
+        initial={{ pathLength: 0, strokeWidth: 1.2 }}
+        animate={{ pathLength: 1, strokeWidth: [1.2, 2.6, 2, 1.3] }}
+        transition={{ duration: 0.5, ease: EASE.ink }}
+      />
+    </svg>
   );
 }

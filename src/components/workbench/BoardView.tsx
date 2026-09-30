@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
-  KeyboardSensor,
   PointerSensor,
   useDraggable,
   useDroppable,
@@ -12,7 +11,15 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { MotionConfig, motion } from 'motion/react';
+import {
+  AnimatePresence,
+  MotionConfig,
+  animate,
+  motion,
+  useMotionValue,
+  useSpring,
+} from 'motion/react';
+import { EASE, SPRING, prefersReducedMotion } from '@/lib/motion';
 import { X } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
@@ -52,6 +59,8 @@ interface BoardViewProps {
   picking?: BoardPicking | null;
   /** Klick auf eine leere Monsterzone, etwa um eine Spielmarke anzulegen */
   onEmptyZone?: (target: DropTarget, at: { x: number; y: number }) => void;
+  /** Chain Links, die ein höherer Link negiert; sie bekommen den Rotstift-Strich */
+  negatedLinks?: Set<string>;
 }
 
 const dropId = (player: Player, zone: Zone, slot?: number) =>
@@ -81,6 +90,8 @@ interface CardEnv {
   layoutIdOf: (id: string) => string;
   /** Xyz-Materialien unter der Karte */
   materialCount: (id: string) => number;
+  /** Gerade abgelegte Karte: sie rastet mit einer Feder ein */
+  droppedId: string | null;
   onEmptyZone?: (id: string, el: HTMLElement) => void;
 }
 
@@ -99,15 +110,14 @@ export function BoardView({
   onCardClick,
   picking,
   onEmptyZone,
+  negatedLinks,
 }: BoardViewProps) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    // Enter gehört der Schrittleiste (Auflösen, Bestätigen); gezogen wird mit der Leertaste
-    useSensor(KeyboardSensor, {
-      keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space', 'Enter'] },
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    // Kein Ziehen per Tastatur: Leertaste spielt ab, Enter öffnet das Aktionsmenü der Karte,
+    // die Kürzel N, S, A, G, B, H, D spielen die Karte (UX-Plan 9)
   );
   const me = boardOf(state, 'self');
   const opp = boardOf(state, 'opponent');
@@ -116,7 +126,17 @@ export function BoardView({
   const [shift, setShift] = useState(false);
   const [generations, setGenerations] = useState<Record<string, number>>({});
   const [pile, setPile] = useState<{ player: Player; zone: Zone } | null>(null);
+  const [droppedId, setDroppedId] = useState<string | null>(null);
   const dragged = useRef(false);
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  // Neigung beim Ziehen (UI-Plan 4.7): die Karte kippt in Zugrichtung und federt zurück
+  const tilt = useMotionValue(0);
+  const rotate = useSpring(tilt, { stiffness: 320, damping: 22 });
+  const lastX = useRef(0);
+  const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  usePileFlights(boardRef, state, cards);
 
   // Umschalt während des Ziehens ändert die Vorschau sofort
   useEffect(() => {
@@ -139,6 +159,8 @@ export function BoardView({
 
   const handleDragEnd = ({ active, over, activatorEvent }: DragEndEvent) => {
     setDrag(null);
+    tilt.set(0);
+    setDroppedId(String(active.id));
     setTimeout(() => (dragged.current = false), 0);
     if (!over || !onDrop) return;
     const id = String(active.id);
@@ -167,6 +189,7 @@ export function BoardView({
     draggable: Boolean(onDrop),
     picking,
     layoutIdOf: (id) => `card-${id}-${generations[id] ?? 0}`,
+    droppedId,
     materialCount: (id) =>
       Object.values(state.cards).filter((c) => c.zone === 'MATERIAL' && c.attachedTo === id).length,
     onEmptyZone: onEmptyZone
@@ -248,19 +271,30 @@ export function BoardView({
         sensors={sensors}
         onDragStart={({ active, activatorEvent }) => {
           dragged.current = true;
+          lastX.current = 0;
           setShift(activatorEvent instanceof PointerEvent && activatorEvent.shiftKey);
           setDrag({ id: String(active.id), over: null });
         }}
         onDragOver={({ active, over }) =>
           setDrag({ id: String(active.id), over: over ? String(over.id) : null })
         }
+        onDragMove={({ delta }) => {
+          const dx = delta.x - lastX.current;
+          lastX.current = delta.x;
+          tilt.set(Math.max(-9, Math.min(9, dx * 0.9)));
+          if (settle.current) clearTimeout(settle.current);
+          settle.current = setTimeout(() => tilt.set(0), 90);
+        }}
         onDragCancel={() => {
           setDrag(null);
           setTimeout(() => (dragged.current = false), 0);
         }}
         onDragEnd={handleDragEnd}
       >
-        <div className="relative flex h-full items-center justify-center gap-6 overflow-auto bg-felt p-6">
+        <div
+          ref={boardRef}
+          className="relative flex h-full items-center justify-center gap-6 overflow-auto bg-felt p-6"
+        >
           <div className="flex flex-col items-center gap-3">
             <SideLabel player="opponent" label={t('workbench.opponent')} lp={state.lp.opponent}>
               <Hand
@@ -320,7 +354,12 @@ export function BoardView({
             )}
           </div>
 
-          <ChainColumn state={state} cards={cards} onInspect={onInspect} />
+          <ChainColumn
+            state={state}
+            cards={cards}
+            onInspect={onInspect}
+            negatedLinks={negatedLinks}
+          />
 
           {pile && (
             <PileOverlay
@@ -336,12 +375,19 @@ export function BoardView({
         </div>
         <DragOverlay dropAnimation={null}>
           {active && (
-            <CardView
-              image={cards.get(active.cardId)?.imageSmall}
-              label={displayName(cards.get(active.cardId), cardLanguage)}
-              size="board"
-              className="cursor-grabbing drop-shadow-[0_14px_20px_rgb(0_0_0/0.5)]"
-            />
+            <motion.div
+              style={{ rotate }}
+              initial={{ scale: 1 }}
+              animate={{ scale: 1.08 }}
+              transition={SPRING.snappy}
+            >
+              <CardView
+                image={cards.get(active.cardId)?.imageSmall}
+                label={displayName(cards.get(active.cardId), cardLanguage)}
+                size="board"
+                className="cursor-grabbing drop-shadow-[0_18px_24px_rgb(0_0_0/0.55)]"
+              />
+            </motion.div>
           )}
         </DragOverlay>
       </DndContext>
@@ -521,14 +567,12 @@ function PileCell({
     >
       <DropPreview label={preview} />
       {top ? (
-        <motion.div key={top.instanceId} layoutId={env.layoutIdOf(top.instanceId)}>
-          <CardView
-            image={faceDown ? null : card?.imageSmall}
-            label={label}
-            size="xs"
-            faceDown={faceDown ? 'opponent' : undefined}
-          />
-        </motion.div>
+        <CardView
+          image={faceDown ? null : card?.imageSmall}
+          label={label}
+          size="xs"
+          faceDown={faceDown ? 'opponent' : undefined}
+        />
       ) : (
         <span className="h-[46px]" />
       )}
@@ -625,28 +669,46 @@ function DraggableCard({
       {...attributes}
       data-instance={placed.instanceId}
       onClick={(e) => env.onClick(placed.instanceId, e.currentTarget)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        env.onClick(placed.instanceId, e.currentTarget);
+      }}
       onMouseEnter={() => !hidden && env.onInspect(placed.instanceId)}
       onFocus={() => !hidden && env.onInspect(placed.instanceId)}
+      whileHover={isDragging ? undefined : { y: -3 }}
       className={cn(
         'rounded-sm outline-none focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-primary',
-        env.draggable && 'cursor-grab',
-        isDragging && 'opacity-30'
+        env.draggable && 'cursor-grab'
       )}
     >
-      <CardView
-        image={card?.imageSmall}
-        label={displayName(card, cardLanguage)}
-        size={size}
-        isNew={isNew}
-        selected={
-          picking ? picking.picked.has(placed.instanceId) : env.inspectedId === placed.instanceId
-        }
-        dimmed={Boolean(picking) && !pickable && placed.zone === 'MONSTER'}
-        faceDown={placed.position === 'SET' ? placed.controller : undefined}
-        defense={placed.position === 'DEF'}
-        materials={env.materialCount(placed.instanceId)}
-        linkMarkers={placed.zone === 'MONSTER' ? card?.linkMarkers : undefined}
-      />
+      {/* Eigenes Element für Flüge aus und in Stapel; die Feder beim Einrasten sitzt darunter */}
+      <div
+        data-fly={animate ? placed.instanceId : undefined}
+        className={cn('transition-opacity duration-(--motion-fast)', isDragging && 'opacity-30')}
+      >
+        <motion.div
+          initial={env.droppedId === placed.instanceId ? { scale: 1.1 } : false}
+          animate={{ scale: 1 }}
+          transition={SPRING.card}
+        >
+          <CardView
+            image={card?.imageSmall}
+            label={displayName(card, cardLanguage)}
+            size={size}
+            isNew={isNew}
+            selected={
+              picking
+                ? picking.picked.has(placed.instanceId)
+                : env.inspectedId === placed.instanceId
+            }
+            dimmed={Boolean(picking) && !pickable && placed.zone === 'MONSTER'}
+            faceDown={placed.position === 'SET' ? placed.controller : undefined}
+            defense={placed.position === 'DEF'}
+            materials={env.materialCount(placed.instanceId)}
+            linkMarkers={placed.zone === 'MONSTER' ? card?.linkMarkers : undefined}
+          />
+        </motion.div>
+      </div>
     </motion.div>
   );
 }
@@ -655,51 +717,190 @@ function ChainColumn({
   state,
   cards,
   onInspect,
+  negatedLinks,
 }: {
   state: GameState;
   cards: Map<string, ComboCard>;
   onInspect: (id: string | null) => void;
+  negatedLinks?: Set<string>;
 }) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
+  const count = state.chain.length;
   return (
     <section
       aria-label={t('workbench.chain')}
       className="flex w-40 shrink-0 flex-col gap-2 self-center"
     >
       <h3 className="font-display text-lg">{t('workbench.chain')}</h3>
-      {state.chain.length === 0 && (
-        <p className="text-xs text-text-subtle">{t('workbench.noChain')}</p>
+      {count === 0 && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35, duration: 0.2 }}
+          className="text-xs text-text-subtle"
+        >
+          {t('workbench.noChain')}
+        </motion.p>
       )}
-      {[...state.chain].reverse().map((link) => {
-        const n = state.chain.indexOf(link) + 1;
-        const card = link.cardId ? cards.get(link.cardId) : undefined;
-        return (
-          <button
-            key={link.nodeId}
-            type="button"
-            onMouseEnter={() => link.instanceId && onInspect(link.instanceId)}
-            className={cn(
-              'flex items-center gap-2 rounded-sm border px-2 py-1.5 text-left text-xs',
-              link.player === 'opponent'
-                ? 'border-opponent shadow-[inset_3px_0_0_var(--opponent)]'
-                : 'border-chain',
-              link.negated && 'opacity-60 line-through decoration-opponent'
-            )}
-          >
-            <span
+      {/* Links stapeln sich sichtbar und lösen rückwärts auf: der höchste geht zuerst (Motion-Prinzip 4) */}
+      <AnimatePresence initial={false} custom={count}>
+        {[...state.chain].reverse().map((link) => {
+          const n = state.chain.indexOf(link) + 1;
+          const card = link.cardId ? cards.get(link.cardId) : undefined;
+          const struck = Boolean(link.negated) || negatedLinks?.has(link.nodeId);
+          const fromOpponent = link.player === 'opponent';
+          return (
+            <motion.button
+              key={link.nodeId}
+              layout
+              type="button"
+              custom={n}
+              initial={{ opacity: 0, y: fromOpponent ? -22 : 22, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{
+                opacity: 0,
+                x: 24,
+                transition: { duration: 0.2, ease: EASE.smooth, delay: (count - n) * 0.12 },
+              }}
+              transition={SPRING.card}
+              onMouseEnter={() => link.instanceId && onInspect(link.instanceId)}
               className={cn(
-                'font-mono text-[10.5px] font-semibold',
-                link.player === 'opponent' ? 'text-opponent' : 'text-chain'
+                'relative flex items-center gap-2 rounded-sm border px-2 py-1.5 text-left text-xs',
+                fromOpponent
+                  ? 'border-opponent shadow-[inset_3px_0_0_var(--opponent)]'
+                  : 'border-chain',
+                link.negated && 'opacity-60'
               )}
             >
-              CL{n}
-            </span>
-            <CardView image={card?.imageSmall} label={displayName(card, cardLanguage)} size="art" />
-            <span className="truncate">{displayName(card, cardLanguage)}</span>
-          </button>
-        );
-      })}
+              <span
+                className={cn(
+                  'font-mono text-[10.5px] font-semibold',
+                  fromOpponent ? 'text-opponent' : 'text-chain'
+                )}
+              >
+                CL{n}
+              </span>
+              <CardView
+                image={card?.imageSmall}
+                label={displayName(card, cardLanguage)}
+                size="art"
+              />
+              <span className="truncate">{displayName(card, cardLanguage)}</span>
+              {struck && (
+                <svg
+                  aria-label={t('workbench.negatedLink')}
+                  viewBox="0 0 100 20"
+                  preserveAspectRatio="none"
+                  className="pointer-events-none absolute left-1 top-1/2 h-3 w-[calc(100%-8px)] -translate-y-1/2 overflow-visible"
+                >
+                  <motion.path
+                    d="M2 13 C 30 9, 60 12, 98 6"
+                    fill="none"
+                    stroke="var(--opponent)"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                    vectorEffect="non-scaling-stroke"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.4, ease: EASE.ink, delay: 0.1 }}
+                  />
+                </svg>
+              )}
+            </motion.button>
+          );
+        })}
+      </AnimatePresence>
     </section>
   );
+}
+
+/**
+ * Flüge aus und in die Stapel (Motion-Prinzip 3, Szene „Karte spielen“): Karten, die aus Deck,
+ * Extra Deck, Friedhof oder Verbannt kommen, fliegen vom Stapel an ihren Platz; Karten, die in
+ * einen Stapel gehen, fliegen als Geist dorthin. Zwischen Hand und Feld übernimmt layoutId.
+ */
+const PILES: Zone[] = ['DECK', 'EXTRA', 'GY', 'BANISHED', 'MATERIAL'];
+
+function usePileFlights(
+  root: React.RefObject<HTMLDivElement | null>,
+  state: GameState,
+  cards: Map<string, ComboCard>
+) {
+  const prev = useRef<GameState | null>(null);
+  const rects = useRef(new Map<string, DOMRect>());
+
+  useLayoutEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const before = prev.current;
+    const target = (card: PlacedCard) =>
+      card.zone === 'MATERIAL' && card.attachedTo
+        ? el.querySelector<HTMLElement>(`[data-fly="${card.attachedTo}"]`)
+        : el.querySelector<HTMLElement>(`[data-drop="${card.owner}:${card.zone}"]`);
+
+    if (before && before !== state && !prefersReducedMotion()) {
+      for (const [id, now] of Object.entries(state.cards)) {
+        const was = before.cards[id];
+        if (!was || was.zone === now.zone) continue;
+        const fromPile = PILES.includes(was.zone);
+        const toPile = PILES.includes(now.zone);
+        if (fromPile && !toPile) {
+          const card = el.querySelector<HTMLElement>(`[data-fly="${id}"]`);
+          const src = target(was)?.getBoundingClientRect();
+          if (!card || !src) continue;
+          const r = card.getBoundingClientRect();
+          animate(
+            card,
+            {
+              x: [src.left + src.width / 2 - (r.left + r.width / 2), 0],
+              y: [src.top + src.height / 2 - (r.top + r.height / 2), 0],
+              scale: [0.6, 1],
+              rotate: [-6, 0],
+            },
+            SPRING.card
+          );
+        } else if (toPile && !fromPile) {
+          const src = rects.current.get(id);
+          const dst = target(now)?.getBoundingClientRect();
+          if (!src || !dst) continue;
+          flyGhost(cards.get(now.cardId)?.imageSmall ?? null, src, dst);
+        }
+      }
+    }
+    prev.current = state;
+    rects.current = new Map(
+      [...el.querySelectorAll<HTMLElement>('[data-fly]')].map((n) => [
+        n.dataset.fly!,
+        n.getBoundingClientRect(),
+      ])
+    );
+  }, [root, state, cards]);
+}
+
+/** Kurzlebige Kopie einer Karte, die in einen Stapel fliegt und dort verschwindet */
+function flyGhost(image: string | null, from: DOMRect, to: DOMRect) {
+  const ghost = document.createElement('div');
+  Object.assign(ghost.style, {
+    position: 'fixed',
+    left: `${from.left}px`,
+    top: `${from.top}px`,
+    width: `${from.width}px`,
+    height: `${from.height}px`,
+    borderRadius: '3px',
+    backgroundImage: image ? `url(${image})` : 'none',
+    backgroundColor: 'var(--surface-3)',
+    backgroundSize: 'cover',
+    boxShadow: '0 10px 20px rgb(0 0 0 / 0.45)',
+    zIndex: '45',
+    pointerEvents: 'none',
+  });
+  document.body.append(ghost);
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  void animate(
+    ghost,
+    { x: [0, dx], y: [0, dy - 10, dy], scale: [1, 0.55], rotate: [0, -6, 0], opacity: [1, 1, 0] },
+    { duration: 0.42, ease: EASE.ink }
+  ).then(() => ghost.remove());
 }

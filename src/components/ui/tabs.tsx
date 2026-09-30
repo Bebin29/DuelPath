@@ -1,6 +1,8 @@
 'use client';
 
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
+import { motion } from 'motion/react';
+import { SPRING } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 
 export interface TabOption<T extends string> {
@@ -28,6 +30,7 @@ export function Tabs<T extends string>({
   className?: string;
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const indicator = useId();
   const move = (index: number) => {
     const next = (index + options.length) % options.length;
     onChange(options[next].value);
@@ -61,11 +64,19 @@ export function Tabs<T extends string>({
               e.preventDefault();
             }}
             className={cn(
-              '-mb-px border-b-2 pb-2 pt-1 text-sm transition-colors duration-(--motion-fast)',
-              selected ? 'border-ink text-ink' : 'border-transparent text-text-muted hover:text-ink'
+              'relative -mb-px pb-2 pt-1 text-sm transition-colors duration-(--motion-fast)',
+              selected ? 'text-ink' : 'text-text-muted hover:text-ink'
             )}
           >
             {o.label}
+            {/* Der Unterstrich gleitet zum gewählten Tab (Szene „Mikro“, Tabs) */}
+            {selected && (
+              <motion.span
+                layoutId={indicator}
+                transition={SPRING.snappy}
+                className="absolute inset-x-0 bottom-0 h-0.5 bg-ink"
+              />
+            )}
           </button>
         );
       })}
