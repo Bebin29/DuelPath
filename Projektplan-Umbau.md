@@ -46,7 +46,7 @@ DuelPath wird ein Werkzeug, um Yu-Gi-Oh!-Combos als **Baumdiagramm auf einem Can
 
 ### 4.1 Datenbank
 
-PostgreSQL lokal per Docker (`docker compose up -d`), eine `docker-compose.yml` mit einem einzigen Service. `DATABASE_URL` und `OPENROUTER_API_KEY` in `.env`.
+PostgreSQL 18 lokal per Docker (`npm run db:up`), eine `docker-compose.yml` mit einem einzigen Service auf Port 5433 (5432 ist lokal oft belegt). Prisma 7 mit `@prisma/adapter-pg`, Client wird nach `src/generated/prisma` erzeugt, Konfiguration in `prisma.config.ts`. `DATABASE_URL`, `AUTH_SECRET` und `OPENROUTER_API_KEY` in `.env`, Vorlage in `.env.example`.
 
 ### 4.2 Kartendatenbank
 
@@ -212,7 +212,7 @@ model RulingMechanic {
 | #      | Inhalt                                                                                                                          | Fertig, wenn                                                                           |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren (**erledigt**)           | `npm run build`, `lint`, `test` grün                                                   |
-| **M1** | PostgreSQL per Docker, Prisma 7 und Provider umstellen, Migrationen neu anlegen                                                 | App startet gegen lokales Postgres                                                     |
+| **M1** | PostgreSQL per Docker, Prisma 7 und Provider umstellen, Migrationen neu anlegen (**erledigt**)                                  | App startet gegen lokales Postgres                                                     |
 | **M2** | `RulingMechanic` anlegen und aus `docs/research/rulings.md` befüllen                                                            | Tabelle mit allen Mechaniken aus der Recherche im Seed                                 |
 | **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder   | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
 | **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking                                               | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
