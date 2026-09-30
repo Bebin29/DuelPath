@@ -34,7 +34,7 @@ export async function signUpAction(formData: FormData) {
   const validationResult = signUpSchema.safeParse(rawData);
   if (!validationResult.success) {
     return {
-      error: validationResult.error.errors[0]?.message || 'Validierungsfehler',
+      error: validationResult.error.issues[0]?.message || 'Validierungsfehler',
     };
   }
 

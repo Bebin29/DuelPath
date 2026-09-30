@@ -8,7 +8,7 @@ import { useTranslation } from '@/lib/i18n/hooks';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Minus, Trash2, ArrowRight, Loader2, AlertTriangle, Checkbox } from 'lucide-react';
+import { Plus, Minus, Trash2, ArrowRight, Loader2, AlertTriangle } from 'lucide-react';
 import { Checkbox as UICheckbox } from '@/components/ui/checkbox';
 import type { DeckCard } from '@prisma/client';
 import type { DeckSection } from '@/lib/validations/deck.schema';
@@ -183,16 +183,14 @@ const SortableDeckCardItem = memo(function SortableDeckCardItem({
           <span className="font-semibold text-sm">{deckCard.quantity}x</span>
           <span className="text-sm truncate">{deckCard.card.name}</span>
           {!cardValidation.isValid && (
-            <AlertTriangle
-              className="h-4 w-4 text-destructive shrink-0"
-              title={cardValidation.error}
-            />
+            <span title={cardValidation.error} className="shrink-0">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </span>
           )}
           {cardValidation.warning && (
-            <AlertTriangle
-              className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0"
-              title={cardValidation.warning}
-            />
+            <span title={cardValidation.warning} className="shrink-0">
+              <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            </span>
           )}
         </div>
         <p className="text-xs text-muted-foreground">{deckCard.card.type}</p>
@@ -458,7 +456,7 @@ export const DeckListSection = memo(
       prevProps.onMove === nextProps.onMove &&
       prevProps.selectedCardIds?.size === nextProps.selectedCardIds?.size &&
       (prevProps.selectedCardIds === nextProps.selectedCardIds ||
-        (prevProps.selectedCardIds &&
+        !!(prevProps.selectedCardIds &&
           nextProps.selectedCardIds &&
           Array.from(prevProps.selectedCardIds).every((id) =>
             nextProps.selectedCardIds!.has(id)
