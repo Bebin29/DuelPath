@@ -32,12 +32,14 @@ export function CardMenu({
   cards,
   onRun,
   onClose,
+  onOpenCard,
 }: {
   anchor: MenuAnchor | null;
   state: GameState;
   cards: Map<string, ComboCard>;
   onRun: (action: CardAction) => void;
   onClose: () => void;
+  onOpenCard?: (cardId: string) => void;
 }) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
@@ -89,6 +91,12 @@ export function CardMenu({
           </DropdownMenuItem>
         ))}
         {effects.length > 0 && other.length > 0 && <DropdownMenuSeparator />}
+        {placed && onOpenCard && (
+          <DropdownMenuItem onSelect={() => onOpenCard(placed.cardId)}>
+            <span className="flex-1">{t('cardSheet.view')}</span>
+          </DropdownMenuItem>
+        )}
+        {placed && onOpenCard && <DropdownMenuSeparator />}
         {other.map((action) => (
           <DropdownMenuItem key={action.id} onSelect={() => onRun(action)}>
             <span className="flex-1">{t(`workbench.actions.${action.label}`)}</span>

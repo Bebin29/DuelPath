@@ -3,7 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowDown, ArrowUp, ChevronDown, MoreHorizontal, Search, X } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  MoreHorizontal,
+  Search,
+  TriangleAlert,
+  X,
+} from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { cn } from '@/lib/utils';
 import { relativeTime } from '@/lib/utils/relative-time';
@@ -327,12 +335,22 @@ export function ComboLibrary({
                 <StartHandStrip cardIds={e.stats.startHand} cards={cards} />
               </div>
               <div role="cell" className="min-w-0">
-                <Link
-                  href={`/combos/${e.id}`}
-                  className="block truncate font-display text-lg leading-tight after:absolute after:inset-0 hover:underline"
-                >
-                  {e.title}
-                </Link>
+                <span className="flex items-center gap-1.5">
+                  <Link
+                    href={`/combos/${e.id}`}
+                    className="truncate font-display text-lg leading-tight after:absolute after:inset-0 hover:underline"
+                  >
+                    {e.title}
+                  </Link>
+                  {e.missing > 0 && (
+                    <TriangleAlert
+                      aria-label={t('library.deckChanged', { count: e.missing })}
+                      className="size-3.5 shrink-0 text-warning"
+                    >
+                      <title>{t('library.deckChanged', { count: e.missing })}</title>
+                    </TriangleAlert>
+                  )}
+                </span>
                 {e.tags.length > 0 && (
                   <span className="block truncate font-mono text-2xs text-text-subtle">
                     {e.tags.join(' · ')}

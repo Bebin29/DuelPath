@@ -3,14 +3,14 @@
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
-import type { ParsedEffects } from '@/lib/cards/effects';
 import type { CardMove, ComboNodeData, StartState } from '@/lib/combo/state';
 import { toComboCard, type ComboCard } from '@/lib/combo/cards';
 import { nodeRows } from '@/lib/prisma/node-rows';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
-import { startStateFromDeck, type DeckEntry } from '@/lib/combo/deck';
+import { drawFromDeck, startStateFromDeck, type DeckEntry } from '@/lib/combo/deck';
 import { saveComboSchema, type SaveComboInput } from '@/lib/validations/combo.schema';
 import { comboStats } from '@/lib/combo/summary';
+import { deckCounts, missingFromDeck } from '@/lib/deck/deck-check';
 import {
   parseStatus,
   type ComboStatus,
@@ -75,16 +75,21 @@ function cardIdsOf(startState: StartState, nodes: ComboNodeData[]): Set<string> 
  * Bibliothek (UX-Plan 7.2): alle Combos mit Kennzahlen. Karten werden einmal für alle geladen;
  * für die Anzeige reichen Name und Bild, die Effekte braucht nur die Endboard-Zahl.
  */
-export async function listLibrary(): Promise<
-  Result<{ entries: LibraryEntry[]; cards: Record<string, LibraryCard> }>
-> {
+export async function listLibrary(
+  deckId?: string
+): Promise<Result<{ entries: LibraryEntry[]; cards: Record<string, LibraryCard> }>> {
   const userId = await currentUserId();
   if (!userId) return { error: 'Unauthorized' };
   const combos = await prisma.combo.findMany({
-    where: { userId },
+    where: { userId, ...(deckId && { deckId }) },
     orderBy: { updatedAt: 'desc' },
     include: {
-      deck: { select: { name: true } },
+      deck: {
+        select: {
+          name: true,
+          deckCards: { select: { cardId: true, quantity: true, deckSection: true } },
+        },
+      },
       nodes: { orderBy: [{ rank: 'asc' }, { createdAt: 'asc' }] },
     },
   });
@@ -105,6 +110,7 @@ export async function listLibrary(): Promise<
       race: true,
       imageSmall: true,
       effects: true,
+      effectsOverride: true,
     },
   });
   const full = new Map(rows.map((r) => [r.id, toComboCard(r)]));
@@ -115,16 +121,20 @@ export async function listLibrary(): Promise<
   return {
     data: {
       cards,
-      entries: parsed.map(({ combo, startState, nodes }) => ({
-        id: combo.id,
-        title: combo.title,
-        deckId: combo.deckId,
-        deckName: combo.deck?.name ?? null,
-        updatedAt: combo.updatedAt.toISOString(),
-        tags: combo.tags,
-        status: parseStatus(combo.status),
-        stats: comboStats(startState, nodes, full),
-      })),
+      entries: parsed.map(({ combo, startState, nodes }) => {
+        const stats = comboStats(startState, nodes, full);
+        return {
+          id: combo.id,
+          title: combo.title,
+          deckId: combo.deckId,
+          deckName: combo.deck?.name ?? null,
+          updatedAt: combo.updatedAt.toISOString(),
+          tags: combo.tags,
+          status: parseStatus(combo.status),
+          stats,
+          missing: combo.deck ? missingFromDeck(stats, deckCounts(combo.deck.deckCards)).length : 0,
+        };
+      }),
     },
   };
 }
@@ -181,7 +191,12 @@ export async function listCombos(): Promise<
 }
 
 /** Legt eine Combo an; mit Deck wird es gleich in den Startzustand geladen */
-export async function createCombo(title: string, deckId?: string): Promise<Result<{ id: string }>> {
+export async function createCombo(
+  title: string,
+  deckId?: string,
+  /** Passcodes der Starthand; werden aus dem Deck gezogen (UX-Plan 7.1 und 7.3) */
+  startHand: string[] = []
+): Promise<Result<{ id: string }>> {
   const userId = await currentUserId();
   if (!userId) return { error: 'Unauthorized' };
   const trimmed = title.trim().slice(0, 100);
@@ -192,6 +207,7 @@ export async function createCombo(title: string, deckId?: string): Promise<Resul
     const deck = await getDeckForCombo(deckId);
     if (!deck.data) return { error: deck.error };
     startState = startStateFromDeck(startState, deck.data.entries);
+    for (const cardId of startHand) startState = drawFromDeck(startState, cardId);
   }
 
   const combo = await prisma.combo.create({
@@ -247,6 +263,7 @@ export async function getCombo(comboId: string): Promise<Result<LoadedCombo>> {
       race: true,
       imageSmall: true,
       effects: true,
+      effectsOverride: true,
     },
   });
 
@@ -259,10 +276,7 @@ export async function getCombo(comboId: string): Promise<Result<LoadedCombo>> {
       status: parseStatus(combo.status),
       startState,
       nodes,
-      cards: cards.map((c) => ({
-        ...c,
-        effects: (c.effects as unknown as ParsedEffects | null)?.effects ?? [],
-      })),
+      cards: cards.map(toComboCard),
     },
   };
 }
@@ -317,6 +331,7 @@ export async function getStaples(): Promise<StapleCard[]> {
       race: true,
       imageSmall: true,
       effects: true,
+      effectsOverride: true,
     },
   });
   const byName = new Map(rows.map((r) => [r.name, toComboCard(r)]));
@@ -361,6 +376,7 @@ export async function getDeckForCombo(
               race: true,
               imageSmall: true,
               effects: true,
+              effectsOverride: true,
             },
           },
         },

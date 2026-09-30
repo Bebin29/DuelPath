@@ -34,10 +34,12 @@ import { existingBranch, stressBranch, type Hit } from '@/lib/combo/stress';
 import { endboardSummary, lineEnds, missingCards } from '@/lib/combo/endboard';
 import { usedOptNames } from '@/lib/combo/opt-names';
 import type { ComboStatus } from '@/lib/combo/library';
+import { getDeckCounts } from '@/server/actions/deck-view.actions';
 import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/combo.actions';
 import { NodeEditor, StartStateEditor, type MoveTarget } from '@/components/combo/NodeEditor';
 import { SuggestionPanel } from '@/components/combo/SuggestionPanel';
 import { Button } from '@/components/ui/button';
+import { useCardSheet } from '@/components/cards/CardSheet';
 import { BoardView } from './BoardView';
 import { CardMenu, type MenuAnchor } from './CardMenu';
 import { cardActions } from './card-actions';
@@ -150,7 +152,36 @@ export function Workbench({
     [cards, cardLanguage, states, t]
   );
   const cardOf = useCallback((n: ComboNodeData) => nodeCardId(n, states.get(n.id)), [states]);
-  const warningCount = useCallback((id: string) => warningsOf(states.get(id), id).length, [states]);
+  // Deck-Abgleich (UX-Plan 7.4): eigene Karten eines Schritts, die nicht mehr im Deck sind
+  const [deckCounts, setDeckCounts] = useState<Record<string, number> | null>(null);
+  useEffect(() => {
+    if (!deckId) return;
+    let live = true;
+    void getDeckCounts(deckId).then((r) => live && setDeckCounts(r.data ?? null));
+    return () => {
+      live = false;
+    };
+  }, [deckId]);
+  const allWarnings = useCallback(
+    (id: string) => {
+      const list = warningsOf(states.get(id), id);
+      const node = nodes.find((n) => n.id === id);
+      if (
+        deckId &&
+        deckCounts &&
+        node?.player === 'self' &&
+        node.cardId &&
+        !deckCounts[node.cardId] &&
+        startState.cards.some((c) => c.cardId === node.cardId && c.owner === 'self')
+      )
+        list.push(
+          t('decks.notInDeck', { name: displayName(cards.get(node.cardId), cardLanguage) })
+        );
+      return list;
+    },
+    [states, nodes, deckId, deckCounts, startState, cards, cardLanguage, t]
+  );
+  const warningCount = useCallback((id: string) => allWarnings(id).length, [allWarnings]);
 
   const line = useMemo(() => lineThrough(nodes, selected?.id ?? null), [nodes, selected]);
   const steps = useMemo(() => lineSteps(nodes, line, labelOf), [nodes, line, labelOf]);
@@ -244,11 +275,19 @@ export function Workbench({
   const [playing, setPlaying] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const { settings, update: updateSettings } = useSettings();
+  const cardSheet = useCardSheet();
   const stress = useStress({ line, steps, states, start, cards, staples });
   const toggleStress = () => {
     setStressOn((on) => !on);
     setStressRun((n) => n + 1);
   };
+
+  /** Korrigierte Effekte aus der Kartenansicht gelten sofort für Zustand, Regeln und Stresstest */
+  const updateCardEffects = (id: string, effects: ComboCard['effects']) =>
+    setCards((prev) => {
+      const card = prev.get(id);
+      return card ? new Map(prev).set(id, { ...card, effects }) : prev;
+    });
 
   const registerCard = (card: ComboCard) =>
     setCards((prev) => (prev.has(card.id) ? prev : new Map(prev).set(card.id, card)));
@@ -610,9 +649,9 @@ export function Workbench({
           showTitle={selected.kind !== 'END'}
         />
       )}
-      {warningsOf(after, selected.id).length > 0 && (
+      {allWarnings(selected.id).length > 0 && (
         <ul className="flex flex-col gap-1 rounded-md border border-warning/40 bg-warning-tint p-2.5 text-xs text-warning">
-          {warningsOf(after, selected.id).map((w) => (
+          {allWarnings(selected.id).map((w) => (
             <li key={w}>{w}</li>
           ))}
         </ul>
@@ -779,7 +818,7 @@ export function Workbench({
                 setEditOpen(true);
               }}
               onPromote={promote}
-              warningTextOf={(id) => warningsOf(states.get(id), id).join('\n')}
+              warningTextOf={(id) => allWarnings(id).join('\n')}
               title={lineTitle}
               steps={steps}
               selectedId={selectedId}
@@ -944,15 +983,21 @@ export function Workbench({
               state={after}
               cards={cards}
               onRun={(action) => menu && flow.run(action, menu.instanceId)}
+              onOpenCard={(cardId) => cardSheet.open(cardId, updateCardEffects)}
               onClose={() => setMenu(null)}
             />
           </div>
-          <div className="min-h-0 border-l border-line bg-surface-1">
+          <div
+            className="min-h-0 border-l border-line bg-surface-1"
+            onMouseEnter={() => inspectedId && inspect(inspectedId)}
+            onMouseLeave={() => inspect(null)}
+          >
             <Inspector
               state={after}
               cards={cards}
               inspected={inspected}
               highlight={chokeHover?.phrase}
+              onOpenCard={(cardId) => cardSheet.open(cardId, updateCardEffects)}
             >
               {stepPanel}
             </Inspector>

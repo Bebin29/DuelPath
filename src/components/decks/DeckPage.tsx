@@ -1,0 +1,368 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  Check,
+  Download,
+  Loader2,
+  Redo2,
+  TriangleAlert,
+  Undo2,
+  Upload,
+} from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { useHistory } from '@/lib/hooks/use-history';
+import { Button } from '@/components/ui/button';
+import { Tabs } from '@/components/ui/tabs';
+import { TimedNotice } from '@/components/ui/timed-notice';
+import { useCardSheet } from '@/components/cards/CardSheet';
+import {
+  deckIssues,
+  sectionCount,
+  sectionFor,
+  type DeckIssue,
+  type Section,
+} from '@/lib/deck/deck-rules';
+import { expandDeck } from '@/lib/deck/hand-tester';
+import { toYdk } from '@/lib/deck/ydk';
+import { parseYDKFile } from '@/lib/utils/deck.utils';
+import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
+import { importYdkToDeck } from '@/server/actions/deck.actions';
+import {
+  getDeckView,
+  saveDeck,
+  type DeckViewCard,
+  type DeckViewEntry,
+} from '@/server/actions/deck-view.actions';
+import { DeckListTab } from './DeckListTab';
+import { DeckCombosTab } from './DeckCombosTab';
+import { HandTester } from './HandTester';
+
+import type { DeckTab } from '@/lib/deck/deck-tab';
+
+interface Doc {
+  name: string;
+  entries: DeckViewEntry[];
+}
+
+/** Anzahl einer Karte in einem Bereich ändern, zwischen 0 und 3 Kopien */
+function adjust(
+  entries: DeckViewEntry[],
+  cardId: string,
+  section: Section,
+  delta: number
+): DeckViewEntry[] {
+  if (!entries.some((e) => e.cardId === cardId && e.section === section))
+    return delta > 0 ? [...entries, { cardId, section, quantity: Math.min(3, delta) }] : entries;
+  return entries.map((e) =>
+    e.cardId === cardId && e.section === section
+      ? { ...e, quantity: Math.max(0, Math.min(3, e.quantity + delta)) }
+      : e
+  );
+}
+
+const isTyping = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+
+/**
+ * Deckseite (UI-Plan 7.5.4): Tabs Deckliste, Combos und Hand-Tester, die Adresse enthält den Tab.
+ * Änderungen speichern automatisch; Strg+Z nimmt sie zurück, auch einen YDK-Import.
+ */
+export function DeckPage({
+  deck,
+  combos,
+  comboCards,
+  handtraps,
+  initialTab,
+}: {
+  deck: { id: string; name: string; entries: DeckViewEntry[]; cards: DeckViewCard[] };
+  combos: LibraryEntry[];
+  comboCards: Record<string, LibraryCard>;
+  handtraps: string[];
+  initialTab: DeckTab;
+}) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const pathname = usePathname();
+  const cardSheet = useCardSheet();
+  const history = useHistory<Doc>({ name: deck.name, entries: deck.entries });
+  const { name, entries } = history.state;
+  const setDoc = history.set;
+  const [cards, setCards] = useState(() => new Map(deck.cards.map((c) => [c.id, c])));
+  const [tab, setTab] = useState(initialTab);
+  const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [notice, setNotice] = useState<{ id: number; missing: number } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // Autosave wie in der Workbench, kurz nach der letzten Änderung
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setStatus('saving');
+      const result = await saveDeck(deck.id, { name, entries });
+      setStatus(result.error ? 'error' : 'saved');
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [deck.id, name, entries]);
+
+  const { undo, redo } = history;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z' || isTyping(e.target)) return;
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [undo, redo]);
+
+  const changeTab = (next: DeckTab) => {
+    setTab(next);
+    router.replace(next === 'list' ? pathname : `${pathname}?tab=${next}`, { scroll: false });
+  };
+
+  const setEntries = useCallback(
+    (fn: (prev: DeckViewEntry[]) => DeckViewEntry[]) =>
+      setDoc((d) => ({ ...d, entries: fn(d.entries).filter((e) => e.quantity > 0) })),
+    [setDoc]
+  );
+  const change = (cardId: string, section: Section, delta: number) =>
+    setEntries((prev) => adjust(prev, cardId, section, delta));
+  const add = (card: DeckViewCard, side: boolean) => {
+    setCards((prev) => (prev.has(card.id) ? prev : new Map(prev).set(card.id, card)));
+    change(card.id, side ? 'SIDE' : sectionFor(card.type), 1);
+  };
+  // Ein Schritt im Verlauf, damit Strg+Z das Verschieben als Ganzes zurücknimmt
+  const move = (cardId: string, from: Section, to: Section) =>
+    setEntries((prev) => adjust(adjust(prev, cardId, from, -1), cardId, to, 1));
+
+  // YDK ersetzt das Deck; der Hinweis bietet Rückgängig, Strg+Z geht ebenso
+  const importYdk = async (file: File) => {
+    const parsed = parseYDKFile(await file.text());
+    const result = await importYdkToDeck(deck.id, parsed);
+    if (!result.data) return;
+    const view = await getDeckView(deck.id);
+    if (!view.data) return;
+    setCards(new Map(view.data.cards.map((c) => [c.id, c])));
+    setDoc((d) => ({ ...d, entries: view.data!.entries }));
+    setNotice({ id: Date.now(), missing: result.data.missing.length });
+  };
+  const exportYdk = () => {
+    const blob = new Blob([toYdk(entries, (id) => cards.get(id)?.passcode)], {
+      type: 'text/plain',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name || 'deck'}.ydk`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const issues = useMemo(() => deckIssues(entries, cards), [entries, cards]);
+  const counts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of entries)
+      if (e.section !== 'SIDE') map.set(e.cardId, (map.get(e.cardId) ?? 0) + e.quantity);
+    return map;
+  }, [entries]);
+  const pool = useMemo(() => expandDeck(entries.filter((e) => e.section === 'MAIN')), [entries]);
+  const handtrapSet = useMemo(() => new Set(handtraps), [handtraps]);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <header className="flex items-start gap-4">
+        <Button
+          asChild
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t('decks.back')}
+          className="mt-2"
+        >
+          <Link href="/decks">
+            <ArrowLeft />
+          </Link>
+        </Button>
+        <div className="min-w-0 flex-1">
+          <input
+            value={name}
+            onChange={(e) => setDoc((d) => ({ ...d, name: e.target.value }), 'name')}
+            aria-label={t('decks.name')}
+            className="w-full rounded-md bg-transparent font-display text-[40px] leading-none outline-none hover:bg-surface-3/40 focus-visible:bg-surface-3/40"
+          />
+          <p className="mt-2 font-mono text-xs text-text-muted">
+            {(['MAIN', 'EXTRA', 'SIDE'] as const)
+              .map((s) => `${t(`decks.section.${s}`)} ${sectionCount(entries, s)}`)
+              .join(' · ')}
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={history.undo}
+            disabled={!history.canUndo}
+            aria-label={t('workbench.undo')}
+          >
+            <Undo2 />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={history.redo}
+            disabled={!history.canRedo}
+            aria-label={t('workbench.redo')}
+          >
+            <Redo2 />
+          </Button>
+          <span
+            role="status"
+            aria-live="polite"
+            className="mr-2 flex w-24 items-center justify-end gap-1.5 font-mono text-[11px] text-text-subtle"
+          >
+            {status === 'saving' ? (
+              <Loader2 className="size-3 animate-spin" />
+            ) : status === 'saved' ? (
+              <Check className="size-3" />
+            ) : null}
+            {status === 'error' ? (
+              <span className="text-opponent">{t('combo.saveError')}</span>
+            ) : (
+              t(status === 'saving' ? 'combo.saving' : 'combo.saved')
+            )}
+          </span>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".ydk,text/plain"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void importYdk(file);
+              e.target.value = '';
+            }}
+          />
+          <Button variant="line" size="sm" onClick={() => fileRef.current?.click()}>
+            <Upload />
+            {t('decks.importYdk')}
+          </Button>
+          <Button variant="line" size="sm" onClick={exportYdk} disabled={entries.length === 0}>
+            <Download />
+            {t('decks.exportYdk')}
+          </Button>
+        </div>
+      </header>
+
+      {issues.length > 0 && <IssueList issues={issues} />}
+
+      <Tabs<DeckTab>
+        id="deck"
+        label={t('decks.tabs')}
+        value={tab}
+        onChange={changeTab}
+        options={[
+          { value: 'list', label: t('decks.tab.list') },
+          { value: 'combos', label: `${t('decks.tab.combos')} · ${combos.length}` },
+          { value: 'hand', label: t('decks.tab.hand') },
+        ]}
+      />
+      <div role="tabpanel" id="deck-panel" aria-labelledby={`deck-${tab}`}>
+        {tab === 'list' && (
+          <DeckListTab
+            entries={entries}
+            cards={cards}
+            onAdd={add}
+            onChange={change}
+            onMove={move}
+            onOpenCard={(id) =>
+              cardSheet.open(id, (cardId, effects) =>
+                setCards((prev) => {
+                  const card = prev.get(cardId);
+                  return card ? new Map(prev).set(cardId, { ...card, effects }) : prev;
+                })
+              )
+            }
+          />
+        )}
+        {tab === 'combos' && (
+          <DeckCombosTab
+            deckId={deck.id}
+            deckName={name}
+            combos={combos}
+            cards={comboCards}
+            counts={counts}
+          />
+        )}
+        {tab === 'hand' && (
+          <HandTester
+            deckId={deck.id}
+            pool={pool}
+            cards={cards}
+            combos={combos}
+            handtraps={handtrapSet}
+          />
+        )}
+      </div>
+
+      {notice && (
+        <TimedNotice
+          key={notice.id}
+          duration={8000}
+          onExpire={() => setNotice(null)}
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 shadow-[0_18px_40px_rgb(0_0_0/0.45)]"
+        >
+          <span className="mr-2 text-sm">
+            {t('decks.imported')}
+            {notice.missing > 0 && ` · ${t('decks.unknownCodes', { count: notice.missing })}`}
+          </span>
+          <Button
+            variant="text"
+            size="sm"
+            onClick={() => {
+              history.undo();
+              setNotice(null);
+            }}
+          >
+            {t('workbench.undo')}
+          </Button>
+        </TimedNotice>
+      )}
+    </div>
+  );
+}
+
+/** Regelhinweise knapp über den Tabs; die App verbietet nichts, sie sagt es */
+function IssueList({ issues }: { issues: DeckIssue[] }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const shown = open ? issues : issues.slice(0, 2);
+  return (
+    <ul className="flex flex-col gap-1 rounded-md border border-warning/40 bg-warning-tint px-3 py-2 text-sm text-warning">
+      {shown.map((issue, i) => (
+        <li key={i} className="flex items-center gap-2">
+          <TriangleAlert className="size-3.5 shrink-0" />
+          {t(`decks.issue.${issue.kind}`, {
+            ...issue,
+            ...('section' in issue && { section: t(`decks.section.${issue.section}`) }),
+          })}
+        </li>
+      ))}
+      {issues.length > 2 && (
+        <li>
+          <button type="button" onClick={() => setOpen((o) => !o)} className="text-xs underline">
+            {open ? t('decks.less') : t('decks.moreIssues', { count: issues.length - 2 })}
+          </button>
+        </li>
+      )}
+    </ul>
+  );
+}

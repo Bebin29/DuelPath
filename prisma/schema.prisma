@@ -71,29 +71,30 @@ model VerificationToken {
 
 // Yu-Gi-Oh! Card Model (nur TCG-Karten)
 model Card {
-  id            String    @id @default(cuid())
-  name          String
-  nameDe        String?
-  initials      String? // Kürzel aus Anfangsbuchstaben für die Suche, „bewd“ (src/lib/cards/nicknames.ts)
-  type          String // z.B. "Normal Monster", "Effect Monster", "Spell Card", etc.
-  race          String? // Monster-Typ oder Spell/Trap-Kategorie
-  attribute     String? // LIGHT, DARK, EARTH, etc. (nur bei Monstern)
-  level         Int? // Level/Rang/Linkzahl
-  atk           Int? // Angriffspunkte
-  def           Int? // Verteidigungspunkte
-  desc          String? // Kartentext (englisch, Grundlage für die Effektzerlegung)
-  descDe        String?
-  archetype     String? // Archetype, falls vorhanden
-  banTcg        String? // "Forbidden" | "Limited" | "Semi-Limited", null = unbeschränkt
-  tcgDate       DateTime?
-  effects       Json? // ParsedEffects aus src/lib/cards/effects.ts
-  effectsReview Boolean   @default(false) // Zerlegung unsicher, manuell prüfen
-  effectsJev    Float? // Jev-Bewertung der Zerlegung (0..1)
-  imageUrl      String? // lokaler Bild-Cache, /api/card-images/<passcode>.jpg
-  imageSmall    String? // lokaler Bild-Cache, /api/card-images/<passcode>_small.jpg
-  passcode      String?   @unique // YGOPRODeck Passcode-ID
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  nameDe          String?
+  initials        String? // Kürzel aus Anfangsbuchstaben für die Suche, „bewd“ (src/lib/cards/nicknames.ts)
+  type            String // z.B. "Normal Monster", "Effect Monster", "Spell Card", etc.
+  race            String? // Monster-Typ oder Spell/Trap-Kategorie
+  attribute       String? // LIGHT, DARK, EARTH, etc. (nur bei Monstern)
+  level           Int? // Level/Rang/Linkzahl
+  atk             Int? // Angriffspunkte
+  def             Int? // Verteidigungspunkte
+  desc            String? // Kartentext (englisch, Grundlage für die Effektzerlegung)
+  descDe          String?
+  archetype       String? // Archetype, falls vorhanden
+  banTcg          String? // "Forbidden" | "Limited" | "Semi-Limited", null = unbeschränkt
+  tcgDate         DateTime?
+  effects         Json? // ParsedEffects aus src/lib/cards/effects.ts
+  effectsOverride Json? // CardEffect[] von Hand korrigiert (UX-Plan 8); Vorrang vor effects, bleibt beim Neuimport
+  effectsReview   Boolean   @default(false) // Zerlegung unsicher, manuell prüfen
+  effectsJev      Float? // Jev-Bewertung der Zerlegung (0..1)
+  imageUrl        String? // lokaler Bild-Cache, /api/card-images/<passcode>.jpg
+  imageSmall      String? // lokaler Bild-Cache, /api/card-images/<passcode>_small.jpg
+  passcode        String?   @unique // YGOPRODeck Passcode-ID
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   deckCards DeckCard[]
 

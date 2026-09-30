@@ -28,6 +28,8 @@ export interface LibraryEntry {
   tags: string[];
   status: ComboStatus;
   stats: ComboStats;
+  /** Karten der Combo, die nicht mehr oder seltener im Deck sind (UX-Plan 7.4) */
+  missing: number;
 }
 
 export interface LibraryFilter {

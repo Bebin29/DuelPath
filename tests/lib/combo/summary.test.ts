@@ -35,6 +35,7 @@ describe('comboStats', () => {
     ];
     expect(comboStats(start, nodes, cards)).toEqual({
       startHand: ['MON', 'ASH'],
+      required: ['MON'],
       lines: 2,
       branches: 1,
       steps: 2,
@@ -44,6 +45,11 @@ describe('comboStats', () => {
   });
 
   it('kommt ohne Schritte aus', () => {
-    expect(comboStats(start, [], cards)).toMatchObject({ lines: 0, steps: 0, endboard: null });
+    expect(comboStats(start, [], cards)).toMatchObject({
+      lines: 0,
+      steps: 0,
+      endboard: null,
+      required: ['MON', 'ASH'],
+    });
   });
 });

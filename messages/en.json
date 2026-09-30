@@ -601,6 +601,123 @@
     "deleted": "“{{title}}” deleted",
     "meta": "Status and tags",
     "tags": "Tags",
-    "newTag": "New tag, Enter"
+    "newTag": "New tag, Enter",
+    "deckChanged_one": "{{count}} card no longer in the deck",
+    "deckChanged_other": "{{count}} cards no longer in the deck"
+  },
+  "decks": {
+    "title": "Decks",
+    "count_one": "{{count}} deck",
+    "count_other": "{{count}} decks",
+    "new": "New deck",
+    "untitled": "New deck",
+    "importYdk": "Import YDK",
+    "exportYdk": "Export YDK",
+    "emptyText": "No decks yet. Import your list as a YDK file from EDOPro or YGOPRODeck, or start an empty deck.",
+    "section": {
+      "MAIN": "Main",
+      "EXTRA": "Extra",
+      "SIDE": "Side"
+    },
+    "combosCount_one": "{{count}} combo",
+    "combosCount_other": "{{count}} combos",
+    "tab": {
+      "list": "Deck list",
+      "combos": "Combos",
+      "hand": "Hand tester"
+    },
+    "tabs": "Deck sections",
+    "back": "Back to decks",
+    "name": "Deck name",
+    "imported": "Deck replaced from YDK",
+    "unknownCodes_one": "{{count}} unknown passcode",
+    "unknownCodes_other": "{{count}} unknown passcodes",
+    "less": "One copy less",
+    "more": "One copy more",
+    "moreIssues": "{{count}} more notes",
+    "moveTo": "To {{section}} Deck",
+    "view": "View",
+    "grid": "Grid",
+    "list": "List",
+    "empty": {
+      "MAIN": "Empty. Search on the right and click cards.",
+      "EXTRA": "No Extra Deck.",
+      "SIDE": "No Side Deck. Shift+click in the search puts cards here."
+    },
+    "group": {
+      "monster": "Monsters",
+      "spell": "Spells",
+      "trap": "Traps"
+    },
+    "search": "Add a card",
+    "searchPlaceholder": "Name, nickname or initials",
+    "searchHint": "Click: Main or Extra · Shift+click: Side",
+    "issue": {
+      "mainSize": "Main Deck has {{count}} cards, 40 to 60 are allowed.",
+      "extraSize": "Extra Deck has {{count}} cards, at most 15 are allowed.",
+      "sideSize": "Side Deck has {{count}} cards, at most 15 are allowed.",
+      "copies": "{{name}} is in the deck {{count}} times, 3 are allowed.",
+      "banlist": "{{name}} is in the deck {{count}} times, the TCG list allows {{limit}}.",
+      "wrongSection": "{{name}} does not belong in the {{section}} Deck."
+    },
+    "affected_one": "{{count}} combo affected: cards missing from the deck",
+    "affected_other": "{{count}} combos affected: cards missing from the deck",
+    "noCombos": "No combo with this deck yet.",
+    "missingCard": "{{name}}: {{have}} of {{need}} in the deck",
+    "drawHand": "Draw a hand",
+    "going": "Turn order",
+    "goingFirst": "Going first · {{n}}",
+    "goingSecond": "Going second · {{n}}",
+    "drawHint": "Draw a hand and see which saved combos work with it.",
+    "hand": "Drawn hand",
+    "role": {
+      "starter": "Starter",
+      "handtrap": "Handtrap",
+      "extender": "Extender?"
+    },
+    "matching": "Combos with this hand",
+    "noMatch": "No saved line for this hand yet.",
+    "newWithHand": "New combo with this hand",
+    "coverage": "Coverage",
+    "coverageText": "In {{percent}} of hands you have a saved line. Computed over {{runs}} simulated hands, {{going}}.",
+    "first": "going first",
+    "second": "going second",
+    "notInDeck": "{{name}} is no longer in the deck"
+  },
+  "newCombo": {
+    "title": "Choose a starting hand",
+    "text": "Click puts a copy in hand, click the card below to take it back.",
+    "empty": "No card",
+    "cards": "{{count}} cards",
+    "group": {
+      "starter": "Starters from your combos",
+      "handtrap": "Handtraps",
+      "monster": "Monsters",
+      "spell": "Spells",
+      "trap": "Traps"
+    },
+    "toHand": "Add to starting hand",
+    "inHand_one": "{{count}}× in hand",
+    "inHand_other": "{{count}}× in hand",
+    "remove": "Take back",
+    "exists": "Already exists: {{title}}",
+    "random": "Random hand",
+    "go": "Start"
+  },
+  "cardSheet": {
+    "text": "Card text",
+    "corrected": "corrected by hand",
+    "edit": "Edit effects",
+    "unsure": "Split may be wrong:",
+    "chainLink": "Chain Link",
+    "reset": "Reset to import",
+    "cancel": "Cancel",
+    "save": "Save for all combos",
+    "opt": "OPT",
+    "noOpt": "none",
+    "split": "Split at cursor",
+    "merge": "Merge with next",
+    "remove": "Remove",
+    "view": "View card"
   }
 }

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
-import type { ParsedEffects } from '@/lib/cards/effects';
+import { effectsOf } from '@/lib/cards/effect-override';
 import type { CardData } from '@/lib/combo/state';
 import { jevRequest, type SuggestionInput } from '@/lib/combo/suggestions';
 import { decide, jevModel } from '@/server/jev';
@@ -22,14 +22,9 @@ export async function rateCandidates(
   ]);
   const rows = await prisma.card.findMany({
     where: { id: { in: [...cardIds] } },
-    select: { id: true, name: true, type: true, race: true, effects: true },
+    select: { id: true, name: true, type: true, race: true, effects: true, effectsOverride: true },
   });
-  const cards = new Map<string, CardData>(
-    rows.map((r) => [
-      r.id,
-      { ...r, effects: (r.effects as unknown as ParsedEffects | null)?.effects ?? [] },
-    ])
-  );
+  const cards = new Map<string, CardData>(rows.map((r) => [r.id, { ...r, effects: effectsOf(r) }]));
 
   const request = jevRequest(input, cards);
   const key = createHash('sha256')

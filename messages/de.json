@@ -601,6 +601,123 @@
     "deleted": "„{{title}}“ gelöscht",
     "meta": "Status und Tags",
     "tags": "Tags",
-    "newTag": "Neuer Tag, Enter"
+    "newTag": "Neuer Tag, Enter",
+    "deckChanged_one": "{{count}} Karte nicht mehr im Deck",
+    "deckChanged_other": "{{count}} Karten nicht mehr im Deck"
+  },
+  "decks": {
+    "title": "Decks",
+    "count_one": "{{count}} Deck",
+    "count_other": "{{count}} Decks",
+    "new": "Neues Deck",
+    "untitled": "Neues Deck",
+    "importYdk": "YDK importieren",
+    "exportYdk": "YDK exportieren",
+    "emptyText": "Noch keine Decks. Importiere deine Liste als YDK-Datei aus EDOPro oder YGOPRODeck, oder leg ein leeres Deck an.",
+    "section": {
+      "MAIN": "Main",
+      "EXTRA": "Extra",
+      "SIDE": "Side"
+    },
+    "combosCount_one": "{{count}} Combo",
+    "combosCount_other": "{{count}} Combos",
+    "tab": {
+      "list": "Deckliste",
+      "combos": "Combos",
+      "hand": "Hand-Tester"
+    },
+    "tabs": "Bereiche des Decks",
+    "back": "Zurück zu den Decks",
+    "name": "Name des Decks",
+    "imported": "Deck aus YDK ersetzt",
+    "unknownCodes_one": "{{count}} Passcode unbekannt",
+    "unknownCodes_other": "{{count}} Passcodes unbekannt",
+    "less": "Eine Kopie weniger",
+    "more": "Eine Kopie mehr",
+    "moreIssues": "{{count}} weitere Hinweise",
+    "moveTo": "Ins {{section}} Deck",
+    "view": "Ansicht",
+    "grid": "Raster",
+    "list": "Liste",
+    "empty": {
+      "MAIN": "Noch leer. Rechts nach Karten suchen und anklicken.",
+      "EXTRA": "Kein Extra Deck.",
+      "SIDE": "Kein Side Deck. Umschalt+Klick in der Suche legt Karten hierher."
+    },
+    "group": {
+      "monster": "Monster",
+      "spell": "Zauber",
+      "trap": "Fallen"
+    },
+    "search": "Karte hinzufügen",
+    "searchPlaceholder": "Name, Spitzname oder Kürzel",
+    "searchHint": "Klick: Main bzw. Extra · Umschalt+Klick: Side",
+    "issue": {
+      "mainSize": "Main Deck hat {{count}} Karten, erlaubt sind 40 bis 60.",
+      "extraSize": "Extra Deck hat {{count}} Karten, erlaubt sind höchstens 15.",
+      "sideSize": "Side Deck hat {{count}} Karten, erlaubt sind höchstens 15.",
+      "copies": "{{name}} ist {{count}}-mal im Deck, erlaubt sind 3.",
+      "banlist": "{{name}} ist {{count}}-mal im Deck, die TCG-Banlist erlaubt {{limit}}.",
+      "wrongSection": "{{name}} gehört nicht ins {{section}} Deck."
+    },
+    "affected_one": "{{count}} Combo betroffen: Karten fehlen im Deck",
+    "affected_other": "{{count}} Combos betroffen: Karten fehlen im Deck",
+    "noCombos": "Noch keine Combo mit diesem Deck.",
+    "missingCard": "{{name}}: {{have}} von {{need}} im Deck",
+    "drawHand": "Hand ziehen",
+    "going": "Zugfolge",
+    "goingFirst": "Going First · {{n}}",
+    "goingSecond": "Going Second · {{n}}",
+    "drawHint": "Zieh eine Hand und sieh, welche gespeicherten Combos damit gehen.",
+    "hand": "Gezogene Hand",
+    "role": {
+      "starter": "Starter",
+      "handtrap": "Handtrap",
+      "extender": "Extender?"
+    },
+    "matching": "Combos mit dieser Hand",
+    "noMatch": "Für diese Hand gibt es noch keine gespeicherte Line.",
+    "newWithHand": "Neue Combo mit dieser Hand",
+    "coverage": "Abdeckung",
+    "coverageText": "In {{percent}} der Hände hast du eine gespeicherte Line. Gerechnet über {{runs}} simulierte Hände, {{going}}.",
+    "first": "Going First",
+    "second": "Going Second",
+    "notInDeck": "{{name}} ist nicht mehr im Deck"
+  },
+  "newCombo": {
+    "title": "Starthand wählen",
+    "text": "Klick legt eine Kopie auf die Hand, Klick auf die Karte unten nimmt sie zurück.",
+    "empty": "Keine Karte",
+    "cards": "{{count}} Karten",
+    "group": {
+      "starter": "Starter aus deinen Combos",
+      "handtrap": "Handtraps",
+      "monster": "Monster",
+      "spell": "Zauber",
+      "trap": "Fallen"
+    },
+    "toHand": "Auf die Starthand",
+    "inHand_one": "{{count}}× auf der Hand",
+    "inHand_other": "{{count}}× auf der Hand",
+    "remove": "Von der Hand nehmen",
+    "exists": "Gibt es schon: {{title}}",
+    "random": "Zufallshand",
+    "go": "Los"
+  },
+  "cardSheet": {
+    "text": "Kartentext",
+    "corrected": "von Hand korrigiert",
+    "edit": "Effekte bearbeiten",
+    "unsure": "Zerlegung unsicher:",
+    "chainLink": "Chain Link",
+    "reset": "Auf Import zurücksetzen",
+    "cancel": "Abbrechen",
+    "save": "Für alle Combos speichern",
+    "opt": "OPT",
+    "noOpt": "kein",
+    "split": "An der Schreibmarke teilen",
+    "merge": "Mit nächstem zusammenlegen",
+    "remove": "Entfernen",
+    "view": "Karte ansehen"
   }
 }

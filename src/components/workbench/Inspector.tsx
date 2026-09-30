@@ -33,12 +33,15 @@ export function Inspector({
   cards,
   inspected,
   highlight,
+  onOpenCard,
   children,
 }: {
   state: GameState;
   cards: Map<string, ComboCard>;
   inspected: PlacedCard | null;
   highlight?: { cardId: string; effectIndex: number; text: string } | null;
+  /** Kartenansicht mit „Effekte bearbeiten“ öffnen (UI-Plan 7.4.4) */
+  onOpenCard?: (cardId: string) => void;
   children: React.ReactNode;
 }) {
   const { t } = useTranslation();
@@ -61,7 +64,13 @@ export function Inspector({
           />
           <div>
             <h2 className="font-display text-[22px] leading-tight">
-              {displayName(card, cardLanguage)}
+              <button
+                type="button"
+                onClick={() => onOpenCard?.(card.id)}
+                className="text-left decoration-line-strong decoration-1 underline-offset-4 hover:underline"
+              >
+                {displayName(card, cardLanguage)}
+              </button>
             </h2>
             <p className="mt-1 font-mono text-[10.5px] text-text-muted">
               {[card.type, card.race].filter(Boolean).join(' · ')}

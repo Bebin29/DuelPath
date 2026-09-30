@@ -1,4 +1,4 @@
-import type { ParsedEffects } from '@/lib/cards/effects';
+import { effectsOf } from '@/lib/cards/effect-override';
 import type { CardData, ComboNodeData } from '@/lib/combo/state';
 
 /** Kartendaten im Combo-Editor: Regeldaten für stateAt plus Anzeige */
@@ -16,6 +16,7 @@ export function toComboCard(row: {
   race?: string | null;
   imageSmall?: string | null;
   effects?: unknown;
+  effectsOverride?: unknown;
 }): ComboCard {
   return {
     id: row.id,
@@ -24,7 +25,7 @@ export function toComboCard(row: {
     type: row.type,
     race: row.race ?? null,
     imageSmall: row.imageSmall ?? null,
-    effects: (row.effects as ParsedEffects | null)?.effects ?? [],
+    effects: effectsOf(row),
   };
 }
 

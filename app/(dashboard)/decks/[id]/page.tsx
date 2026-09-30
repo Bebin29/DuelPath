@@ -1,24 +1,30 @@
-'use client';
+import { notFound } from 'next/navigation';
+import { DeckPage } from '@/components/decks/DeckPage';
+import { parseTab } from '@/lib/deck/deck-tab';
+import { getDeckView } from '@/server/actions/deck-view.actions';
+import { getStaples, listLibrary } from '@/server/actions/combo.actions';
 
-import { use } from 'react';
-import { DeckEditor } from '@/components/deck/DeckEditor';
-import { DeckErrorBoundary } from '@/components/deck/DeckErrorBoundary';
-
-interface DeckEditorPageProps {
+export default async function DeckRoute({
+  params,
+  searchParams,
+}: {
   params: Promise<{ id: string }>;
-}
-
-/**
- * Deck-Editor Seite
- */
-export default function DeckEditorPage({ params }: DeckEditorPageProps) {
-  const { id } = use(params);
-
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const [{ id }, { tab }] = await Promise.all([params, searchParams]);
+  const [deck, library, staples] = await Promise.all([
+    getDeckView(id),
+    listLibrary(id),
+    getStaples(),
+  ]);
+  if (!deck.data) notFound();
   return (
-    <div className="container mx-auto px-4 py-8">
-      <DeckErrorBoundary deckId={id}>
-        <DeckEditor deckId={id} />
-      </DeckErrorBoundary>
-    </div>
+    <DeckPage
+      deck={deck.data}
+      combos={library.data?.entries ?? []}
+      comboCards={library.data?.cards ?? {}}
+      handtraps={staples.filter((s) => s.staple.side === 'opponent').map((s) => s.card.id)}
+      initialTab={parseTab(tab)}
+    />
   );
 }

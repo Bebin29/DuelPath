@@ -30,9 +30,10 @@ export function NewComboButton({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
-  const create = async (deckId?: string) => {
+  // Mit Deck geht es über das Starthand-Raster, ohne Deck direkt in die Workbench
+  const create = async () => {
     setBusy(true);
-    const result = await createCombo(t('library.untitled'), deckId);
+    const result = await createCombo(t('library.untitled'));
     if (result.data) router.push(`/combos/${result.data.id}`);
     else setBusy(false);
   };
@@ -48,12 +49,12 @@ export function NewComboButton({
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>{t('library.chooseDeck')}</DropdownMenuLabel>
         {decks.map((d) => (
-          <DropdownMenuItem key={d.id} onSelect={() => create(d.id)}>
+          <DropdownMenuItem key={d.id} onSelect={() => router.push(`/combos/new?deck=${d.id}`)}>
             {d.name}
           </DropdownMenuItem>
         ))}
         {decks.length > 0 && <DropdownMenuSeparator />}
-        <DropdownMenuItem onSelect={() => create()}>{t('library.withoutDeck')}</DropdownMenuItem>
+        <DropdownMenuItem onSelect={create}>{t('library.withoutDeck')}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

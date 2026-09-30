@@ -15,7 +15,8 @@ const entry = (id: string, extra: Partial<LibraryEntry> = {}): LibraryEntry => (
   updatedAt: '2026-09-30T10:00:00.000Z',
   tags: [],
   status: 'DRAFT',
-  stats: { startHand: [], lines: 1, branches: 0, steps: 3, endboard: 1, cardIds: [] },
+  missing: 0,
+  stats: { startHand: [], required: [], lines: 1, branches: 0, steps: 3, endboard: 1, cardIds: [] },
   ...extra,
 });
 const cards = {
@@ -28,6 +29,7 @@ const entries = [
     status: 'TESTED',
     stats: {
       startHand: ['ALU'],
+      required: ['ALU'],
       lines: 3,
       branches: 2,
       steps: 5,
