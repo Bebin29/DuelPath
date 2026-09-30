@@ -43,6 +43,11 @@ export interface Decision<Q extends Record<string, Question>> {
   cost: number;
 }
 
+/** Verwendetes Modell, auch Teil des Cache-Schlüssels */
+export function jevModel(): string {
+  return process.env.JEV_MODEL || DEFAULT_MODEL;
+}
+
 export function isJevConfigured(): boolean {
   return Boolean(process.env.OPENROUTER_API_KEY);
 }
@@ -57,7 +62,7 @@ export async function decide<Q extends Record<string, Question>>(
   const res = await fetch(ENDPOINT, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: process.env.JEV_MODEL || DEFAULT_MODEL, state, questions }),
+    body: JSON.stringify({ model: jevModel(), state, questions }),
     signal: AbortSignal.timeout(20_000),
   });
   if (!res.ok) {

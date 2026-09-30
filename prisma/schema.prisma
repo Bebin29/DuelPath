@@ -178,3 +178,10 @@ model ComboNode {
   @@index([comboId])
   @@index([parentId])
 }
+
+// Cache für Jev-Antworten: gleiche Anfrage (Modell, Zustand, Fragen) wird nur einmal bezahlt
+model JevCache {
+  key       String   @id // sha256 der Anfrage
+  answers   Json
+  createdAt DateTime @default(now())
+}

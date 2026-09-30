@@ -70,3 +70,21 @@ export const saveComboSchema = z.object({
 });
 
 export type SaveComboInput = z.input<typeof saveComboSchema>;
+
+export const suggestionInputSchema = z.object({
+  board: z.array(z.object({ cardId: id, player, zone, position: position.optional() })).max(150),
+  chain: z
+    .array(
+      z.object({
+        cardId: id.optional(),
+        player,
+        effectIndex: z.number().int().min(0).max(20).optional(),
+        negated: z.boolean().optional(),
+      })
+    )
+    .max(20),
+  normalSummonUsed: z.boolean(),
+  candidates: z
+    .array(z.object({ cardId: id, effectIndex: z.number().int().min(0).max(20), player, zone }))
+    .max(30),
+});
