@@ -193,9 +193,14 @@ model RulingMechanic {
 }
 ```
 
-- **Deterministische Mechaniken** rechnet `stateAt` direkt (zum Beispiel: Beschwörung negiert, also kein Trigger und OPT unverbraucht; Aktivierung negiert, also Kosten bezahlt und OPT verbraucht).
-- **Nicht deterministische Mechaniken** gehen als kurzer Hinweistext in die Jev-Anfrage.
-- Die Tabelle wird per Seed befüllt und im Repo versioniert.
+- **Deterministische Mechaniken** rechnet `stateAt` direkt. Die wichtigsten aus der Recherche:
+  - **Aktivierung negiert:** Kosten bleiben bezahlt. OPT mit „use“ und „Once per turn:“ ist verbraucht, OPT mit „activate“ (auch „activate 1 X per turn“) nicht.
+  - **Effekt negiert:** OPT ist in jeder Formulierung verbraucht, weil die Aktivierung erfolgreich war. Continuous- und Field-Karten bleiben liegen.
+  - **Beschwörung negiert:** „If Summoned“-Trigger entstehen nicht. Eine negierte Normal Summon verbraucht trotzdem die Normal Summon des Zuges.
+  - **Hard OPT** gilt pro Spieler und Kartenname und überlebt das Verlassen des Feldes. **Soft OPT** gilt pro Kopie und setzt sich bei Ortswechsel oder Verdecken zurück. `GameState` braucht dafür pro Karteninstanz einen Zähler für Ortswechsel.
+  - **Trigger im TCG** verfallen, wenn die Karte vor dem Aufbau der Chain ihren Ort wechselt (Regel-Update 2021).
+- **Nicht deterministische Mechaniken** gehen als kurzer Hinweistext in die Jev-Anfrage, ebenso alle Stellen, die die Recherche als unsicher markiert.
+- Die Tabelle wird per Seed befüllt und im Repo versioniert. Der Vorschlag mit 38 Einträgen und Erkennungsmustern steht in `docs/research/rulings.md`.
 
 ## 5. Meilensteine
 
@@ -203,7 +208,7 @@ model RulingMechanic {
 |---|---|---|
 | **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren | `npm run build`, `lint`, `test` grün |
 | **M1** | PostgreSQL per Docker, Prisma-Provider umstellen, Migrationen neu anlegen | App startet gegen lokales Postgres |
-| **M2** | Ruling-Recherche auswerten, `RulingMechanic` anlegen und befüllen | Tabelle mit allen Mechaniken aus der Recherche im Seed |
+| **M2** | `RulingMechanic` anlegen und aus `docs/research/rulings.md` befüllen | Tabelle mit allen Mechaniken aus der Recherche im Seed |
 | **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
 | **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün |
 | **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar |
@@ -241,5 +246,5 @@ model RulingMechanic {
 
 ## 8. Offen
 
-- Inhalt der Staple-Liste für Gegnerreaktionen.
-- Ergebnisse der Ruling-Recherche einarbeiten (`docs/research/rulings.md`).
+- Staple-Liste für Gegnerreaktionen: Vorschlag liegt vor, Rückmeldung ausstehend.
+- Unsichere Rulings aus der Recherche: Gelten „the turn you activate“-Einschränkungen auch bei negierter Aktivierung? Endet die Negierung durch Imperm oder Veiler, wenn das Monster das Feld verlässt? Viele Detail-Rulings stammen aus der OCG-Datenbank. Diese Fälle laufen vorerst als Jev-Kontext und über `optOverride`.
