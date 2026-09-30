@@ -54,19 +54,26 @@ Quelle bleibt die YGOPRODeck-API (`cardinfo.php?misc=yes`).
 
 - **TCG-Filter:** Nur Karten mit `tcg_date` werden importiert. Banlist aus `banlist_info.ban_tcg`.
 - **Sprache:** Englisch ist die Grundlage für Effektzerlegung, Rulings und Jev. Deutsche Namen und Texte werden zusätzlich importiert (`language=de`, Spalten `nameDe`, `descDe`) und sind in der Anzeige umschaltbar.
-- **Effekte zerlegen:** Beim Import wird der englische Kartentext in einzelne Effekte geteilt und als `effects` (JSON) gespeichert:
+- **Effekte zerlegen:** Beim Import wird der englische Kartentext in `src/lib/cards/effects.ts` in einzelne Effekte geteilt und als `effects` (JSON, `ParsedEffects`) gespeichert:
   ```ts
   type CardEffect = {
     index: number;
+    section?: 'pendulum' | 'monster';
     text: string;
-    opt: 'NONE' | 'SOFT' | 'HARD';
-    optWording?: 'USE' | 'ACTIVATE' | 'ACTIVATE_CARD'; // "use" / "activate this effect" / "activate 1 X"
-    optGroup?: string; // bei "each effect" bzw. "1 X effect per turn" gemeinsame Gruppe
-    mechanics: string[]; // Keys aus RULING_MECHANICS, z. B. "OPT_HARD_USE", "TRIGGER_WHEN_OPTIONAL"
+    activated: boolean; // Chain Link; sonst Continuous Effect o. ä.
+    opt?: {
+      kind: 'SOFT' | 'HARD';
+      wording: 'use' | 'activate' | 'activateCard' | 'apply' | 'shared';
+      per: 'turn' | 'duel';
+      limit: number; // twice/thrice per turn
+      group?: string; // gemeinsamer Zähler, z. B. Maxx "C"
+    };
+    patterns: PatternKey[]; // erkannte PSCT-Muster aus src/lib/rulings/mechanics.ts
   };
   ```
-  Die Zerlegung ist eine Heuristik über die PSCT-Struktur (Sätze mit `:` und `;`, OPT-Klauseln). **Jev prüft mit:** Für jede Karte bewertet Jev, ob die Zerlegung plausibel ist (`noul`). Karten unter dem Schwellwert werden zur manuellen Prüfung markiert (`effectsReview = true`). Manuelle Korrekturen werden gesondert gespeichert und überleben einen Neuimport.
-- **Bilder lokal:** YGOPRODeck untersagt Hotlinking. Bilder werden einmalig heruntergeladen und unter `public/cards/<passcode>.jpg` abgelegt (nicht in Git).
+  Die Zerlegung ist eine Heuristik über die PSCT-Struktur (Sätze mit `:` und `;`, OPT-Klauseln, Aufzählungen, Pendel-Abschnitte, Materialzeilen). Karten, bei denen der Parser unsicher ist, bekommen `effectsReview = true`; nach dem ersten Import waren das 259 von 14.135 Karten (1,8 %), fast alle mit altem Kartentext ohne Doppelpunkt und Semikolon.
+- **Jev prüft mit:** `npm run cards:check-effects` fragt pro Karte per `noul`, ob die Zerlegung plausibel ist, und speichert die Bewertung in `effectsJev`. Zur manuellen Prüfung gehören Karten mit `effectsReview` oder `effectsJev < 0,3`. Die Schwelle stammt aus einem Test mit 20 Karten und absichtlich verfälschten Zerlegungen (korrekt im Schnitt 0,66, zusammengelegt 0,25, zerteilt 0,08). Eine Zählfrage („wie viele Effekte?“) war unzuverlässig, weil Jev Materialzeilen mitzählt. Manuelle Korrekturen kommen, sobald es eine Oberfläche dafür gibt.
+- **Bilder lokal:** YGOPRODeck untersagt Hotlinking. `/api/card-images/<passcode>.jpg` (bzw. `_small.jpg`) lädt ein Bild beim ersten Abruf herunter und legt es in `CARD_IMAGE_DIR` ab, standardmäßig `~/.duelpath/card-images`. Alle Bilder vorab zu laden wären über 1 GB, die OneDrive sonst mitsynchronisieren würde.
 
 ### 4.3 Combo als Baum
 
@@ -170,9 +177,9 @@ function stateAt(combo: Combo, nodeId: string): GameState; // reine Funktion, vo
 
 ### 4.5 Effektvorschläge mit Jev
 
-Zugang über **OpenRouter**, Modell `typesafe/jev-1.13` (fest gepinnt, nicht `~typesafe/jev-latest`, damit sich das Verhalten nicht unbemerkt ändert). Jev läuft über die **Decisions API** (`POST https://openrouter.ai/api/alpha/decisions`), nicht über den Chat-Endpunkt; das OpenAI-SDK funktioniert dafür nicht. Kontextfenster 32k Tokens, abgerechnet werden nur Input-Tokens.
+Zugang über **OpenRouter**, Modell `typesafe/jev-1.13-20260917` (fest gepinnt, nicht `~typesafe/jev-latest`, damit sich das Verhalten nicht unbemerkt ändert; per `JEV_MODEL` überschreibbar). Eine Anfrage dauert etwa 0,6 Sekunden und kostet etwa 0,00003 US-Dollar. Jev läuft über die **Decisions API** (`POST https://openrouter.ai/api/alpha/decisions`), nicht über den Chat-Endpunkt; das OpenAI-SDK funktioniert dafür nicht. Kontextfenster 32k Tokens, abgerechnet werden nur Input-Tokens.
 
-Jev wird an zwei Stellen genutzt: beim Import zur Prüfung der Effektzerlegung (4.2) und im Editor für Vorschläge. Beide Aufrufe laufen über dieselbe Datei `src/server/jev.ts`.
+Jev wird an zwei Stellen genutzt: zur Prüfung der Effektzerlegung (4.2) und im Editor für Vorschläge. Beide Aufrufe laufen über dieselbe Datei `src/server/jev.ts`. Erfahrung aus der Zerlegungsprüfung: konkrete Ja/Nein-Fragen mit klaren Kriterien funktionieren, Zählfragen nicht; Absolutwerte streuen stark, daher Schwellen immer an einem Testset festlegen.
 
 **Ablauf pro Knoten:**
 
@@ -216,17 +223,17 @@ interface RulingMechanic {
 
 ## 5. Meilensteine
 
-| #      | Inhalt                                                                                                                          | Fertig, wenn                                                                           |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren (**erledigt**)           | `npm run build`, `lint`, `test` grün                                                   |
-| **M1** | PostgreSQL per Docker, Prisma 7 und Provider umstellen, Migrationen neu anlegen (**erledigt**)                                  | App startet gegen lokales Postgres                                                     |
-| **M2** | `RULING_MECHANICS` und PSCT-Muster aus `docs/research/rulings.md` übernehmen (**erledigt**)                                     | alle Mechaniken aus der Recherche im Code, Test grün                                   |
-| **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder   | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
-| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking                                               | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
-| **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop                     | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
-| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand                                                           | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
-| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert                                                      | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
-| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen, YDK-Import fertigstellen (bisher nur ein Platzhalter) | Combo aus einem Deck heraus starten                                                    |
+| #      | Inhalt                                                                                                                                       | Fertig, wenn                                                                           |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren (**erledigt**)                        | `npm run build`, `lint`, `test` grün                                                   |
+| **M1** | PostgreSQL per Docker, Prisma 7 und Provider umstellen, Migrationen neu anlegen (**erledigt**)                                               | App startet gegen lokales Postgres                                                     |
+| **M2** | `RULING_MECHANICS` und PSCT-Muster aus `docs/research/rulings.md` übernehmen (**erledigt**)                                                  | alle Mechaniken aus der Recherche im Code, Test grün                                   |
+| **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder (**erledigt**) | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
+| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking                                                            | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
+| **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop                                  | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
+| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand                                                                        | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
+| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert                                                                   | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
+| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen, YDK-Import fertigstellen (bisher nur ein Platzhalter)              | Combo aus einem Deck heraus starten                                                    |
 
 ## 6. Risiken
 
