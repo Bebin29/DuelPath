@@ -89,11 +89,15 @@ DuelPath
 
 Hier verbringt der Nutzer 90 % seiner Zeit.
 
-### 6.1 Aufbau
+### 6.1 Aufbau: zwei Modi
+
+Die Workbench hat zwei Vollbild-Modi, zwischen denen der Nutzer mit **V** oder einem Schalter im Kopf wechselt. Beide zeigen dieselbe Combo; der ausgewählte Schritt bleibt beim Wechsel erhalten.
+
+**Board-Modus: spielen und nachspielen**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ ◀ Combos   Albaz 1-Card · Deck: Branded Despia ▾    Goldfish · 3 Branches   │
+│ ◀ Combos   Albaz 1-Card · Deck: Branded Despia ▾  [Board | Baum] 3 Branches │
 ├──────────────┬───────────────────────────────────────────────┬──────────────┤
 │ LINES        │                  GEGNER                       │ INSPECTOR    │
 │              │  Hand ▢▢▢▢▢       GY 2  Banish 0  Deck 35     │              │
@@ -106,16 +110,40 @@ Hier verbringt der Nutzer 90 % seiner Zeit.
 │  …           │  GY 3  Banish 1  Extra 14  Deck 33 └────────┘ │ Vorschläge   │
 │ ○ B: Ash     │                  ICH                          │ (Jev)        │
 │ ○ C: Imperm  │                                               │              │
-│ [Baum ⤢]     │  ◀ Schritt 2 von 9 ▶   Nächste: NS · Aktiv. · Chain auflösen  │
+│              │  ◀ Schritt 2 von 9 ▶   Nächste: NS · Aktiv. · Chain auflösen  │
 └──────────────┴───────────────────────────────────────────────┴──────────────┘
 ```
 
 - **Mitte: Board.** Das Spielfeld beider Spieler wie im Spiel: 5 Monsterzonen, 2 Extra Monster Zones, 5 Zauber/Fallen-Zonen, Spielfeldzone, Stapel für Deck, Extra Deck, Friedhof und Verbannt. Eigene Seite unten, Gegner oben gespiegelt. Die offene Chain liegt als Stapel daneben.
-- **Links: Lines.** Die aktuelle Line als nummerierte Schrittliste, so wie Spieler sie aufschreiben. Branches hängen an ihrem Schritt und sind aufklappbar. Darunter die anderen Lines der Combo. Ein Klick auf „Baum“ öffnet den Canvas als Vollbild-Übersicht mit allen Verzweigungen.
+- **Links: Lines.** Die aktuelle Line als nummerierte Schrittliste, so wie Spieler sie aufschreiben. Branches hängen an ihrem Schritt und sind aufklappbar. Darunter die anderen Lines der Combo.
 - **Rechts: Inspector.** Zeigt die Karte unter dem Mauszeiger oder die ausgewählte Karte in groß, mit vollem Text, einzelnen Effekten und HOPT-Status. Darunter die Vorschläge von Jev für den nächsten Schritt.
 - **Unten: Schrittleiste.** „Schritt 2 von 9“ mit Vor und Zurück sowie den naheliegenden nächsten Aktionen als Knöpfe.
 
-Warum Board in der Mitte statt Baum: Der Nutzer arbeitet am Zustand und schaut auf den Verlauf. Der Baum ist für die Übersicht und Navigation da, die Line-Liste für das Lesen und Bearbeiten. Beides sind Ansichten derselben Daten.
+**Baum-Modus: Überblick und Struktur**
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ◀ Combos   Albaz 1-Card · Deck: Branded Despia ▾  [Board | Baum] 3 Branches │
+├───────────────────────────────────────────────────────────────┬─────────────┤
+│                    [Starthand]                                │ SCHRITT 2   │
+│                         │                                     │ Albaz: Fus. │
+│                     [NS Albaz]                                │             │
+│                         │                                     │ Mini-Board  │
+│                  [Albaz: Fusion] ⚡                            │ ▢▢▣▢▢       │
+│              ┌──────────┼───────────┐                         │ ▣▣▣▣        │
+│         Goldfish       Ash         Imperm                     │             │
+│     [Mirrorjade]   [Extender …]  [Branch C]                   │ Warnungen   │
+│           │             │                                     │ HOPTs       │
+│     [Endboard: 3]   [Endboard: 1]                             │             │
+└───────────────────────────────────────────────────────────────┴─────────────┘
+```
+
+- **Mitte: Baum** auf dem Canvas mit allen Lines und Branches. Die Goldfish-Line läuft als gerade Achse, Branches zweigen seitlich ab. Knoten sind kompakt: Kartenbild, Kurzform der Aktion, Choke-Point-Symbole, Endboard-Interruptions an den Blättern.
+- **Rechts: Schritt-Detail** mit einem kleinen Board des gewählten Knotens, Warnungen und HOPT-Stand. So bleibt der Zustand sichtbar, ohne den Modus zu wechseln.
+- **Doppelklick** auf einen Knoten (oder Enter) springt in den Board-Modus an genau diesen Schritt.
+- Im Baum-Modus werden Branches umbenannt, zusammengeklappt und gelöscht. Gespielt wird im Board-Modus.
+
+Warum zwei Modi statt einer geteilten Ansicht: Das Board braucht die volle Breite, damit 12 Zonen je Spieler lesbar bleiben. Der Baum braucht die volle Fläche, sobald eine Combo mehr als drei Branches hat. Ein schneller Wechsel ist besser als zwei halbe Ansichten.
 
 ### 6.2 Einen Schritt spielen
 
@@ -170,7 +198,7 @@ Am Ende einer Line (letzter Schritt oder „Endboard“ markieren) zeigt die Wor
 1. Aus der Workbench oder von einer Deckseite: **„Neue Combo“**.
 2. Deck wählen (vorausgewählt, wenn man vom Deck kommt).
 3. **Starthand**: Das Deck liegt als Bildraster da. Klick legt eine Karte auf die Hand, erneuter Klick nimmt sie zurück. Oben „1-Card“, „2-Card“, „5 Karten“ als Zähler. Optional **„Zufallshand“** für Übungssitzungen.
-4. Optional: **Going Second** mit Gegnerboard. Zum Beispiel lassen sich bekannte Endboards wie „Baronne + Apollousa + Imperm gesetzt“ als Vorlage laden oder frei setzen.
+4. Optional: **Going Second** mit Gegnerboard. Karten des Gegners werden wie die eigenen per Suche auf seine Zonen gelegt, gesetzte Fallen standardmäßig verdeckt.
 5. Los: Die Workbench öffnet sich mit Board und Starthand.
 
 Titel werden automatisch vorgeschlagen („Albaz 1-Card“), damit niemand vor dem ersten Schritt tippen muss.
@@ -203,6 +231,7 @@ Tastatur ist Beschleunigung, nie Voraussetzung. Ein Druck auf „?“ zeigt jede
 | Taste                    | Aktion                                                         |
 | ------------------------ | -------------------------------------------------------------- |
 | Strg+K                   | Suche und Befehle (Karten, Combos, Aktionen)                   |
+| V                        | zwischen Board-Modus und Baum-Modus wechseln                   |
 | ← →                      | vorheriger / nächster Schritt                                  |
 | ↑ ↓                      | in einen Branch hinein / zurück zur übergeordneten Line        |
 | Leertaste                | Line abspielen / anhalten                                      |
@@ -228,7 +257,7 @@ Später: Befehlszeile in Strg+K mit Kurzform, zum Beispiel „ns albaz“ oder �
 
 ## 11. Leere Zustände und Einstieg
 
-- **Erste Anmeldung:** Kein Tutorial-Marathon. Eine Beispiel-Combo ist vorinstalliert („Beispiel: Albaz-Line mit Ash-Branch“) und zeigt alle Konzepte in 30 Sekunden Nachspielen.
+- **Erste Anmeldung:** Kein Tutorial-Marathon. Die Workbench zeigt drei Schritte zum Start: Deck per YDK importieren, Starthand wählen, ersten Schritt spielen.
 - **Keine Decks:** „Deck per YDK importieren“ ist der Hauptknopf, weil fast jeder Spieler seine Liste schon in EDOPro oder YGOPRODeck hat.
 - **Leere Combo:** Das Board zeigt die Starthand und im Inspector die Vorschläge für den ersten Schritt. Die erste Aktion ist also immer einen Klick entfernt.
 - **Hinweise im Kontext:** Beim ersten Mal erscheint an der Staple-Leiste einmalig der Hinweis „Zieh eine Handtrap auf einen Schritt, um einen Branch anzulegen“.
@@ -256,21 +285,21 @@ Jede UI-Version muss diese Szenarien schaffen. Wir testen sie selbst mit der Sto
 | Stresstest einer 10-Schritt-Line mit allen Staples       | Ergebnis in unter 10 Sekunden          |
 | Line nachspielen und jeden Zustand verstehen             | ohne einen einzigen Klick in Formulare |
 | Eine Line komplett ohne Maus eingeben                    | möglich                                |
-| Neuer Nutzer spielt die Beispiel-Combo nach              | ohne Erklärung, unter 1 Minute         |
+| Neuer Nutzer legt seine erste Combo an                   | ohne Erklärung, unter 2 Minuten        |
 
 ## 14. Was sich gegenüber heute ändert
 
-| Heute                                                                       | Neu                                                               |
-| --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Baum im Zentrum, Board klein in der Seitenleiste                            | Board im Zentrum, Line-Liste links, Baum als Übersicht            |
-| Schritt = Formular mit Auswahlfeldern, Bewegungen manuell                   | Schritt = Geste an der Karte, Bewegungen automatisch              |
-| Knotentypen (Aktion, Aktivierung, Gegner reagiert, Chain auflösen) sichtbar | Aktionen in Spielersprache; Chain-Auflösung meist automatisch     |
-| Branches nur an vorher angelegten Gegner-Knoten                             | Handtrap auf jeden Schritt ziehen; Stresstest findet Choke Points |
-| Kein Endboard-Überblick                                                     | Endboard-Auswertung mit Interruptions und Schwachstellen          |
-| Kein Nachspielen                                                            | Schritt für Schritt und Autoplay mit Animation                    |
-| Suchergebnisse nur über exakte Namen                                        | Spitznamen, Kürzel, Deck zuerst                                   |
-| Kartennamen folgen der Oberflächensprache                                   | Kartensprache eigene Einstellung, Standard Englisch               |
-| Helles Design                                                               | Dunkles Design als Standard                                       |
+| Heute                                                                       | Neu                                                                                 |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Baum im Zentrum, Board klein in der Seitenleiste                            | zwei Vollbild-Modi: Board mit Line-Liste und Baum mit Schritt-Detail, Wechsel per V |
+| Schritt = Formular mit Auswahlfeldern, Bewegungen manuell                   | Schritt = Geste an der Karte, Bewegungen automatisch                                |
+| Knotentypen (Aktion, Aktivierung, Gegner reagiert, Chain auflösen) sichtbar | Aktionen in Spielersprache; Chain-Auflösung meist automatisch                       |
+| Branches nur an vorher angelegten Gegner-Knoten                             | Handtrap auf jeden Schritt ziehen; Stresstest findet Choke Points                   |
+| Kein Endboard-Überblick                                                     | Endboard-Auswertung mit Interruptions und Schwachstellen                            |
+| Kein Nachspielen                                                            | Schritt für Schritt und Autoplay mit Animation                                      |
+| Suchergebnisse nur über exakte Namen                                        | Spitznamen, Kürzel, Deck zuerst                                                     |
+| Kartennamen folgen der Oberflächensprache                                   | Kartensprache eigene Einstellung, Standard Englisch                                 |
+| Helles Design                                                               | Dunkles Design als Standard                                                         |
 
 ## 15. Technische Voraussetzungen aus der UX
 
@@ -294,14 +323,18 @@ Damit die UX funktioniert, braucht das Datenmodell einige Erweiterungen:
 | **UX-3 Stresstest**                 | Staple-Leiste mit Drag auf Schritte, Choke-Point-Analyse mit Jev, Endboard-Auswertung, Vergleich                                                  | Job 2 und 4          |
 | **UX-4 Nachspielen und Bibliothek** | Schritt-Navigation, Autoplay, Bibliothek mit Filtern, Tags und Status                                                                             | Job 3                |
 | **UX-5 Deck und Hand-Tester**       | Deckbau im neuen Design, Hand-Tester mit Abdeckung, neue Combo aus einer gezogenen Hand                                                           | Job 5 und 6          |
-| **UX-6 Tempo**                      | Befehlszeile, Tastatur-Feinschliff, Spitznamen-Pflege, Beispiel-Combo                                                                             | für Vielnutzer       |
+| **UX-6 Tempo**                      | Befehlszeile, Tastatur-Feinschliff, Spitznamen-Pflege                                                                                             | für Vielnutzer       |
 
 Jede Phase endet mit den passenden Szenarien aus Abschnitt 13.
 
-## 17. Offene Entscheidungen
+## 17. Entscheidungen
 
-- Workbench-Aufbau: Board im Zentrum mit Line-Liste und Baum als Übersicht (Empfehlung), oder Baum im Zentrum wie bisher.
-- Kartensprache Standard Englisch (Empfehlung) oder weiterhin nach Oberflächensprache.
-- Zufallshand und Hand-Tester: aufnehmen (Empfehlung) oder bei der reinen Auswahl aus dem Deck bleiben.
-- Teilen: Line als Text für Discord kopieren, zum Beispiel „1. NS Albaz 2. Albaz: discard, Fusion → Mirrorjade …“. Bisher ausgeschlossen, für Teams aber sehr nützlich.
-- Dunkles Design als Standard (Empfehlung) oder hell.
+| Frage                       | Entscheidung                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| Aufbau der Workbench        | zwei umschaltbare Vollbild-Modi: Board-Modus und Baum-Modus                    |
+| Kartensprache               | Standard Englisch, Deutsch per Schalter, unabhängig von der Oberflächensprache |
+| Zufallshand und Hand-Tester | aufgenommen (Abschnitt 7.3, Phase UX-5)                                        |
+| Design                      | dunkel als Standard, hell umschaltbar                                          |
+| Line als Text teilen        | nicht enthalten                                                                |
+| Going-Second-Vorlagen       | nicht enthalten; Gegnerboard wird frei gesetzt                                 |
+| Beispiel-Combo              | nicht enthalten; Einstieg über leere Zustände                                  |
