@@ -906,9 +906,9 @@
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
                           "content": "Ash hier? Tragedy als Extender.",
-                          "lineHeight": 1.1,
+                          "lineHeight": 1.15,
                           "fontFamily": "$hand",
-                          "fontSize": 17,
+                          "fontSize": 15,
                           "fontWeight": "normal"
                         }
                       ]
@@ -11590,9 +11590,9 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "Immer zuerst Aluber, damit Ash hier landet und nicht auf Branded Fusion.",
-                      "lineHeight": 1.15,
+                      "lineHeight": 1.2,
                       "fontFamily": "$hand",
-                      "fontSize": 17,
+                      "fontSize": 15,
                       "fontWeight": "normal"
                     }
                   ]
@@ -14472,9 +14472,9 @@
                               "name": "Text",
                               "fill": "$opponent",
                               "content": "Ash, Imperm und Fuwalos bleiben als Unterbrechungen auf der Hand.",
-                              "lineHeight": 1.15,
+                              "lineHeight": 1.2,
                               "fontFamily": "$hand",
-                              "fontSize": 17,
+                              "fontSize": 15,
                               "fontWeight": "normal"
                             }
                           ]
@@ -18989,11 +18989,11 @@
     },
     "font": {
       "type": "string",
-      "value": "Schibsted Grotesk"
+      "value": "Instrument Sans"
     },
     "mono": {
       "type": "string",
-      "value": "IBM Plex Mono"
+      "value": "JetBrains Mono"
     },
     "r-sm": {
       "type": "number",
@@ -19060,11 +19060,11 @@
     },
     "font-display": {
       "type": "string",
-      "value": "Newsreader"
+      "value": "Instrument Serif"
     },
     "hand": {
       "type": "string",
-      "value": "Caveat Brush"
+      "value": "Kalam"
     }
   },
   "fileToken": "58a67a9a-f4cd-45ea-b380-3ad75dcf42b2"
