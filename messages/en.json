@@ -378,7 +378,12 @@
     "uiLanguage": "Interface language",
     "uiLanguageText": "Menus, buttons and hints.",
     "cardLanguage": "Card language",
-    "cardLanguageText": "Card names. Independent of the interface language; card texts stay English."
+    "cardLanguageText": "Card names. Independent of the interface language; card texts stay English.",
+    "staples": "Staples",
+    "staplesText": "Which cards the staple rail and the stress test use, in this order. Cards forbidden in the TCG are missing.",
+    "staplesReset": "Default list",
+    "up": "Move up",
+    "down": "Move down"
   },
   "workbench": {
     "board": "Board",
@@ -491,5 +496,61 @@
       "Semi-Limited": "Semi-Limited · 2",
       "Unlimited": "Unlimited"
     }
+  },
+  "stress": {
+    "rail": "Staple rail",
+    "run": "Stress test",
+    "chokePoints": "Stress test · {{count}}",
+    "hitsSteps": "hits step {{steps}}",
+    "noHits": "does not hit this line",
+    "railHint": "Drag onto a step or a card, click adds the branch at the selected step.",
+    "chooseStaples": "Choose staples",
+    "compare": "Compare",
+    "endboardCount": "Interruptions on the endboard",
+    "branchName": "{{staple}} on {{n}}",
+    "branchStart": "{{staple}} at start",
+    "hitsHere": "hits here",
+    "pickStaple": "Pick a staple …",
+    "pickStapleHint": "Name or digit, Enter adds the branch at the selected step",
+    "answerWith": "Answer with {{name}}",
+    "missing_one": "missing: {{count}} card",
+    "missing_other": "missing: {{count}} cards",
+    "missingLabel": "missing",
+    "hitReason": "{{staple}} hits: {{why}}",
+    "pattern": {
+      "FROM_DECK": "search from the Deck",
+      "FROM_GY": "card leaves the GY",
+      "FIELD_MONSTER_EFFECT": "effect of a face-up monster",
+      "FIELD_EFFECT": "effect of a card on the field",
+      "MONSTER_EFFECT_NO_OPP_MONSTER": "monster effect, opponent has no monster",
+      "MONSTER_EFFECT": "monster effect",
+      "SPELL_TRAP_ACTIVATION": "Spell or Trap",
+      "SUMMON": "summon",
+      "SPECIAL_SUMMON": "Special Summon",
+      "SUMMONING_EFFECT": "effect summons",
+      "FIFTH_SUMMON": "summon number {{count}} this turn",
+      "ADD_FROM_DECK": "card added from the Deck",
+      "GY_NEEDED_LATER": "a later step needs this card in the GY",
+      "TURN_START_DECK_SUMMONS": "opponent draws {{count}} (summons from Deck and Extra Deck)",
+      "TURN_START_HAND_SUMMONS": "opponent draws {{count}} (summons from the hand)"
+    }
+  },
+  "endboard": {
+    "interruptions_one": "interruption",
+    "interruptions_other": "interruptions",
+    "interruptionsLabel": "Interruptions",
+    "cards": "Cards on the endboard",
+    "countFor": "{{name}}: counts {{count}}",
+    "countHint": "Click changes how often the card counts as an interruption",
+    "hand": "Hand",
+    "gyEffects": "GY with effect",
+    "normalSummon": "Normal Summon",
+    "left": "left",
+    "used": "used",
+    "startHand": "Starting hand",
+    "cardCombo": "{{count}}-card combo",
+    "hopts": "HOPT names locked",
+    "weaknesses": "Weak points",
+    "noWeaknesses": "No hits from the chosen staples."
   }
 }

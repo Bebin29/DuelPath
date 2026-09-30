@@ -157,23 +157,25 @@ model Combo {
 }
 
 model ComboNode {
-  id           String   @id @default(cuid())
-  comboId      String
-  parentId     String? // null = Wurzel
-  rank         Int      @default(0) // Reihenfolge unter Geschwistern; 0 = Hauptline
-  kind         String // ACTION | ACTIVATE | OPPONENT | RESOLVE | END
-  player       String // self | opponent
-  edgeLabel    String? // "Keine Reaktion", "Ash Blossom", ...
-  instanceId   String? // aktivierende Karteninstanz
-  cardId       String?
-  effectIndex  Int?
-  action       String? // NORMAL_SUMMON | SPECIAL_SUMMON | SET | OTHER
-  costMoves    Json     @default("[]") // CardMove[] bei Aktivierung
-  resolveMoves Json     @default("[]") // CardMove[] bei Auflösung
-  negates      Json? // Negation
-  optOverride  Boolean? // manueller Eingriff in die OPT-Regel
-  note         String?
-  createdAt    DateTime @default(now())
+  id            String   @id @default(cuid())
+  comboId       String
+  parentId      String? // null = Wurzel
+  rank          Int      @default(0) // Reihenfolge unter Geschwistern; 0 = Hauptline
+  kind          String // ACTION | ACTIVATE | OPPONENT | RESOLVE | END
+  player        String // self | opponent
+  edgeLabel     String? // "Keine Reaktion", "Ash Blossom", ...
+  instanceId    String? // aktivierende Karteninstanz
+  cardId        String?
+  effectIndex   Int?
+  action        String? // NORMAL_SUMMON | SPECIAL_SUMMON | SET | OTHER
+  costMoves     Json     @default("[]") // CardMove[] bei Aktivierung
+  resolveMoves  Json     @default("[]") // CardMove[] bei Auflösung
+  negates       Json? // Negation
+  optOverride   Boolean? // manueller Eingriff in die OPT-Regel
+  note          String?
+  ignoredHits   Json? // Staple-Namen, deren Stresstest-Treffer an diesem Schritt entfernt sind
+  interruptions Json? // Endboard: Unterbrechungen pro Karteninstanz, überschreibt die Erkennung
+  createdAt     DateTime @default(now())
 
   combo    Combo       @relation(fields: [comboId], references: [id], onDelete: Cascade)
   parent   ComboNode?  @relation("Tree", fields: [parentId], references: [id], onDelete: Cascade)

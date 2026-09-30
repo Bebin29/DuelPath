@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
 import { drawFromDeck, startStateFromDeck, type DeckEntry } from '@/lib/combo/deck';
-import { sortByDepth } from '@/lib/combo/cards';
+import { nodeRows } from '@/lib/prisma/node-rows';
 import type { CardMove, ComboNodeData, StartState, Zone } from '@/lib/combo/state';
 
 /**
@@ -190,15 +190,7 @@ async function main() {
       startState: start as unknown as Prisma.InputJsonValue,
     },
   });
-  await prisma.comboNode.createMany({
-    data: sortByDepth(nodes).map((n) => ({
-      ...n,
-      comboId: combo.id,
-      costMoves: (n.costMoves ?? []) as unknown as Prisma.InputJsonValue,
-      resolveMoves: (n.resolveMoves ?? []) as unknown as Prisma.InputJsonValue,
-      negates: (n.negates ?? undefined) as Prisma.InputJsonValue | undefined,
-    })),
-  });
+  await prisma.comboNode.createMany({ data: nodeRows(combo.id, nodes) });
 
   console.log(`Deck:  ${deck.name}`);
   console.log(`Combo: ${combo.title} → /combos/${combo.id}`);

@@ -1,7 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Check, CloudOff, Loader2, Redo2, TriangleAlert, Undo2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  CloudOff,
+  Crosshair,
+  Loader2,
+  Redo2,
+  TriangleAlert,
+  Undo2,
+} from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -28,6 +37,9 @@ export function WorkbenchHeader({
   onWarnings,
   status,
   onRetry,
+  stress,
+  chokePoints,
+  onStress,
 }: {
   title: string;
   onTitle: (title: string) => void;
@@ -44,6 +56,10 @@ export function WorkbenchHeader({
   onWarnings: () => void;
   status: SaveStatus;
   onRetry: () => void;
+  /** Stresstest an: Choke-Point-Chips in der Line-Liste (UX-Plan 6.8) */
+  stress: boolean;
+  chokePoints: number;
+  onStress: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -107,6 +123,17 @@ export function WorkbenchHeader({
         <Redo2 />
       </Button>
       <span className="h-5 w-px bg-line" />
+      <Button
+        variant="line"
+        size="sm"
+        onClick={onStress}
+        aria-pressed={stress}
+        className={cn(stress && 'border-opponent text-opponent')}
+      >
+        <Crosshair className={cn(stress && 'text-opponent')} />
+        {stress ? t('stress.chokePoints', { count: chokePoints }) : t('stress.run')}
+        <Kbd>T</Kbd>
+      </Button>
       <button
         type="button"
         onClick={onWarnings}

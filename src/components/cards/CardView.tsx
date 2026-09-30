@@ -3,6 +3,8 @@ import { cn } from '@/lib/utils';
 
 /** Größen nach UI-Plan 5.1, Seitenverhältnis 59 : 86 */
 export const CARD_SIZES = {
+  /** Artwork-Ausschnitt für Choke-Point-Chips */
+  dot: 16,
   art: 24,
   xs: 32,
   sm: 44,
@@ -56,7 +58,7 @@ export function CardView({
   className,
 }: CardViewProps) {
   const width = CARD_SIZES[size];
-  const square = size === 'art';
+  const square = size === 'art' || size === 'dot';
   const height = square ? width : Math.round(width * (86 / 59));
   const plaques = width >= CARD_SIZES.board;
   const showBack = faceDown === 'opponent' || !image;

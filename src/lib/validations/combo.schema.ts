@@ -45,6 +45,8 @@ export const comboNodeSchema = z.object({
   negates: negationSchema.nullish(),
   optOverride: z.boolean().nullish(),
   note: z.string().max(1000).nullish(),
+  ignoredHits: z.array(z.string().max(100)).max(40).nullish(),
+  interruptions: z.record(id, z.number().int().min(0).max(9)).nullish(),
 });
 
 export const startStateSchema = z.object({

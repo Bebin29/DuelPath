@@ -81,6 +81,10 @@ export interface ComboNodeData {
   negates?: Negation | null;
   /** Manueller Eingriff: zählt diese Aktivierung für den OPT? Überschreibt die Regel */
   optOverride?: boolean | null;
+  /** Stresstest-Treffer, die der Nutzer an diesem Schritt entfernt hat (Staple-Namen, UX-Plan 6.8) */
+  ignoredHits?: string[] | null;
+  /** Endboard: Unterbrechungen pro Karteninstanz, überschreibt die Erkennung (UX-Plan 6.9) */
+  interruptions?: Record<string, number> | null;
 }
 
 export interface StartState {

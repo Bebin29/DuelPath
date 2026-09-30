@@ -5,7 +5,8 @@ import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
 import type { ParsedEffects } from '@/lib/cards/effects';
 import type { CardMove, ComboNodeData, StartState } from '@/lib/combo/state';
-import { sortByDepth, toComboCard, type ComboCard } from '@/lib/combo/cards';
+import { toComboCard, type ComboCard } from '@/lib/combo/cards';
+import { nodeRows } from '@/lib/prisma/node-rows';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
 import { startStateFromDeck, type DeckEntry } from '@/lib/combo/deck';
 import { saveComboSchema, type SaveComboInput } from '@/lib/validations/combo.schema';
@@ -108,6 +109,8 @@ export async function getCombo(comboId: string): Promise<Result<LoadedCombo>> {
     resolveMoves: n.resolveMoves as unknown as CardMove[],
     negates: n.negates as unknown as ComboNodeData['negates'],
     optOverride: n.optOverride,
+    ignoredHits: n.ignoredHits as string[] | null,
+    interruptions: n.interruptions as Record<string, number> | null,
   }));
   const startState = combo.startState as unknown as StartState;
 
@@ -169,15 +172,7 @@ export async function saveCombo(comboId: string, input: SaveComboInput): Promise
 
   await prisma.$transaction([
     prisma.comboNode.deleteMany({ where: { comboId } }),
-    prisma.comboNode.createMany({
-      data: sortByDepth(nodes).map((n) => ({
-        ...n,
-        comboId,
-        costMoves: n.costMoves as Prisma.InputJsonValue,
-        resolveMoves: n.resolveMoves as Prisma.InputJsonValue,
-        negates: (n.negates ?? undefined) as Prisma.InputJsonValue | undefined,
-      })),
-    }),
+    prisma.comboNode.createMany({ data: nodeRows(comboId, nodes) }),
     prisma.combo.update({
       where: { id: comboId },
       data: { title, deckId, startState: startState as Prisma.InputJsonValue },

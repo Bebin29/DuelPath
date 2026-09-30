@@ -36,6 +36,13 @@ export interface TriggerOffer {
   cardId: string;
 }
 
+/** Antwort auf eine gegnerische Unterbrechung, etwa Called by the Grave von der Hand (UX-Plan 6.8) */
+export interface AnswerOffer {
+  staple: string;
+  cardId: string;
+  short: string;
+}
+
 interface StepBarProps {
   position: number;
   total: number;
@@ -58,6 +65,9 @@ interface StepBarProps {
 
   triggers: TriggerOffer[];
   onTrigger: (offer: TriggerOffer) => void;
+
+  answers: AnswerOffer[];
+  onAnswer: (offer: AnswerOffer) => void;
 
   offer: boolean;
   onInsert: () => void;
@@ -100,7 +110,10 @@ export function StepBar(props: StepBarProps) {
         </Button>
       </div>
       <span className="h-5 w-px shrink-0 bg-line" />
-      <div className="flex min-w-0 flex-1 items-center gap-3" aria-live="polite">
+      <div
+        className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto"
+        aria-live="polite"
+      >
         {prompt ? (
           <PromptRow {...props} prompt={prompt} />
         ) : chainLength > 0 ? (
@@ -112,7 +125,8 @@ export function StepBar(props: StepBarProps) {
       {props.offer ? (
         <OfferNotice {...props} />
       ) : (
-        !prompt && (
+        !prompt &&
+        chainLength === 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="line">
@@ -232,6 +246,8 @@ function ChainRow({
   triggers,
   cards,
   onTrigger,
+  answers,
+  onAnswer,
 }: StepBarProps) {
   const { t } = useTranslation();
   return (
@@ -239,29 +255,35 @@ function ChainRow({
       <span className="shrink-0 font-mono text-xs text-chain">
         {t('workbench.chainOpen', { count: chainLength })}
       </span>
-      <Button onClick={onResolve}>
+      <Button onClick={onResolve} className="shrink-0">
         {t('workbench.resolve')} <Kbd>⏎</Kbd>
       </Button>
       <Button
         variant="line"
         onClick={onChain}
         aria-pressed={chainMode}
-        className={cn(chainMode && 'border-chain text-chain')}
+        className={cn('shrink-0', chainMode && 'border-chain text-chain')}
       >
         {chainMode ? t('workbench.chainArmed') : t('workbench.chainOn')} <Kbd>C</Kbd>
       </Button>
-      <Button variant="line" onClick={onOpponent}>
+      <Button variant="line" onClick={onOpponent} className="shrink-0">
         {t('workbench.opponentReacts')} <Kbd>O</Kbd>
       </Button>
+      <Answers answers={answers} cards={cards} onAnswer={onAnswer} />
       <Triggers triggers={triggers} cards={cards} onTrigger={onTrigger} />
     </>
   );
 }
 
-function IdleRow({ position, triggers, cards, onTrigger }: StepBarProps) {
+function IdleRow({ position, triggers, cards, onTrigger, answers, onAnswer }: StepBarProps) {
   const { t } = useTranslation();
-  if (triggers.length > 0)
-    return <Triggers triggers={triggers} cards={cards} onTrigger={onTrigger} />;
+  if (triggers.length > 0 || answers.length > 0)
+    return (
+      <>
+        <Answers answers={answers} cards={cards} onAnswer={onAnswer} />
+        <Triggers triggers={triggers} cards={cards} onTrigger={onTrigger} />
+      </>
+    );
   return (
     <span className="truncate text-text-muted">
       {position === 0 ? t('workbench.startHint') : t('workbench.nextHint')}
@@ -300,6 +322,30 @@ function Triggers({
       })}
     </div>
   );
+}
+
+function Answers({
+  answers,
+  cards,
+  onAnswer,
+}: Pick<StepBarProps, 'answers' | 'cards' | 'onAnswer'>) {
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
+  return answers.map((offer) => {
+    const card = cards.get(offer.cardId);
+    return (
+      <Button
+        key={offer.staple}
+        variant="line"
+        size="sm"
+        onClick={() => onAnswer(offer)}
+        className="shrink-0 border-self text-self"
+      >
+        <CardView image={card?.imageSmall} label={displayName(card, cardLanguage)} size="art" />
+        {t('stress.answerWith', { name: offer.short })}
+      </Button>
+    );
+  });
 }
 
 function OfferNotice({ onInsert, onReplace, onDismissOffer }: StepBarProps) {

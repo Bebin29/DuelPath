@@ -9,6 +9,21 @@ import { displayName, type ComboCard } from '@/lib/combo/cards';
 import { isOptAvailable, type GameState, type PlacedCard } from '@/lib/combo/state';
 import { usedOptNames } from '@/lib/combo/opt-names';
 
+/** Satzteil, auf den ein Staple reagiert, im Effekttext markiert (UI-Plan 7.2.5) */
+function Marked({ text, phrase }: { text: string; phrase?: string }) {
+  const at = phrase ? text.indexOf(phrase) : -1;
+  if (!phrase || at < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <mark className="rounded-[2px] bg-opponent-tint px-0.5 text-ink underline decoration-opponent decoration-1 underline-offset-2">
+        {phrase}
+      </mark>
+      {text.slice(at + phrase.length)}
+    </>
+  );
+}
+
 /**
  * Inspector (UI-Plan 7.2.5): Karte unter dem Mauszeiger in groß mit Effekten und HOPT-Status.
  * Ohne Karte zeigt er den gewählten Schritt (children).
@@ -17,11 +32,13 @@ export function Inspector({
   state,
   cards,
   inspected,
+  highlight,
   children,
 }: {
   state: GameState;
   cards: Map<string, ComboCard>;
   inspected: PlacedCard | null;
+  highlight?: { cardId: string; effectIndex: number; text: string } | null;
   children: React.ReactNode;
 }) {
   const { t } = useTranslation();
@@ -74,7 +91,14 @@ export function Inspector({
                   <span className="font-mono text-xs text-text-subtle">{i + 1}</span>
                   <div className="flex flex-1 flex-col gap-1.5">
                     <p lang="en" className="text-[12.5px] leading-[1.45]">
-                      {effect.text}
+                      <Marked
+                        text={effect.text}
+                        phrase={
+                          highlight?.cardId === card.id && highlight.effectIndex === i
+                            ? highlight.text
+                            : undefined
+                        }
+                      />
                     </p>
                     {effect.opt && (
                       <span

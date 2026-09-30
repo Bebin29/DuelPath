@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { useHistory } from '@/lib/hooks/use-history';
 import {
+  cardsIn,
   initialState,
   pathTo,
   statesForTree,
@@ -21,6 +22,9 @@ import { childrenOf, lineSteps, lineThrough, nextRank, rootAlternatives } from '
 import { reactionNode, type Staple } from '@/lib/combo/reactions';
 import { candidateEffects, toSuggestionInput, type Candidate } from '@/lib/combo/suggestions';
 import { dropMeaning, type DropTarget } from '@/lib/combo/play';
+import { existingBranch, stressBranch, type Hit } from '@/lib/combo/stress';
+import { endboardSummary, lineEnds, missingCards } from '@/lib/combo/endboard';
+import { usedOptNames } from '@/lib/combo/opt-names';
 import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/combo.actions';
 import { NodeEditor, StartStateEditor, type MoveTarget } from '@/components/combo/NodeEditor';
 import { SuggestionPanel } from '@/components/combo/SuggestionPanel';
@@ -29,6 +33,11 @@ import { CardMenu, type MenuAnchor } from './CardMenu';
 import { cardActions } from './card-actions';
 import { QuickSelect } from './QuickSelect';
 import { usePlay, type Prompt } from './use-play';
+import { useStress } from './use-stress';
+import { CompareView, type CompareColumn } from './CompareView';
+import { EndboardSummary } from './EndboardSummary';
+import { PickList } from './PickList';
+import { StapleRail, STAPLE_MIME } from './StapleRail';
 import { Inspector } from './Inspector';
 import { LineList } from './LineList';
 import { StepBar } from './StepBar';
@@ -205,6 +214,17 @@ export function Workbench({
   );
   const [menu, setMenu] = useState<MenuAnchor | null>(null);
   const [quick, setQuick] = useState(false);
+  const [staplePicker, setStaplePicker] = useState(false);
+  const [stressOn, setStressOn] = useState(false);
+  const [stressRun, setStressRun] = useState(0);
+  const [railHover, setRailHover] = useState<string | null>(null);
+  const [chokeHover, setChokeHover] = useState<Hit | null>(null);
+  const [comparing, setComparing] = useState(false);
+  const stress = useStress({ line, steps, states, start, cards, staples });
+  const toggleStress = () => {
+    setStressOn((on) => !on);
+    setStressRun((n) => n + 1);
+  };
 
   const registerCard = (card: ComboCard) =>
     setCards((prev) => (prev.has(card.id) ? prev : new Map(prev).set(card.id, card)));
@@ -246,6 +266,86 @@ export function Workbench({
     select(child.id);
     setMoveTarget('costMoves');
   };
+
+  /**
+   * Branch mit einer Unterbrechung des Gegners (UX-Plan 6.8). Liegt am Anker schon derselbe Staple,
+   * springt die Workbench dorthin, statt ihn doppelt anzulegen.
+   */
+  const openStressBranch = (hit: Pick<Hit, 'staple' | 'anchorId' | 'target' | 'stepId'>) => {
+    const entry = staples.find((s) => s.staple.name === hit.staple);
+    if (!entry) return;
+    const existing = existingBranch(nodes, hit.anchorId, entry.card.id);
+    if (existing) return select(existing.id);
+    registerCard(entry.card);
+    const n = stress.numberOf(hit.stepId);
+    const label = n
+      ? t('stress.branchName', { staple: entry.staple.short, n })
+      : t('stress.branchStart', { staple: entry.staple.short });
+    const node = {
+      ...stressBranch(hit, entry, nodes, states, start, label),
+      rank: nextRank(nodes, hit.anchorId),
+    };
+    setNodes((prev) => [...prev, node]);
+    select(node.id);
+  };
+  /** Staple auf einen Schritt gezogen oder per O gewählt; ein Treffer des Stresstests gibt den Anker vor */
+  const dropStaple = (staple: string, nodeId: string | null, target?: string) => {
+    const hit = stress.hits.find((h) => h.staple === staple && h.stepId === (nodeId ?? ''));
+    const node = nodeId ? nodes.find((n) => n.id === nodeId) : undefined;
+    openStressBranch({
+      staple,
+      stepId: nodeId ?? '',
+      anchorId: hit?.anchorId ?? nodeId,
+      target: target ?? hit?.target ?? node?.instanceId ?? undefined,
+    });
+  };
+  const dismissHit = (hit: Hit) =>
+    setNodes((prev) =>
+      prev.map((n) =>
+        n.id === hit.stepId ? { ...n, ignoredHits: [...(n.ignoredHits ?? []), hit.staple] } : n
+      )
+    );
+
+  // Antworten auf eine gegnerische Unterbrechung: Called, Crossout, Droplet von der eigenen Hand
+  const answers = useMemo(() => {
+    const top = after.chain.at(-1);
+    if (!selected || top?.player !== 'opponent') return [];
+    const hand = new Set(cardsIn(after, 'self', 'HAND').map((c) => c.cardId));
+    return staples
+      .filter((s) => s.staple.side === 'self' && hand.has(s.card.id))
+      .map((s) => ({ staple: s.staple.name, cardId: s.card.id, short: s.staple.short }));
+  }, [after, selected, staples]);
+
+  // Endboard am Ende der Line (UX-Plan 6.9) und Vergleich aller Line-Enden
+  const isEnd = Boolean(selected && line.at(-1)?.id === selected.id && after.chain.length === 0);
+  const summary = useMemo(
+    () => (isEnd && selected ? endboardSummary(after, start, cards, selected.interruptions) : null),
+    [isEnd, selected, after, start, cards]
+  );
+  const ends = useMemo(() => lineEnds(nodes), [nodes]);
+  const compareColumns = useMemo((): CompareColumn[] => {
+    if (!comparing) return [];
+    const mainState = states.get(ends[0]?.leaf.id ?? '') ?? start;
+    return ends.slice(0, 4).map(({ leaf, branches }) => {
+      const state = states.get(leaf.id) ?? start;
+      return {
+        leafId: leaf.id,
+        title: branches.length
+          ? branches.map((b) => b.edgeLabel || labelOf(b)).join(' · ')
+          : t('workbench.mainLine'),
+        summary: endboardSummary(state, start, cards, leaf.interruptions),
+        missing: branches.length ? missingCards(mainState, state) : [],
+      };
+    });
+  }, [comparing, ends, states, start, cards, labelOf, t]);
+  const endCountOf = useCallback(
+    (nodeId: string) => {
+      const leaf = lineThrough(nodes, nodeId).at(-1);
+      const state = leaf && states.get(leaf.id);
+      return state ? endboardSummary(state, start, cards, leaf.interruptions).interruptions : null;
+    },
+    [nodes, states, start, cards]
+  );
 
   /** Ablegen am Board spielt den Schritt (UX-Plan 6.3); die Starthand legt der Editor fest */
   const handleDrop = (instanceId: string, target: DropTarget, shift: boolean) => {
@@ -350,8 +450,17 @@ export function Workbench({
         flow.setChainMode((on) => !on);
         return;
       }
-      if (key === 'O' && selected) {
-        addChild('OPPONENT');
+      if (key === 'O') {
+        e.preventDefault();
+        setStaplePicker(true);
+        return;
+      }
+      if (key === 'T') {
+        toggleStress();
+        return;
+      }
+      if (key === 'M' && hovered.current) {
+        openMenuFor(hovered.current);
         return;
       }
       if (key === 'E') {
@@ -414,6 +523,16 @@ export function Workbench({
     }
   };
   const inspected = inspectedId ? (after.cards[inspectedId] ?? null) : null;
+  const hoverChoke = (hit: Hit | null) => {
+    setChokeHover(hit);
+    if (!hit) return inspect(null);
+    const step = nodes.find((n) => n.id === hit.stepId);
+    const id = hit.phrase ? step?.instanceId : (hit.target ?? step?.instanceId);
+    if (id) inspect(id);
+  };
+
+  const hitsHere = (name: string) =>
+    Boolean(selected && stress.byStep.get(selected.id)?.some((h) => h.staple === name));
 
   const stepPanel = selected ? (
     <>
@@ -423,6 +542,23 @@ export function Workbench({
         </p>
         <h2 className="font-display text-2xl leading-tight">{labelOf(selected)}</h2>
       </header>
+      {summary && (
+        <EndboardSummary
+          summary={summary}
+          cards={cards}
+          hopts={usedOptNames(after, cards, cardLanguage).length}
+          weaknesses={stress.weaknesses}
+          onCount={(instanceId, count) =>
+            setNodes((prev) =>
+              updateNode(prev, selected.id, {
+                interruptions: { ...selected.interruptions, [instanceId]: count },
+              })
+            )
+          }
+          onCompare={ends.length > 1 ? () => setComparing(true) : undefined}
+          showTitle={selected.kind !== 'END'}
+        />
+      )}
       {warningsOf(after, selected.id).length > 0 && (
         <ul className="flex flex-col gap-1 rounded-md border border-warning/40 bg-warning-tint p-2.5 text-xs text-warning">
           {warningsOf(after, selected.id).map((w) => (
@@ -521,12 +657,37 @@ export function Workbench({
         }}
         status={status}
         onRetry={() => setSaveAttempt((n) => n + 1)}
+        stress={stressOn}
+        chokePoints={stress.byStep.size}
+        onStress={toggleStress}
       />
 
       {mode === 'board' ? (
-        <div className="grid min-h-0 flex-1 grid-cols-[280px_1fr_320px]">
+        <div className="grid min-h-0 flex-1 grid-cols-[264px_56px_1fr_320px]">
           <div className="min-h-0 border-r border-line bg-surface-1">
             <LineList
+              chokes={
+                stressOn
+                  ? {
+                      byStep: stress.byStep,
+                      run: stressRun,
+                      imageOf: (name) =>
+                        staples.find((s) => s.staple.name === name)?.card.imageSmall ?? null,
+                      describe: (hit) => describeHit(hit, stress.shortOf(hit.staple), t),
+                      onPick: openStressBranch,
+                      onHover: hoverChoke,
+                      onDismiss: dismissHit,
+                    }
+                  : null
+              }
+              marked={
+                railHover
+                  ? new Set(stress.hits.filter((h) => h.staple === railHover).map((h) => h.stepId))
+                  : undefined
+              }
+              onDropStaple={(name, nodeId) => dropStaple(name, nodeId)}
+              endCountOf={endCountOf}
+              onCompare={ends.length > 1 ? () => setComparing(true) : undefined}
               title={lineTitle}
               steps={steps}
               selectedId={selectedId}
@@ -540,11 +701,30 @@ export function Workbench({
               onSelectStart={() => select(START_ID)}
             />
           </div>
+          <StapleRail
+            staples={stress.rail}
+            onHover={setRailHover}
+            onPick={(name) => dropStaple(name, selected?.id ?? null)}
+          />
           <div
             className="relative flex min-h-0 min-w-0 flex-col"
             onMouseLeave={() => inspect(null)}
           >
-            <div className="min-h-0 flex-1">
+            <div
+              className="min-h-0 flex-1"
+              onDragOver={(e) => {
+                if (!e.dataTransfer.types.includes(STAPLE_MIME)) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+              }}
+              onDrop={(e) => {
+                const name = e.dataTransfer.getData(STAPLE_MIME);
+                if (!name) return;
+                e.preventDefault();
+                const card = (e.target as HTMLElement).closest<HTMLElement>('[data-instance]');
+                dropStaple(name, selected?.id ?? null, card?.dataset.instance);
+              }}
+            >
               <BoardView
                 state={after}
                 cards={cards}
@@ -600,7 +780,12 @@ export function Workbench({
               chainMode={flow.chainMode}
               onResolve={() => flow.play({ kind: 'resolve' })}
               onChain={() => flow.setChainMode((on) => !on)}
-              onOpponent={() => addChild('OPPONENT')}
+              onOpponent={() => setStaplePicker(true)}
+              answers={answers}
+              onAnswer={(offer) => {
+                const entry = staples.find((s) => s.staple.name === offer.staple);
+                if (entry) addReaction(entry.card, entry.staple);
+              }}
               triggers={flow.triggers}
               onTrigger={(offer) =>
                 flow.play({
@@ -615,6 +800,39 @@ export function Workbench({
               onDismissOffer={flow.dismissOffer}
               onAdd={addChild}
             />
+            {staplePicker && (
+              <PickList
+                items={[...stress.chosen]
+                  .sort((a, b) => Number(hitsHere(b.staple.name)) - Number(hitsHere(a.staple.name)))
+                  .map((s) => ({
+                    id: s.staple.name,
+                    label: displayName(s.card, cardLanguage),
+                    image: s.card.imageSmall,
+                    hint: hitsHere(s.staple.name) ? t('stress.hitsHere') : undefined,
+                    strong: hitsHere(s.staple.name),
+                    keywords: [s.staple.short, s.card.name, s.card.nameDe ?? ''],
+                  }))}
+                max={12}
+                placeholder={t('stress.pickStaple')}
+                hint={t('stress.pickStapleHint')}
+                onPick={(name) => {
+                  setStaplePicker(false);
+                  dropStaple(name, selected?.id ?? null);
+                }}
+                onClose={() => setStaplePicker(false)}
+              />
+            )}
+            {comparing && (
+              <CompareView
+                columns={compareColumns}
+                cards={cards}
+                onOpen={(leafId) => {
+                  setComparing(false);
+                  select(leafId);
+                }}
+                onClose={() => setComparing(false)}
+              />
+            )}
             {quick && (
               <QuickSelect
                 state={after}
@@ -632,7 +850,12 @@ export function Workbench({
             />
           </div>
           <div className="min-h-0 border-l border-line bg-surface-1">
-            <Inspector state={after} cards={cards} inspected={inspected}>
+            <Inspector
+              state={after}
+              cards={cards}
+              inspected={inspected}
+              highlight={chokeHover?.phrase}
+            >
               {stepPanel}
             </Inspector>
           </div>
@@ -697,4 +920,15 @@ function questionOf(
         picked: prompt.picked.length,
       });
   }
+}
+
+/** Begründung eines Choke Points für Tooltip und Screenreader, etwa „Ash trifft: add … from your Deck“ */
+function describeHit(
+  hit: Hit,
+  short: string | undefined,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  const name = short ?? hit.staple;
+  const why = hit.phrase?.text ?? t(`stress.pattern.${hit.pattern}`, { count: hit.count ?? 0 });
+  return t('stress.hitReason', { staple: name, why });
 }
