@@ -92,14 +92,16 @@ export function parseEffects(desc: string, card: CardInfo): ParsedEffects {
       .split('\n')
       .map((l) => l.trim())
       .filter(Boolean);
-    // Materialzeile von Extra-Deck-Monstern; sie endet nie mit einem Punkt
-    if (
-      section !== 'pendulum' &&
-      EXTRA_DECK.test(card.type) &&
-      lines[0] &&
-      !lines[0].endsWith('.')
-    ) {
-      result.materials = lines.shift();
+    // Materialzeile von Extra-Deck-Monstern; sie endet nie mit einem Punkt.
+    // Einige Karten trennen Materialien und ersten Effekt mit " / " statt Zeilenumbruch.
+    if (section !== 'pendulum' && EXTRA_DECK.test(card.type) && lines[0]) {
+      const [head, ...tail] = lines[0].split(' / ');
+      if (tail.length > 0 && !head.includes('.')) {
+        result.materials = head;
+        lines[0] = tail.join(' / ');
+      } else if (!lines[0].endsWith('.')) {
+        result.materials = lines.shift();
+      }
     }
 
     const sentences = joinBullets(lines).flatMap(splitSentences);

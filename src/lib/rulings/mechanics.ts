@@ -10,8 +10,9 @@ export const PATTERNS = {
   // OPT-Klauseln. Kartennamen können selbst Anführungszeichen enthalten (Maxx "C"), daher "(.+?)".
   OPT_USE_THIS:
     /You can only use (?:this|the) effect of "(.+?)" (once|twice|thrice) per (turn|Duel)/,
+  // Erweitert gegenüber der Recherche um "each of these effects" (31 Karten)
   OPT_USE_EACH:
-    /You can only use each (?:of the (?:following|preceding|previous|above|\w+) )?(?:Pendulum |monster )?effects? of "(.+?)" once per (turn|Duel)/,
+    /You can only use each (?:of (?:the|these) (?:(?:following|preceding|previous|above|\w+) )?)?(?:Pendulum |monster )?effects? of "(.+?)" once per (turn|Duel)/,
   OPT_USE_SHARED:
     /You can only use 1 (?:of (?:these|the following|the preceding) effects of )?"(.+?)"(?: effect)? per turn, and only once that turn/,
   OPT_USE_NTH:

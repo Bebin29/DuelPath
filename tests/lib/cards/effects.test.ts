@@ -81,6 +81,19 @@ describe('parseEffects', () => {
     expect(r.needsReview).toBe(false);
   });
 
+  it('"each of these effects" und Materialien mit " / " (Tsuchigumo)', () => {
+    const r = parseEffects(
+      '1 Tuner + 1+ non-Tuner monsters / You can only control 1 "Tsuchigumo, the Poisonous Mayakashi". You can only use each of these effects of "Tsuchigumo, the Poisonous Mayakashi" once per turn.\r\n● If a Synchro Monster you control is destroyed: You can Special Summon this card from your GY.\r\n● When this card destroys a monster by battle: You can draw 1 card.',
+      { name: 'Tsuchigumo, the Poisonous Mayakashi', type: 'Synchro Monster' }
+    );
+    expect(r.materials).toBe('1 Tuner + 1+ non-Tuner monsters');
+    expect(r.effects.map((e) => [e.activated, e.opt?.kind])).toEqual([
+      [false, undefined],
+      [true, 'HARD'],
+      [true, 'HARD'],
+    ]);
+  });
+
   it('Fusion ohne Materialzeile: der erste Satz bleibt ein Effekt', () => {
     const r = parseEffects(
       'Must be Special Summoned with "The Fang of Critias". If this card is Special Summoned: You can look at your opponent\'s hand.',
