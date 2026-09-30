@@ -35,19 +35,19 @@ import {
   Move,
 } from 'lucide-react';
 import { HistoryTimeline } from './HistoryTimeline';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import Image from 'next/image';
-import { useToast } from '@/components/components/ui/toast';
-import { Button } from '@/components/components/ui/button';
-import { Input } from '@/components/components/ui/input';
-import { Skeleton } from '@/components/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/components/ui/select';
+} from '@/components/ui/select';
 import type { DeckWithCards, CardForDeck } from '@/lib/hooks/use-deck-history';
 import { useCardCache } from '@/lib/hooks/use-card-cache';
 import { useKeyboardShortcuts } from '@/lib/hooks/use-keyboard-shortcuts';

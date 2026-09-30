@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import deTranslations from '@/messages/de.json';
-import enTranslations from '@/messages/en.json';
+import deTranslations from '../../../messages/de.json';
+import enTranslations from '../../../messages/en.json';
 
 /**
  * i18n Konfiguration für DuelPath

@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { authConfig } from '@/src/lib/auth/config';
-import { prisma } from '@/src/lib/prisma/client';
+import { authConfig } from '@/lib/auth/config';
+import { prisma } from '@/lib/prisma/client';
 import bcrypt from 'bcryptjs';
 
 /**
  * Mock Prisma Client
  */
-vi.mock('@/src/lib/prisma/client', () => ({
+vi.mock('@/lib/prisma/client', () => ({
   prisma: {
     user: {
       findUnique: vi.fn(),

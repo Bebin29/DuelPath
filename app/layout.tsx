@@ -6,7 +6,7 @@ import { SWRProvider } from '@/components/providers/SWRProvider';
 import { I18nProvider } from '@/components/common/I18nProvider';
 import { Navigation } from '@/components/common/Navigation';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { ToastProvider } from '@/components/components/ui/toast';
+import { ToastProvider } from '@/components/ui/toast';
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
 
 const geistSans = Geist({

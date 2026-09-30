@@ -7,8 +7,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/components/ui/card';
-import { Button } from '@/components/components/ui/button';
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import { logError, getErrorMessage, isRetryableError } from '@/lib/utils/error-logger';
 import { useTranslation } from '@/lib/i18n/hooks';

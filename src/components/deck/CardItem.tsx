@@ -4,7 +4,7 @@ import { useState, memo } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import type { Card } from '@prisma/client';
-import { Button } from '@/components/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import Image from 'next/image';
 import { CardDetailDialog } from './CardDetailDialog';

@@ -6,10 +6,10 @@ import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Button } from '@/components/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Minus, Trash2, ArrowRight, Loader2, AlertTriangle, Checkbox } from 'lucide-react';
-import { Checkbox as UICheckbox } from '@/components/components/ui/checkbox';
+import { Checkbox as UICheckbox } from '@/components/ui/checkbox';
 import type { DeckCard } from '@prisma/client';
 import type { DeckSection } from '@/lib/validations/deck.schema';
 import type { CardForDeck } from '@/lib/hooks/use-deck-history';
@@ -21,7 +21,7 @@ import {
   VIRTUALIZATION_OVERSCAN,
   MAX_CARD_COPIES,
 } from '@/lib/constants/deck.constants';
-import { Skeleton } from '@/components/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { validateCardInDeck } from '@/lib/validations/deck.schema';
 
 interface DeckCardWithCard extends DeckCard {

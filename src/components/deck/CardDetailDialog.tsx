@@ -8,11 +8,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/components/ui/dialog';
-import { Button } from '@/components/components/ui/button';
-import { Badge } from '@/components/components/ui/badge';
-import { Separator } from '@/components/components/ui/separator';
-import { ScrollArea } from '@/components/components/ui/scroll-area';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Card } from '@prisma/client';
 import type { CardForDeck } from '@/lib/hooks/use-deck-history';
 import Image from 'next/image';

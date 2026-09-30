@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from '@/lib/i18n/hooks';
-import { Button } from '@/components/components/ui/button';
-import { ScrollArea } from '@/components/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Clock, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DeckWithCards } from '@/lib/hooks/use-deck-history';

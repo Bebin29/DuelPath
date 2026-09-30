@@ -1,7 +1,7 @@
 'use client';
 
 import { useLanguage } from '@/lib/i18n/hooks';
-import { Button } from '@/components/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 /**

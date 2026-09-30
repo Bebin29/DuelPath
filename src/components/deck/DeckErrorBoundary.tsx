@@ -9,8 +9,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/components/ui/card';
-import { Button } from '@/components/components/ui/button';
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 

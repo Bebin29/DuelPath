@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { createDeck } from '@/server/actions/deck.actions';
-import { Button } from '@/components/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,16 +13,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/components/ui/dialog';
-import { Input } from '@/components/components/ui/input';
-import { Label } from '@/components/components/ui/label';
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/components/ui/select';
+} from '@/components/ui/select';
 import { Plus } from 'lucide-react';
 
 /**

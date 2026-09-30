@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/hooks';
-import { Button } from '@/components/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { signOut } from 'next-auth/react';
 import { useSession } from 'next-auth/react';

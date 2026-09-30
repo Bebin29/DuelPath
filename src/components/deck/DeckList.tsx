@@ -4,17 +4,17 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { getUserDecks, deleteDeck } from '@/server/actions/deck.actions';
-import { Button } from '@/components/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/components/ui/card';
+} from '@/components/ui/card';
 import { Library, Edit, Trash2 } from 'lucide-react';
 import type { Deck } from '@prisma/client';
-import { useToast } from '@/components/components/ui/toast';
+import { useToast } from '@/components/ui/toast';
 
 type DeckWithCount = Deck & {
   _count?: {

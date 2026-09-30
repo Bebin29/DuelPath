@@ -3,14 +3,14 @@
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Button } from '@/components/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/components/ui/card';
+} from '@/components/ui/card';
 import { Library } from 'lucide-react';
 
 /**

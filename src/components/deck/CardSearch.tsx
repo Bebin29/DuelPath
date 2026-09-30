@@ -4,33 +4,33 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import useSWR from 'swr';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Input } from '@/components/components/ui/input';
-import { Button } from '@/components/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/components/ui/select';
-import { Label } from '@/components/components/ui/label';
-import { Badge } from '@/components/components/ui/badge';
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Card as UICard,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/components/components/ui/card';
-import { Separator } from '@/components/components/ui/separator';
-import { Skeleton } from '@/components/components/ui/skeleton';
+} from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { CardItem } from './CardItem';
 import type { Card } from '@prisma/client';
 import type { CardSearchFilter, CardSortOptions, CardListResult } from '@/types/card.types';
 import { Search, X, Loader2, AlertCircle } from 'lucide-react';
 import { useClickOutside } from '@/lib/hooks/use-click-outside';
 import { useDebounce } from '@/lib/hooks/use-debounce';
-import { useToast } from '@/components/components/ui/toast';
+import { useToast } from '@/components/ui/toast';
 import { useCardCache } from '@/lib/hooks/use-card-cache';
 import {
   VIRTUALIZATION_THRESHOLD_CARD_SEARCH,

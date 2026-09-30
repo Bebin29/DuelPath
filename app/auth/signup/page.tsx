@@ -3,15 +3,15 @@
 import { useState } from 'react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { signUpAction } from '@/server/actions/auth';
-import { Button } from '@/components/components/ui/button';
-import { Input } from '@/components/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/components/ui/card';
+} from '@/components/ui/card';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
