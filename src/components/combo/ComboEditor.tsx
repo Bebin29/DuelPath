@@ -144,7 +144,7 @@ export function ComboEditor({
   };
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] flex-col gap-2">
+    <div className="flex h-dvh flex-col gap-2 p-3">
       <div className="flex items-center gap-3">
         <Link
           href="/combos"

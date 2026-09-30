@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "home": "Home",
+    "home": "Start",
     "decks": "Decks",
     "combos": "Combos",
     "profile": "Profile"
@@ -339,5 +339,31 @@
       "load": "Load deck into starting state",
       "draw": "Draw into starting hand:"
     }
+  },
+  "shell": {
+    "skipToContent": "Skip to content",
+    "mainNavigation": "Main navigation",
+    "userMenu": "User menu",
+    "theme": "Theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "language": "Language"
+  },
+  "start": {
+    "illustration": "Two players at a table, one raises a card like an interruption",
+    "pre": "Your line is set. The only question is:",
+    "headline": "Where does",
+    "headlineWord": "Ash stop you?",
+    "resume": "Continue editing",
+    "open": "Open",
+    "recent": "Recently edited",
+    "newCombo": "New combo",
+    "noDeck": "no deck",
+    "edited": "edited {{time}}",
+    "firstSteps": "First steps",
+    "firstStepsText": "Three steps to your first line.",
+    "stepImport": "Import a deck via YDK",
+    "stepHand": "Pick a starting hand",
+    "stepPlay": "Play your first step"
   }
 }

@@ -55,7 +55,7 @@ await send('Emulation.setDeviceMetricsOverride', {
   deviceScaleFactor: 1,
   mobile: false,
 });
-await send('Page.navigate', { url: 'file://' + file });
+await send('Page.navigate', { url: /^https?:/.test(file) ? file : 'file://' + file });
 const t0 = Date.now();
 for (const t of times.split(',').map(Number)) {
   await sleep(Math.max(0, t - (Date.now() - t0)));

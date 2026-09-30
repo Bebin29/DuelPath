@@ -56,109 +56,93 @@ Jonas und Mia (UX 1) stellen unterschiedliche Anforderungen an dieselbe Oberflä
 
 ## 4. Design-Tokens
 
+Die Tokens stammen aus dem Design-Dokument `design/DuelPath.pen` (Stil D „Tinte und Rotstift“) und liegen im Code in `app/globals.css`. Frühere Werte dieses Abschnitts (Gold als Hauptfarbe, Geist als Schrift, grünstichige Flächen) sind durch Stil D ersetzt.
+
 ### 4.1 Aufbau
 
-Tokens liegen als CSS-Variablen in `app/globals.css` und werden über `@theme inline` für Tailwind registriert, wie heute. Neu ist die Trennung in drei Stufen:
+Tokens sind CSS-Variablen und werden über `@theme inline` für Tailwind registriert (`bg-surface-1`, `text-text-muted`, `text-opponent` …). Hell steht auf `:root` und `.light`, dunkel auf `.dark`. Komponenten verwenden nur Bedeutungen, nie Hex-Werte. Die shadcn-Namen (`--background`, `--primary`, `--muted` …) bleiben als Aliase auf die Bedeutungen erhalten, damit vorhandene Komponenten weiter funktionieren.
 
-1. **Grundwerte** (`--gray-3`, `--gold-8`, `--red-7` …): reine Farbwerte in OKLCH, ohne Bedeutung. Nur in `globals.css` verwendet.
-2. **Bedeutungen** (`--surface-1`, `--text-muted`, `--self`, `--opponent`, `--chain` …): verweisen auf Grundwerte und unterscheiden sich zwischen dunklem und hellem Design.
-3. **Komponenten** (`--zone-border`, `--card-ring-selected` …): nur, wo eine Komponente eigene Werte braucht.
-
-Komponenten verwenden ausschließlich Stufe 2 und 3. Die shadcn-Namen (`--background`, `--primary`, `--muted` …) bleiben als Aliase auf die neuen Bedeutungen erhalten, damit vorhandene Komponenten weiter funktionieren.
-
-**Design-Umschaltung:** Die Klasse `.dark` am `<html>`-Element (vorhandene `@custom-variant dark`), Standard ist dunkel. Dazu `color-scheme: dark` bzw. `light`, damit Scrollbalken und native Elemente passen. Die Wahl wird in den Nutzereinstellungen gespeichert (UX 16) und vor dem ersten Rendern gesetzt, damit nichts aufblitzt.
+**Design-Umschaltung:** Klasse `dark` oder `light` am `<html>`, Standard dunkel, dazu `color-scheme`. Die Wahl liegt vorerst im Cookie `duelpath-theme`, das der Server beim Rendern liest, damit nichts aufblitzt (`src/lib/theme.ts`). Später wandert sie in die Nutzereinstellungen (UX 16).
 
 ### 4.2 Farben: Flächen und Text
 
-Das dunkle Design leitet sich aus der Markenfarbe ab: Die Flächen tragen einen leichten Stich des Dunkelgrüns (#194038, Farbton 180 bis 190), statt neutral grau zu sein. Kein reines Schwarz, weil Kartenbilder darauf zu hart wirken und Text flimmert.
+Warmes Anthrazit statt Schwarz im Dunkeln, Papier statt Weiß im Hellen. Die Anmutung ist Tinte auf Papier.
 
-| Token             | Dunkel (Standard)                  | Hell                              | Verwendung                                           |
-| ----------------- | ---------------------------------- | --------------------------------- | ---------------------------------------------------- |
-| `--bg`            | `oklch(0.17 0.012 190)` · #091111  | `oklch(0.975 0.008 85)` · #F9F6F1 | Seitenhintergrund                                    |
-| `--surface-1`     | `oklch(0.205 0.012 190)` · #111918 | `oklch(0.955 0.01 85)` · #F3F0E9  | Seitenleisten, Kopfzeile, Schrittleiste              |
-| `--surface-2`     | `oklch(0.245 0.012 190)` · #1A2222 | `oklch(0.995 0.003 85)` · #FEFDFB | Menüs, Popover, Karten in Listen                     |
-| `--surface-3`     | `oklch(0.29 0.014 190)` · #242E2D  | `oklch(0.92 0.012 85)` · #E8E4DC  | Hover und aktive Zeilen                              |
-| `--felt`          | `oklch(0.19 0.022 172)` · #091713  | `oklch(0.94 0.018 165)` · #E1EFE8 | Spielfeld, leicht grünlich wie eine Spielmatte       |
-| `--border`        | `oklch(0.32 0.012 190)` · #2C3534  | `oklch(0.88 0.01 85)`             | Trennlinien (dekorativ, kein Kontrastziel)           |
-| `--border-strong` | `oklch(0.56 0.012 190)` · #6D7776  | `oklch(0.60 0.012 190)` · #798382 | Eingabefelder, Knöpfe mit Rahmen (mindestens 3:1)    |
-| `--zone`          | `oklch(0.52 0.02 172)` · #5E6D67   | `oklch(0.62 0.02 165)` · #7C8A83  | Umrisse leerer Zonen auf dem Feld (3,4:1 bzw. 3,0:1) |
-| `--text`          | `oklch(0.95 0.005 190)` · #EBF0EF  | `oklch(0.22 0.015 190)` · #131D1C | Fließtext, Kartennamen                               |
-| `--text-muted`    | `oklch(0.76 0.01 190)` · #AAB3B2   | `oklch(0.42 0.015 190)` · #44504F | Sekundärtext, Beschriftungen                         |
-| `--text-subtle`   | `oklch(0.66 0.01 190)` · #8C9493   | `oklch(0.50 0.012 190)` · #5C6665 | Kürzel, Zähler, Platzhalter                          |
+| Token           | Dunkel (Standard) | Hell    | Verwendung                                 |
+| --------------- | ----------------- | ------- | ------------------------------------------ |
+| `--bg`          | #121110           | #F4F1EA | Seitenhintergrund                          |
+| `--surface-1`   | #171614           | #EDE9E0 | Seitenleisten, Kopfzeile, Schrittleiste    |
+| `--surface-2`   | #1D1C19           | #FBF9F5 | Menüs, Popover, Knoten im Baum             |
+| `--surface-3`   | #24221F           | #E4DFD4 | Hover und gewählte Zeilen                  |
+| `--felt`        | #151412           | #EFEBE2 | Spielfeld                                  |
+| `--line`        | #2B2926           | #DAD5CA | Trennlinien (dekorativ)                    |
+| `--line-strong` | #7E786F           | #78736A | Eingabefelder, Rahmen mit Kontrastziel 3:1 |
+| `--zone`        | #6F6A61           | #7E786E | Umrisse leerer Zonen (3,4:1 bzw. 3,7:1)    |
+| `--ink`         | #F2EFE8           | #151412 | Text, Hauptaktion, Auswahl, Fokus          |
+| `--text-muted`  | #A19D94           | #4F4B45 | Sekundärtext                               |
+| `--text-subtle` | #958F86           | #5E5951 | Kürzel, Zähler, Platzhalter                |
 
-Gemessene Kontraste im dunklen Design: `--text` 14:1 auf `--surface-2`, `--text-muted` 6,6:1 und `--text-subtle` 4,5:1 auf der hellsten Fläche `--surface-3`. Damit besteht jede Textstufe auf jeder Fläche AA. Im hellen Design liegen alle drei Stufen ebenfalls über 4,5:1.
+Gemessen: `--text-subtle` erreicht auf der hellsten Fläche `--surface-3` im Dunkeln 4,95:1 und im Hellen 5,2:1. Damit besteht jede Textstufe auf jeder Fläche AA.
 
 ### 4.3 Farben: Bedeutungen
 
-Jede Bedeutung aus UX 12 hat genau eine Farbe. Farbe ist nie das einzige Merkmal: Jede Bedeutung hat zusätzlich ein festes Symbol (4.8) oder eine feste Position.
+| Token        | Bedeutung                                    | Dunkel  | Hell    | Zusätzliches Merkmal         |
+| ------------ | -------------------------------------------- | ------- | ------- | ---------------------------- |
+| `--ink`      | Hauptaktion, Auswahl, Fokus („Tinte“)        | #F2EFE8 | #151412 | Fläche oder Ring, nie Symbol |
+| `--self`     | eigene Seite („blaue Tinte“)                 | #6AA8FF | #1A55AD | Position unten               |
+| `--opponent` | Gegner, Choke Points, Negierung („Rotstift“) | #FF5A36 | #B3301A | Position oben, Handschrift   |
+| `--chain`    | offene Chain, Chain Links                    | #A99BFF | #5B45B0 | `CL`-Plakette                |
+| `--warning`  | Regelwarnung                                 | #E8B04B | #7D5100 | `TriangleAlert`              |
+| `--jev`      | Vorschläge von Jev                           | #5CC8B8 | #0A6459 | Balken, Beschriftung „Jev“   |
 
-| Token        | Bedeutung                                  | Dunkel                                   | Hell               | Symbol                     | Kontrast dunkel (auf `--surface-3` / `--bg`) |
-| ------------ | ------------------------------------------ | ---------------------------------------- | ------------------ | -------------------------- | -------------------------------------------- |
-| `--primary`  | Hauptaktion, Auswahl, Fokus                | Gold `oklch(0.82 0.12 84)` · #E9BD63     | Markengrün #113F37 | keins                      | 8,0 / 10,9                                   |
-| `--self`     | eigene Seite                               | Blau `oklch(0.72 0.13 245)` · #56ACF0    | #0065B4            | Position unten             | 5,7 / 7,8                                    |
-| `--opponent` | Gegner, gegnerische Schritte, Choke Points | Rot `oklch(0.71 0.16 22)` · #F57373      | #C2272D            | Position oben, `Crosshair` | 5,1 / 6,9                                    |
-| `--chain`    | offene Chain, Chain Links                  | Violett `oklch(0.73 0.14 300)` · #B692F2 | #7444B4            | `Link`                     | 5,6 / 7,6                                    |
-| `--warning`  | Regelwarnung                               | Orange `oklch(0.78 0.15 58)` · #FE9D4A   | #B45000            | `TriangleAlert`            | 6,8 / 9,2                                    |
-| `--jev`      | Vorschläge von Jev                         | Türkis `oklch(0.78 0.10 185)` · #63CCC0  | #00736A            | `Sparkles`                 | 7,3 / 10,0                                   |
-| `--danger`   | destruktive Aktion                         | wie `--opponent`                         | wie `--opponent`   | `Trash2`                   | nur in Menüs und Bestätigungen               |
-
-**Begründungen:**
-
-- **Gold als Hauptaktion im Dunkeln, Grün im Hellen.** Das Markengrün hat auf dunklem Grund keinen Kontrast (heute 1,3:1). Das Gold aus der Markenpalette (#D9B473, aufgehellt) erreicht 10,9:1 und bleibt markentypisch. Schrift auf Gold ist dunkel (`--bg`, 10,9:1).
-- **Blau gegen Rot für die Seiten.** Das ist die vertraute Spielkonvention und bleibt bei Rot-Grün-Schwäche unterscheidbar, anders als Grün gegen Rot. Zusätzlich trennt die Position (Gegner immer oben).
-- **Choke Points in Gegnerfarbe.** Ein Choke Point ist die Stelle, an der der Gegner eingreift. Deshalb gibt es keine eigene Farbe, sondern das Staple-Symbol in `--opponent` mit dem `Crosshair`-Symbol. Eine Farbe weniger, eine Bedeutung klarer.
-- **Destruktiv teilt sich Rot mit dem Gegner.** Destruktive Aktionen erscheinen nie auf dem Board, sondern nur in Menüs und Bestätigungen mit Text und Symbol. Eine eigene zweite Rotstufe wäre kaum unterscheidbar.
-- **Orange und Gold liegen nah beieinander.** Deshalb trägt eine Warnung immer das Dreieck und Gold erscheint nie mit einem Symbol. Gold ist Fläche (Knopf) oder Ring (Auswahl), Orange ist nur Symbol und Rahmen.
-
-**Getönte Flächen** für Chips und hervorgehobene Zeilen: `oklch(0.30 0.05 <Farbton>)` im Dunkeln (zum Beispiel `--self-tint` #163045). Die Bedeutungsfarbe als Text darauf erreicht mindestens 5:1, `--text` mindestens 11:1.
-
-**Verteilung:** Rund 90 % der Fläche sind Flächen und Kartenbilder, Bedeutungsfarben erscheinen nur als Ring, Symbol, Chip oder schmale Kante. Gold als Fläche gibt es pro Bereich höchstens einmal (ein Hauptknopf).
-
-**Kartenrahmen:** Die Kartentypfarben (Effekt orange, Fusion violett, Synchro weiß, Xyz schwarz, Link blau, Zauber grün, Falle pink) kommen aus den Kartenbildern selbst und werden nicht nachgebaut. Nur Platzhalter für fehlende Bilder (UX 11) verwenden eine gedämpfte Rahmenfarbe nach Kartentyp.
+- **Tinte als Hauptaktion.** Der Hauptknopf ist eine Fläche in `--ink` mit Schrift in `--on-primary`. Es gibt pro Bereich höchstens eine solche Fläche.
+- **Rotstift als Erzählfarbe.** Alles, was der Gegner tut oder wo die Line bricht, wird wie von Hand markiert: Kreis, Strich, Stempel, Notiz (siehe 4.7). Destruktive Aktionen teilen sich die Farbe, erscheinen aber nur in Menüs und Bestätigungen.
+- **Getönte Flächen** (`--self-tint`, `--opponent-tint` …) für Chips und Plaketten, die Bedeutungsfarbe als Text darauf.
+- **Kartenrahmen** kommen aus den Kartenbildern selbst und werden nicht nachgebaut.
 
 ### 4.4 Typografie
 
-Schrift ist **Geist Sans** für alles, **Geist Mono** nur für Tastenkürzel und Passcodes. Beide werden schon geladen; die Arial-Regel in `globals.css` entfällt.
+| Rolle       | Schrift          | Einsatz                                                         |
+| ----------- | ---------------- | --------------------------------------------------------------- |
+| Display     | Instrument Serif | Seitentitel, Combo-Namen, Abschnittstitel, Headline mit Kursive |
+| Oberfläche  | Instrument Sans  | alles Übrige, Kartentext                                        |
+| Mono        | JetBrains Mono   | Zahlen, Zähler, Kürzel, Tokens                                  |
+| Handschrift | Kalam            | Notizen und Anmerkungen des Rotstifts, nie für Bedienelemente   |
 
-| Token       | Größe / Zeilenhöhe | Gewicht | Verwendung                                                                 |
-| ----------- | ------------------ | ------- | -------------------------------------------------------------------------- |
-| `text-2xs`  | 11 / 14 px         | 500     | nur Großbuchstaben-Beschriftungen mit Laufweite 0,04 em (LINES, INSPECTOR) |
-| `text-xs`   | 12 / 16 px         | 400     | Zähler, Kürzel, Metadaten                                                  |
-| `text-sm`   | 13 / 18 px         | 400     | Standard in der Workbench: Line-Liste, Menüs, Schrittleiste                |
-| `text-base` | 14 / 21 px         | 400     | Kartentext im Inspector, Formulare, Verwaltungsseiten                      |
-| `text-md`   | 16 / 24 px         | 600     | Kartenname im Inspector, Abschnittstitel                                   |
-| `text-lg`   | 20 / 28 px         | 600     | Seitentitel                                                                |
-| `text-xl`   | 24 / 32 px         | 600     | Endboard-Zahlen, Startseite                                                |
+Alle vier kommen über `next/font` und liegen als `font-display`, `font-sans`, `font-mono` und `font-hand` in Tailwind. Größen: `text-2xs` 11 px, `text-xs` 12 px, `text-sm` 13 px (Standard in der Workbench), `text-base` 14 px (Kartentext). Titel nutzen feste Größen der Display-Schrift (18 bis 56 px).
 
-- **Zahlen tabellarisch** (`font-variant-numeric: tabular-nums`) überall, wo sie sich ändern: Zähler der Stapel, LP, Schrittnummern, Interruptions. Sonst springt das Layout beim Nachspielen.
-- **Kartentext** mit höchstens 60 Zeichen pro Zeile im Inspector (320 px Breite ergibt etwa 48 Zeichen). Kartentext ist Englisch und bekommt `lang="en"`, damit Bildschirmleser ihn richtig aussprechen.
-- **Keine Schrift unter 11 px**, und 11 px nur für Großbuchstaben-Beschriftungen.
-- **Abschneiden statt umbrechen** in Listen: Lange Kartennamen enden mit „…“ und zeigen den vollen Namen im Tooltip.
+- **Zahlen tabellarisch** überall (`tabular-nums` am `body`), damit beim Nachspielen nichts springt.
+- **Kartentext** bekommt `lang="en"`.
+- **Keine Schrift unter 11 px.**
 
 ### 4.5 Abstände, Raster und Größen
 
-- **Grundraster 4 px.** Abstände: 4, 8, 12, 16, 24, 32, 48. Innerhalb der Workbench fast nur 4, 8 und 12; Verwaltungsseiten nutzen 16 bis 32.
-- **Zeilenhöhen:** Listenzeilen 28 px (Line-Liste, Menüs), Knöpfe klein 28 px, normal 32 px, groß 40 px. Das erfüllt die Zielgröße von 24 px mit Reserve.
-- **Symbole** 16 px in Zeilen, 20 px in Knöpfen der Kopfzeile, Strichstärke 1,75.
+- **Grundraster 4 px.** In der Workbench fast nur 4, 8 und 12; Verwaltungsseiten nutzen 16 bis 40.
+- **Zeilenhöhen:** Line-Liste 34 px, Menüeinträge 30 px, Knöpfe 28, 32 und 40 px.
+- **Symbole** lucide, 16 px in Zeilen, 14 px in Menüs.
 
 ### 4.6 Radien, Rahmen und Tiefe
 
-- **Radien klein**, weil das Werkzeug dicht ist: 4 px für Chips und Zonen, 6 px für Knöpfe und Eingabefelder, 8 px für Menüs und Panels. Kartenbilder behalten ihre eigene Form mit 3 px.
-- **Tiefe über Helligkeit, nicht über Schatten.** Im dunklen Design ist eine höhere Ebene heller (`--surface-1` bis `--surface-3`). Schatten gibt es nur für schwebende Ebenen (Menüs, Overlays, gezogene Karte), dort kombiniert mit einem 1-px-Rahmen `--border`.
-- **Ebenen (z-index):** Board 0, Seitenleisten 10, Schrittleiste 20, gezogene Karte 30, Popover und Menüs 40, Overlays 50, Toasts 60.
+- **Radien sehr klein:** 2 px für Karten und Zonen, 3 px für Knöpfe und Felder, 4 px für Menüs und Panels, 6 px nur für große Rahmen.
+- **Tiefe über Helligkeit.** Höhere Ebenen sind heller (`--surface-1` bis `--surface-3`). Schatten nur für schwebende Ebenen und gezogene Karten.
+- **Ebenen (z-index):** Board 0, Seitenleisten 10, Schrittleiste 20, gezogene Karte 30, Menüs 40, Overlays 50, Toasts 60.
 
 ### 4.7 Bewegung
 
-| Token            | Dauer  | Kurve                        | Verwendung                                                |
-| ---------------- | ------ | ---------------------------- | --------------------------------------------------------- |
-| `--motion-fast`  | 100 ms | `ease-out`                   | Hover, Fokus, Knopfzustände                               |
-| `--motion-base`  | 150 ms | `cubic-bezier(0.2, 0, 0, 1)` | Karte wechselt die Zone (UX 12), Menüs öffnen             |
-| `--motion-slow`  | 240 ms | `cubic-bezier(0.2, 0, 0, 1)` | Modus-Wechsel Board/Baum, Panels ein- und ausklappen      |
-| `--motion-flash` | 600 ms | `ease-out`                   | Aufleuchten geänderter Karten nach einem Schritt (UX 4.7) |
+Die Bewegungssprache ist als Motion-System mit acht Live-Szenen ausgearbeitet: `design/motion/` (Übersicht `design/motion/index.html`, Prinzipien in `design/motion/README.md`). Umsetzung mit `motion` (motion.dev).
 
-- Animiert werden nur `transform` und `opacity`, damit es auch mit 20 Karten flüssig bleibt.
-- **Kartenbewegung** als FLIP-Animation: Die Karte fliegt aus ihrer alten Zone in die neue. Beim Autoplay (UX 6.10) bleibt die Dauer gleich, nur die Pause zwischen den Schritten ändert sich.
-- **`prefers-reduced-motion`:** Keine Flugbewegung, stattdessen erscheint die Karte am Ziel und leuchtet auf. Modus-Wechsel ohne Überblendung.
+| Token            | Wert                 | Verwendung                   |
+| ---------------- | -------------------- | ---------------------------- |
+| `--motion-fast`  | 100 ms               | Hover, Fokus                 |
+| `--motion-base`  | 150 ms               | Zonenwechsel, Menüs          |
+| `--motion-slow`  | 240 ms               | Moduswechsel, Wechselwort    |
+| `--motion-flash` | 600 ms               | Aufleuchten nach dem Schritt |
+| Strich           | 500 ms, Kurve `ink`  | Kreise, Unterstriche, Kanten |
+| Feder `card`     | Bounce 0,28 · 0,32 s | Karte rastet in der Zone ein |
+
+- **Werkzeug ruhig, Ergebnis feiert:** In der Workbench höchstens 250 ms und keine Choreografie. Start, Stresstest und Endboard dürfen inszenieren (UX 12).
+- **Karten** bewegen sich als FLIP zwischen Zonen, mit Neigung beim Ziehen.
+- **`prefers-reduced-motion`:** sofort der Endzustand, nur Aufleuchten bleibt.
 
 ### 4.8 Symbole
 
@@ -664,15 +648,15 @@ Jede Phase wird mit diesen vier Durchläufen geprüft. Sie ergänzen die Stoppuh
 
 Die UI-Arbeit läuft mit den Phasen des UX-Plans (UX 17), mit einer Phase davor:
 
-| Phase              | UI-Inhalt                                                                                                                                                                                                        |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **UI-0 Grundlage** | Tokens in `globals.css` (Abschnitt 4), Arial-Regel entfernen, Design-Umschaltung, neue App-Shell (eine Kopfzeile, ein `main`, volle Breite für die Workbench), Grundkomponenten aus 8.1, `CardView`, Musterseite |
-| **mit UX-1**       | Workbench-Raster mit Breitenstufen, Kopfzeile, Line-Liste, Inspector, Board mit Zonen, Baum-Modus mit neuen Knoten                                                                                               |
-| **mit UX-2**       | Aktionsmenü, Drag und Drop mit Vorschau, Schrittleiste mit allen Zuständen, Stapel-Ansicht, Kartenbewegung, Schnellauswahl                                                                                       |
-| **mit UX-3**       | Staple-Leiste, Choke-Point-Chips, PSCT-Hervorhebung, Endboard-Zusammenfassung, Vergleich                                                                                                                         |
-| **mit UX-4**       | Autoplay-Steuerung, Notizen, Bibliothek, Startseite                                                                                                                                                              |
-| **mit UX-5**       | Deckseite mit Tabs, Hand-Tester, Starthand-Raster, Kartenansicht mit Effekt-Korrektur                                                                                                                            |
-| **mit UX-6**       | Tastaturhilfe, Befehlszeile, Feinschliff der Dichte                                                                                                                                                              |
+| Phase                         | UI-Inhalt                                                                                                                                                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **UI-0 Grundlage** (erledigt) | Tokens in `globals.css` (Abschnitt 4), Arial-Regel entfernen, Design-Umschaltung, neue App-Shell (eine Kopfzeile, ein `main`, volle Breite für die Workbench), Grundkomponenten aus 8.1, `CardView`, Musterseite |
+| **mit UX-1**                  | Workbench-Raster mit Breitenstufen, Kopfzeile, Line-Liste, Inspector, Board mit Zonen, Baum-Modus mit neuen Knoten                                                                                               |
+| **mit UX-2**                  | Aktionsmenü, Drag und Drop mit Vorschau, Schrittleiste mit allen Zuständen, Stapel-Ansicht, Kartenbewegung, Schnellauswahl                                                                                       |
+| **mit UX-3**                  | Staple-Leiste, Choke-Point-Chips, PSCT-Hervorhebung, Endboard-Zusammenfassung, Vergleich                                                                                                                         |
+| **mit UX-4**                  | Autoplay-Steuerung, Notizen, Bibliothek, Startseite                                                                                                                                                              |
+| **mit UX-5**                  | Deckseite mit Tabs, Hand-Tester, Starthand-Raster, Kartenansicht mit Effekt-Korrektur                                                                                                                            |
+| **mit UX-6**                  | Tastaturhilfe, Befehlszeile, Feinschliff der Dichte                                                                                                                                                              |
 
 Die **Musterseite** (`/dev/ui`, nur in der Entwicklung) zeigt alle Tokens und Komponenten in allen Zuständen, in beiden Designs nebeneinander. Sie ersetzt ein eigenes Storybook und ist der Ort für Reviews.
 

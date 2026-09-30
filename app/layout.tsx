@@ -1,53 +1,43 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { cookies } from 'next/headers';
+import { Instrument_Sans, Instrument_Serif, JetBrains_Mono, Kalam } from 'next/font/google';
 import './globals.css';
 import { SessionProvider } from '@/components/providers/SessionProvider';
 import { SWRProvider } from '@/components/providers/SWRProvider';
 import { I18nProvider } from '@/components/common/I18nProvider';
-import { Navigation } from '@/components/common/Navigation';
-import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { ToastProvider } from '@/components/ui/toast';
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
+import { THEME_COOKIE, parseTheme } from '@/lib/theme';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const instrumentSans = Instrument_Sans({ variable: '--font-instrument-sans', subsets: ['latin'] });
+const instrumentSerif = Instrument_Serif({
+  variable: '--font-instrument-serif',
   subsets: ['latin'],
+  weight: '400',
+  style: ['normal', 'italic'],
 });
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
+const jetbrainsMono = JetBrains_Mono({ variable: '--font-jetbrains-mono', subsets: ['latin'] });
+const kalam = Kalam({ variable: '--font-kalam', subsets: ['latin'], weight: ['400', '700'] });
 
 export const metadata: Metadata = {
-  title: 'DuelPath - Yu-Gi-Oh! Deck-Verwaltung und Kombo-Editor',
-  description:
-    'DuelPath ist eine Webanwendung für Yu-Gi-Oh!-Spieler, die Kombos visualisieren und ausführen sowie eigene Decks verwalten möchten.',
+  title: 'DuelPath',
+  description: 'Yu-Gi-Oh!-Lines planen, stresstesten und nachspielen.',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  const fonts = [instrumentSans, instrumentSerif, jetbrainsMono, kalam]
+    .map((f) => f.variable)
+    .join(' ');
+
   return (
-    <html lang="de" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="de" className={`${theme} ${fonts}`} suppressHydrationWarning>
+      <body>
         <SessionProvider>
           <I18nProvider>
             <GlobalErrorBoundary>
               <SWRProvider>
-                <ToastProvider>
-                  <div className="min-h-screen flex flex-col">
-                    <header>
-                      <Navigation />
-                      <div className="container mx-auto px-4 py-2 flex justify-end">
-                        <LanguageSwitcher />
-                      </div>
-                    </header>
-                    <main className="flex-1">{children}</main>
-                  </div>
-                </ToastProvider>
+                <ToastProvider>{children}</ToastProvider>
               </SWRProvider>
             </GlobalErrorBoundary>
           </I18nProvider>

@@ -1,8 +1,8 @@
 {
   "navigation": {
-    "home": "Startseite",
+    "home": "Start",
     "decks": "Decks",
-    "combos": "Kombos",
+    "combos": "Combos",
     "profile": "Profil"
   },
   "deck": {
@@ -339,5 +339,31 @@
       "load": "Deck in den Startzustand laden",
       "draw": "Auf die Starthand ziehen:"
     }
+  },
+  "shell": {
+    "skipToContent": "Zum Inhalt springen",
+    "mainNavigation": "Hauptnavigation",
+    "userMenu": "Nutzermenü",
+    "theme": "Design",
+    "themeDark": "Dunkel",
+    "themeLight": "Hell",
+    "language": "Sprache"
+  },
+  "start": {
+    "illustration": "Zwei Spieler am Tisch, einer hält eine Karte hoch wie eine Unterbrechung",
+    "pre": "Deine Line steht. Die Frage ist nur:",
+    "headline": "Wo stoppt dich",
+    "headlineWord": "Ash?",
+    "resume": "Weiter bearbeiten",
+    "open": "Öffnen",
+    "recent": "Zuletzt bearbeitet",
+    "newCombo": "Neue Combo",
+    "noDeck": "ohne Deck",
+    "edited": "zuletzt {{time}}",
+    "firstSteps": "Erste Schritte",
+    "firstStepsText": "Drei Schritte bis zur ersten Line.",
+    "stepImport": "Deck per YDK importieren",
+    "stepHand": "Starthand wählen",
+    "stepPlay": "Ersten Schritt spielen"
   }
 }
