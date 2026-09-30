@@ -342,3 +342,65 @@ export function triggerOffers(
   }
   return offers.slice(0, 3);
 }
+
+export interface DropTarget {
+  player: Player;
+  zone: Zone;
+  slot?: number;
+}
+
+export type DropMeaning =
+  | {
+      label: 'normalSummon' | 'setMonster' | 'specialSummon' | 'activate' | 'setSpellTrap' | 'move';
+      intent: PlayIntent;
+    }
+  | { label: 'extraSummon'; instanceId: string; slot?: number };
+
+/**
+ * Was ein Ablegen bedeutet (UX-Plan 6.3), zugleich die Vorschau an der Zone beim Ziehen (UI-Plan 7.2.3).
+ * Mit Umschalttaste wird gesetzt statt beschworen bzw. aktiviert.
+ */
+export function dropMeaning(
+  state: GameState,
+  cards: Map<string, CardData>,
+  instanceId: string,
+  target: DropTarget,
+  shift = false
+): DropMeaning | null {
+  const card = state.cards[instanceId];
+  if (!card) return null;
+  const data = cards.get(card.cardId);
+  const { zone, slot, player } = target;
+  const same = card.zone === zone && (slot === undefined || card.slot === slot);
+  if (same) return null;
+  const mine = player === card.owner;
+
+  if (zone === 'MONSTER' && mine) {
+    if (card.zone === 'EXTRA' && isExtraDeckMonster(data))
+      return { label: 'extraSummon', instanceId, slot };
+    if (card.zone === 'HAND' && isMonster(data)) {
+      if (shift) return { label: 'setMonster', intent: { kind: 'setMonster', instanceId, slot } };
+      if (!state.normalSummonUsed)
+        return { label: 'normalSummon', intent: { kind: 'normalSummon', instanceId, slot } };
+      return { label: 'specialSummon', intent: { kind: 'specialSummon', instanceId, slot } };
+    }
+    if (card.zone !== 'MONSTER' && isMonster(data)) {
+      return { label: 'specialSummon', intent: { kind: 'specialSummon', instanceId, slot } };
+    }
+  }
+  if ((zone === 'SPELL_TRAP' || zone === 'FIELD') && mine && card.zone === 'HAND') {
+    const fits =
+      zone === 'FIELD'
+        ? isFieldSpell(data)
+        : (isSpell(data) && !isFieldSpell(data)) || isTrap(data);
+    if (fits) {
+      if (shift || isTrap(data))
+        return { label: 'setSpellTrap', intent: { kind: 'setSpellTrap', instanceId, slot } };
+      return { label: 'activate', intent: { kind: 'activate', instanceId, effectIndex: 0, slot } };
+    }
+  }
+  return {
+    label: 'move',
+    intent: { kind: 'move', instanceId, to: zone, slot, controller: player },
+  };
+}

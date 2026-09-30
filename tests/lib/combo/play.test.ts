@@ -9,6 +9,7 @@ import {
 import {
   buildStep,
   costMovesFor,
+  dropMeaning,
   insertBefore,
   needsDiscard,
   replaceMain,
@@ -166,5 +167,50 @@ describe('Kosten und Trigger', () => {
       () => true
     );
     expect(offers).toEqual([{ instanceId: 'alu', effectIndex: 0, cardId: 'ALU' }]);
+  });
+});
+
+describe('dropMeaning', () => {
+  const TRAP: CardData = {
+    id: 'TRP',
+    name: 'Trap',
+    type: 'Trap Card',
+    race: 'Normal',
+    effects: [],
+  };
+  const XYZ: CardData = { id: 'EXT', name: 'Albion', type: 'Fusion Monster', effects: [] };
+  const all = new Map([...cards, [TRAP.id, TRAP], [XYZ.id, XYZ]]);
+  const s = initialState({
+    cards: [
+      ...start.cards,
+      { instanceId: 'trp', cardId: 'TRP', owner: 'self', zone: 'HAND' },
+      { instanceId: 'ext', cardId: 'EXT', owner: 'self', zone: 'EXTRA' },
+      { instanceId: 'gy', cardId: 'DIS', owner: 'self', zone: 'GY' },
+    ],
+  });
+  const mz = { player: 'self' as const, zone: 'MONSTER' as const, slot: 2 };
+  const st = { player: 'self' as const, zone: 'SPELL_TRAP' as const, slot: 1 };
+
+  it('beschwört Handmonster normal, mit Umschalt gesetzt, nach dem Normal Summon speziell', () => {
+    expect(dropMeaning(s, all, 'alu', mz)?.label).toBe('normalSummon');
+    expect(dropMeaning(s, all, 'alu', mz, true)?.label).toBe('setMonster');
+    expect(dropMeaning({ ...s, normalSummonUsed: true }, all, 'alu', mz)?.label).toBe(
+      'specialSummon'
+    );
+  });
+
+  it('aktiviert Zauber, setzt Fallen und schickt Extra-Deck-Monster in die Materialwahl', () => {
+    expect(dropMeaning(s, all, 'bf', st)?.label).toBe('activate');
+    expect(dropMeaning(s, all, 'trp', st)?.label).toBe('setSpellTrap');
+    expect(dropMeaning(s, all, 'ext', mz)).toEqual({
+      label: 'extraSummon',
+      instanceId: 'ext',
+      slot: 2,
+    });
+  });
+
+  it('beschwört aus dem Friedhof speziell und bewegt sonst frei', () => {
+    expect(dropMeaning(s, all, 'gy', mz)?.label).toBe('specialSummon');
+    expect(dropMeaning(s, all, 'alu', { player: 'self', zone: 'GY' })?.label).toBe('move');
   });
 });
