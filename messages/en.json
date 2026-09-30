@@ -389,7 +389,18 @@
     "down": "Move down",
     "workbench": "Workbench",
     "autoplay": "Playback speed",
-    "autoplayText": "How fast Space plays a line."
+    "autoplayText": "How fast Space plays a line.",
+    "nicknames": "Nicknames",
+    "nicknamesText": "Your own shorthands for search and the command line. They come before the built-in list.",
+    "alias": "Nickname",
+    "aliasCard": "Card",
+    "aliasFirst": "Type the nickname first, then search and click the card.",
+    "removeNickname": "Remove {{alias}}",
+    "builtInNicknames": "Built-in list ({{count}})",
+    "hints": "Hints",
+    "hintsText": "Show one-time hints again, e.g. at the staple rail.",
+    "hintsReset": "Reset",
+    "aliasPlaceholder": "e.g. grave"
   },
   "workbench": {
     "board": "Board",
@@ -501,7 +512,8 @@
     "branchHint": "Branch {{letter}}: {{label}}",
     "promote": "Make {{label}} the main line",
     "promoteThis": "Make main line",
-    "announce": "Step {{n}}: {{label}}. {{chain}}"
+    "announce": "Step {{n}}: {{label}}. {{chain}}",
+    "tooNarrow": "The workbench needs a window at least 1280 px wide."
   },
   "preview": {
     "effects": "Effects",
@@ -548,7 +560,11 @@
       "GY_NEEDED_LATER": "a later step needs this card in the GY",
       "TURN_START_DECK_SUMMONS": "opponent draws {{count}} (summons from Deck and Extra Deck)",
       "TURN_START_HAND_SUMMONS": "opponent draws {{count}} (summons from the hand)"
-    }
+    },
+    "pairs": "Pairs",
+    "pairsHint": "In a branch with an interruption the stress test shows what still hits afterwards (“Ash, then Imperm”)",
+    "pairsInBranch_one": "{{count}} more interruption in this branch",
+    "pairsInBranch_other": "{{count}} more interruptions in this branch"
   },
   "endboard": {
     "interruptions_one": "interruption",
@@ -719,5 +735,77 @@
     "merge": "Merge with next",
     "remove": "Remove",
     "view": "View card"
+  },
+  "palette": {
+    "title": "Search and commands",
+    "open": "Search and commands",
+    "placeholder": "Card, combo, deck or a command like “ns aluber”",
+    "empty": "Nothing found.",
+    "footer": "↑ ↓ choose · Enter run · workbench commands: ns, set, ss, act, gy, ban, hand, deck, pos, o, res, end",
+    "newCombo": "New combo with {{deck}}",
+    "lightTheme": "Light theme",
+    "darkTheme": "Dark theme",
+    "cardLanguage": "Switch card language",
+    "stapleCommand": "Opponent responds: {{name}}",
+    "notPossible": "Not possible here",
+    "group": {
+      "commands": "Command",
+      "recent": "Recent",
+      "actions": "Actions",
+      "combos": "Combos",
+      "decks": "Decks",
+      "cards": "Cards"
+    }
+  },
+  "help": {
+    "title": "Keyboard shortcuts",
+    "search": "Search shortcuts …",
+    "group": {
+      "general": "General",
+      "navigation": "Navigation",
+      "playing": "Playing",
+      "chain": "Chain",
+      "editing": "Editing"
+    },
+    "key": {
+      "ctrl": "Ctrl",
+      "shift": "Shift",
+      "space": "Space",
+      "del": "Del",
+      "dblclick": "Double-click"
+    },
+    "keys": {
+      "palette": "Search and commands",
+      "help": "This help",
+      "undo": "Undo",
+      "redo": "Redo",
+      "mode": "Switch board and tree",
+      "steps": "Previous and next step",
+      "branches": "To the parent line, into a branch",
+      "play": "Play and pause the line",
+      "stress": "Stress test on and off",
+      "quick": "Pick a card by name",
+      "menu": "Card action menu",
+      "summon": "Normal Summon",
+      "set": "Set",
+      "activate": "Activate",
+      "effect": "Effect 1 to 9",
+      "position": "Change position",
+      "move": "GY, banish, hand, deck",
+      "end": "Mark endboard",
+      "resolve": "Resolve chain, confirm choice",
+      "chain": "Keep chaining",
+      "opponent": "Opponent responds: pick a staple",
+      "cancel": "Cancel prompt or menu",
+      "delete": "Delete step and what follows",
+      "edit": "Edit step",
+      "command": "Type a command"
+    }
+  },
+  "hints": {
+    "dismiss": "Close hint",
+    "stapleRail": "Drag a handtrap from the rail on the left onto a step to create a branch.",
+    "stress": "The chips show which staples hit where. Click creates the branch, right-click removes the hit.",
+    "tree": "Here you see all lines at once. Double-click a node to open it on the board."
   }
 }

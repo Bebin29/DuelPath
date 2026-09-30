@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut, Search, Settings } from 'lucide-react';
 import { useLanguage, useTranslation } from '@/lib/i18n/hooks';
 import { parseTheme } from '@/lib/theme';
+import { usePalette } from '@/components/command/CommandPalette';
+import { Kbd } from '@/components/ui/kbd';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
 import {
@@ -29,6 +31,7 @@ export function AppHeader() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { settings, update } = useSettings();
+  const palette = usePalette();
 
   const items = [
     { href: '/', label: t('navigation.home') },
@@ -71,6 +74,17 @@ export function AppHeader() {
           })}
         </nav>
         <div className="flex-1" />
+        {session && (
+          <button
+            type="button"
+            onClick={() => palette.open()}
+            className="mr-4 flex h-8 w-64 items-center gap-2 rounded-md border border-line bg-surface-1 px-2.5 text-sm text-text-subtle hover:border-line-strong"
+          >
+            <Search className="size-3.5" />
+            <span className="flex-1 text-left">{t('palette.open')}</span>
+            <Kbd>{t('help.key.ctrl')} K</Kbd>
+          </button>
+        )}
         {session && (
           <DropdownMenu>
             <DropdownMenuTrigger

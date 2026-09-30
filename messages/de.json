@@ -389,7 +389,18 @@
     "down": "Nach unten",
     "workbench": "Workbench",
     "autoplay": "Tempo beim Abspielen",
-    "autoplayText": "Wie schnell die Leertaste eine Line abspielt."
+    "autoplayText": "Wie schnell die Leertaste eine Line abspielt.",
+    "nicknames": "Spitznamen",
+    "nicknamesText": "Eigene Kürzel für Suche und Befehlszeile. Sie gehen der gepflegten Liste vor.",
+    "alias": "Spitzname",
+    "aliasCard": "Karte",
+    "aliasFirst": "Zuerst den Spitznamen eintippen, dann die Karte suchen und anklicken.",
+    "removeNickname": "{{alias}} entfernen",
+    "builtInNicknames": "Gepflegte Liste ({{count}})",
+    "hints": "Hinweise",
+    "hintsText": "Einmalige Hinweise, etwa an der Staple-Leiste, wieder zeigen.",
+    "hintsReset": "Zurücksetzen",
+    "aliasPlaceholder": "etwa grave"
   },
   "workbench": {
     "board": "Board",
@@ -501,7 +512,8 @@
     "branchHint": "Branch {{letter}}: {{label}}",
     "promote": "{{label}} zur Hauptline machen",
     "promoteThis": "Zur Hauptline machen",
-    "announce": "Schritt {{n}}: {{label}}. {{chain}}"
+    "announce": "Schritt {{n}}: {{label}}. {{chain}}",
+    "tooNarrow": "Für die Workbench bitte mindestens 1280 px breit."
   },
   "preview": {
     "effects": "Effekte",
@@ -548,7 +560,11 @@
       "GY_NEEDED_LATER": "Karte im Friedhof wird später gebraucht",
       "TURN_START_DECK_SUMMONS": "Gegner zieht {{count}} (Beschwörungen aus Deck und Extra Deck)",
       "TURN_START_HAND_SUMMONS": "Gegner zieht {{count}} (Beschwörungen von der Hand)"
-    }
+    },
+    "pairs": "Paare",
+    "pairsHint": "In einem Branch mit Unterbrechung zeigt der Stresstest, was danach noch trifft („Ash und dann Imperm“)",
+    "pairsInBranch_one": "{{count}} weitere Unterbrechung in diesem Branch",
+    "pairsInBranch_other": "{{count}} weitere Unterbrechungen in diesem Branch"
   },
   "endboard": {
     "interruptions_one": "Unterbrechung",
@@ -719,5 +735,77 @@
     "merge": "Mit nächstem zusammenlegen",
     "remove": "Entfernen",
     "view": "Karte ansehen"
+  },
+  "palette": {
+    "title": "Suche und Befehle",
+    "open": "Suchen und Befehle",
+    "placeholder": "Karte, Combo, Deck oder Befehl wie „ns aluber“",
+    "empty": "Nichts gefunden.",
+    "footer": "↑ ↓ wählen · Enter ausführen · Befehle in der Workbench: ns, set, ss, act, gy, ban, hand, deck, pos, o, res, end",
+    "newCombo": "Neue Combo mit {{deck}}",
+    "lightTheme": "Helles Design",
+    "darkTheme": "Dunkles Design",
+    "cardLanguage": "Kartensprache wechseln",
+    "stapleCommand": "Gegner reagiert: {{name}}",
+    "notPossible": "Geht hier nicht",
+    "group": {
+      "commands": "Befehl",
+      "recent": "Zuletzt",
+      "actions": "Aktionen",
+      "combos": "Combos",
+      "decks": "Decks",
+      "cards": "Karten"
+    }
+  },
+  "help": {
+    "title": "Tastenkürzel",
+    "search": "Kürzel suchen …",
+    "group": {
+      "general": "Allgemein",
+      "navigation": "Navigation",
+      "playing": "Spielen",
+      "chain": "Chain",
+      "editing": "Bearbeiten"
+    },
+    "key": {
+      "ctrl": "Strg",
+      "shift": "Umschalt",
+      "space": "Leertaste",
+      "del": "Entf",
+      "dblclick": "Doppelklick"
+    },
+    "keys": {
+      "palette": "Suche und Befehle",
+      "help": "Diese Hilfe",
+      "undo": "Rückgängig",
+      "redo": "Wiederholen",
+      "mode": "Board und Baum wechseln",
+      "steps": "Vorheriger und nächster Schritt",
+      "branches": "Zur übergeordneten Line, in einen Branch",
+      "play": "Line abspielen und anhalten",
+      "stress": "Stresstest an und aus",
+      "quick": "Karte per Name wählen",
+      "menu": "Aktionsmenü der Karte",
+      "summon": "Normal Summon",
+      "set": "Setzen",
+      "activate": "Aktivieren",
+      "effect": "Effekt 1 bis 9",
+      "position": "Position ändern",
+      "move": "Friedhof, Verbannen, Hand, Deck",
+      "end": "Endboard markieren",
+      "resolve": "Chain auflösen, Auswahl bestätigen",
+      "chain": "Weiter chainen",
+      "opponent": "Gegner reagiert: Staple wählen",
+      "cancel": "Abfrage oder Menü abbrechen",
+      "delete": "Schritt mit Folgeschritten löschen",
+      "edit": "Schritt bearbeiten",
+      "command": "Befehl eingeben"
+    }
+  },
+  "hints": {
+    "dismiss": "Hinweis schließen",
+    "stapleRail": "Zieh eine Handtrap aus der Leiste links auf einen Schritt, um einen Branch anzulegen.",
+    "stress": "Die Chips zeigen, welche Staples wo treffen. Klick legt den Branch an, Rechtsklick entfernt den Treffer.",
+    "tree": "Hier siehst du alle Lines auf einmal. Doppelklick auf einen Knoten öffnet ihn im Board."
   }
 }

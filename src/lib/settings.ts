@@ -15,6 +15,26 @@ export interface UserSettings {
   staples: string[] | null;
   /** Tempo beim Abspielen einer Line (UX-Plan 6.10): Schritte pro Sekunde */
   autoplaySpeed: AutoplaySpeed;
+  /** Eigene Spitznamen für Suche und Befehle (UX-Plan 8), ergänzen die gepflegte Liste */
+  nicknames: Nickname[];
+  /** Einmalige Hinweise, die der Nutzer schon gesehen hat (UX-Plan 11) */
+  seenHints: string[];
+}
+
+export interface Nickname {
+  alias: string;
+  /** Exakter englischer Kartenname */
+  card: string;
+}
+
+/** Eigene Spitznamen als Nachschlagetabelle, Schlüssel klein geschrieben */
+export function nicknameMap(list: Nickname[]): Record<string, string[]> {
+  const map: Record<string, string[]> = {};
+  for (const n of list) {
+    const key = n.alias.trim().toLowerCase();
+    if (key) map[key] = [...(map[key] ?? []), n.card];
+  }
+  return map;
 }
 
 export const AUTOPLAY_SPEEDS = [0.5, 1, 2] as const;
@@ -28,6 +48,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   cardLanguage: 'en',
   staples: null,
   autoplaySpeed: 1,
+  nicknames: [],
+  seenHints: [],
 };
 
 export const settingsPatchSchema = z
@@ -36,6 +58,11 @@ export const settingsPatchSchema = z
     cardLanguage: z.enum(['en', 'de']).optional(),
     staples: z.array(z.string().max(100)).max(60).nullable().optional(),
     autoplaySpeed: z.union([z.literal(0.5), z.literal(1), z.literal(2)]).optional(),
+    nicknames: z
+      .array(z.object({ alias: z.string().trim().min(1).max(30), card: z.string().min(1).max(200) }))
+      .max(200)
+      .optional(),
+    seenHints: z.array(z.string().max(40)).max(40).optional(),
   })
   .strict();
 

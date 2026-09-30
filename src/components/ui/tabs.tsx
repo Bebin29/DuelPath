@@ -62,9 +62,7 @@ export function Tabs<T extends string>({
             }}
             className={cn(
               '-mb-px border-b-2 pb-2 pt-1 text-sm transition-colors duration-(--motion-fast)',
-              selected
-                ? 'border-ink text-ink'
-                : 'border-transparent text-text-muted hover:text-ink'
+              selected ? 'border-ink text-ink' : 'border-transparent text-text-muted hover:text-ink'
             )}
           >
             {o.label}

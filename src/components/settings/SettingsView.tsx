@@ -3,12 +3,8 @@
 import { useLanguage, useTranslation } from '@/lib/i18n/hooks';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Segmented } from '@/components/ui/segmented';
-import {
-  AUTOPLAY_SPEEDS,
-  speedLabel,
-  type AutoplaySpeed,
-  type CardLanguage,
-} from '@/lib/settings';
+import { Button } from '@/components/ui/button';
+import { AUTOPLAY_SPEEDS, speedLabel, type AutoplaySpeed, type CardLanguage } from '@/lib/settings';
 import type { Theme } from '@/lib/theme';
 
 function Row({
@@ -91,6 +87,16 @@ export function SettingsView() {
               label: speedLabel(s, i18n.language),
             }))}
           />
+        </Row>
+        <Row title={t('settings.hints')} text={t('settings.hintsText')}>
+          <Button
+            variant="line"
+            size="sm"
+            disabled={settings.seenHints.length === 0}
+            onClick={() => update({ seenHints: [] })}
+          >
+            {t('settings.hintsReset')}
+          </Button>
         </Row>
       </section>
     </div>

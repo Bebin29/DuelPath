@@ -1,5 +1,6 @@
 import { SettingsView } from '@/components/settings/SettingsView';
 import { StapleSettings } from '@/components/settings/StapleSettings';
+import { NicknameSettings } from '@/components/settings/NicknameSettings';
 import { getStaples } from '@/server/actions/combo.actions';
 
 export default async function SettingsPage() {
@@ -10,6 +11,7 @@ export default async function SettingsPage() {
     <>
       <SettingsView />
       <StapleSettings staples={staples} />
+      <NicknameSettings />
     </>
   );
 }

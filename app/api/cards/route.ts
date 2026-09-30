@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CardSearchService } from '@/server/services/card-search.service';
 import type { CardSearchFilter, CardSortOptions } from '@/types/card.types';
 import { createHash } from 'crypto';
+import { getSettings } from '@/server/actions/settings.actions';
+import { nicknameMap } from '@/lib/settings';
 
 /**
  * GET /api/cards
@@ -26,12 +28,13 @@ import { createHash } from 'crypto';
  */
 export async function GET(request: NextRequest) {
   try {
+    const nicknames = nicknameMap((await getSettings()).nicknames);
     const searchParams = request.nextUrl.searchParams;
 
     // Einzelne Karte nach ID holen
     const cardId = searchParams.get('id');
     if (cardId) {
-      const searchService = new CardSearchService();
+      const searchService = new CardSearchService(nicknames);
       const card = await searchService.getCardById(cardId);
       if (!card) {
         return NextResponse.json({ error: 'Card not found' }, { status: 404 });
@@ -56,7 +59,7 @@ export async function GET(request: NextRequest) {
     if (cardIds) {
       const ids = cardIds.split(',').filter((id) => id.trim().length > 0);
       if (ids.length > 0) {
-        const searchService = new CardSearchService();
+        const searchService = new CardSearchService(nicknames);
         const cards = await searchService.getCardsByIds(ids);
 
         // ETag für Caching generieren
@@ -80,7 +83,7 @@ export async function GET(request: NextRequest) {
       const query = searchParams.get('query') || '';
       const limit = Math.min(parseInt(searchParams.get('limit') || '5', 10), 10); // Max 10, default 5
 
-      const searchService = new CardSearchService();
+      const searchService = new CardSearchService(nicknames);
       const names = await searchService.autocompleteCardNames(query, limit);
 
       // ETag für Caching generieren
@@ -103,7 +106,7 @@ export async function GET(request: NextRequest) {
       const archetypeQuery = searchParams.get('archetype') || '';
       const limit = parseInt(searchParams.get('limit') || '10', 10);
 
-      const searchService = new CardSearchService();
+      const searchService = new CardSearchService(nicknames);
       const [races, archetypes] = await Promise.all([
         raceQuery ? searchService.autocompleteRaces(raceQuery, limit) : Promise.resolve([]),
         archetypeQuery
@@ -202,7 +205,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Suche ausführen
-    const searchService = new CardSearchService();
+    const searchService = new CardSearchService(nicknames);
     const result = await searchService.searchCards(filter, page, limit, sortOptions);
 
     // ETag für Caching generieren (basierend auf Query-Params und Ergebnis)

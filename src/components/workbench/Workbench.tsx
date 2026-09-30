@@ -39,7 +39,11 @@ import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/c
 import { NodeEditor, StartStateEditor, type MoveTarget } from '@/components/combo/NodeEditor';
 import { SuggestionPanel } from '@/components/combo/SuggestionPanel';
 import { Button } from '@/components/ui/button';
+import { OneTimeHint } from '@/components/ui/one-time-hint';
 import { useCardSheet } from '@/components/cards/CardSheet';
+import { usePaletteSource, type PaletteItem } from '@/components/command/CommandPalette';
+import { matchCards, parseCommand, PREFERRED_ZONES } from '@/lib/combo/command';
+import { nicknameMap } from '@/lib/settings';
 import { BoardView } from './BoardView';
 import { CardMenu, type MenuAnchor } from './CardMenu';
 import { cardActions } from './card-actions';
@@ -276,7 +280,16 @@ export function Workbench({
   const [editOpen, setEditOpen] = useState(false);
   const { settings, update: updateSettings } = useSettings();
   const cardSheet = useCardSheet();
-  const stress = useStress({ line, steps, states, start, cards, staples });
+  const [pairsOn, setPairsOn] = useState(false);
+  const stress = useStress({
+    line,
+    steps,
+    states,
+    start,
+    cards,
+    staples,
+    pairs: stressOn && pairsOn,
+  });
   const toggleStress = () => {
     setStressOn((on) => !on);
     setStressRun((n) => n + 1);
@@ -549,6 +562,13 @@ export function Workbench({
         toggleStress();
         return;
       }
+      if (key === 'Delete' && selected && !onControl) {
+        // Mit allen Folgeschritten; Strg+Z holt sie zurück (UX-Plan 9)
+        e.preventDefault();
+        setNodes((prev) => removeSubtree(prev, selected.id));
+        select(parentId ?? START_ID);
+        return;
+      }
       if (key === 'M' && hovered.current) {
         openMenuFor(hovered.current);
         return;
@@ -623,6 +643,121 @@ export function Workbench({
 
   const hitsHere = (name: string) =>
     Boolean(selected && stress.byStep.get(selected.id)?.some((h) => h.staple === name));
+
+  // Befehlszeile in Strg+K (UX-Plan 9): „ns aluber“, „act ash 2“, „o imperm“, „res“
+  const userNicknames = useMemo(() => nicknameMap(settings.nicknames), [settings.nicknames]);
+  usePaletteSource('workbench', (query): PaletteItem[] => {
+    const cmd = parseCommand(query);
+    if (!cmd) return [];
+    const item = (
+      id: string,
+      label: string,
+      run: () => void,
+      extra: Partial<PaletteItem> = {}
+    ) => ({
+      id: `cmd:${id}`,
+      group: 'commands',
+      label,
+      run,
+      ...extra,
+    });
+    if (cmd.verb === 'resolve')
+      return [
+        item('resolve', t('workbench.resolve'), () => flow.play({ kind: 'resolve' }), {
+          disabled: after.chain.length === 0,
+          hint: after.chain.length ? undefined : t('workbench.noChain'),
+        }),
+      ];
+    if (cmd.verb === 'end')
+      return [item('end', t('combo.kind.END'), () => flow.play({ kind: 'end' }))];
+    if (!cmd.query) return [];
+    if (cmd.verb === 'staple') {
+      const list = stress.chosen.map((s) => ({
+        id: s.staple.name,
+        name: s.card.name,
+        nameDe: s.card.nameDe,
+        image: s.card.imageSmall,
+        short: s.staple.short,
+      }));
+      return matchCards(cmd.query, list, [], userNicknames)
+        .slice(0, 4)
+        .map((s) =>
+          item(
+            `staple:${s.id}`,
+            t('palette.stapleCommand', { name: s.name }),
+            () => dropStaple(s.id, selected?.id ?? null),
+            { image: s.image, hint: hitsHere(s.id) ? t('stress.hitsHere') : undefined }
+          )
+        );
+    }
+    const seen = new Set<string>();
+    const mine = Object.values(after.cards)
+      .filter((c) => c.owner === 'self' || c.controller === 'self')
+      .filter((c) => {
+        const key = `${c.zone}:${c.cardId}`;
+        if ((c.zone === 'DECK' || c.zone === 'EXTRA') && seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((c) => {
+        const card = cards.get(c.cardId);
+        return {
+          id: c.instanceId,
+          name: card?.name ?? '',
+          nameDe: card?.nameDe,
+          zone: c.zone,
+          card,
+        };
+      });
+    const pick = (instanceId: string) => {
+      const { effects, other } = cardActions(after, cards, instanceId);
+      const byId = (id: string) => other.find((a) => a.id === id);
+      switch (cmd.verb) {
+        case 'ns':
+          return byId('ns');
+        case 'set':
+          return byId('set');
+        case 'ss':
+          return byId('ss') ?? byId('xs');
+        case 'act':
+          return cmd.effect
+            ? effects.find((a) => a.id === `effect-${cmd.effect! - 1}`)
+            : (effects[0] ?? byId('activate'));
+        case 'gy':
+          return byId('gy');
+        case 'banish':
+          return byId('banish');
+        case 'hand':
+          return byId('hand');
+        case 'deck':
+          return byId('deck') ?? byId('extra');
+        case 'pos':
+          return byId('pos');
+      }
+    };
+    const found = matchCards(cmd.query, mine, PREFERRED_ZONES[cmd.verb], userNicknames).map(
+      (c) => ({ ...c, action: pick(c.id) })
+    );
+    // Nicht ausführbare Treffer nur zeigen, wenn es sonst nichts gibt
+    const usable = found.some((c) => c.action) ? found.filter((c) => c.action) : found;
+    return usable.slice(0, 4).map((c) => {
+      const { action } = c;
+      const name = displayName(c.card, cardLanguage);
+      const verb = action
+        ? t(`workbench.actions.${action.label}`, { n: action.key })
+        : t('palette.notPossible');
+      return item(
+        `${cmd.verb}:${c.id}`,
+        `${verb} · ${name}`,
+        () => action && flow.run(action, c.id),
+        {
+          image: c.card?.imageSmall ?? null,
+          hint: t(`combo.zones.${c.zone}`),
+          disabled: !action,
+        }
+      );
+    });
+  });
 
   const stepPanel = selected ? (
     <>
@@ -748,6 +883,10 @@ export function Workbench({
 
   return (
     <div className="flex h-dvh flex-col">
+      {/* Unter 1280 px reicht der Platz nicht für Board und Seitenleisten (UI-Plan 6.2) */}
+      <div className="fixed inset-0 z-[60] hidden place-items-center bg-bg p-8 text-center max-[1279px]:grid">
+        <p className="max-w-sm font-display text-2xl">{t('workbench.tooNarrow')}</p>
+      </div>
       <p className="sr-only" aria-live="polite">
         {selected
           ? t('workbench.announce', {
@@ -781,6 +920,11 @@ export function Workbench({
         stress={stressOn}
         chokePoints={stress.byStep.size}
         onStress={toggleStress}
+        pairs={pairsOn}
+        onPairs={() => {
+          setPairsOn((on) => !on);
+          setStressRun((n) => n + 1);
+        }}
         comboStatus={comboStatus}
         onComboStatus={(value) => setDoc((d) => ({ ...d, status: value }))}
         tags={tags}
@@ -788,7 +932,7 @@ export function Workbench({
       />
 
       {mode === 'board' ? (
-        <div className="grid min-h-0 flex-1 grid-cols-[264px_56px_1fr_320px]">
+        <div className="grid min-h-0 flex-1 grid-cols-[220px_48px_1fr_288px] min-[1440px]:grid-cols-[248px_56px_1fr_320px] min-[1920px]:grid-cols-[280px_56px_1fr_360px]">
           <div className="min-h-0 border-r border-line bg-surface-1">
             <LineList
               chokes={
@@ -812,6 +956,11 @@ export function Workbench({
               }
               onDropStaple={(name, nodeId) => dropStaple(name, nodeId)}
               endCountOf={endCountOf}
+              pairCountOf={
+                stressOn && pairsOn
+                  ? (nodeId) => stress.pairsIn(lineThrough(nodes, nodeId))
+                  : undefined
+              }
               onCompare={ends.length > 1 ? () => setComparing(true) : undefined}
               onOpen={(id) => {
                 select(id);
@@ -841,6 +990,14 @@ export function Workbench({
             className="relative flex min-h-0 min-w-0 flex-col"
             onMouseLeave={() => inspect(null)}
           >
+            <OneTimeHint id="staple-rail" className="absolute left-3 top-3">
+              {t('hints.stapleRail')}
+            </OneTimeHint>
+            {stressOn && (
+              <OneTimeHint id="stress" className="absolute right-3 top-3">
+                {t('hints.stress')}
+              </OneTimeHint>
+            )}
             <div
               className="min-h-0 flex-1"
               onDragOver={(e) => {
@@ -1004,7 +1161,10 @@ export function Workbench({
           </div>
         </div>
       ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-[1fr_320px]">
+        <div className="relative grid min-h-0 flex-1 grid-cols-[1fr_320px]">
+          <OneTimeHint id="tree" className="absolute left-4 top-4">
+            {t('hints.tree')}
+          </OneTimeHint>
           <div className="min-h-0">
             <TreeCanvas
               nodes={nodes}

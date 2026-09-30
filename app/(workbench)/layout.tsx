@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth/auth';
 import { SettingsProvider } from '@/components/providers/SettingsProvider';
 import { CardSheetProvider } from '@/components/cards/CardSheet';
+import { CommandPaletteProvider } from '@/components/command/CommandPalette';
 import { getSettings } from '@/server/actions/settings.actions';
 
 /**
@@ -16,9 +17,11 @@ export default async function WorkbenchLayout({ children }: { children: React.Re
   return (
     <SettingsProvider initial={settings}>
       <CardSheetProvider>
-        <main id="main" className="h-dvh overflow-hidden bg-bg">
-          {children}
-        </main>
+        <CommandPaletteProvider>
+          <main id="main" className="h-dvh overflow-hidden bg-bg">
+            {children}
+          </main>
+        </CommandPaletteProvider>
       </CardSheetProvider>
     </SettingsProvider>
   );

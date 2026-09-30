@@ -20,6 +20,7 @@ export function useStress({
   start,
   cards,
   staples,
+  pairs = false,
 }: {
   line: ComboNodeData[];
   steps: LineStep[];
@@ -27,6 +28,8 @@ export function useStress({
   start: GameState;
   cards: Map<string, ComboCard>;
   staples: StapleCard[];
+  /** Paare prüfen: in einem Branch mit Unterbrechung zählen die Treffer danach */
+  pairs?: boolean;
 }) {
   const { settings } = useSettings();
 
@@ -37,16 +40,13 @@ export function useStress({
     return settings.staples.flatMap((name) => opponent.filter((s) => s.staple.name === name));
   }, [staples, settings.staples]);
 
+  const entries = useMemo(
+    () => chosen.map((s) => ({ staple: s.staple, cardId: s.card.id })),
+    [chosen]
+  );
   const hits = useMemo(
-    () =>
-      stressTest(
-        line,
-        states,
-        start,
-        cards,
-        chosen.map((s) => ({ staple: s.staple, cardId: s.card.id }))
-      ),
-    [line, states, start, cards, chosen]
+    () => stressTest(line, states, start, cards, entries, { pairs }),
+    [line, states, start, cards, entries, pairs]
   );
   const byStep = useMemo(() => hitsByStep(hits), [hits]);
 
@@ -88,5 +88,11 @@ export function useStress({
     [steps, byStep, staples]
   );
 
-  return { chosen, hits, byStep, rail, numberOf, weaknesses, shortOf };
+  /** Zweite Unterbrechungen in einer anderen Line, für die Zahl an den Branch-Zeilen */
+  const pairsIn = (otherLine: ComboNodeData[]) =>
+    otherLine.filter((n) => n.kind === 'ACTIVATE' && n.player === 'opponent').length === 1
+      ? stressTest(otherLine, states, start, cards, entries, { pairs: true }).length
+      : 0;
+
+  return { chosen, hits, byStep, rail, numberOf, weaknesses, shortOf, pairsIn };
 }

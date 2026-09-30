@@ -8,6 +8,7 @@ import {
   Crosshair,
   Loader2,
   Redo2,
+  Search,
   TriangleAlert,
   Undo2,
 } from 'lucide-react';
@@ -27,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { StatusChip } from '@/components/library/StatusChip';
+import { usePalette } from '@/components/command/CommandPalette';
 import { COMBO_STATUSES, SUGGESTED_TAGS, type ComboStatus } from '@/lib/combo/library';
 
 export type WorkbenchMode = 'board' | 'tree';
@@ -52,6 +54,8 @@ export function WorkbenchHeader({
   stress,
   chokePoints,
   onStress,
+  pairs,
+  onPairs,
   comboStatus,
   onComboStatus,
   tags,
@@ -76,18 +80,31 @@ export function WorkbenchHeader({
   stress: boolean;
   chokePoints: number;
   onStress: () => void;
+  /** Paare im Stresstest (UX-Plan 6.8), nur auf Knopfdruck */
+  pairs: boolean;
+  onPairs: () => void;
   comboStatus: ComboStatus;
   onComboStatus: (status: ComboStatus) => void;
   tags: string[];
   onTags: (tags: string[]) => void;
 }) {
   const { t } = useTranslation();
+  const palette = usePalette();
   return (
     <header className="flex h-12 shrink-0 items-center gap-3 border-b border-line bg-surface-1 px-4">
       <Button asChild variant="ghost" size="icon-sm" aria-label={t('combo.back')}>
         <Link href="/combos">
           <ArrowLeft />
         </Link>
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => palette.open()}
+        aria-label={`${t('palette.open')} (${t('help.key.ctrl')}+K)`}
+        title={`${t('palette.open')} (${t('help.key.ctrl')}+K)`}
+      >
+        <Search />
       </Button>
       <input
         value={title}
@@ -155,6 +172,18 @@ export function WorkbenchHeader({
         {stress ? t('stress.chokePoints', { count: chokePoints }) : t('stress.run')}
         <Kbd>T</Kbd>
       </Button>
+      {stress && (
+        <Button
+          variant="line"
+          size="sm"
+          onClick={onPairs}
+          aria-pressed={pairs}
+          title={t('stress.pairsHint')}
+          className={cn(pairs && 'border-opponent text-opponent')}
+        >
+          {t('stress.pairs')}
+        </Button>
+      )}
       <button
         type="button"
         onClick={onWarnings}

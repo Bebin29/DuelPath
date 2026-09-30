@@ -27,7 +27,16 @@ const toDeckCard = (row: ApiCard): DeckViewCard => ({
  * Kartensuche neben dem Deck (UI-Plan 7.5.5): Spitznamen und Kürzel wie im Rest der App.
  * Klick legt die Karte in Main bzw. Extra Deck, Umschalt+Klick ins Side Deck.
  */
-export function CardSearchPanel({ onAdd }: { onAdd: (card: DeckViewCard, side: boolean) => void }) {
+export function CardSearchPanel({
+  onAdd,
+  hint,
+  label,
+}: {
+  onAdd: (card: DeckViewCard, side: boolean) => void;
+  /** Hinweis unter dem Feld; null blendet ihn aus */
+  hint?: string | null;
+  label?: string;
+}) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
   const [query, setQuery] = useState('');
@@ -49,18 +58,20 @@ export function CardSearchPanel({ onAdd }: { onAdd: (card: DeckViewCard, side: b
   const visible = debounced.length >= 2 ? results : [];
 
   return (
-    <section aria-label={t('decks.search')} className="flex min-h-0 flex-col gap-3">
+    <section aria-label={label ?? t('decks.search')} className="flex min-h-0 flex-col gap-3">
       <label className="flex h-9 items-center gap-2 rounded-md border border-line bg-surface-1 px-2.5 focus-within:border-line-strong">
         <Search className="size-3.5 text-text-subtle" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('decks.searchPlaceholder')}
-          aria-label={t('decks.search')}
+          aria-label={label ?? t('decks.search')}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-subtle"
         />
       </label>
-      <p className="font-mono text-2xs text-text-subtle">{t('decks.searchHint')}</p>
+      {hint !== null && (
+        <p className="font-mono text-2xs text-text-subtle">{hint ?? t('decks.searchHint')}</p>
+      )}
       <ul className="flex min-h-0 flex-col overflow-y-auto">
         {visible.map((card) => {
           const name = displayName(card, cardLanguage);

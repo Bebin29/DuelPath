@@ -154,6 +154,47 @@ describe('stressTest', () => {
     expect(stressTest([...nodes.slice(0, 2), branch], states, start, cards, entries)).toEqual([]);
   });
 
+  it('prüft Paare nur nach der ersten Unterbrechung und ohne denselben Staple', () => {
+    const IMP: CardData = {
+      id: 'IMP',
+      name: 'Infinite Impermanence',
+      type: 'Trap Card',
+      effects: [],
+    };
+    const withImp = new Map([...cards, ['IMP', IMP]]);
+    const imperm = stressBranch(
+      of('Infinite')[0],
+      { staple: entries[1].staple, card: IMP },
+      nodes,
+      states,
+      start,
+      'Imperm auf 2'
+    );
+    // Nach der Unterbrechung: Chain auflösen, dann Aluber auf den Friedhof und wieder beschwören
+    const after: ComboNodeData[] = [
+      { id: 'res2', parentId: imperm.id, kind: 'RESOLVE', player: 'self' },
+      {
+        id: 'ss2',
+        parentId: 'res2',
+        kind: 'ACTION',
+        player: 'self',
+        action: 'SPECIAL_SUMMON',
+        resolveMoves: [{ instanceId: 'bf', cardId: 'BF', from: 'DECK', to: 'HAND' }],
+      },
+    ];
+    const tree = [...nodes, imperm, ...after];
+    const treeStates = statesForTree(tree, START, withImp);
+    const branchLine = [ns, act, imperm, ...after];
+    const pairs = stressTest(branchLine, treeStates, start, withImp, entries, { pairs: true });
+    expect(pairs.length).toBeGreaterThan(0);
+    expect(pairs.every((h) => ['res2', 'ss2', imperm.id].includes(h.stepId))).toBe(true);
+    expect(pairs.some((h) => h.staple === 'Infinite Impermanence')).toBe(false);
+    expect(pairs.some((h) => h.pattern === 'TURN_START_HAND_SUMMONS')).toBe(false);
+    expect(pairs.map((h) => h.staple)).toContain('Droll & Lock Bird');
+    // Ohne Paar-Modus bleibt eine Line mit Unterbrechung ungeprüft
+    expect(stressTest(branchLine, treeStates, start, withImp, entries)).toEqual([]);
+  });
+
   it('legt den Ash-Branch am Schritt an und negiert dessen Effekt', () => {
     const branch = stressBranch(
       of('Ash')[0],

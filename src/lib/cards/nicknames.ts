@@ -74,6 +74,7 @@ export function looksLikeInitials(query: string): boolean {
 }
 
 /** Kartennamen hinter einem Spitznamen, sonst leer */
-export function nicknameTargets(query: string): string[] {
-  return NICKNAMES[query.trim().toLowerCase()] ?? [];
+export function nicknameTargets(query: string, extra?: Record<string, string[]>): string[] {
+  const key = query.trim().toLowerCase();
+  return [...new Set([...(extra?.[key] ?? []), ...(NICKNAMES[key] ?? [])])];
 }

@@ -14,6 +14,9 @@ import { looksLikeInitials, nicknameTargets } from '@/lib/cards/nicknames';
  * - Autocomplete für Kartennamen
  */
 export class CardSearchService {
+  /** Eigene Spitznamen des Nutzers ergänzen die gepflegte Liste (UX-Plan 8) */
+  constructor(private readonly nicknames: Record<string, string[]> = {}) {}
+
   /**
    * Sucht Karten mit Filtern und Pagination
    *
@@ -222,7 +225,7 @@ export class CardSearchService {
    * Nur für kurze Eingaben, damit normale Suchen keine zusätzliche Abfrage kosten.
    */
   private async aliasHits(query: string, where: Prisma.CardWhereInput) {
-    const names = nicknameTargets(query);
+    const names = nicknameTargets(query, this.nicknames);
     const initials = looksLikeInitials(query) ? query.trim().toLowerCase() : null;
     if (!names.length && !initials) return [];
     const { OR: _nameMatch, AND, ...rest } = where;

@@ -45,6 +45,8 @@ interface LineListProps {
   onDropStaple?: (staple: string, nodeId: string | null) => void;
   /** Unterbrechungen am Ende eines Branches */
   endCountOf?: (nodeId: string) => number | null;
+  /** Paar-Modus: zweite Unterbrechungen im Branch */
+  pairCountOf?: (nodeId: string) => number;
   onCompare?: () => void;
   /** Doppelklick: Schritt im Inspector bearbeiten (UX-Plan 6.6) */
   onOpen?: (id: string) => void;
@@ -74,6 +76,7 @@ export function LineList({
   marked,
   onDropStaple,
   endCountOf,
+  pairCountOf,
   onCompare,
   onOpen,
   onPromote,
@@ -285,6 +288,14 @@ export function LineList({
                     <span className="flex-1 truncate">
                       {b.letter} · {b.label}
                     </span>
+                    {pairCountOf && pairCountOf(b.nodeId) > 0 && (
+                      <span
+                        className="font-mono text-2xs text-opponent"
+                        title={t('stress.pairsInBranch', { count: pairCountOf(b.nodeId) })}
+                      >
+                        ! {pairCountOf(b.nodeId)}
+                      </span>
+                    )}
                     {endCountOf?.(b.nodeId) != null && (
                       <span
                         className="font-mono text-2xs text-text-subtle"

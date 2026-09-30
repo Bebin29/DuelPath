@@ -125,9 +125,33 @@ export function stressTest(
   states: Map<string, GameState>,
   start: GameState,
   cards: Map<string, CardData>,
-  staples: StapleEntry[]
+  staples: StapleEntry[],
+  /**
+   * Paare (UX-Plan 6.8, nur auf Knopfdruck): In einer Line mit genau einer Unterbrechung zählen
+   * die Treffer danach, etwa „Ash auf 2, dann Imperm auf 5“. Derselbe Staple zählt nicht zweimal.
+   */
+  options: { pairs?: boolean } = {}
 ): Hit[] {
-  if (line.some((n) => n.kind === 'ACTIVATE' && n.player === 'opponent')) return [];
+  const interruptions = line
+    .map((n, i) => ({ n, i }))
+    .filter(({ n }) => n.kind === 'ACTIVATE' && n.player === 'opponent');
+  if (interruptions.length > (options.pairs ? 1 : 0)) return [];
+  if (options.pairs && interruptions.length === 1) {
+    const [{ n: first, i: at }] = interruptions;
+    const after = new Set(line.slice(at + 1).map((n) => n.id));
+    return stressTest(
+      line.filter((n) => n.id !== first.id),
+      states,
+      start,
+      cards,
+      staples.filter((s) => s.cardId !== first.cardId)
+    ).filter(
+      (h) =>
+        after.has(h.stepId) &&
+        h.pattern !== 'TURN_START_DECK_SUMMONS' &&
+        h.pattern !== 'TURN_START_HAND_SUMMONS'
+    );
+  }
   const before = (i: number) => (i === 0 ? start : (states.get(line[i - 1].id) ?? start));
   const after = (i: number) => states.get(line[i].id) ?? before(i);
   const visibleAt = (i: number): string | null => {
