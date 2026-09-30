@@ -64,8 +64,10 @@ describe('ErrorBoundary', () => {
   });
 
   it('sollte Retry-Button anzeigen bei retry-fähigen Fehlern', () => {
-    function ThrowNetworkError() {
-      throw new Error('NetworkError');
+    function ThrowNetworkError(): never {
+      const error = new Error('Network down');
+      error.name = 'NetworkError';
+      throw error;
     }
 
     render(

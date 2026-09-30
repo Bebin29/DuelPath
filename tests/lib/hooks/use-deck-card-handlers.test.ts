@@ -121,7 +121,6 @@ describe('useDeckCardHandlers', () => {
         updateQuantityOperation: mockUpdateQuantityOperation,
         removeCardOperation: mockRemoveCardOperation,
         moveCardOperation: mockMoveCardOperation,
-        moveCardOperation: mockMoveCardOperation,
         getCardData: mockGetCardData,
         onError: mockOnError,
         t: mockT,

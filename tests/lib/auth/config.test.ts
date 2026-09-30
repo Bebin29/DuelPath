@@ -14,6 +14,19 @@ vi.mock('@/lib/prisma/client', () => ({
   },
 }));
 
+type Authorize = (
+  credentials: Record<string, unknown>
+) => Promise<{ email?: string | null; name?: string | null } | null>;
+
+/**
+ * Credentials() legt die eigene authorize-Funktion unter `options` ab;
+ * `provider.authorize` ist nur ein Platzhalter, der immer null liefert.
+ */
+function getAuthorize(): Authorize {
+  const provider = authConfig.providers[0] as unknown as { options: { authorize: Authorize } };
+  return provider.options.authorize;
+}
+
 /**
  * Tests für die Auth-Konfiguration
  */
@@ -28,29 +41,20 @@ describe('Auth Config', () => {
   });
 
   it('validiert fehlende Credentials', async () => {
-    const credentialsProvider = authConfig.providers[0];
-    if (credentialsProvider && 'authorize' in credentialsProvider) {
-      const result = await (credentialsProvider as { authorize: (credentials: Record<string, unknown>) => Promise<unknown> }).authorize({
-        email: undefined,
-        password: undefined,
-      });
+    const result = await getAuthorize()({ email: undefined, password: undefined });
 
-      expect(result).toBeNull();
-    }
+    expect(result).toBeNull();
   });
 
   it('validiert nicht existierenden Benutzer', async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
-    const credentialsProvider = authConfig.providers[0];
-    if (credentialsProvider && 'authorize' in credentialsProvider) {
-      const result = await (credentialsProvider as { authorize: (credentials: Record<string, unknown>) => Promise<unknown> }).authorize({
-        email: 'nonexistent@test.com',
-        password: 'password123',
-      });
+    const result = await getAuthorize()({
+      email: 'nonexistent@test.com',
+      password: 'password123',
+    });
 
-      expect(result).toBeNull();
-    }
+    expect(result).toBeNull();
   });
 
   it('validiert falsches Passwort', async () => {
@@ -60,17 +64,14 @@ describe('Auth Config', () => {
       email: 'test@test.com',
       password: hashedPassword,
       name: 'Test User',
-    } as Record<string, unknown>);
+    } as never);
 
-    const credentialsProvider = authConfig.providers[0];
-    if (credentialsProvider && 'authorize' in credentialsProvider) {
-      const result = await (credentialsProvider as { authorize: (credentials: Record<string, unknown>) => Promise<unknown> }).authorize({
-        email: 'test@test.com',
-        password: 'wrongPassword',
-      });
+    const result = await getAuthorize()({
+      email: 'test@test.com',
+      password: 'wrongPassword',
+    });
 
-      expect(result).toBeNull();
-    }
+    expect(result).toBeNull();
   });
 
   it('gibt Benutzer zurück bei korrekten Credentials', async () => {
@@ -81,18 +82,15 @@ describe('Auth Config', () => {
       password: hashedPassword,
       name: 'Test User',
       image: null,
-    } as Record<string, unknown>);
+    } as never);
 
-    const credentialsProvider = authConfig.providers[0];
-    if (credentialsProvider && 'authorize' in credentialsProvider) {
-      const result = await (credentialsProvider as { authorize: (credentials: Record<string, unknown>) => Promise<unknown> }).authorize({
-        email: 'test@test.com',
-        password: 'correctPassword',
-      });
+    const result = await getAuthorize()({
+      email: 'test@test.com',
+      password: 'correctPassword',
+    });
 
-      expect(result).not.toBeNull();
-      expect(result?.email).toBe('test@test.com');
-      expect(result?.name).toBe('Test User');
-    }
+    expect(result).not.toBeNull();
+    expect(result?.email).toBe('test@test.com');
+    expect(result?.name).toBe('Test User');
   });
 });
