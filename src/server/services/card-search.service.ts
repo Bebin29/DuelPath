@@ -206,7 +206,8 @@ export class CardSearchService {
    * @returns Array von Kartennamen
    */
   async autocompleteCardNames(query: string, limit: number = 5): Promise<string[]> {
-    if (!query || query.trim().length === 0) {
+    // Mindestens 2 Zeichen, sonst scannt `contains` praktisch die ganze Tabelle
+    if (!query || query.trim().length < 2) {
       return [];
     }
 
