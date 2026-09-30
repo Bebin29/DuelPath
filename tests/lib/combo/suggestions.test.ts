@@ -39,7 +39,14 @@ const CARDS = new Map<string, CardData>(
       type: 'Effect Monster',
       effects: [fx({ patterns: ['TRIGGER_IF_OPT'] })],
     },
-    { id: 'trap', name: 'Trap', type: 'Trap Card', race: 'Normal', effects: [fx()] },
+    // Kartenaktivierung mit "When ...:"-Bedingung (Solemn Strike): kein Trigger
+    {
+      id: 'trap',
+      name: 'Trap',
+      type: 'Trap Card',
+      race: 'Counter',
+      effects: [fx({ patterns: ['TRIGGER_MANDATORY'] })],
+    },
     {
       id: 'imperm',
       name: 'Imperm',

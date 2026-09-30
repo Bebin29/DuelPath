@@ -63,7 +63,7 @@ export function candidateEffects(
         if (!cardActivationPossible(card, effectIndex, zone, placed.position, controlsCards))
           return;
         if (top) {
-          if (isTriggerEffect(effect)) return;
+          if (isTriggerEffect(card, effectIndex, effect)) return;
           const speed = spellSpeedOf(card, effectIndex, effect);
           if (speed < 2 || speed < top.spellSpeed) return;
         }

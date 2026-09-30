@@ -284,7 +284,7 @@ function activate(
   const top = state.chain.at(-1);
   if (
     top &&
-    !(effect && isTriggerEffect(effect)) &&
+    !(card && effect && isTriggerEffect(card, node.effectIndex ?? 0, effect)) &&
     (spellSpeed < 2 || spellSpeed < top.spellSpeed)
   ) {
     warn(`Spell Speed ${spellSpeed} kann nicht auf Spell Speed ${top.spellSpeed} gechaint werden`);
@@ -347,8 +347,11 @@ function optKeysFor(
 /**
  * Trigger-Effekt ("If/When ...: You can"), aber kein Quick Effect: Ash Blossom beginnt mit
  * "When a card or effect is activated", ist aber ein Quick Effect (siehe rulings.md, TRIGGER_MANDATORY).
+ * Bei der Kartenaktivierung einer Spell/Trap ("When ...: Pay 1500 LP") ist "When" eine
+ * Aktivierungsbedingung, kein Trigger.
  */
-export function isTriggerEffect(effect: CardEffect): boolean {
+export function isTriggerEffect(card: CardData, effectIndex: number, effect: CardEffect): boolean {
+  if (/Spell|Trap/.test(card.type) && effectIndex === 0) return false;
   return (
     !effect.patterns.includes('QUICK') && effect.patterns.some((p) => p.startsWith('TRIGGER_'))
   );
