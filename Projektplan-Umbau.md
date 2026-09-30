@@ -62,7 +62,7 @@ Quelle bleibt die YGOPRODeck-API (`cardinfo.php?misc=yes`).
     opt: 'NONE' | 'SOFT' | 'HARD';
     optWording?: 'USE' | 'ACTIVATE' | 'ACTIVATE_CARD'; // "use" / "activate this effect" / "activate 1 X"
     optGroup?: string; // bei "each effect" bzw. "1 X effect per turn" gemeinsame Gruppe
-    mechanics: string[]; // Keys aus RulingMechanic, z. B. "TRIGGER_IF", "QUICK"
+    mechanics: string[]; // Keys aus RULING_MECHANICS, z. B. "OPT_HARD_USE", "TRIGGER_WHEN_OPTIONAL"
   };
   ```
   Die Zerlegung ist eine Heuristik über die PSCT-Struktur (Sätze mit `:` und `;`, OPT-Klauseln). **Jev prüft mit:** Für jede Karte bewertet Jev, ob die Zerlegung plausibel ist (`noul`). Karten unter dem Schwellwert werden zur manuellen Prüfung markiert (`effectsReview = true`). Manuelle Korrekturen werden gesondert gespeichert und überleben einen Neuimport.
@@ -135,7 +135,7 @@ function stateAt(combo: Combo, nodeId: string): GameState; // reine Funktion, vo
 
 **Chains explizit:** Aktivierungen stapeln sich als Chain Links (CL1, CL2, ...), bis ein `RESOLVE`-Knoten kommt. Auf dem Canvas wird eine offene Chain als Gruppe dargestellt. Gegnerische Reaktionen (Ash Blossom, Imperm, Nibiru, ...) sind `ACTIVATE`-Knoten mit `player = OPPONENT` und `negates`.
 
-**Negierungsarten und OPT:** Ob ein OPT verbraucht ist, hängt davon ab, ob die Aktivierung, der Effekt oder die Beschwörung negiert wurde, und von der OPT-Formulierung (Beispiel: Solemn Judgment negiert die Beschwörung, der On-Summon-Effekt wurde nie aktiviert und bleibt nach einer weiteren Beschwörung verfügbar). Die Regeln dafür stammen aus der Tabelle `RulingMechanic` (Abschnitt 4.6). `optOverride` erlaubt pro Knoten den manuellen Eingriff.
+**Negierungsarten und OPT:** Ob ein OPT verbraucht ist, hängt davon ab, ob die Aktivierung, der Effekt oder die Beschwörung negiert wurde, und von der OPT-Formulierung (Beispiel: Solemn Judgment negiert die Beschwörung, der On-Summon-Effekt wurde nie aktiviert und bleibt nach einer weiteren Beschwörung verfügbar). Die Regeln dafür stammen aus `RULING_MECHANICS` (Abschnitt 4.6). `optOverride` erlaubt pro Knoten den manuellen Eingriff.
 
 **Startzustand:** Starthand wird aus dem zugeordneten Deck gewählt, ohne Deck über die freie Kartensuche. Für Going Second kann das Gegnerboard vorbelegt werden.
 
@@ -186,15 +186,22 @@ Jev wird an zwei Stellen genutzt: beim Import zur Prüfung der Effektzerlegung (
 
 ### 4.6 Rulings
 
-Kuratierte Tabelle der **allgemeinen Mechaniken**, keine kartenbezogenen Einzelrulings. Grundlage ist die Recherche in `docs/research/rulings.md`.
+Kuratierte Liste der **allgemeinen Mechaniken**, keine kartenbezogenen Einzelrulings. Grundlage ist die Recherche in `docs/research/rulings.md`.
 
-```prisma
-model RulingMechanic {
-  key           String  @id // z. B. "NEGATE_ACTIVATION", "NEGATE_SUMMON", "OPT_USE", "TRIGGER_WHEN"
-  description   String
-  deterministic Boolean // true = stateAt rechnet es, false = nur Jev-Kontext
-  effect        Json    // Auswirkung auf OPT, Kosten, Karte, Trigger
-  pattern       String? // Erkennungsmuster im Kartentext
+Die Mechaniken liegen als typisierte Konstante in `src/lib/rulings/mechanics.ts`, nicht als Datenbanktabelle: Die Daten sind statisch, werden im Repo versioniert und von `stateAt` und der Jev-Anbindung direkt gelesen. Dort liegen auch die PSCT-Erkennungsmuster (`PATTERNS`, `detectPatterns`), die der Kartenimport in M3 nutzt.
+
+```ts
+interface RulingMechanic {
+  key: string; // z. B. "NEGATE_ACTIVATION", "OPT_HARD_USE"
+  category: 'negation' | 'opt' | 'cost' | 'trigger' | 'chain' | 'summon' | 'text';
+  description: string;
+  deterministic: 'yes' | 'partial' | 'no'; // no = nur Jev-Kontext
+  opt?: string;
+  cost?: string;
+  card?: string;
+  trigger?: string; // Auswirkungen
+  detect: Detect[]; // Muster-Keys oder engine | cardType | context
+  notes?: string; // Unsicherheiten
 }
 ```
 
@@ -205,7 +212,7 @@ model RulingMechanic {
   - **Hard OPT** gilt pro Spieler und Kartenname und überlebt das Verlassen des Feldes. **Soft OPT** gilt pro Kopie und setzt sich bei Ortswechsel oder Verdecken zurück. `GameState` braucht dafür pro Karteninstanz einen Zähler für Ortswechsel.
   - **Trigger im TCG** verfallen, wenn die Karte vor dem Aufbau der Chain ihren Ort wechselt (Regel-Update 2021).
 - **Nicht deterministische Mechaniken** gehen als kurzer Hinweistext in die Jev-Anfrage, ebenso alle Stellen, die die Recherche als unsicher markiert.
-- Die Tabelle wird per Seed befüllt und im Repo versioniert. Der Vorschlag mit 38 Einträgen und Erkennungsmustern steht in `docs/research/rulings.md`.
+- Ein Test prüft, dass die 41 Einträge exakt der Tabelle in `docs/research/rulings.md` entsprechen und alle Erkennungsmuster existieren.
 
 ## 5. Meilensteine
 
@@ -213,7 +220,7 @@ model RulingMechanic {
 | ------ | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren (**erledigt**)           | `npm run build`, `lint`, `test` grün                                                   |
 | **M1** | PostgreSQL per Docker, Prisma 7 und Provider umstellen, Migrationen neu anlegen (**erledigt**)                                  | App startet gegen lokales Postgres                                                     |
-| **M2** | `RulingMechanic` anlegen und aus `docs/research/rulings.md` befüllen                                                            | Tabelle mit allen Mechaniken aus der Recherche im Seed                                 |
+| **M2** | `RULING_MECHANICS` und PSCT-Muster aus `docs/research/rulings.md` übernehmen (**erledigt**)                                     | alle Mechaniken aus der Recherche im Code, Test grün                                   |
 | **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder   | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
 | **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking                                               | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
 | **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop                     | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
@@ -243,7 +250,7 @@ model RulingMechanic {
 | Going Second           | Gegnerboard im Startzustand möglich                                                                                                                                                                                                                                                                                                                                                                                               |
 | Jev unter Schwellwert  | ausblenden                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Chains                 | explizit mit Chain Links                                                                                                                                                                                                                                                                                                                                                                                                          |
-| OPT bei Negierung      | abhängig von Negierungsart und Formulierung, Regeln aus `RulingMechanic`                                                                                                                                                                                                                                                                                                                                                          |
+| OPT bei Negierung      | abhängig von Negierungsart und Formulierung, Regeln aus `RULING_MECHANICS`                                                                                                                                                                                                                                                                                                                                                        |
 | Rulings                | allgemeine Mechaniken kuratiert; deterministisch im Code, sonst Jev-Kontext                                                                                                                                                                                                                                                                                                                                                       |
 | Effektzerlegung        | Heuristik, Jev prüft mit                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Kartensprache          | Englisch, Deutsch umschaltbar                                                                                                                                                                                                                                                                                                                                                                                                     |
