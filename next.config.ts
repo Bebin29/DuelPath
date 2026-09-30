@@ -61,8 +61,8 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // HTML-Seiten: Kurze Cache-Zeit mit Revalidation
-        source: '/:path*',
+        // HTML-Seiten: Kurze Cache-Zeit mit Revalidation (API-Routen haben eigene Regeln)
+        source: '/:path((?!api/).*)',
         headers: [
           {
             key: 'Cache-Control',
