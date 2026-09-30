@@ -9,7 +9,7 @@ import type { CardEffect, EffectOpt } from '@/lib/cards/effects';
 export type Player = 'self' | 'opponent';
 export type Zone =
   'HAND' | 'DECK' | 'EXTRA' | 'MONSTER' | 'SPELL_TRAP' | 'FIELD' | 'GY' | 'BANISHED';
-/** SET = verdeckt (Monster in Verteidigung oder gesetzte Spell/Trap) */
+/** SET = verdeckt (Monster in Verteidigung oder gesetzte Spell/Trap); ATK bei Spell/Trap = offen */
 export type Position = 'ATK' | 'DEF' | 'SET';
 
 export interface CardData {
@@ -287,15 +287,19 @@ function activate(
     warn(`Spell Speed ${spellSpeed} kann nicht auf Spell Speed ${top.spellSpeed} gechaint werden`);
   }
 
+  // OPT-Schlüssel vor den Kosten bestimmen: "diese Karte abwerfen" würde sonst die Epoche verschieben
+  const optKeys = card && effect?.opt ? optKeysFor(node, card, effect.opt, state) : [];
+  applyMoves(state, node.costMoves ?? [], warn);
+
+  // Kartenaktivierung: die Spell/Trap liegt nach den Aktivierungsbewegungen auf dem Feld.
+  // Erst danach prüfen, weil die Instanz auch erst durch diese Bewegung entstehen kann.
+  const placed = node.instanceId ? state.cards[node.instanceId] : undefined;
   const cardActivation =
     !!card &&
     /Spell|Trap/.test(card.type) &&
     (node.effectIndex ?? 0) === 0 &&
-    (instance?.zone === 'HAND' || (instance ? onField(instance.zone) : false));
-
-  // OPT-Schlüssel vor den Kosten bestimmen: "diese Karte abwerfen" würde sonst die Epoche verschieben
-  const optKeys = card && effect?.opt ? optKeysFor(node, card, effect.opt, state) : [];
-  applyMoves(state, node.costMoves ?? [], warn);
+    !!placed &&
+    onField(placed.zone);
 
   const counts = node.optOverride ?? true;
   if (counts && effect?.opt) {
