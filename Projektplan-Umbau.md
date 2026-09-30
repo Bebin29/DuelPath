@@ -14,7 +14,7 @@ DuelPath wird ein Werkzeug, um Yu-Gi-Oh!-Combos als **Baumdiagramm auf einem Can
 - **Nur lokal.** Kein Hosting, kein Deployment. Datenbank ist PostgreSQL lokal.
 - **Ein Zug pro Combo.** Eine Combo deckt genau einen eigenen Zug ab. Kein Zugwechsel, kein Phasenmodell über den Zug hinaus.
 - **Keine vollständige Regel-Engine.** DuelPath prüft nicht jeden Zug auf Legalität. Eindeutige Mechaniken (OPT, Negierungsarten, Chain-Auflösung) werden berechnet; alles andere beschreibt der Nutzer.
-- **Kein Duellmodus** als eigene Seite. Die Spielfeld-Komponenten werden für die Zustandsansicht weiterverwendet.
+- **Kein Duellmodus** als eigene Seite. Die alten Spielfeld-Komponenten sind entfernt; das Zustandspanel wird in M5 neu auf gebaut (Vorlage in der Git-Historie).
 - **Auth bleibt.** NextAuth bleibt unverändert, damit ein späteres Hosting ohne Umbau möglich ist.
 
 ## 3. Bestandsaufnahme
@@ -22,11 +22,10 @@ DuelPath wird ein Werkzeug, um Yu-Gi-Oh!-Combos als **Baumdiagramm auf einem Can
 **Bleibt:**
 
 - Next.js 16, React 19, TypeScript, Tailwind 4, Radix/shadcn UI
-- Prisma (Provider wechselt von SQLite auf PostgreSQL)
+- Prisma (Provider wechselt von SQLite auf PostgreSQL, Upgrade von Prisma 5 auf 7 in M1)
 - NextAuth mit Prisma-Adapter
 - Kartenimport (`card-import.service.ts`) und Kartensuche (`card-search.service.ts`)
 - Deckverwaltung (`src/components/deck`, `deck.actions.ts`)
-- Spielfeld-Darstellung (`DuelField`, `DuelHand`, `DuelCard`) als Basis für das Zustandspanel
 - i18n (Deutsch/Englisch), Vitest
 
 **Entfällt:**
@@ -210,17 +209,17 @@ model RulingMechanic {
 
 ## 5. Meilensteine
 
-| #      | Inhalt                                                                                                                        | Fertig, wenn                                                                           |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren                        | `npm run build`, `lint`, `test` grün                                                   |
-| **M1** | PostgreSQL per Docker, Prisma-Provider umstellen, Migrationen neu anlegen                                                     | App startet gegen lokales Postgres                                                     |
-| **M2** | `RulingMechanic` anlegen und aus `docs/research/rulings.md` befüllen                                                          | Tabelle mit allen Mechaniken aus der Recherche im Seed                                 |
-| **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
-| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking                                             | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
-| **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop                   | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
-| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand                                                         | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
-| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert                                                    | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
-| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen                                                      | Combo aus einem Deck heraus starten                                                    |
+| #      | Inhalt                                                                                                                          | Fertig, wenn                                                                           |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren (**erledigt**)           | `npm run build`, `lint`, `test` grün                                                   |
+| **M1** | PostgreSQL per Docker, Prisma 7 und Provider umstellen, Migrationen neu anlegen                                                 | App startet gegen lokales Postgres                                                     |
+| **M2** | `RulingMechanic` anlegen und aus `docs/research/rulings.md` befüllen                                                            | Tabelle mit allen Mechaniken aus der Recherche im Seed                                 |
+| **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder   | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
+| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking                                               | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
+| **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop                     | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
+| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand                                                           | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
+| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert                                                      | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
+| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen, YDK-Import fertigstellen (bisher nur ein Platzhalter) | Combo aus einem Deck heraus starten                                                    |
 
 ## 6. Risiken
 
