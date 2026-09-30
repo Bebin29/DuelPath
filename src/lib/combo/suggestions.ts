@@ -1,8 +1,8 @@
-import type { CardEffect } from '@/lib/cards/effects';
 import type { NoulQuestion } from '@/server/jev';
 import {
   cardsIn,
   isOptAvailable,
+  isTriggerEffect,
   onField,
   spellSpeedOf,
   type CardData,
@@ -17,8 +17,12 @@ import {
  * Ausgewertet mit prisma/scripts/eval-jev-suggestions.ts (Schwelle siehe SUGGESTION_THRESHOLD).
  */
 
-/** Vorschläge unter dieser Wahrscheinlichkeit werden ausgeblendet */
-export const SUGGESTION_THRESHOLD = 0.8;
+/**
+ * Vorschläge unter dieser Wahrscheinlichkeit werden ausgeblendet.
+ * Testset (npm run jev:eval, 33 Situationen): bei 0,5 Genauigkeit 91 %, Präzision 100 %, Trefferquote 80 %;
+ * bei 0,8 nur noch 20 % Trefferquote. Jev liegt bei legalen Aktivierungen oft nur knapp über 0,5.
+ */
+export const SUGGESTION_THRESHOLD = 0.5;
 export const MAX_CANDIDATES = 30;
 
 const ACTIVATION_ZONES: Zone[] = ['HAND', 'MONSTER', 'SPELL_TRAP', 'FIELD', 'GY', 'BANISHED'];
@@ -43,6 +47,9 @@ export function candidateEffects(
 ): Candidate[] {
   const top = state.chain.at(-1);
   const result: Candidate[] = [];
+  const controlsCards = (['MONSTER', 'SPELL_TRAP', 'FIELD'] as const).some(
+    (zone) => cardsIn(state, player, zone).length > 0
+  );
 
   for (const zone of ACTIVATION_ZONES) {
     for (const placed of cardsIn(state, player, zone)) {
@@ -53,9 +60,10 @@ export function candidateEffects(
 
       card.effects.forEach((effect, effectIndex) => {
         if (!effect.activated) return;
-        if (!cardActivationPossible(card, effectIndex, effect, zone, placed.position)) return;
+        if (!cardActivationPossible(card, effectIndex, zone, placed.position, controlsCards))
+          return;
         if (top) {
-          if (effect.patterns.some((p) => p.startsWith('TRIGGER_'))) return;
+          if (isTriggerEffect(effect)) return;
           const speed = spellSpeedOf(card, effectIndex, effect);
           if (speed < 2 || speed < top.spellSpeed) return;
         }
@@ -74,16 +82,21 @@ export function candidateEffects(
 function cardActivationPossible(
   card: CardData,
   effectIndex: number,
-  effect: CardEffect,
   zone: Zone,
-  position?: Position
+  position: Position | undefined,
+  controlsCards: boolean
 ): boolean {
   const isSpell = /Spell/.test(card.type);
   const isTrap = /Trap/.test(card.type);
   if (!(isSpell || isTrap) || effectIndex !== 0) return true;
   if (zone === 'GY' || zone === 'BANISHED') return false;
-  // Fallen nur gesetzt, außer der Text erlaubt die Aktivierung von der Hand (Imperm)
-  if (isTrap && zone === 'HAND') return /activate this card from your hand/.test(effect.text);
+  // Fallen nur gesetzt, außer der Kartentext erlaubt die Aktivierung von der Hand (Imperm).
+  // Die Erlaubnis steht als eigener Satz, oft mit der Bedingung "If you control no cards".
+  if (isTrap && zone === 'HAND') {
+    const permission = card.effects.find((e) => /activate this card from your hand/.test(e.text));
+    if (!permission) return false;
+    return !(/If you control no cards/.test(permission.text) && controlsCards);
+  }
   if (isTrap && onField(zone)) return position === 'SET';
   return true;
 }
@@ -174,17 +187,20 @@ export function jevRequest(
     openChain: input.chain.length
       ? input.chain.map(
           (l, i) =>
-            `Chain Link ${i + 1}: ${PLAYER_LABEL[l.player]} activated ${name(l.cardId)}${l.negated ? ' (negated)' : ''}`
+            `Chain Link ${i + 1}: ${PLAYER_LABEL[l.player]} activated ${name(l.cardId)}${l.negated ? ' (negated)' : ''}: "${(l.cardId && cards.get(l.cardId)?.effects[l.effectIndex ?? 0]?.text) || ''}"`
         )
       : 'No chain is open; the next action starts a new chain.',
   };
 
   const questions: Record<string, NoulQuestion> = {};
   input.candidates.forEach((c, i) => {
-    const effect = cards.get(c.cardId)?.effects[c.effectIndex];
+    const card = cards.get(c.cardId);
+    const effect = card?.effects[c.effectIndex];
+    // Bedingungen stehen oft in anderen Sätzen der Karte (z. B. Aktivierung von der Hand)
+    const fullText = card?.effects.map((e) => e.text).join(' ') ?? '';
     questions[`c${i}`] = {
       type: 'noul',
-      instructions: `Can ${PLAYER_LABEL[c.player]} legally activate this effect of "${name(c.cardId)}" (in ${PLAYER_LABEL[c.player]}'s ${ZONE_LABEL[c.zone]}) right now${input.chain.length ? ' in response to the open chain' : ''}? Effect: "${effect?.text ?? ''}"`,
+      instructions: `Can ${PLAYER_LABEL[c.player]} legally activate this effect of "${name(c.cardId)}" (in ${PLAYER_LABEL[c.player]}'s ${ZONE_LABEL[c.zone]}) right now${input.chain.length ? ' in response to the open chain' : ''}? Effect to activate: "${effect?.text ?? ''}" Full card text: "${fullText}"`,
       criteria: {
         true: 'Timing, location, activation conditions, costs and targets are all satisfied in this game state.',
         false:

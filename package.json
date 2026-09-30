@@ -18,6 +18,7 @@
     "db:generate": "prisma generate",
     "cards:import": "tsx --env-file=.env prisma/scripts/import-cards.ts",
     "cards:check-effects": "tsx --env-file=.env prisma/scripts/check-effects.ts",
+    "jev:eval": "tsx --env-file=.env prisma/scripts/eval-jev-suggestions.ts",
     "db:seed": "prisma db seed",
     "test": "vitest run",
     "test:watch": "vitest",
