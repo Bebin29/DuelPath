@@ -57,6 +57,7 @@ model User {
   accounts Account[]
   sessions Session[]
   decks    Deck[]
+  combos   Combo[]
 }
 
 model VerificationToken {
@@ -112,6 +113,7 @@ model Deck {
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   deckCards DeckCard[]
+  combos    Combo[]
 
   @@index([userId])
 }
@@ -130,4 +132,49 @@ model DeckCard {
   @@unique([deckId, cardId, deckSection])
   @@index([deckId, deckSection])
   @@index([cardId])
+}
+
+// Combo als Baum. Der Gamestate wird nicht gespeichert, sondern mit stateAt
+// (src/lib/combo/state.ts) aus startState und den Knoten auf dem Pfad berechnet.
+model Combo {
+  id         String   @id @default(cuid())
+  title      String
+  userId     String
+  deckId     String?
+  startState Json // StartState: Starthand, optional Gegnerboard
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck  Deck?       @relation(fields: [deckId], references: [id], onDelete: SetNull)
+  nodes ComboNode[]
+
+  @@index([userId])
+  @@index([deckId])
+}
+
+model ComboNode {
+  id           String   @id @default(cuid())
+  comboId      String
+  parentId     String? // null = Wurzel
+  kind         String // ACTION | ACTIVATE | OPPONENT | RESOLVE | END
+  player       String // self | opponent
+  edgeLabel    String? // "Keine Reaktion", "Ash Blossom", ...
+  instanceId   String? // aktivierende Karteninstanz
+  cardId       String?
+  effectIndex  Int?
+  action       String? // NORMAL_SUMMON | SPECIAL_SUMMON | SET | OTHER
+  costMoves    Json     @default("[]") // CardMove[] bei Aktivierung
+  resolveMoves Json     @default("[]") // CardMove[] bei Auflösung
+  negates      Json? // Negation
+  optOverride  Boolean? // manueller Eingriff in die OPT-Regel
+  note         String?
+  createdAt    DateTime @default(now())
+
+  combo    Combo       @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  parent   ComboNode?  @relation("Tree", fields: [parentId], references: [id], onDelete: Cascade)
+  children ComboNode[] @relation("Tree")
+
+  @@index([comboId])
+  @@index([parentId])
 }
