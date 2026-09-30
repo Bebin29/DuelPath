@@ -18638,6 +18638,37 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "Zkbbx",
+      "x": 0,
+      "y": 5161,
+      "name": "Motion-Prototypen (live, motion.dev)",
+      "width": 1340,
+      "layout": "vertical",
+      "gap": 12,
+      "children": [
+        {
+          "type": "text",
+          "id": "nLC1u",
+          "name": "Titel",
+          "fill": "#F2EFE8",
+          "content": "Motion-Prototypen · live aus design/motion/prototypen.html",
+          "fontFamily": "Instrument Serif",
+          "fontSize": 26,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "browser",
+          "id": "p8kxmL",
+          "name": "Prototyp",
+          "width": 1340,
+          "height": 410,
+          "url": "file:///home/bkoch/repos/personal/DuelPath/design/motion/prototypen.html",
+          "cornerRadius": 4
+        }
+      ]
     }
   ],
   "themes": {

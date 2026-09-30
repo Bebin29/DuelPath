@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>DuelPath · Motion-Prototypen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600&family=Kalam&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #121110;
+        --surface-1: #171614;
+        --surface-3: #24221f;
+        --felt: #151412;
+        --line: #2b2926;
+        --zone: #6f6a61;
+        --ink: #f2efe8;
+        --text-muted: #a19d94;
+        --text-subtle: #958f86;
+        --self: #6aa8ff;
+        --opponent: #ff5a36;
+        --chain: #a99bff;
+        --motion-base: 150ms;
+        --motion-flash: 600ms;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      html {
+        background: var(--bg);
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Instrument Sans', sans-serif;
+        font-size: 13px;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      section {
+        background: var(--surface-1);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 360px;
+      }
+      h2 {
+        font-family: 'Instrument Serif', serif;
+        font-weight: 400;
+        font-size: 22px;
+      }
+      .meta {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10.5px;
+        color: var(--text-subtle);
+      }
+      .stage {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 14px;
+      }
+
+      /* 1 · Wechselwort */
+      .headline {
+        font-family: 'Instrument Serif', serif;
+        font-size: 40px;
+        line-height: 1.1;
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+      }
+      .slot {
+        position: relative;
+        display: inline-block;
+        min-width: 150px;
+        height: 1.15em;
+        overflow: hidden;
+      }
+      .word {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        font-style: italic;
+        color: var(--opponent);
+        white-space: nowrap;
+      }
+      .underline {
+        position: absolute;
+        left: 0;
+        bottom: -2px;
+        width: 130px;
+        height: 12px;
+        overflow: visible;
+      }
+
+      /* 2 · Karte spielen */
+      .felt {
+        background: var(--felt);
+        border-radius: 4px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        align-items: center;
+        width: 100%;
+      }
+      .zones,
+      .hand {
+        display: flex;
+        gap: 6px;
+      }
+      .zone {
+        width: 64px;
+        height: 64px;
+        border: 1px solid var(--zone);
+        border-radius: 2px;
+        display: grid;
+        place-items: center;
+        position: relative;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        color: var(--text-subtle);
+      }
+      .card {
+        width: 40px;
+        height: 58px;
+        border-radius: 2px;
+        background-size: cover;
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+        position: relative;
+        z-index: 1;
+      }
+      .zone > * {
+        grid-area: 1 / 1;
+      }
+      .dot {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--self);
+        opacity: 0;
+      }
+
+      /* 3 · Stresstest */
+      .row {
+        width: 100%;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 14px;
+        position: relative;
+      }
+      .row.on {
+        background: var(--surface-3);
+        box-shadow: inset 2px 0 0 var(--ink);
+      }
+      .nr {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+        color: var(--text-subtle);
+      }
+      .row.on .nr {
+        color: var(--ink);
+      }
+      .grow {
+        flex: 1;
+      }
+      .chips {
+        display: flex;
+        gap: 4px;
+        position: relative;
+      }
+      .chip {
+        width: 18px;
+        height: 18px;
+        border-radius: 2px;
+        background-size: 120% auto;
+        background-position: 50% 30%;
+        opacity: 0;
+      }
+      .circle {
+        position: absolute;
+        left: -10px;
+        top: -11px;
+        width: 60px;
+        height: 40px;
+        overflow: visible;
+      }
+      .note {
+        font-family: 'Kalam', cursive;
+        font-size: 15px;
+        color: var(--opponent);
+        padding-left: 40px;
+        opacity: 0;
+      }
+      .btn {
+        font: inherit;
+        font-weight: 600;
+        background: var(--ink);
+        color: var(--bg);
+        border: 0;
+        border-radius: 3px;
+        height: 30px;
+        padding: 0 12px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <section>
+      <h2>Wechselwort</h2>
+      <p class="meta">Start · alle 2,4 s · 240 ms · alt nach oben, neu von unten</p>
+      <div class="stage">
+        <p
+          class="meta"
+          style="font-family: 'Instrument Sans'; font-size: 13px; color: var(--text-muted)"
+        >
+          Deine Line steht. Die Frage ist nur:
+        </p>
+        <div class="headline">
+          <span>Wo stoppt dich</span>
+          <span class="slot" id="slot">
+            <span class="word">Ash?</span>
+            <svg class="underline" viewBox="0 0 140 14" fill="none">
+              <path
+                id="uline"
+                d="M 3 8 C 34 3 80 2 137 5 M 14 12 C 50 9 92 9 128 10"
+                stroke="#FF5A36"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Karte spielen</h2>
+      <p class="meta">Workbench · Zonenwechsel 150 ms · Aufleuchten 600 ms · FLIP</p>
+      <div class="stage">
+        <div class="felt">
+          <div class="zones">
+            <div class="zone"><span>MZ</span></div>
+            <div class="zone" id="target"><span>MZ</span><span class="dot" id="dot"></span></div>
+            <div class="zone"><span>MZ</span></div>
+          </div>
+          <div class="hand" id="hand">
+            <div
+              class="card"
+              id="aluber"
+              style="background-image: url(../assets/62962630_small.jpg)"
+            ></div>
+            <div class="card" style="background-image: url(../assets/14558127_small.jpg)"></div>
+            <div class="card" style="background-image: url(../assets/10045474_small.jpg)"></div>
+          </div>
+        </div>
+        <button class="btn" id="play">Normal Summon</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Stresstest-Ergebnis</h2>
+      <p class="meta">seltene Fläche · Chips gestaffelt 40 ms · Kreis zeichnet sich 500 ms</p>
+      <div class="stage" style="align-items: stretch; gap: 0">
+        <div class="row"><span class="nr">1</span><span>NS Aluber</span></div>
+        <div class="row on">
+          <span class="nr">2</span><span>Aluber → Br. Fusion</span><span class="grow"></span>
+          <span class="chips" id="chips">
+            <span class="chip" style="background-image: url(../assets/14558127_small.jpg)"></span>
+            <span class="chip" style="background-image: url(../assets/10045474_small.jpg)"></span>
+            <svg class="circle" viewBox="0 0 112 46" fill="none">
+              <path
+                id="circle"
+                d="M 14 30 C 4 20 12 8 40 5 C 72 1 104 7 107 21 C 110 35 76 42 46 41 C 20 40 4 33 7 22 C 9 14 22 9 36 8"
+                stroke="#FF5A36"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </span>
+        </div>
+        <p class="note" id="note">Ash hier? Tragedy als Extender.</p>
+        <div class="row"><span class="nr">3</span><span>Branded Fusion → Albion</span></div>
+      </div>
+    </section>
+
+    <script type="module">
+      import { animate, stagger } from 'https://cdn.jsdelivr.net/npm/motion@12/+esm';
+
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const ease = [0.2, 0, 0, 1];
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const drawIn = (path, duration) => {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len;
+        return animate(
+          path,
+          { strokeDashoffset: [len, 0] },
+          { duration: reduced ? 0 : duration, ease }
+        );
+      };
+
+      /* 1 · Wechselwort */
+      const words = ['Ash?', 'Imperm?', 'Nibiru?', 'Droll?'];
+      const slot = document.getElementById('slot');
+      const uline = document.getElementById('uline');
+      let i = 0;
+      drawIn(uline, 0.5);
+      setInterval(async () => {
+        const old = slot.querySelector('.word');
+        const next = document.createElement('span');
+        next.className = 'word';
+        next.textContent = words[(i = (i + 1) % words.length)];
+        slot.prepend(next);
+        if (reduced) {
+          old.remove();
+          return;
+        }
+        animate(
+          old,
+          { y: ['0%', '-100%'], opacity: [1, 0], filter: ['blur(0px)', 'blur(4px)'] },
+          { duration: 0.24, ease }
+        );
+        await animate(
+          next,
+          { y: ['100%', '0%'], opacity: [0, 1], filter: ['blur(4px)', 'blur(0px)'] },
+          { duration: 0.24, ease }
+        );
+        old.remove();
+        drawIn(uline, 0.4);
+      }, 2400);
+
+      /* 2 · Karte spielen (FLIP: Position messen, umhängen, Differenz animieren) */
+      const card = document.getElementById('aluber');
+      const hand = document.getElementById('hand');
+      const target = document.getElementById('target');
+      const dot = document.getElementById('dot');
+      const btn = document.getElementById('play');
+      let onField = false;
+      async function move() {
+        const first = card.getBoundingClientRect();
+        (onField ? hand : target).prepend(card);
+        onField = !onField;
+        const last = card.getBoundingClientRect();
+        btn.textContent = onField ? 'Zurück auf die Hand' : 'Normal Summon';
+        if (!reduced) {
+          await animate(
+            card,
+            { x: [first.left - last.left, 0], y: [first.top - last.top, 0] },
+            { duration: 0.15, ease }
+          );
+        }
+        if (onField) {
+          animate(
+            card,
+            {
+              boxShadow: [
+                '0 0 0 2px #6AA8FF, 0 0 18px #6AA8FF',
+                'inset 0 0 0 1px rgb(255 255 255 / 0.1)',
+              ],
+            },
+            { duration: 0.6, ease: 'easeOut' }
+          );
+          animate(dot, { opacity: 1 }, { duration: 0.1 });
+        } else {
+          animate(dot, { opacity: 0 }, { duration: 0.1 });
+        }
+      }
+      btn.addEventListener('click', move);
+      setInterval(move, 2600);
+
+      /* 3 · Stresstest-Ergebnis */
+      const chips = document.querySelectorAll('.chip');
+      const circle = document.getElementById('circle');
+      const note = document.getElementById('note');
+      async function reveal() {
+        chips.forEach((c) => Object.assign(c.style, { opacity: 0, transform: 'scale(0.6)' }));
+        Object.assign(note.style, { opacity: 0, transform: 'none' });
+        const len = circle.getTotalLength();
+        circle.style.strokeDasharray = len;
+        circle.style.strokeDashoffset = len;
+        await wait(500);
+        await animate(
+          chips,
+          { opacity: [0, 1], scale: [0.6, 1] },
+          { duration: reduced ? 0 : 0.25, delay: stagger(0.04), ease: [0.34, 1.36, 0.64, 1] }
+        );
+        await drawIn(circle, 0.5);
+        animate(note, { opacity: [0, 1], x: [-6, 0] }, { duration: reduced ? 0 : 0.35, ease });
+      }
+      reveal();
+      setInterval(reveal, 4000);
+    </script>
+  </body>
+</html>
