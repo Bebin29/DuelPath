@@ -174,15 +174,25 @@ Zugang über **OpenRouter**, Modell `typesafe/jev-1.13-20260917` (fest gepinnt, 
 
 Jev wird an zwei Stellen genutzt: zur Prüfung der Effektzerlegung (4.2) und im Editor für Vorschläge. Beide Aufrufe laufen über dieselbe Datei `src/server/jev.ts`. Erfahrung aus der Zerlegungsprüfung: konkrete Ja/Nein-Fragen mit klaren Kriterien funktionieren, Zählfragen nicht; Absolutwerte streuen stark, daher Schwellen immer an einem Testset festlegen.
 
-**Ablauf pro Knoten:**
+**Ablauf pro Knoten** (umgesetzt in `src/lib/combo/suggestions.ts`, `src/server/services/suggestion.service.ts`, `src/components/combo/SuggestionPanel.tsx`):
 
-1. **Vorfilter ohne Jev.** Kandidaten sind Effekte von Karten in Hand, Feld, Friedhof und Verbannt. Effekte mit verbrauchtem OPT fallen raus, ebenso Effekte, deren Spell Speed nicht zur offenen Chain passt.
-2. **Eine Anfrage pro Knoten.** `state` = kompakt serialisierter Gamestate plus relevante Ruling-Hinweise der Kandidaten, `questions` = je Kandidat ein `noul` („Kann Effekt n von Karte X in diesem Zustand aktiviert werden?“ plus Effekttext). Alle Kandidaten in einer Anfrage spart Input-Tokens, weil der State nur einmal gesendet wird.
-3. **Schwellwert.** Vorschläge unter 0,8 (einstellbar) werden ausgeblendet, der Rest nach Wahrscheinlichkeit sortiert.
-4. **Cache.** Antworten werden über einen Hash aus State und Kandidaten zwischengespeichert (Tabelle `JevCache`).
-5. **Nur serverseitig.** `OPENROUTER_API_KEY` bleibt auf dem Server. Ohne Key läuft der Editor normal weiter, nur ohne Vorschläge.
+1. **Vorfilter ohne Jev** (`candidateEffects`). Kandidaten sind aktivierte Effekte von Karten in Hand, Feld, Friedhof und Verbannt. Aussortiert werden verbrauchte OPTs, negierte Karten und Namen, bei offener Chain Spell Speed unter 2 bzw. unter dem obersten Link sowie Trigger, und Kartenaktivierungen, die an diesem Ort nicht gehen (Spell/Trap aus Friedhof oder Verbannt, offene Falle, Falle von der Hand ohne Erlaubnis im Kartentext, Imperm-Typ bei eigenen Karten auf dem Feld). Höchstens 30 Kandidaten.
+2. **Eine Anfrage pro Knoten.** `state` = Zug, Felder beider Spieler mit Positionen, offene Chain mit dem Text des jeweils aktivierten Effekts; `questions` = je Kandidat ein `noul` mit dem zu aktivierenden Effekt und dem vollen Kartentext (Bedingungen stehen oft in anderen Sätzen). Die Server Action nimmt vom Browser nur Karten-IDs und Zonen an und lädt alle Texte selbst aus der Datenbank.
+3. **Schwelle 0,5.** Vorschläge darunter werden ausgeblendet, der Rest nach Wahrscheinlichkeit sortiert; die Anzahl der ausgeblendeten wird angezeigt.
+4. **Cache.** Tabelle `JevCache`, Schlüssel = sha256 aus Modell, Zustand und Fragen. Wiederholte Situationen kosten nichts.
+5. **Nur serverseitig.** Ohne `OPENROUTER_API_KEY` zeigt das Panel einen Hinweis, der Editor funktioniert normal.
 
-**Qualitätsprüfung:** Vor dem Einschalten ein Testset aus etwa 30 bekannten Situationen (State, Effekt, erwartetes Ja/Nein) anlegen und Trefferquote sowie sinnvollen Schwellwert messen. Die Leistungsangaben stammen vom Hersteller und sind unabhängig noch nicht bestätigt.
+Ein Klick auf einen Vorschlag legt die Aktivierung als nächsten Schritt an. Am Gegner-Knoten gelten die Vorschläge für den Gegner, sonst für den eigenen Zug.
+
+**Qualitätsprüfung:** `npm run jev:eval` misst die komplette Pipeline (Vorfilter, dann Jev) an 33 Situationen mit bekannter Antwort (`prisma/scripts/jev-suggestion-cases.ts`). Ergebnis:
+
+| Schwelle | Genauigkeit | Präzision | Trefferquote |
+| -------- | ----------- | --------- | ------------ |
+| 0,5      | 91 %        | 100 %     | 80 %         |
+| 0,6      | 82 %        | 100 %     | 60 %         |
+| 0,8      | 64 %        | 100 %     | 20 %         |
+
+Die ursprünglich geplante Schwelle 0,8 hätte kaum noch etwas vorgeschlagen; Jev bewertet legale Aktivierungen oft nur knapp über 0,5. Harte Bedingungen gehören deshalb in den Vorfilter (Beispiel Imperm: Jev ignorierte „If you control no cards“). Schwächen bleiben bei Karten ohne Ziel wie Raigeki oder Dark Hole, die Jev kaum von Karten mit Ziel unterscheidet.
 
 ### 4.6 Rulings
 
@@ -225,7 +235,7 @@ interface RulingMechanic {
 | **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking (**erledigt**)                                                         | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
 | **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop (**erledigt**, Chain-Gruppen als Markierung) | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
 | **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand (**erledigt**)                                                                     | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
-| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert                                                                               | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
+| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert (**erledigt**, Schwelle 0,5)                                                  | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
 | **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen, YDK-Import fertigstellen (bisher nur ein Platzhalter)                          | Combo aus einem Deck heraus starten                                                    |
 
 ## 6. Risiken
