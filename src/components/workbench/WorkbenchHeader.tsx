@@ -1,0 +1,155 @@
+'use client';
+
+import Link from 'next/link';
+import { ArrowLeft, Check, CloudOff, Loader2, Redo2, TriangleAlert, Undo2 } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Kbd } from '@/components/ui/kbd';
+import { Segmented } from '@/components/ui/segmented';
+
+export type WorkbenchMode = 'board' | 'tree';
+export type SaveStatus = 'saved' | 'saving' | 'error';
+
+/** Kopfzeile der Workbench (UI-Plan 7.1): ersetzt dort die App-Kopfzeile */
+export function WorkbenchHeader({
+  title,
+  onTitle,
+  deckId,
+  decks,
+  onDeck,
+  mode,
+  onMode,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
+  warnings,
+  onWarnings,
+  status,
+  onRetry,
+}: {
+  title: string;
+  onTitle: (title: string) => void;
+  deckId: string | null;
+  decks: { id: string; name: string }[];
+  onDeck: (deckId: string | null) => void;
+  mode: WorkbenchMode;
+  onMode: (mode: WorkbenchMode) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+  warnings: number;
+  onWarnings: () => void;
+  status: SaveStatus;
+  onRetry: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <header className="flex h-12 shrink-0 items-center gap-3 border-b border-line bg-surface-1 px-4">
+      <Button asChild variant="ghost" size="icon-sm" aria-label={t('combo.back')}>
+        <Link href="/combos">
+          <ArrowLeft />
+        </Link>
+      </Button>
+      <input
+        value={title}
+        onChange={(e) => onTitle(e.target.value)}
+        aria-label={t('combo.titlePlaceholder')}
+        className="min-w-0 max-w-80 rounded-md bg-transparent px-1 font-display text-xl leading-none text-ink outline-none hover:bg-surface-3/50 focus-visible:bg-surface-3/50"
+      />
+      <select
+        value={deckId ?? ''}
+        onChange={(e) => onDeck(e.target.value || null)}
+        aria-label={t('combo.deck.label')}
+        className="rounded-md bg-transparent px-1 text-xs text-text-muted outline-none hover:bg-surface-3/50"
+      >
+        <option value="">{t('combo.deck.none')}</option>
+        {decks.map((d) => (
+          <option key={d.id} value={d.id}>
+            {d.name}
+          </option>
+        ))}
+      </select>
+
+      <span className="flex-1" />
+      <Segmented<WorkbenchMode>
+        label={t('workbench.mode')}
+        value={mode}
+        onChange={onMode}
+        options={[
+          { value: 'board', label: t('workbench.board') },
+          { value: 'tree', label: t('workbench.tree') },
+        ]}
+      />
+      <Kbd>V</Kbd>
+      <span className="flex-1" />
+
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={onUndo}
+        disabled={!canUndo}
+        aria-label={`${t('workbench.undo')} (Strg+Z)`}
+        title={`${t('workbench.undo')} (Strg+Z)`}
+      >
+        <Undo2 />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={onRedo}
+        disabled={!canRedo}
+        aria-label={`${t('workbench.redo')} (Strg+Umschalt+Z)`}
+        title={`${t('workbench.redo')} (Strg+Umschalt+Z)`}
+      >
+        <Redo2 />
+      </Button>
+      <span className="h-5 w-px bg-line" />
+      <button
+        type="button"
+        onClick={onWarnings}
+        disabled={warnings === 0}
+        aria-label={
+          warnings ? t('workbench.warnings', { count: warnings }) : t('workbench.noWarnings')
+        }
+        className={cn(
+          'flex items-center gap-1 rounded-md px-1.5 py-1 font-mono text-xs',
+          warnings ? 'text-warning hover:bg-warning-tint' : 'text-text-subtle'
+        )}
+      >
+        <TriangleAlert className="size-3.5" />
+        {warnings}
+      </button>
+      <span
+        role="status"
+        aria-live="polite"
+        className="flex min-w-28 items-center justify-end gap-1.5 font-mono text-[11px]"
+      >
+        {status === 'saved' && (
+          <>
+            <Check className="size-3 text-text-subtle" />
+            <span className="text-text-subtle">{t('combo.saved')}</span>
+          </>
+        )}
+        {status === 'saving' && (
+          <>
+            <Loader2 className="size-3 animate-spin text-text-subtle" />
+            <span className="text-text-subtle">{t('combo.saving')}</span>
+          </>
+        )}
+        {status === 'error' && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="flex items-center gap-1.5 text-opponent hover:underline"
+          >
+            <CloudOff className="size-3" />
+            {t('combo.saveError')}
+          </button>
+        )}
+      </span>
+    </header>
+  );
+}
