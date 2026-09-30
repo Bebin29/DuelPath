@@ -256,7 +256,7 @@ function applyMoves(state: GameState, moves: CardMove[], warn: (m: string) => vo
   }
 }
 
-function onField(zone: Zone): boolean {
+export function onField(zone: Zone): boolean {
   return zone === 'MONSTER' || zone === 'SPELL_TRAP' || zone === 'FIELD';
 }
 
@@ -325,7 +325,7 @@ function activate(
 }
 
 function optKeysFor(
-  node: ComboNodeData,
+  node: Pick<ComboNodeData, 'instanceId' | 'effectIndex' | 'player'>,
   card: CardData,
   opt: EffectOpt,
   state: GameState
@@ -341,7 +341,7 @@ function optKeysFor(
   return [`hard:${node.player}:${opt.group ?? `${card.name}#${node.effectIndex}`}`];
 }
 
-function spellSpeedOf(card: CardData, effectIndex: number, effect?: CardEffect): 1 | 2 | 3 {
+export function spellSpeedOf(card: CardData, effectIndex: number, effect?: CardEffect): 1 | 2 | 3 {
   if (/Trap/.test(card.type)) {
     if (card.race === 'Counter' && effectIndex === 0) return 3;
     return effectIndex === 0 || effect?.patterns.includes('QUICK') ? 2 : 1;
@@ -460,5 +460,18 @@ function applyNegation(
 export function cardsIn(state: GameState, player: Player, zone: Zone): PlacedCard[] {
   return Object.values(state.cards).filter(
     (c) => c.zone === zone && (onField(zone) ? c.controller : c.owner) === player
+  );
+}
+
+/** Ist der OPT dieses Effekts für den Spieler noch frei? (für Vorschläge, ohne den Zustand zu ändern) */
+export function isOptAvailable(
+  state: GameState,
+  activation: { instanceId: string; effectIndex: number; player: Player },
+  card: CardData
+): boolean {
+  const opt = card.effects[activation.effectIndex]?.opt;
+  if (!opt) return true;
+  return optKeysFor(activation, card, opt, state).every(
+    (key) => (state.optUsage[key] ?? 0) < opt.limit
   );
 }
