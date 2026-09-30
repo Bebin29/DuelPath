@@ -18,7 +18,9 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', '.next', 'out', 'build', 'dist'],
-    // ponytail: capped because workers time out on start in the OneDrive folder; raise when the repo moves off OneDrive
+    // ponytail: threads with max 4 workers, because forked workers time out on start in the OneDrive folder
+    // (especially with next dev running); raise when the repo moves off OneDrive
+    pool: 'threads',
     maxWorkers: 4,
   },
   resolve: {
