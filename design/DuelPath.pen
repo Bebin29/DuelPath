@@ -17,7 +17,7 @@
       "type": "frame",
       "id": "SOkTN",
       "x": 0,
-      "y": -399,
+      "y": -880,
       "name": "Komponenten",
       "theme": {
         "mode": "dark"
@@ -906,9 +906,9 @@
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
                           "content": "Ash hier? Tragedy als Extender.",
-                          "lineHeight": 1.15,
+                          "lineHeight": 1.1,
                           "fontFamily": "$hand",
-                          "fontSize": 15,
+                          "fontSize": 17,
                           "fontWeight": "normal"
                         }
                       ]
@@ -11590,9 +11590,9 @@
                       "textGrowth": "fixed-width",
                       "width": "fill_container",
                       "content": "Immer zuerst Aluber, damit Ash hier landet und nicht auf Branded Fusion.",
-                      "lineHeight": 1.2,
+                      "lineHeight": 1.15,
                       "fontFamily": "$hand",
-                      "fontSize": 15,
+                      "fontSize": 17,
                       "fontWeight": "normal"
                     }
                   ]
@@ -14472,8 +14472,9 @@
                               "name": "Text",
                               "fill": "$opponent",
                               "content": "Ash, Imperm und Fuwalos bleiben als Unterbrechungen auf der Hand.",
+                              "lineHeight": 1.15,
                               "fontFamily": "$hand",
-                              "fontSize": 15,
+                              "fontSize": 17,
                               "fontWeight": "normal"
                             }
                           ]
@@ -16358,6 +16359,2285 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "hL0Rr",
+      "x": 2232,
+      "y": 5181,
+      "name": "Schriftvergleich",
+      "theme": {
+        "mode": "dark"
+      },
+      "fill": "$bg",
+      "gap": 24,
+      "padding": 40,
+      "children": [
+        {
+          "type": "frame",
+          "id": "DwuRb",
+          "name": "Satz 1 · Aktuell",
+          "width": 620,
+          "fill": "$surface-1",
+          "cornerRadius": 4,
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 18,
+          "padding": 28,
+          "children": [
+            {
+              "type": "frame",
+              "id": "aNc1E",
+              "name": "Kopf",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "NKec2",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "content": "1 · Aktuell",
+                  "fontFamily": "JetBrains Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "uleQE",
+                  "name": "Familien",
+                  "fill": "$text-muted",
+                  "content": "Instrument Serif · Instrument Sans · JetBrains Mono · Kalam",
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "kcjR3",
+                  "name": "Warum",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Schmale Display-Serif, neutrale Grotesk, Code-Mono, lockere Handschrift.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "W7fEn9",
+              "name": "Headline",
+              "gap": 10,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "NqRV1",
+                  "name": "Fest",
+                  "fill": "$ink",
+                  "content": "Wo stoppt dich",
+                  "lineHeight": 1.05,
+                  "fontFamily": "Instrument Serif",
+                  "fontSize": 40,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "C0zgLe",
+                  "name": "Wort",
+                  "fill": "$opponent",
+                  "content": "Ash?",
+                  "lineHeight": 1.05,
+                  "fontFamily": "Instrument Serif",
+                  "fontSize": 40,
+                  "fontWeight": "normal",
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ZAJtG",
+              "name": "Workbench",
+              "width": "fill_container",
+              "fill": "$bg",
+              "cornerRadius": 3,
+              "layout": "vertical",
+              "padding": [
+                10,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "hgm3s",
+                  "name": "Titelzeile",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "padding": [
+                    4,
+                    14,
+                    10,
+                    14
+                  ],
+                  "alignItems": "end",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ruzk1",
+                      "name": "Titel",
+                      "fill": "$ink",
+                      "content": "Aluber 1-Card",
+                      "fontFamily": "Instrument Serif",
+                      "fontSize": 21,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "gHljx",
+                      "name": "Deck",
+                      "fill": "$text-muted",
+                      "content": "Branded Despia",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 12.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "uqpON",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "Eyc4J",
+                      "name": "Status",
+                      "fill": "$text-subtle",
+                      "content": "gespeichert",
+                      "fontFamily": "JetBrains Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wBe9r",
+                  "name": "Schritt 1",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "#00000000",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "pQIRl",
+                      "name": "Nr",
+                      "fill": "$text-subtle",
+                      "content": "1",
+                      "fontFamily": "JetBrains Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "J1aeSu",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "NS Aluber",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "frame",
+                      "id": "B5aNw",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "Ccdi3",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "fontFamily": "JetBrains Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "AIFYU",
+                  "name": "Schritt 2",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "$surface-3",
+                  "stroke": "$primary",
+                  "strokeWidth": {
+                    "left": 2
+                  },
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "yA09Y",
+                      "name": "Nr",
+                      "fill": "$ink",
+                      "content": "2",
+                      "fontFamily": "JetBrains Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Cb4Js",
+                      "name": "Text",
+                      "fill": "$ink",
+                      "content": "Aluber → Br. Fusion",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mUqhv",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "gnrXG",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "content": "Endboard 3",
+                      "fontFamily": "JetBrains Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wpwrA",
+                  "name": "Schritt 3",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "#00000000",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "fmkBo",
+                      "name": "Nr",
+                      "fill": "$text-subtle",
+                      "content": "3",
+                      "fontFamily": "JetBrains Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "IfSrn",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "Branded Fusion → Albion",
+                      "fontFamily": "Instrument Sans",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "frame",
+                      "id": "A7BfsR",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "C6rbOz",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "fontFamily": "JetBrains Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "joDRJ",
+                  "name": "Notiz",
+                  "width": "fill_container",
+                  "padding": [
+                    6,
+                    14,
+                    4,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "z4RAHK",
+                      "name": "Hand",
+                      "fill": "$opponent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Ash hier? Tragödie als Extender, dann Albion trotzdem.",
+                      "lineHeight": 1.15,
+                      "fontFamily": "Kalam",
+                      "fontSize": 17,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "TpKym",
+              "name": "Kartentext",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "If this card is Normal or Special Summoned: You can add 1 \"Branded\" Spell/Trap from your Deck to your hand.",
+              "lineHeight": 1.5,
+              "fontFamily": "Instrument Sans",
+              "fontSize": 12.5,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "UXhso",
+              "name": "Mono",
+              "fill": "$text-muted",
+              "content": "HOPT · genutzt   2 / 9   CL1   Strg K   1800 / 0   68 %",
+              "fontFamily": "JetBrains Mono",
+              "fontSize": 11.5,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "TPc8b",
+              "name": "Sonderzeichen",
+              "fill": "$ink",
+              "content": "Rückgängig · Größe · Übergänge · „Zitat“ · 0123456789",
+              "fontFamily": "Instrument Sans",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "zlvtF",
+              "name": "Display klein",
+              "fill": "$ink",
+              "content": "Einstellungen, Zuletzt bearbeitet, Kartensprache ÄÖÜ ß",
+              "fontFamily": "Instrument Serif",
+              "fontSize": 18,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "BkpJS",
+          "name": "Satz 2 · Redaktion",
+          "width": 620,
+          "fill": "$surface-1",
+          "cornerRadius": 4,
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 18,
+          "padding": 28,
+          "children": [
+            {
+              "type": "frame",
+              "id": "auOBK",
+              "name": "Kopf",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "vWJ08",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "content": "2 · Redaktion",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "e320K",
+                  "name": "Familien",
+                  "fill": "$text-muted",
+                  "content": "Newsreader · Schibsted Grotesk · IBM Plex Mono · Gochi Hand",
+                  "fontFamily": "Schibsted Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "IV83O",
+                  "name": "Warum",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Zeitungs-Serif mit echter Kursive, kräftige Grotesk mit Charakter, Schreibmaschinen-Mono, Filzstift.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Schibsted Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "j1wsJB",
+              "name": "Headline",
+              "gap": 10,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "STIN3",
+                  "name": "Fest",
+                  "fill": "$ink",
+                  "content": "Wo stoppt dich",
+                  "lineHeight": 1.05,
+                  "fontFamily": "Newsreader",
+                  "fontSize": 40,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "XJbnp",
+                  "name": "Wort",
+                  "fill": "$opponent",
+                  "content": "Ash?",
+                  "lineHeight": 1.05,
+                  "fontFamily": "Newsreader",
+                  "fontSize": 40,
+                  "fontWeight": "normal",
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "x7DuK",
+              "name": "Workbench",
+              "width": "fill_container",
+              "fill": "$bg",
+              "cornerRadius": 3,
+              "layout": "vertical",
+              "padding": [
+                10,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "GhxWq",
+                  "name": "Titelzeile",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "padding": [
+                    4,
+                    14,
+                    10,
+                    14
+                  ],
+                  "alignItems": "end",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "p9XgS",
+                      "name": "Titel",
+                      "fill": "$ink",
+                      "content": "Aluber 1-Card",
+                      "fontFamily": "Newsreader",
+                      "fontSize": 21,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "U9bSxJ",
+                      "name": "Deck",
+                      "fill": "$text-muted",
+                      "content": "Branded Despia",
+                      "fontFamily": "Schibsted Grotesk",
+                      "fontSize": 12.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "aVowD",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "dKf9u",
+                      "name": "Status",
+                      "fill": "$text-subtle",
+                      "content": "gespeichert",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "U7bOe",
+                  "name": "Schritt 1",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "#00000000",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "wIviQ",
+                      "name": "Nr",
+                      "fill": "$text-subtle",
+                      "content": "1",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "dRNAD",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "NS Aluber",
+                      "fontFamily": "Schibsted Grotesk",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "frame",
+                      "id": "v9cdMz",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "PkoJy",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "H8IMir",
+                  "name": "Schritt 2",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "$surface-3",
+                  "stroke": "$primary",
+                  "strokeWidth": {
+                    "left": 2
+                  },
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rW8u7",
+                      "name": "Nr",
+                      "fill": "$ink",
+                      "content": "2",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "BUpfm",
+                      "name": "Text",
+                      "fill": "$ink",
+                      "content": "Aluber → Br. Fusion",
+                      "fontFamily": "Schibsted Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "cKClX",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "y3vCW",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "content": "Endboard 3",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hCcs8",
+                  "name": "Schritt 3",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "#00000000",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "wi6do",
+                      "name": "Nr",
+                      "fill": "$text-subtle",
+                      "content": "3",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "KIID1",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "Branded Fusion → Albion",
+                      "fontFamily": "Schibsted Grotesk",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "frame",
+                      "id": "qm1Mi",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "nXPxU",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "fontFamily": "IBM Plex Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ppwlC",
+                  "name": "Notiz",
+                  "width": "fill_container",
+                  "padding": [
+                    6,
+                    14,
+                    4,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Y3Iwx",
+                      "name": "Hand",
+                      "fill": "$opponent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Ash hier? Tragödie als Extender, dann Albion trotzdem.",
+                      "lineHeight": 1.15,
+                      "fontFamily": "Gochi Hand",
+                      "fontSize": 17,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "u1VUk",
+              "name": "Kartentext",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "If this card is Normal or Special Summoned: You can add 1 \"Branded\" Spell/Trap from your Deck to your hand.",
+              "lineHeight": 1.5,
+              "fontFamily": "Schibsted Grotesk",
+              "fontSize": 12.5,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "oHPwi",
+              "name": "Mono",
+              "fill": "$text-muted",
+              "content": "HOPT · genutzt   2 / 9   CL1   Strg K   1800 / 0   68 %",
+              "fontFamily": "IBM Plex Mono",
+              "fontSize": 11.5,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "BXP3g",
+              "name": "Sonderzeichen",
+              "fill": "$ink",
+              "content": "Rückgängig · Größe · Übergänge · „Zitat“ · 0123456789",
+              "fontFamily": "Schibsted Grotesk",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "UJHDi",
+              "name": "Display klein",
+              "fill": "$ink",
+              "content": "Einstellungen, Zuletzt bearbeitet, Kartensprache ÄÖÜ ß",
+              "fontFamily": "Newsreader",
+              "fontSize": 18,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "yc8R9",
+          "name": "Satz 3 · Tinte",
+          "width": 620,
+          "fill": "$surface-1",
+          "cornerRadius": 4,
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 18,
+          "padding": 28,
+          "children": [
+            {
+              "type": "frame",
+              "id": "U7hH6s",
+              "name": "Kopf",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BZSun",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "content": "3 · Tinte",
+                  "fontFamily": "DM Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "d2hVZ",
+                  "name": "Familien",
+                  "fill": "$text-muted",
+                  "content": "Young Serif · Hanken Grotesk · DM Mono · Just Another Hand",
+                  "fontFamily": "Hanken Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "DUwHm",
+                  "name": "Warum",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Warme, runde Serif wie gestempelt, sehr gut lesbare Grotesk, weiche Mono, schneller Rotstift.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Hanken Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ldEmF",
+              "name": "Headline",
+              "gap": 10,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "RJLAr",
+                  "name": "Fest",
+                  "fill": "$ink",
+                  "content": "Wo stoppt dich",
+                  "lineHeight": 1.05,
+                  "fontFamily": "Young Serif",
+                  "fontSize": 40,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "ampXu",
+                  "name": "Wort",
+                  "fill": "$opponent",
+                  "content": "Ash?",
+                  "lineHeight": 1.05,
+                  "fontFamily": "Young Serif",
+                  "fontSize": 40,
+                  "fontWeight": "normal",
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nyyqX",
+              "name": "Workbench",
+              "width": "fill_container",
+              "fill": "$bg",
+              "cornerRadius": 3,
+              "layout": "vertical",
+              "padding": [
+                10,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "f2G0N0",
+                  "name": "Titelzeile",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "padding": [
+                    4,
+                    14,
+                    10,
+                    14
+                  ],
+                  "alignItems": "end",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "HHIG5",
+                      "name": "Titel",
+                      "fill": "$ink",
+                      "content": "Aluber 1-Card",
+                      "fontFamily": "Young Serif",
+                      "fontSize": 21,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "gPlf9",
+                      "name": "Deck",
+                      "fill": "$text-muted",
+                      "content": "Branded Despia",
+                      "fontFamily": "Hanken Grotesk",
+                      "fontSize": 12.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "G16anK",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "QFVBy",
+                      "name": "Status",
+                      "fill": "$text-subtle",
+                      "content": "gespeichert",
+                      "fontFamily": "DM Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Ug4ry",
+                  "name": "Schritt 1",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "#00000000",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RGz9x",
+                      "name": "Nr",
+                      "fill": "$text-subtle",
+                      "content": "1",
+                      "fontFamily": "DM Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RnNQY",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "NS Aluber",
+                      "fontFamily": "Hanken Grotesk",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dnKzk",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "rZBio",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "fontFamily": "DM Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "F7tYU",
+                  "name": "Schritt 2",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "$surface-3",
+                  "stroke": "$primary",
+                  "strokeWidth": {
+                    "left": 2
+                  },
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "L34wJ",
+                      "name": "Nr",
+                      "fill": "$ink",
+                      "content": "2",
+                      "fontFamily": "DM Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "J7hjM4",
+                      "name": "Text",
+                      "fill": "$ink",
+                      "content": "Aluber → Br. Fusion",
+                      "fontFamily": "Hanken Grotesk",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "M803e",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "z5wTcm",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "content": "Endboard 3",
+                      "fontFamily": "DM Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "G4sGH",
+                  "name": "Schritt 3",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "#00000000",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "USmJz",
+                      "name": "Nr",
+                      "fill": "$text-subtle",
+                      "content": "3",
+                      "fontFamily": "DM Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "CNrnt",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "Branded Fusion → Albion",
+                      "fontFamily": "Hanken Grotesk",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "frame",
+                      "id": "D1r0e",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "gEPEs",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "fontFamily": "DM Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "NGfYL",
+                  "name": "Notiz",
+                  "width": "fill_container",
+                  "padding": [
+                    6,
+                    14,
+                    4,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "NYMvt",
+                      "name": "Hand",
+                      "fill": "$opponent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Ash hier? Tragödie als Extender, dann Albion trotzdem.",
+                      "lineHeight": 1.15,
+                      "fontFamily": "Just Another Hand",
+                      "fontSize": 17,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "bpuOb",
+              "name": "Kartentext",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "If this card is Normal or Special Summoned: You can add 1 \"Branded\" Spell/Trap from your Deck to your hand.",
+              "lineHeight": 1.5,
+              "fontFamily": "Hanken Grotesk",
+              "fontSize": 12.5,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "SAUoh",
+              "name": "Mono",
+              "fill": "$text-muted",
+              "content": "HOPT · genutzt   2 / 9   CL1   Strg K   1800 / 0   68 %",
+              "fontFamily": "DM Mono",
+              "fontSize": 11.5,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "l0hWG",
+              "name": "Sonderzeichen",
+              "fill": "$ink",
+              "content": "Rückgängig · Größe · Übergänge · „Zitat“ · 0123456789",
+              "fontFamily": "Hanken Grotesk",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "f70Wv6",
+              "name": "Display klein",
+              "fill": "$ink",
+              "content": "Einstellungen, Zuletzt bearbeitet, Kartensprache ÄÖÜ ß",
+              "fontFamily": "Young Serif",
+              "fontSize": 18,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "yq55y",
+          "name": "Satz 4 · Klassisch",
+          "width": 620,
+          "fill": "$surface-1",
+          "cornerRadius": 4,
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 18,
+          "padding": 28,
+          "children": [
+            {
+              "type": "frame",
+              "id": "FFqqK",
+              "name": "Kopf",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 4,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "nFvUy",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "content": "4 · Klassisch",
+                  "fontFamily": "Spline Sans Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "gRIJ9",
+                  "name": "Familien",
+                  "fill": "$text-muted",
+                  "content": "EB Garamond · Onest · Spline Sans Mono · Nanum Pen Script",
+                  "fontFamily": "Onest",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Z2NDM",
+                  "name": "Warum",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Buchdruck-Serif, klare Grotesk mit hoher x-Höhe, freundliche Mono, dünner Fineliner.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Onest",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "I3Dq8N",
+              "name": "Headline",
+              "gap": 10,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "mLW5r",
+                  "name": "Fest",
+                  "fill": "$ink",
+                  "content": "Wo stoppt dich",
+                  "lineHeight": 1.05,
+                  "fontFamily": "EB Garamond",
+                  "fontSize": 40,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "y1zqJD",
+                  "name": "Wort",
+                  "fill": "$opponent",
+                  "content": "Ash?",
+                  "lineHeight": 1.05,
+                  "fontFamily": "EB Garamond",
+                  "fontSize": 40,
+                  "fontWeight": "normal",
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Z16U3",
+              "name": "Workbench",
+              "width": "fill_container",
+              "fill": "$bg",
+              "cornerRadius": 3,
+              "layout": "vertical",
+              "padding": [
+                10,
+                0
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "fMKJT",
+                  "name": "Titelzeile",
+                  "width": "fill_container",
+                  "gap": 10,
+                  "padding": [
+                    4,
+                    14,
+                    10,
+                    14
+                  ],
+                  "alignItems": "end",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ly858",
+                      "name": "Titel",
+                      "fill": "$ink",
+                      "content": "Aluber 1-Card",
+                      "fontFamily": "EB Garamond",
+                      "fontSize": 21,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "dPL6A",
+                      "name": "Deck",
+                      "fill": "$text-muted",
+                      "content": "Branded Despia",
+                      "fontFamily": "Onest",
+                      "fontSize": 12.5,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "OYBm3",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "Gu8t0",
+                      "name": "Status",
+                      "fill": "$text-subtle",
+                      "content": "gespeichert",
+                      "fontFamily": "Spline Sans Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qIDHA",
+                  "name": "Schritt 1",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "#00000000",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Z9ZwmD",
+                      "name": "Nr",
+                      "fill": "$text-subtle",
+                      "content": "1",
+                      "fontFamily": "Spline Sans Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "JAtLa",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "NS Aluber",
+                      "fontFamily": "Onest",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "frame",
+                      "id": "ugai1",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "kjusO",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "fontFamily": "Spline Sans Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "p4uuUC",
+                  "name": "Schritt 2",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "$surface-3",
+                  "stroke": "$primary",
+                  "strokeWidth": {
+                    "left": 2
+                  },
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "mDprl",
+                      "name": "Nr",
+                      "fill": "$ink",
+                      "content": "2",
+                      "fontFamily": "Spline Sans Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YNIUn",
+                      "name": "Text",
+                      "fill": "$ink",
+                      "content": "Aluber → Br. Fusion",
+                      "fontFamily": "Onest",
+                      "fontSize": 13,
+                      "fontWeight": "500"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rr1Ew",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "p8wOD",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "content": "Endboard 3",
+                      "fontFamily": "Spline Sans Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "y4uxc",
+                  "name": "Schritt 3",
+                  "width": "fill_container",
+                  "height": 32,
+                  "fill": "#00000000",
+                  "gap": 10,
+                  "padding": [
+                    0,
+                    14
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "zALNK",
+                      "name": "Nr",
+                      "fill": "$text-subtle",
+                      "content": "3",
+                      "fontFamily": "Spline Sans Mono",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "A7ftw",
+                      "name": "Text",
+                      "fill": "$text-muted",
+                      "content": "Branded Fusion → Albion",
+                      "fontFamily": "Onest",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "frame",
+                      "id": "EUeDF",
+                      "name": "Spacer",
+                      "width": "fill_container",
+                      "height": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "V8RXvK",
+                      "name": "Wert",
+                      "fill": "$text-muted",
+                      "fontFamily": "Spline Sans Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "g8Dsu",
+                  "name": "Notiz",
+                  "width": "fill_container",
+                  "padding": [
+                    6,
+                    14,
+                    4,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "KJWa7",
+                      "name": "Hand",
+                      "fill": "$opponent",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Ash hier? Tragödie als Extender, dann Albion trotzdem.",
+                      "lineHeight": 1.15,
+                      "fontFamily": "Nanum Pen Script",
+                      "fontSize": 17,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "riJNk",
+              "name": "Kartentext",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "If this card is Normal or Special Summoned: You can add 1 \"Branded\" Spell/Trap from your Deck to your hand.",
+              "lineHeight": 1.5,
+              "fontFamily": "Onest",
+              "fontSize": 12.5,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "ZlyFr",
+              "name": "Mono",
+              "fill": "$text-muted",
+              "content": "HOPT · genutzt   2 / 9   CL1   Strg K   1800 / 0   68 %",
+              "fontFamily": "Spline Sans Mono",
+              "fontSize": 11.5,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "Rb1w4",
+              "name": "Sonderzeichen",
+              "fill": "$ink",
+              "content": "Rückgängig · Größe · Übergänge · „Zitat“ · 0123456789",
+              "fontFamily": "Onest",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "text",
+              "id": "peIXo",
+              "name": "Display klein",
+              "fill": "$ink",
+              "content": "Einstellungen, Zuletzt bearbeitet, Kartensprache ÄÖÜ ß",
+              "fontFamily": "EB Garamond",
+              "fontSize": 18,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Cv9Gq",
+      "x": 2232,
+      "y": 5887,
+      "name": "Schriftvergleich · Details",
+      "theme": {
+        "mode": "dark"
+      },
+      "fill": "$bg",
+      "layout": "vertical",
+      "gap": 28,
+      "padding": 40,
+      "children": [
+        {
+          "type": "frame",
+          "id": "UARMh",
+          "name": "DISPLAY · Ziffern und Kursive, 26 px",
+          "layout": "vertical",
+          "gap": 10,
+          "children": [
+            {
+              "type": "text",
+              "id": "ayUzq",
+              "name": "Titel",
+              "fill": "$text-subtle",
+              "content": "DISPLAY · Ziffern und Kursive, 26 px",
+              "fontFamily": "IBM Plex Mono",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "j3PG6k",
+              "name": "Instrument Serif",
+              "gap": 18,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "pi6cY",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Instrument Serif",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "sdHJp",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber 1-Card · Albaz 2-Card · Endboard 3",
+                  "fontFamily": "Instrument Serif",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "R0qD7",
+                  "name": "Kursiv",
+                  "fill": "$opponent",
+                  "content": "Ash?",
+                  "fontFamily": "Instrument Serif",
+                  "fontSize": 26,
+                  "fontWeight": "normal",
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "gYb2R",
+              "name": "Newsreader",
+              "gap": 18,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "uj8WX",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Newsreader",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "lY6tJ",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber 1-Card · Albaz 2-Card · Endboard 3",
+                  "fontFamily": "Newsreader",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "LfP7G",
+                  "name": "Kursiv",
+                  "fill": "$opponent",
+                  "content": "Ash?",
+                  "fontFamily": "Newsreader",
+                  "fontSize": 26,
+                  "fontWeight": "normal",
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "z7IHN",
+              "name": "Young Serif",
+              "gap": 18,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "N53ce6",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Young Serif",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "P00MBj",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber 1-Card · Albaz 2-Card · Endboard 3",
+                  "fontFamily": "Young Serif",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "LUtQ3",
+                  "name": "Kursiv",
+                  "fill": "$opponent",
+                  "content": "Ash?",
+                  "fontFamily": "Young Serif",
+                  "fontSize": 26,
+                  "fontWeight": "normal",
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Kt6iE",
+              "name": "EB Garamond",
+              "gap": 18,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "GDdPR",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "EB Garamond",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "k7avVN",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber 1-Card · Albaz 2-Card · Endboard 3",
+                  "fontFamily": "EB Garamond",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "FYVI5",
+                  "name": "Kursiv",
+                  "fill": "$opponent",
+                  "content": "Ash?",
+                  "fontFamily": "EB Garamond",
+                  "fontSize": 26,
+                  "fontWeight": "normal",
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "M0RLc",
+              "name": "Fraunces",
+              "gap": 18,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "e7sJzX",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Fraunces",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "nzlgK",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber 1-Card · Albaz 2-Card · Endboard 3",
+                  "fontFamily": "Fraunces",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "nY4ac",
+                  "name": "Kursiv",
+                  "fill": "$opponent",
+                  "content": "Ash?",
+                  "fontFamily": "Fraunces",
+                  "fontSize": 26,
+                  "fontWeight": "normal",
+                  "fontStyle": "italic"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "w0zEQ",
+              "name": "Gloock",
+              "gap": 18,
+              "alignItems": "end",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "kWsPa",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Gloock",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Ione6",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber 1-Card · Albaz 2-Card · Endboard 3",
+                  "fontFamily": "Gloock",
+                  "fontSize": 26,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "oE0zq",
+                  "name": "Kursiv",
+                  "fill": "$opponent",
+                  "content": "Ash?",
+                  "fontFamily": "Gloock",
+                  "fontSize": 26,
+                  "fontWeight": "normal",
+                  "fontStyle": "italic"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "aLF2A",
+          "name": "OBERFLÄCHE · 12,5 und 13 px",
+          "layout": "vertical",
+          "gap": 10,
+          "children": [
+            {
+              "type": "text",
+              "id": "NCa9J",
+              "name": "Titel",
+              "fill": "$text-subtle",
+              "content": "OBERFLÄCHE · 12,5 und 13 px",
+              "fontFamily": "IBM Plex Mono",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "C1eJN4",
+              "name": "Instrument Sans",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "E82hQO",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Instrument Sans",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "YgZBs",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber → Br. Fusion   Branded Fusion → Albion   Il1 0O   Rückgängig",
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "EBjSI",
+                  "name": "Klein",
+                  "fill": "$text-muted",
+                  "content": "Kosten werden auch bei Negierung bezahlt.",
+                  "fontFamily": "Instrument Sans",
+                  "fontSize": 12.5,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "A7MZx",
+              "name": "Schibsted Grotesk",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Z8bY7",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Schibsted Grotesk",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "EFSAw",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber → Br. Fusion   Branded Fusion → Albion   Il1 0O   Rückgängig",
+                  "fontFamily": "Schibsted Grotesk",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "y2pcf",
+                  "name": "Klein",
+                  "fill": "$text-muted",
+                  "content": "Kosten werden auch bei Negierung bezahlt.",
+                  "fontFamily": "Schibsted Grotesk",
+                  "fontSize": 12.5,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "UuFEd",
+              "name": "Hanken Grotesk",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "C0xdg",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Hanken Grotesk",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "o47MZm",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber → Br. Fusion   Branded Fusion → Albion   Il1 0O   Rückgängig",
+                  "fontFamily": "Hanken Grotesk",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "mph4u",
+                  "name": "Klein",
+                  "fill": "$text-muted",
+                  "content": "Kosten werden auch bei Negierung bezahlt.",
+                  "fontFamily": "Hanken Grotesk",
+                  "fontSize": 12.5,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "kHneS",
+              "name": "Onest",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "amo3Q",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Onest",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "h0YfR6",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber → Br. Fusion   Branded Fusion → Albion   Il1 0O   Rückgängig",
+                  "fontFamily": "Onest",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "KUw6u",
+                  "name": "Klein",
+                  "fill": "$text-muted",
+                  "content": "Kosten werden auch bei Negierung bezahlt.",
+                  "fontFamily": "Onest",
+                  "fontSize": 12.5,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "e46QX6",
+              "name": "Figtree",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "dwdmF",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Figtree",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Wdbko",
+                  "name": "Probe",
+                  "fill": "$ink",
+                  "content": "Aluber → Br. Fusion   Branded Fusion → Albion   Il1 0O   Rückgängig",
+                  "fontFamily": "Figtree",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "ttumM",
+                  "name": "Klein",
+                  "fill": "$text-muted",
+                  "content": "Kosten werden auch bei Negierung bezahlt.",
+                  "fontFamily": "Figtree",
+                  "fontSize": 12.5,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "ju95L",
+          "name": "HANDSCHRIFT · Rotstift, 17 px",
+          "layout": "vertical",
+          "gap": 10,
+          "children": [
+            {
+              "type": "text",
+              "id": "XIi6C",
+              "name": "Titel",
+              "fill": "$text-subtle",
+              "content": "HANDSCHRIFT · Rotstift, 17 px",
+              "fontFamily": "IBM Plex Mono",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "J9b8g",
+              "name": "Kalam",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "w1QKX",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Kalam",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "y9uKjb",
+                  "name": "Probe",
+                  "fill": "$opponent",
+                  "content": "Ash hier? Tragödie als Extender, dann Albion trotzdem. Größe 1 2 3",
+                  "fontFamily": "Kalam",
+                  "fontSize": 17,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "f0krAo",
+              "name": "Gochi Hand",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "XufUl",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Gochi Hand",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "yGum6",
+                  "name": "Probe",
+                  "fill": "$opponent",
+                  "content": "Ash hier? Tragödie als Extender, dann Albion trotzdem. Größe 1 2 3",
+                  "fontFamily": "Gochi Hand",
+                  "fontSize": 17,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "u17zvd",
+              "name": "Patrick Hand",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "RAT2r",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Patrick Hand",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "JFyMn",
+                  "name": "Probe",
+                  "fill": "$opponent",
+                  "content": "Ash hier? Tragödie als Extender, dann Albion trotzdem. Größe 1 2 3",
+                  "fontFamily": "Patrick Hand",
+                  "fontSize": 17,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "W9uiAA",
+              "name": "Caveat Brush",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "FsUNN",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Caveat Brush",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "M9plX",
+                  "name": "Probe",
+                  "fill": "$opponent",
+                  "content": "Ash hier? Tragödie als Extender, dann Albion trotzdem. Größe 1 2 3",
+                  "fontFamily": "Caveat Brush",
+                  "fontSize": 17,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "juTof",
+              "name": "Shadows Into Light Two",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "G8NPKc",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Shadows Into Light Two",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "MK9Kc",
+                  "name": "Probe",
+                  "fill": "$opponent",
+                  "content": "Ash hier? Tragödie als Extender, dann Albion trotzdem. Größe 1 2 3",
+                  "fontFamily": "Shadows Into Light Two",
+                  "fontSize": 17,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "zJXVC",
+              "name": "Nanum Pen Script",
+              "gap": 18,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "X4Ihf",
+                  "name": "Name",
+                  "fill": "$text-subtle",
+                  "textGrowth": "fixed-width",
+                  "width": 150,
+                  "content": "Nanum Pen Script",
+                  "fontFamily": "IBM Plex Mono",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "rcKtn",
+                  "name": "Probe",
+                  "fill": "$opponent",
+                  "content": "Ash hier? Tragödie als Extender, dann Albion trotzdem. Größe 1 2 3",
+                  "fontFamily": "Nanum Pen Script",
+                  "fontSize": 17,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "themes": {
@@ -16709,11 +18989,11 @@
     },
     "font": {
       "type": "string",
-      "value": "Instrument Sans"
+      "value": "Schibsted Grotesk"
     },
     "mono": {
       "type": "string",
-      "value": "JetBrains Mono"
+      "value": "IBM Plex Mono"
     },
     "r-sm": {
       "type": "number",
@@ -16780,11 +19060,11 @@
     },
     "font-display": {
       "type": "string",
-      "value": "Instrument Serif"
+      "value": "Newsreader"
     },
     "hand": {
       "type": "string",
-      "value": "Kalam"
+      "value": "Caveat Brush"
     }
   },
   "fileToken": "58a67a9a-f4cd-45ea-b380-3ad75dcf42b2"
