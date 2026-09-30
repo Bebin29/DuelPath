@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { ComboNodeData, NodeKind } from '@/lib/combo/state';
-import { childrenOf, lineSteps, lineThrough, nextRank, rootAlternatives } from '@/lib/combo/lines';
+import {
+  childrenOf,
+  isMainLine,
+  promoteLine,
+  lineSteps,
+  lineThrough,
+  nextRank,
+  rootAlternatives,
+} from '@/lib/combo/lines';
 
 const n = (
   id: string,
@@ -74,5 +82,32 @@ describe('lineSteps', () => {
 describe('rootAlternatives', () => {
   it('liefert die weiteren Lines ab der Starthand', () => {
     expect(rootAlternatives(tree).map((x) => x.id)).toEqual(['alt']);
+  });
+});
+
+describe('promoteLine', () => {
+  const n = (id: string, parentId: string | null, rank = 0): ComboNodeData => ({
+    id,
+    parentId,
+    rank,
+    kind: 'ACTION',
+    player: 'self',
+  });
+  // a → b (Hauptline) und a → c → d; unter c zusätzlich e als Branch
+  const nodes = [n('a', null), n('b', 'a'), n('c', 'a', 1), n('d', 'c'), n('e', 'c', 1)];
+
+  it('macht jeden Knoten auf dem Pfad zum ersten Kind', () => {
+    const promoted = promoteLine(nodes, 'e');
+    expect(childrenOf(promoted, 'a').map((x) => x.id)).toEqual(['c', 'b']);
+    expect(childrenOf(promoted, 'c').map((x) => x.id)).toEqual(['e', 'd']);
+    expect(isMainLine(promoted, 'e')).toBe(true);
+    expect(isMainLine(promoted, 'b')).toBe(false);
+  });
+
+  it('lässt die Hauptline unverändert', () => {
+    expect(isMainLine(nodes, 'b')).toBe(true);
+    expect(promoteLine(nodes, 'b').map((x) => [x.id, x.rank])).toEqual(
+      nodes.map((x) => [x.id, x.rank])
+    );
   });
 });

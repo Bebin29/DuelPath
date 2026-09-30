@@ -3,7 +3,12 @@
 import { useLanguage, useTranslation } from '@/lib/i18n/hooks';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { Segmented } from '@/components/ui/segmented';
-import type { CardLanguage } from '@/lib/settings';
+import {
+  AUTOPLAY_SPEEDS,
+  speedLabel,
+  type AutoplaySpeed,
+  type CardLanguage,
+} from '@/lib/settings';
 import type { Theme } from '@/lib/theme';
 
 function Row({
@@ -28,7 +33,7 @@ function Row({
 
 /** Einstellungen (UI-Plan 7.5.6): eine Seite, Änderungen gelten sofort */
 export function SettingsView() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { currentLanguage, changeLanguage } = useLanguage();
   const { settings, update } = useSettings();
 
@@ -71,6 +76,20 @@ export function SettingsView() {
               { value: 'en', label: 'English' },
               { value: 'de', label: 'Deutsch' },
             ]}
+          />
+        </Row>
+      </section>
+      <section className="mt-10 max-w-[720px]">
+        <h2 className="mb-1 font-display text-2xl">{t('settings.workbench')}</h2>
+        <Row title={t('settings.autoplay')} text={t('settings.autoplayText')}>
+          <Segmented<string>
+            label={t('settings.autoplay')}
+            value={String(settings.autoplaySpeed)}
+            onChange={(value) => update({ autoplaySpeed: Number(value) as AutoplaySpeed })}
+            options={AUTOPLAY_SPEEDS.map((s) => ({
+              value: String(s),
+              label: speedLabel(s, i18n.language),
+            }))}
           />
         </Row>
       </section>

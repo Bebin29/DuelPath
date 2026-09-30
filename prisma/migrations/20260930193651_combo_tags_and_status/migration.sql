@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Combo" ADD COLUMN     "status" TEXT NOT NULL DEFAULT 'DRAFT',
+ADD COLUMN     "tags" TEXT[] DEFAULT ARRAY[]::TEXT[];

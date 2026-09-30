@@ -5,19 +5,23 @@ import { useTranslation } from '@/lib/i18n/hooks';
 import { Button } from '@/components/ui/button';
 import { AmSpieltisch } from '@/components/illustrations/AmSpieltisch';
 import { relativeTime } from '@/lib/utils/relative-time';
-
-export interface StartCombo {
-  id: string;
-  title: string;
-  deckName: string | null;
-  updatedAt: string;
-}
+import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
+import { NewComboButton } from '@/components/library/NewComboButton';
+import { StartHandStrip } from '@/components/library/StartHandStrip';
 
 /**
  * Start (UI-Plan 7.5.1): links Illustration und Headline als seltene Fläche,
  * rechts weiter bearbeiten und zuletzt bearbeitet. Ohne Combos die ersten Schritte (UX-Plan 11).
  */
-export function StartView({ combos }: { combos: StartCombo[] }) {
+export function StartView({
+  combos,
+  cards,
+  decks,
+}: {
+  combos: LibraryEntry[];
+  cards: Record<string, LibraryCard>;
+  decks: { id: string; name: string }[];
+}) {
   const { t, i18n } = useTranslation();
   const [latest, ...recent] = combos;
   const when = (iso: string) =>
@@ -56,11 +60,20 @@ export function StartView({ combos }: { combos: StartCombo[] }) {
           <>
             <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface-1 p-6">
               <span className="font-mono text-2xs text-text-subtle">{t('start.resume')}</span>
-              <div>
-                <h2 className="font-display text-3xl leading-none">{latest.title}</h2>
-                <p className="mt-2 text-text-muted">
-                  {latest.deckName ?? t('start.noDeck')} · {when(latest.updatedAt)}
-                </p>
+              <div className="flex items-start gap-4">
+                <StartHandStrip cardIds={latest.stats.startHand} cards={cards} size="sm" max={3} />
+                <div className="min-w-0">
+                  <h2 className="font-display text-3xl leading-none">{latest.title}</h2>
+                  <p className="mt-2 text-text-muted">
+                    {latest.deckName ?? t('start.noDeck')} · {when(latest.updatedAt)}
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-text-subtle">
+                    {t('start.progress', {
+                      steps: latest.stats.steps,
+                      endboard: latest.stats.endboard ?? '–',
+                    })}
+                  </p>
+                </div>
               </div>
               <div>
                 <Button asChild>
@@ -71,10 +84,10 @@ export function StartView({ combos }: { combos: StartCombo[] }) {
 
             <div>
               <div className="flex items-end pb-2">
-                <h2 className="flex-1 font-display text-2xl">{t('start.recent')}</h2>
-                <Button asChild variant="line">
-                  <Link href="/combos">{t('start.newCombo')}</Link>
-                </Button>
+                <h2 className="flex-1 font-display text-2xl">
+                  {recent.length > 0 && t('start.recent')}
+                </h2>
+                <NewComboButton decks={decks} variant="line" />
               </div>
               <ul>
                 {recent.map((c) => (
@@ -83,13 +96,25 @@ export function StartView({ combos }: { combos: StartCombo[] }) {
                       href={`/combos/${c.id}`}
                       className="flex h-15 items-center gap-5 border-b border-line px-1 transition-colors duration-(--motion-fast) hover:bg-surface-1"
                     >
-                      <span className="flex-1">
-                        <span className="block font-display text-lg leading-tight">{c.title}</span>
+                      <StartHandStrip cardIds={c.stats.startHand} cards={cards} max={3} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-display text-lg leading-tight">
+                          {c.title}
+                        </span>
                         <span className="text-xs text-text-muted">
-                          {c.deckName ?? t('start.noDeck')}
+                          {c.deckName ?? t('start.noDeck')} ·{' '}
+                          {t('start.lines', { count: c.stats.lines })}
                         </span>
                       </span>
-                      <span className="font-mono text-xs text-text-muted">{when(c.updatedAt)}</span>
+                      <span
+                        className="font-display text-xl leading-none"
+                        title={t('library.col.endboard')}
+                      >
+                        {c.stats.endboard ?? ''}
+                      </span>
+                      <span className="w-24 text-right font-mono text-xs text-text-muted">
+                        {when(c.updatedAt)}
+                      </span>
                     </Link>
                   </li>
                 ))}

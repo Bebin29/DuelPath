@@ -16,6 +16,18 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 import { Segmented } from '@/components/ui/segmented';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { StatusChip } from '@/components/library/StatusChip';
+import { COMBO_STATUSES, SUGGESTED_TAGS, type ComboStatus } from '@/lib/combo/library';
 
 export type WorkbenchMode = 'board' | 'tree';
 export type SaveStatus = 'saved' | 'saving' | 'error';
@@ -40,6 +52,10 @@ export function WorkbenchHeader({
   stress,
   chokePoints,
   onStress,
+  comboStatus,
+  onComboStatus,
+  tags,
+  onTags,
 }: {
   title: string;
   onTitle: (title: string) => void;
@@ -60,6 +76,10 @@ export function WorkbenchHeader({
   stress: boolean;
   chokePoints: number;
   onStress: () => void;
+  comboStatus: ComboStatus;
+  onComboStatus: (status: ComboStatus) => void;
+  tags: string[];
+  onTags: (tags: string[]) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -75,6 +95,7 @@ export function WorkbenchHeader({
         aria-label={t('combo.titlePlaceholder')}
         className="min-w-0 max-w-80 rounded-md bg-transparent px-1 font-display text-xl leading-none text-ink outline-none hover:bg-surface-3/50 focus-visible:bg-surface-3/50"
       />
+      <MetaMenu status={comboStatus} onStatus={onComboStatus} tags={tags} onTags={onTags} />
       <select
         value={deckId ?? ''}
         onChange={(e) => onDeck(e.target.value || null)}
@@ -178,5 +199,81 @@ export function WorkbenchHeader({
         )}
       </span>
     </header>
+  );
+}
+
+/** Status und Tags der Combo (UX-Plan 7.2); der Status-Chip ist zugleich der Auslöser */
+function MetaMenu({
+  status,
+  onStatus,
+  tags,
+  onTags,
+}: {
+  status: ComboStatus;
+  onStatus: (status: ComboStatus) => void;
+  tags: string[];
+  onTags: (tags: string[]) => void;
+}) {
+  const { t } = useTranslation();
+  const all = [...new Set([...SUGGESTED_TAGS, ...tags])];
+  const toggle = (tag: string) =>
+    onTags(tags.includes(tag) ? tags.filter((x) => x !== tag) : [...tags, tag]);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={t('library.meta')}
+          className="flex items-center gap-1.5 rounded-md px-1 py-0.5 hover:bg-surface-3/50"
+        >
+          <StatusChip status={status} />
+          {tags.length > 0 && (
+            <span className="max-w-40 truncate font-mono text-2xs text-text-subtle">
+              {tags.join(' · ')}
+            </span>
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuLabel>{t('library.col.status')}</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={status}
+          onValueChange={(value) => onStatus(value as ComboStatus)}
+        >
+          {COMBO_STATUSES.map((s) => (
+            <DropdownMenuRadioItem key={s} value={s}>
+              {t(`library.status.${s}`)}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>{t('library.tags')}</DropdownMenuLabel>
+        {all.map((tag) => (
+          <DropdownMenuCheckboxItem
+            key={tag}
+            checked={tags.includes(tag)}
+            onCheckedChange={() => toggle(tag)}
+            onSelect={(e) => e.preventDefault()}
+          >
+            {tag}
+          </DropdownMenuCheckboxItem>
+        ))}
+        <input
+          placeholder={t('library.newTag')}
+          aria-label={t('library.newTag')}
+          maxLength={30}
+          onKeyDown={(e) => {
+            // Tippen gehört dem Feld, nicht der Typeahead-Suche des Menüs
+            e.stopPropagation();
+            const value = e.currentTarget.value.trim();
+            if (e.key === 'Enter' && value) {
+              if (!tags.includes(value)) onTags([...tags, value]);
+              e.currentTarget.value = '';
+            }
+          }}
+          className="mx-1 mt-1 h-7 w-[calc(100%-8px)] rounded-md border border-line bg-transparent px-2 text-sm outline-none placeholder:text-text-subtle focus:border-line-strong"
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

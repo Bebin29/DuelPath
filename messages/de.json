@@ -365,7 +365,10 @@
     "firstStepsText": "Drei Schritte bis zur ersten Line.",
     "stepImport": "Deck per YDK importieren",
     "stepHand": "Starthand wählen",
-    "stepPlay": "Ersten Schritt spielen"
+    "stepPlay": "Ersten Schritt spielen",
+    "progress": "{{steps}} Schritte · Endboard {{endboard}}",
+    "lines_one": "{{count}} Line",
+    "lines_other": "{{count}} Lines"
   },
   "settings": {
     "title": "Einstellungen",
@@ -383,7 +386,10 @@
     "staplesText": "Welche Karten Staple-Leiste und Stresstest verwenden, in dieser Reihenfolge. Im TCG verbotene Karten fehlen.",
     "staplesReset": "Standardliste",
     "up": "Nach oben",
-    "down": "Nach unten"
+    "down": "Nach unten",
+    "workbench": "Workbench",
+    "autoplay": "Tempo beim Abspielen",
+    "autoplayText": "Wie schnell die Leertaste eine Line abspielt."
   },
   "workbench": {
     "board": "Board",
@@ -486,7 +492,16 @@
     "quickSelectHint": "Name tippen, Enter wählt",
     "pileTitle": "{{zone}} · {{count}}",
     "close": "Schließen",
-    "opponentReacts": "Gegner reagiert"
+    "opponentReacts": "Gegner reagiert",
+    "play": "Abspielen",
+    "pause": "Anhalten",
+    "space": "Leertaste",
+    "playing": "Spielt ab",
+    "speed": "Tempo",
+    "branchHint": "Branch {{letter}}: {{label}}",
+    "promote": "{{label}} zur Hauptline machen",
+    "promoteThis": "Zur Hauptline machen",
+    "announce": "Schritt {{n}}: {{label}}. {{chain}}"
   },
   "preview": {
     "effects": "Effekte",
@@ -552,5 +567,40 @@
     "hopts": "HOPT-Namen gesperrt",
     "weaknesses": "Schwachstellen",
     "noWeaknesses": "Keine Treffer der gewählten Staples."
+  },
+  "library": {
+    "untitled": "Neue Combo",
+    "chooseDeck": "Mit Deck",
+    "withoutDeck": "Ohne Deck",
+    "status": {
+      "DRAFT": "Entwurf",
+      "TESTED": "getestet",
+      "TOURNAMENT": "turnierfest"
+    },
+    "count_one": "{{count}} Combo",
+    "count_other": "{{count}} Combos",
+    "filters": "Filter",
+    "search": "Titel oder Karte, etwa Called by the Grave",
+    "starter": "Starterkarte",
+    "allDecks": "Alle Decks",
+    "reset": "Filter zurücksetzen",
+    "empty": "Noch keine Combos. Eine Combo beginnt mit einer Starthand aus deinem Deck.",
+    "noHits": "Keine Combo passt zu diesen Filtern.",
+    "col": {
+      "hand": "Starthand",
+      "title": "Titel",
+      "deck": "Deck",
+      "lines": "Lines",
+      "endboard": "Endboard",
+      "status": "Status",
+      "updated": "Bearbeitet"
+    },
+    "actions": "Aktionen für {{title}}",
+    "duplicate": "Duplizieren",
+    "copyTitle": "{{title}} (Kopie)",
+    "deleted": "„{{title}}“ gelöscht",
+    "meta": "Status und Tags",
+    "tags": "Tags",
+    "newTag": "Neuer Tag, Enter"
   }
 }

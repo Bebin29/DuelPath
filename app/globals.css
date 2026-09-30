@@ -192,4 +192,18 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  /* Eine Frist ist keine Dekoration: der Hinweis bleibt so lange stehen wie sonst */
+  .notice-timer {
+    animation-duration: var(--notice-duration) !important;
+  }
+}
+
+/* Restzeit eines Hinweises (TimedNotice); läuft auch bei reduzierter Bewegung, weil sie eine Frist zeigt */
+@keyframes notice-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
 }

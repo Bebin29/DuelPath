@@ -10,6 +10,13 @@ import { nodeRows } from '@/lib/prisma/node-rows';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
 import { startStateFromDeck, type DeckEntry } from '@/lib/combo/deck';
 import { saveComboSchema, type SaveComboInput } from '@/lib/validations/combo.schema';
+import { comboStats } from '@/lib/combo/summary';
+import {
+  parseStatus,
+  type ComboStatus,
+  type LibraryCard,
+  type LibraryEntry,
+} from '@/lib/combo/library';
 
 type Result<T> = { data: T; error?: undefined } | { data?: undefined; error: string };
 
@@ -25,6 +32,137 @@ async function ownCombo(comboId: string) {
   const combo = await prisma.combo.findUnique({ where: { id: comboId } });
   if (!combo || combo.userId !== userId) return { error: 'Not found' as const };
   return { combo };
+}
+
+type NodeRow = Awaited<ReturnType<typeof prisma.comboNode.findMany>>[number];
+
+function nodeFromRow(n: NodeRow): ComboNodeData {
+  return {
+    id: n.id,
+    parentId: n.parentId,
+    rank: n.rank,
+    note: n.note,
+    kind: n.kind as ComboNodeData['kind'],
+    player: n.player as ComboNodeData['player'],
+    edgeLabel: n.edgeLabel,
+    instanceId: n.instanceId,
+    cardId: n.cardId,
+    effectIndex: n.effectIndex,
+    action: n.action as ComboNodeData['action'],
+    costMoves: n.costMoves as unknown as CardMove[],
+    resolveMoves: n.resolveMoves as unknown as CardMove[],
+    negates: n.negates as unknown as ComboNodeData['negates'],
+    optOverride: n.optOverride,
+    ignoredHits: n.ignoredHits as string[] | null,
+    interruptions: n.interruptions as Record<string, number> | null,
+  };
+}
+
+/** Alle Karten, die im Startzustand oder in einem Knoten vorkommen */
+function cardIdsOf(startState: StartState, nodes: ComboNodeData[]): Set<string> {
+  const ids = new Set<string>(startState.cards.map((c) => c.cardId));
+  for (const n of nodes) {
+    if (n.cardId) ids.add(n.cardId);
+    for (const m of [...(n.costMoves ?? []), ...(n.resolveMoves ?? [])]) {
+      if (m.cardId) ids.add(m.cardId);
+    }
+    if (n.negates?.type === 'NAME') ids.add(n.negates.cardId);
+  }
+  return ids;
+}
+
+/**
+ * Bibliothek (UX-Plan 7.2): alle Combos mit Kennzahlen. Karten werden einmal für alle geladen;
+ * für die Anzeige reichen Name und Bild, die Effekte braucht nur die Endboard-Zahl.
+ */
+export async function listLibrary(): Promise<
+  Result<{ entries: LibraryEntry[]; cards: Record<string, LibraryCard> }>
+> {
+  const userId = await currentUserId();
+  if (!userId) return { error: 'Unauthorized' };
+  const combos = await prisma.combo.findMany({
+    where: { userId },
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      deck: { select: { name: true } },
+      nodes: { orderBy: [{ rank: 'asc' }, { createdAt: 'asc' }] },
+    },
+  });
+  const parsed = combos.map((c) => ({
+    combo: c,
+    startState: c.startState as unknown as StartState,
+    nodes: c.nodes.map(nodeFromRow),
+  }));
+  const ids = new Set<string>();
+  for (const p of parsed) for (const id of cardIdsOf(p.startState, p.nodes)) ids.add(id);
+  const rows = await prisma.card.findMany({
+    where: { id: { in: [...ids] } },
+    select: {
+      id: true,
+      name: true,
+      nameDe: true,
+      type: true,
+      race: true,
+      imageSmall: true,
+      effects: true,
+    },
+  });
+  const full = new Map(rows.map((r) => [r.id, toComboCard(r)]));
+  const cards = Object.fromEntries(
+    rows.map((r) => [r.id, { name: r.name, nameDe: r.nameDe, imageSmall: r.imageSmall }])
+  );
+
+  return {
+    data: {
+      cards,
+      entries: parsed.map(({ combo, startState, nodes }) => ({
+        id: combo.id,
+        title: combo.title,
+        deckId: combo.deckId,
+        deckName: combo.deck?.name ?? null,
+        updatedAt: combo.updatedAt.toISOString(),
+        tags: combo.tags,
+        status: parseStatus(combo.status),
+        stats: comboStats(startState, nodes, full),
+      })),
+    },
+  };
+}
+
+/** Kopie einer Combo mit neuen Knoten-IDs, etwa um eine Line mit anderer Starthand zu probieren */
+export async function duplicateCombo(
+  comboId: string,
+  title: string
+): Promise<Result<{ id: string }>> {
+  const owned = await ownCombo(comboId);
+  if (owned.error) return { error: owned.error };
+  const { combo } = owned;
+  const rows = await prisma.comboNode.findMany({ where: { comboId } });
+  const nodes = rows.map(nodeFromRow);
+  const ids = new Map(nodes.map((n) => [n.id, crypto.randomUUID()]));
+  const remap = (id: string) => ids.get(id) ?? id;
+  const copied = nodes.map((n) => ({
+    ...n,
+    id: remap(n.id),
+    parentId: n.parentId ? remap(n.parentId) : null,
+    negates:
+      n.negates && 'nodeId' in n.negates
+        ? { ...n.negates, nodeId: remap(n.negates.nodeId) }
+        : n.negates,
+  }));
+  const created = await prisma.combo.create({
+    data: {
+      title: title.trim().slice(0, 100) || combo.title,
+      userId: combo.userId,
+      deckId: combo.deckId,
+      tags: combo.tags,
+      status: 'DRAFT',
+      startState: combo.startState as Prisma.InputJsonValue,
+    },
+    select: { id: true },
+  });
+  await prisma.comboNode.createMany({ data: nodeRows(created.id, copied) });
+  return { data: created };
 }
 
 export async function listCombos(): Promise<
@@ -79,6 +217,8 @@ export interface LoadedCombo {
   id: string;
   title: string;
   deckId: string | null;
+  tags: string[];
+  status: ComboStatus;
   startState: StartState;
   nodes: ComboNodeData[];
   cards: ComboCard[];
@@ -93,36 +233,10 @@ export async function getCombo(comboId: string): Promise<Result<LoadedCombo>> {
     where: { comboId },
     orderBy: [{ rank: 'asc' }, { createdAt: 'asc' }],
   });
-  const nodes: ComboNodeData[] = rows.map((n) => ({
-    id: n.id,
-    parentId: n.parentId,
-    rank: n.rank,
-    note: n.note,
-    kind: n.kind as ComboNodeData['kind'],
-    player: n.player as ComboNodeData['player'],
-    edgeLabel: n.edgeLabel,
-    instanceId: n.instanceId,
-    cardId: n.cardId,
-    effectIndex: n.effectIndex,
-    action: n.action as ComboNodeData['action'],
-    costMoves: n.costMoves as unknown as CardMove[],
-    resolveMoves: n.resolveMoves as unknown as CardMove[],
-    negates: n.negates as unknown as ComboNodeData['negates'],
-    optOverride: n.optOverride,
-    ignoredHits: n.ignoredHits as string[] | null,
-    interruptions: n.interruptions as Record<string, number> | null,
-  }));
+  const nodes = rows.map(nodeFromRow);
   const startState = combo.startState as unknown as StartState;
 
-  // Alle Karten, die im Startzustand oder in einem Knoten vorkommen
-  const cardIds = new Set<string>(startState.cards.map((c) => c.cardId));
-  for (const n of nodes) {
-    if (n.cardId) cardIds.add(n.cardId);
-    for (const m of [...(n.costMoves ?? []), ...(n.resolveMoves ?? [])]) {
-      if (m.cardId) cardIds.add(m.cardId);
-    }
-    if (n.negates?.type === 'NAME') cardIds.add(n.negates.cardId);
-  }
+  const cardIds = cardIdsOf(startState, nodes);
   const cards = await prisma.card.findMany({
     where: { id: { in: [...cardIds] } },
     select: {
@@ -141,6 +255,8 @@ export async function getCombo(comboId: string): Promise<Result<LoadedCombo>> {
       id: combo.id,
       title: combo.title,
       deckId: combo.deckId,
+      tags: combo.tags,
+      status: parseStatus(combo.status),
       startState,
       nodes,
       cards: cards.map((c) => ({
@@ -157,7 +273,7 @@ export async function saveCombo(comboId: string, input: SaveComboInput): Promise
 
   const parsed = saveComboSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültige Daten' };
-  const { title, deckId, startState, nodes } = parsed.data;
+  const { title, deckId, startState, nodes, tags, status } = parsed.data;
 
   if (deckId) {
     const deck = await prisma.deck.findUnique({ where: { id: deckId }, select: { userId: true } });
@@ -175,7 +291,7 @@ export async function saveCombo(comboId: string, input: SaveComboInput): Promise
     prisma.comboNode.createMany({ data: nodeRows(comboId, nodes) }),
     prisma.combo.update({
       where: { id: comboId },
-      data: { title, deckId, startState: startState as Prisma.InputJsonValue },
+      data: { title, deckId, tags, status, startState: startState as Prisma.InputJsonValue },
     }),
   ]);
   return { data: true };

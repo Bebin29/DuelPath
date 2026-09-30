@@ -365,7 +365,10 @@
     "firstStepsText": "Three steps to your first line.",
     "stepImport": "Import a deck via YDK",
     "stepHand": "Pick a starting hand",
-    "stepPlay": "Play your first step"
+    "stepPlay": "Play your first step",
+    "progress": "{{steps}} steps · endboard {{endboard}}",
+    "lines_one": "{{count}} line",
+    "lines_other": "{{count}} lines"
   },
   "settings": {
     "title": "Settings",
@@ -383,7 +386,10 @@
     "staplesText": "Which cards the staple rail and the stress test use, in this order. Cards forbidden in the TCG are missing.",
     "staplesReset": "Default list",
     "up": "Move up",
-    "down": "Move down"
+    "down": "Move down",
+    "workbench": "Workbench",
+    "autoplay": "Playback speed",
+    "autoplayText": "How fast Space plays a line."
   },
   "workbench": {
     "board": "Board",
@@ -486,7 +492,16 @@
     "quickSelectHint": "Type a name, Enter picks",
     "pileTitle": "{{zone}} · {{count}}",
     "close": "Close",
-    "opponentReacts": "Opponent responds"
+    "opponentReacts": "Opponent responds",
+    "play": "Play",
+    "pause": "Pause",
+    "space": "Space",
+    "playing": "Playing",
+    "speed": "Speed",
+    "branchHint": "Branch {{letter}}: {{label}}",
+    "promote": "Make {{label}} the main line",
+    "promoteThis": "Make main line",
+    "announce": "Step {{n}}: {{label}}. {{chain}}"
   },
   "preview": {
     "effects": "Effects",
@@ -552,5 +567,40 @@
     "hopts": "HOPT names locked",
     "weaknesses": "Weak points",
     "noWeaknesses": "No hits from the chosen staples."
+  },
+  "library": {
+    "untitled": "New combo",
+    "chooseDeck": "With deck",
+    "withoutDeck": "Without deck",
+    "status": {
+      "DRAFT": "draft",
+      "TESTED": "tested",
+      "TOURNAMENT": "tournament ready"
+    },
+    "count_one": "{{count}} combo",
+    "count_other": "{{count}} combos",
+    "filters": "Filters",
+    "search": "Title or card, e.g. Called by the Grave",
+    "starter": "Starter card",
+    "allDecks": "All decks",
+    "reset": "Reset filters",
+    "empty": "No combos yet. A combo starts with a hand from your deck.",
+    "noHits": "No combo matches these filters.",
+    "col": {
+      "hand": "Hand",
+      "title": "Title",
+      "deck": "Deck",
+      "lines": "Lines",
+      "endboard": "Endboard",
+      "status": "Status",
+      "updated": "Edited"
+    },
+    "actions": "Actions for {{title}}",
+    "duplicate": "Duplicate",
+    "copyTitle": "{{title}} (copy)",
+    "deleted": "“{{title}}” deleted",
+    "meta": "Status and tags",
+    "tags": "Tags",
+    "newTag": "New tag, Enter"
   }
 }

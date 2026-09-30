@@ -4,8 +4,8 @@ import { DEFAULT_SETTINGS, parseSettings, settingsPatchSchema } from '@/lib/sett
 describe('parseSettings', () => {
   it('ergänzt fehlende Werte mit den Standards (dunkel, Karten englisch)', () => {
     expect(parseSettings({})).toEqual(DEFAULT_SETTINGS);
-    expect(parseSettings(null)).toEqual({ theme: 'dark', cardLanguage: 'en', staples: null });
-    expect(parseSettings({ cardLanguage: 'de' })).toEqual({ theme: 'dark', cardLanguage: 'de', staples: null });
+    expect(parseSettings(null)).toEqual({ theme: 'dark', cardLanguage: 'en', staples: null, autoplaySpeed: 1 });
+    expect(parseSettings({ cardLanguage: 'de' })).toEqual({ theme: 'dark', cardLanguage: 'de', staples: null, autoplaySpeed: 1 });
   });
 
   it('verwirft unbekannte und ungültige Werte statt zu scheitern', () => {

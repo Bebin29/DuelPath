@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { Columns3, GitBranch, StickyNote, TriangleAlert } from 'lucide-react';
+import { ArrowUpToLine, Columns3, GitBranch, StickyNote, TriangleAlert } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { cn } from '@/lib/utils';
 import { CardView } from '@/components/cards/CardView';
@@ -46,6 +46,12 @@ interface LineListProps {
   /** Unterbrechungen am Ende eines Branches */
   endCountOf?: (nodeId: string) => number | null;
   onCompare?: () => void;
+  /** Doppelklick: Schritt im Inspector bearbeiten (UX-Plan 6.6) */
+  onOpen?: (id: string) => void;
+  /** Branch zur Hauptline machen (UX-Plan 6.7) */
+  onPromote?: (nodeId: string) => void;
+  /** Gründe der Warnungen für den Tooltip */
+  warningTextOf?: (nodeId: string) => string;
 }
 
 /**
@@ -69,6 +75,9 @@ export function LineList({
   onDropStaple,
   endCountOf,
   onCompare,
+  onOpen,
+  onPromote,
+  warningTextOf,
 }: LineListProps) {
   const { t } = useTranslation();
   const listRef = useRef<HTMLOListElement>(null);
@@ -148,6 +157,7 @@ export function LineList({
                 tabIndex={0}
                 aria-current={selected ? 'step' : undefined}
                 onClick={() => onSelect(step.node.id)}
+                onDoubleClick={() => onOpen?.(step.node.id)}
                 onKeyDown={(e) => {
                   if (e.key !== 'Enter' && e.key !== ' ') return;
                   e.preventDefault();
@@ -248,32 +258,55 @@ export function LineList({
                   />
                 )}
                 {warnings > 0 && (
-                  <TriangleAlert
-                    aria-label={t('workbench.warnings', { count: warnings })}
-                    className="size-3.5 text-warning"
-                  />
+                  <span title={warningTextOf?.(step.node.id)} className="flex">
+                    <TriangleAlert
+                      aria-label={t('workbench.warnings', { count: warnings })}
+                      className="size-3.5 text-warning"
+                    />
+                  </span>
                 )}
               </div>
+              {selected && step.node.note && (
+                <p className="pb-1.5 pl-[58px] pr-4 font-hand text-[14px] leading-snug text-opponent">
+                  {step.node.note}
+                </p>
+              )}
               {step.branches.map((b) => (
-                <button
+                <div
                   key={b.nodeId}
-                  type="button"
-                  onClick={() => onSelect(b.nodeId)}
-                  className="flex h-[30px] w-full items-center gap-2 pl-11 pr-4 text-left text-[12.5px] text-text-muted hover:bg-surface-3/60"
+                  className="group/branch flex items-center hover:bg-surface-3/60"
                 >
-                  <GitBranch className="size-3.5 text-text-subtle" />
-                  <span className="flex-1 truncate">
-                    {b.letter} · {b.label}
-                  </span>
-                  {endCountOf?.(b.nodeId) != null && (
-                    <span
-                      className="font-mono text-2xs text-text-subtle"
-                      title={t('stress.endboardCount')}
-                    >
-                      {endCountOf(b.nodeId)}
+                  <button
+                    type="button"
+                    onClick={() => onSelect(b.nodeId)}
+                    className="flex h-[30px] min-w-0 flex-1 items-center gap-2 pl-11 text-left text-[12.5px] text-text-muted"
+                  >
+                    <GitBranch className="size-3.5 shrink-0 text-text-subtle" />
+                    <span className="flex-1 truncate">
+                      {b.letter} · {b.label}
                     </span>
+                    {endCountOf?.(b.nodeId) != null && (
+                      <span
+                        className="font-mono text-2xs text-text-subtle"
+                        title={t('stress.endboardCount')}
+                      >
+                        {endCountOf(b.nodeId)}
+                      </span>
+                    )}
+                  </button>
+                  {onPromote && (
+                    <button
+                      type="button"
+                      onClick={() => onPromote(b.nodeId)}
+                      aria-label={t('workbench.promote', { label: b.label })}
+                      title={t('workbench.promote', { label: b.label })}
+                      className="mr-2 grid size-6 place-items-center rounded-sm text-text-subtle opacity-0 hover:text-ink focus-visible:opacity-100 group-hover/branch:opacity-100"
+                    >
+                      <ArrowUpToLine className="size-3.5" />
+                    </button>
                   )}
-                </button>
+                  {!onPromote && <span className="w-4" />}
+                </div>
               ))}
             </li>
           );

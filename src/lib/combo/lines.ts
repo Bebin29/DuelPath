@@ -108,3 +108,27 @@ export function lineSteps(
 export function rootAlternatives(nodes: ComboNodeData[]): ComboNodeData[] {
   return childrenOf(nodes, null).slice(1);
 }
+
+/**
+ * Line zur Hauptline befördern (UX-Plan 6.7): Jeder Knoten auf dem Pfad wird das erste Kind
+ * seines Elternknotens, die bisherigen Geschwister rücken in ihrer Reihenfolge nach.
+ */
+export function promoteLine(nodes: ComboNodeData[], nodeId: string): ComboNodeData[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const ranks = new Map<string, number>();
+  for (let n = byId.get(nodeId); n; n = n.parentId ? byId.get(n.parentId) : undefined) {
+    const siblings = childrenOf(nodes, n.parentId).filter((s) => s.id !== n!.id);
+    ranks.set(n.id, 0);
+    siblings.forEach((s, i) => ranks.set(s.id, i + 1));
+  }
+  return nodes.map((n) => (ranks.has(n.id) ? { ...n, rank: ranks.get(n.id) } : n));
+}
+
+/** Liegt der Knoten auf der Hauptline (überall das erste Kind)? */
+export function isMainLine(nodes: ComboNodeData[], nodeId: string): boolean {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  for (let n = byId.get(nodeId); n; n = n.parentId ? byId.get(n.parentId) : undefined) {
+    if (childrenOf(nodes, n.parentId)[0]?.id !== n.id) return false;
+  }
+  return true;
+}

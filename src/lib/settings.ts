@@ -13,12 +13,21 @@ export interface UserSettings {
   cardLanguage: CardLanguage;
   /** Staples für Leiste und Stresstest in dieser Reihenfolge; null = Standardliste (UX-Plan 6.8) */
   staples: string[] | null;
+  /** Tempo beim Abspielen einer Line (UX-Plan 6.10): Schritte pro Sekunde */
+  autoplaySpeed: AutoplaySpeed;
 }
+
+export const AUTOPLAY_SPEEDS = [0.5, 1, 2] as const;
+export type AutoplaySpeed = (typeof AUTOPLAY_SPEEDS)[number];
+/** „0,5×“ auf Deutsch, „0.5×“ auf Englisch */
+export const speedLabel = (speed: AutoplaySpeed, locale: string) =>
+  `${new Intl.NumberFormat(locale).format(speed)}×`;
 
 export const DEFAULT_SETTINGS: UserSettings = {
   theme: DEFAULT_THEME,
   cardLanguage: 'en',
   staples: null,
+  autoplaySpeed: 1,
 };
 
 export const settingsPatchSchema = z
@@ -26,6 +35,7 @@ export const settingsPatchSchema = z
     theme: z.enum(['dark', 'light']).optional(),
     cardLanguage: z.enum(['en', 'de']).optional(),
     staples: z.array(z.string().max(100)).max(60).nullable().optional(),
+    autoplaySpeed: z.union([z.literal(0.5), z.literal(1), z.literal(2)]).optional(),
   })
   .strict();
 

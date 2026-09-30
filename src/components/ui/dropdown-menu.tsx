@@ -53,6 +53,23 @@ function DropdownMenuRadioItem({
   );
 }
 
+function DropdownMenuCheckboxItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>) {
+  return (
+    <DropdownMenuPrimitive.CheckboxItem className={cn(itemClass, 'pr-7', className)} {...props}>
+      {children}
+      <DropdownMenuPrimitive.ItemIndicator className="absolute right-2 text-ink">
+        <svg viewBox="0 0 12 12" className="size-3" aria-hidden>
+          <path d="M2 6.5 4.8 9 10 3" fill="none" stroke="currentColor" strokeWidth={1.6} />
+        </svg>
+      </DropdownMenuPrimitive.ItemIndicator>
+    </DropdownMenuPrimitive.CheckboxItem>
+  );
+}
+
 function DropdownMenuLabel({
   className,
   ...props
@@ -81,6 +98,7 @@ export {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuCheckboxItem,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,

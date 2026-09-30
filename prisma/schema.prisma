@@ -145,6 +145,8 @@ model Combo {
   userId     String
   deckId     String?
   startState Json // StartState: Starthand, optional Gegnerboard
+  tags       String[] @default([]) // freie Schlagworte wie "1-Card", "Going Second" (UX-Plan 7.2)
+  status     String   @default("DRAFT") // DRAFT | TESTED | TOURNAMENT
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

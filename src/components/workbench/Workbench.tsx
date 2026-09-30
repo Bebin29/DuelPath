@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/i18n/hooks';
-import { useCardLanguage } from '@/components/providers/SettingsProvider';
+import { useCardLanguage, useSettings } from '@/components/providers/SettingsProvider';
 import { useHistory } from '@/lib/hooks/use-history';
 import {
   cardsIn,
@@ -18,16 +18,26 @@ import {
 } from '@/lib/combo/state';
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import { START_ID, newNode, removeSubtree, updateNode } from '@/lib/combo/tree';
-import { childrenOf, lineSteps, lineThrough, nextRank, rootAlternatives } from '@/lib/combo/lines';
+import {
+  childrenOf,
+  isMainLine,
+  lineSteps,
+  lineThrough,
+  nextRank,
+  promoteLine,
+  rootAlternatives,
+} from '@/lib/combo/lines';
 import { reactionNode, type Staple } from '@/lib/combo/reactions';
 import { candidateEffects, toSuggestionInput, type Candidate } from '@/lib/combo/suggestions';
 import { dropMeaning, type DropTarget } from '@/lib/combo/play';
 import { existingBranch, stressBranch, type Hit } from '@/lib/combo/stress';
 import { endboardSummary, lineEnds, missingCards } from '@/lib/combo/endboard';
 import { usedOptNames } from '@/lib/combo/opt-names';
+import type { ComboStatus } from '@/lib/combo/library';
 import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/combo.actions';
 import { NodeEditor, StartStateEditor, type MoveTarget } from '@/components/combo/NodeEditor';
 import { SuggestionPanel } from '@/components/combo/SuggestionPanel';
+import { Button } from '@/components/ui/button';
 import { BoardView } from './BoardView';
 import { CardMenu, type MenuAnchor } from './CardMenu';
 import { cardActions } from './card-actions';
@@ -48,6 +58,8 @@ import { nodeCardId, stepLabel } from './step-label';
 interface Doc {
   title: string;
   deckId: string | null;
+  tags: string[];
+  status: ComboStatus;
   startState: StartState;
   nodes: ComboNodeData[];
 }
@@ -95,10 +107,12 @@ export function Workbench({
   const history = useHistory<Doc>({
     title: initial.title,
     deckId: initial.deckId,
+    tags: initial.tags,
+    status: initial.status,
     startState: initial.startState,
     nodes: initial.nodes,
   });
-  const { title, deckId, startState, nodes } = history.state;
+  const { title, deckId, tags, status: comboStatus, startState, nodes } = history.state;
   const setDoc = history.set;
   const setNodes = useCallback(
     (fn: (prev: ComboNodeData[]) => ComboNodeData[], group?: string) =>
@@ -184,11 +198,18 @@ export function Workbench({
     }
     const timer = setTimeout(async () => {
       setStatus('saving');
-      const result = await saveCombo(initial.id, { title, deckId, startState, nodes });
+      const result = await saveCombo(initial.id, {
+        title,
+        deckId,
+        tags,
+        status: comboStatus,
+        startState,
+        nodes,
+      });
       setStatus(result.error ? 'error' : 'saved');
     }, 800);
     return () => clearTimeout(timer);
-  }, [initial.id, title, deckId, startState, nodes, saveAttempt]);
+  }, [initial.id, title, deckId, tags, comboStatus, startState, nodes, saveAttempt]);
 
   // Modus und Schritt stehen in der Adresse (UX-Plan 5): Neuladen landet an derselben Stelle
   useEffect(() => {
@@ -220,6 +241,9 @@ export function Workbench({
   const [railHover, setRailHover] = useState<string | null>(null);
   const [chokeHover, setChokeHover] = useState<Hit | null>(null);
   const [comparing, setComparing] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const { settings, update: updateSettings } = useSettings();
   const stress = useStress({ line, steps, states, start, cards, staples });
   const toggleStress = () => {
     setStressOn((on) => !on);
@@ -306,6 +330,13 @@ export function Workbench({
       )
     );
 
+  /** Line durch den Knoten zur Hauptline machen (UX-Plan 6.7) */
+  const promote = (nodeId: string) =>
+    setNodes((prev) => {
+      const leaf = lineThrough(prev, nodeId).at(-1);
+      return leaf ? promoteLine(prev, leaf.id) : prev;
+    });
+
   // Antworten auf eine gegnerische Unterbrechung: Called, Crossout, Droplet von der eigenen Hand
   const answers = useMemo(() => {
     const top = after.chain.at(-1);
@@ -388,6 +419,21 @@ export function Workbench({
     [select, steps]
   );
 
+  // Nachspielen (UX-Plan 6.10): ein Schritt pro Sekunde mal Tempo, am Ende hält es an
+  useEffect(() => {
+    if (!playing) return;
+    const timer = setTimeout(() => {
+      if (position >= steps.length) setPlaying(false);
+      else goTo(position + 1);
+    }, 1000 / settings.autoplaySpeed);
+    return () => clearTimeout(timer);
+  }, [playing, position, steps.length, goTo, settings.autoplaySpeed]);
+  const togglePlay = () => {
+    if (playing) return setPlaying(false);
+    if (position >= steps.length) goTo(0);
+    setPlaying(true);
+  };
+
   // Tastatur (UX-Plan 9): nur, wenn kein Textfeld den Fokus hat
   const { undo, redo } = history;
   useEffect(() => {
@@ -434,6 +480,11 @@ export function Workbench({
         e.target instanceof HTMLElement && e.target.closest('button, a, [role="button"]');
       if (key === 'Escape' && flow.chainMode) {
         flow.setChainMode(false);
+        return;
+      }
+      if (key === ' ' && !onControl) {
+        e.preventDefault();
+        togglePlay();
         return;
       }
       if (key === '/') {
@@ -566,22 +617,42 @@ export function Workbench({
           ))}
         </ul>
       )}
-      <label className="flex flex-col gap-1.5">
-        <span className="font-display text-base">{t('workbench.note')}</span>
-        <textarea
-          value={selected.note ?? ''}
-          onChange={(e) =>
-            setNodes(
-              (prev) => updateNode(prev, selected.id, { note: e.target.value || null }),
-              `note:${selected.id}`
-            )
-          }
-          placeholder={t('workbench.notePlaceholder')}
-          rows={2}
-          className="resize-y rounded-md border border-line bg-transparent px-2.5 py-2 font-hand text-[15px] leading-snug text-opponent outline-none placeholder:font-sans placeholder:text-sm placeholder:text-text-subtle focus-visible:border-line-strong"
-        />
-      </label>
-      <details className="group">
+      {!isMainLine(nodes, selected.id) && (
+        <Button
+          variant="line"
+          size="sm"
+          className="self-start"
+          onClick={() => promote(selected.id)}
+        >
+          {t('workbench.promoteThis')}
+        </Button>
+      )}
+      {playing ? (
+        selected.note && (
+          <p className="font-hand text-[22px] leading-snug text-opponent">{selected.note}</p>
+        )
+      ) : (
+        <label className="flex flex-col gap-1.5">
+          <span className="font-display text-base">{t('workbench.note')}</span>
+          <textarea
+            value={selected.note ?? ''}
+            onChange={(e) =>
+              setNodes(
+                (prev) => updateNode(prev, selected.id, { note: e.target.value || null }),
+                `note:${selected.id}`
+              )
+            }
+            placeholder={t('workbench.notePlaceholder')}
+            rows={2}
+            className="resize-y rounded-md border border-line bg-transparent px-2.5 py-2 font-hand text-[15px] leading-snug text-opponent outline-none placeholder:font-sans placeholder:text-sm placeholder:text-text-subtle focus-visible:border-line-strong"
+          />
+        </label>
+      )}
+      <details
+        className="group"
+        open={editOpen}
+        onToggle={(e) => setEditOpen(e.currentTarget.open)}
+      >
         <summary className="cursor-pointer font-display text-base">
           {t('workbench.editStep')}
         </summary>
@@ -638,6 +709,17 @@ export function Workbench({
 
   return (
     <div className="flex h-dvh flex-col">
+      <p className="sr-only" aria-live="polite">
+        {selected
+          ? t('workbench.announce', {
+              n: position,
+              label: labelOf(selected),
+              chain: after.chain.length
+                ? t('workbench.chainOpen', { count: after.chain.length })
+                : '',
+            })
+          : t('workbench.startHand')}
+      </p>
       <WorkbenchHeader
         title={title}
         onTitle={(value) => setDoc((d) => ({ ...d, title: value }), 'title')}
@@ -660,6 +742,10 @@ export function Workbench({
         stress={stressOn}
         chokePoints={stress.byStep.size}
         onStress={toggleStress}
+        comboStatus={comboStatus}
+        onComboStatus={(value) => setDoc((d) => ({ ...d, status: value }))}
+        tags={tags}
+        onTags={(value) => setDoc((d) => ({ ...d, tags: value }))}
       />
 
       {mode === 'board' ? (
@@ -688,6 +774,12 @@ export function Workbench({
               onDropStaple={(name, nodeId) => dropStaple(name, nodeId)}
               endCountOf={endCountOf}
               onCompare={ends.length > 1 ? () => setComparing(true) : undefined}
+              onOpen={(id) => {
+                select(id);
+                setEditOpen(true);
+              }}
+              onPromote={promote}
+              warningTextOf={(id) => warningsOf(states.get(id), id).join('\n')}
               title={lineTitle}
               steps={steps}
               selectedId={selectedId}
@@ -731,7 +823,7 @@ export function Workbench({
                 changed={changed}
                 inspectedId={inspectedId}
                 onInspect={inspect}
-                onDrop={handleDrop}
+                onDrop={playing ? undefined : handleDrop}
                 describeDrop={describeDrop}
                 onCardClick={handleCardClick}
                 picking={
@@ -794,11 +886,17 @@ export function Workbench({
                   effectIndex: offer.effectIndex,
                 })
               }
-              offer={Boolean(flow.offer)}
+              offer={flow.offer}
               onInsert={() => flow.accept('insert')}
               onReplace={() => flow.accept('replace')}
               onDismissOffer={flow.dismissOffer}
               onAdd={addChild}
+              playing={playing}
+              onPlay={togglePlay}
+              speed={settings.autoplaySpeed}
+              onSpeed={(autoplaySpeed) => updateSettings({ autoplaySpeed })}
+              branches={steps[position - 1]?.branches ?? []}
+              onBranch={select}
             />
             {staplePicker && (
               <PickList

@@ -1,12 +1,15 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
-import { motion } from 'motion/react';
+import { ChevronLeft, ChevronRight, GitBranch, Pause, Play, Plus, X } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
+import { Segmented } from '@/components/ui/segmented';
+import { AUTOPLAY_SPEEDS, speedLabel, type AutoplaySpeed } from '@/lib/settings';
+import type { LineBranch } from '@/lib/combo/lines';
+import { TimedNotice } from '@/components/ui/timed-notice';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,12 +72,22 @@ interface StepBarProps {
   answers: AnswerOffer[];
   onAnswer: (offer: AnswerOffer) => void;
 
-  offer: boolean;
+  /** Erster Knoten des frisch angelegten Branches; null ohne Angebot */
+  offer: string | null;
   onInsert: () => void;
   onReplace: () => void;
   onDismissOffer: () => void;
 
   onAdd: (kind: NodeKind) => void;
+
+  /** Nachspielen (UX-Plan 6.10): Leertaste spielt ab, Tempo 0,5× bis 2× */
+  playing: boolean;
+  onPlay: () => void;
+  speed: AutoplaySpeed;
+  onSpeed: (speed: AutoplaySpeed) => void;
+  /** Branches am aktuellen Schritt, ↓ wechselt in den ersten */
+  branches: LineBranch[];
+  onBranch: (nodeId: string) => void;
 }
 
 /**
@@ -108,13 +121,23 @@ export function StepBar(props: StepBarProps) {
         >
           <ChevronRight />
         </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={props.onPlay}
+          disabled={total === 0}
+          aria-pressed={props.playing}
+          aria-label={`${props.playing ? t('workbench.pause') : t('workbench.play')} (${t('workbench.space')})`}
+          title={`${props.playing ? t('workbench.pause') : t('workbench.play')} (${t('workbench.space')})`}
+        >
+          {props.playing ? <Pause /> : <Play />}
+        </Button>
       </div>
       <span className="h-5 w-px shrink-0 bg-line" />
-      <div
-        className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto"
-        aria-live="polite"
-      >
-        {prompt ? (
+      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto" aria-live="polite">
+        {props.playing ? (
+          <PlayRow {...props} />
+        ) : prompt ? (
           <PromptRow {...props} prompt={prompt} />
         ) : chainLength > 0 ? (
           <ChainRow {...props} />
@@ -123,9 +146,10 @@ export function StepBar(props: StepBarProps) {
         )}
       </div>
       {props.offer ? (
-        <OfferNotice {...props} />
+        <OfferNotice key={props.offer} {...props} />
       ) : (
         !prompt &&
+        !props.playing &&
         chainLength === 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -275,8 +299,69 @@ function ChainRow({
   );
 }
 
-function IdleRow({ position, triggers, cards, onTrigger, answers, onAnswer }: StepBarProps) {
+function PlayRow({ position, total, speed, onSpeed }: StepBarProps) {
+  const { t, i18n } = useTranslation();
+  return (
+    <>
+      <span className="font-mono text-xs text-text-muted">{t('workbench.playing')}</span>
+      <Segmented<string>
+        label={t('workbench.speed')}
+        value={String(speed)}
+        onChange={(value) => onSpeed(Number(value) as AutoplaySpeed)}
+        options={AUTOPLAY_SPEEDS.map((s) => ({
+          value: String(s),
+          label: speedLabel(s, i18n.language),
+        }))}
+      />
+      <span
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={position}
+        aria-label={t('workbench.stepCounter', { n: position, total })}
+        className="relative h-1 w-40 overflow-hidden rounded-full bg-line"
+      >
+        <span
+          className="absolute inset-y-0 left-0 bg-ink transition-[width] duration-(--motion-base)"
+          style={{ width: `${total ? (position / total) * 100 : 0}%` }}
+        />
+      </span>
+    </>
+  );
+}
+
+function Branches({ branches, onBranch }: Pick<StepBarProps, 'branches' | 'onBranch'>) {
   const { t } = useTranslation();
+  return branches.slice(0, 3).map((b, i) => (
+    <Button
+      key={b.nodeId}
+      variant="line"
+      size="sm"
+      onClick={() => onBranch(b.nodeId)}
+      className="max-w-56 shrink-0"
+    >
+      <GitBranch />
+      <span className="truncate">
+        {t('workbench.branchHint', { letter: b.letter, label: b.label })}
+      </span>
+      {i === 0 && <Kbd>↓</Kbd>}
+    </Button>
+  ));
+}
+
+function IdleRow({
+  position,
+  triggers,
+  cards,
+  onTrigger,
+  answers,
+  onAnswer,
+  branches,
+  onBranch,
+}: StepBarProps) {
+  const { t } = useTranslation();
+  if (branches.length > 0 && triggers.length === 0 && answers.length === 0)
+    return <Branches branches={branches} onBranch={onBranch} />;
   if (triggers.length > 0 || answers.length > 0)
     return (
       <>
@@ -351,7 +436,7 @@ function Answers({
 function OfferNotice({ onInsert, onReplace, onDismissOffer }: StepBarProps) {
   const { t } = useTranslation();
   return (
-    <div className="relative flex shrink-0 items-center gap-1 overflow-hidden rounded-md border border-line py-1 pl-3 pr-1">
+    <TimedNotice duration={OFFER_MS} onExpire={onDismissOffer} className="shrink-0">
       <span className="mr-1 text-xs text-text-muted">{t('workbench.offer.branch')}</span>
       <Button variant="text" size="sm" onClick={onInsert}>
         {t('workbench.offer.insert')}
@@ -367,13 +452,6 @@ function OfferNotice({ onInsert, onReplace, onDismissOffer }: StepBarProps) {
       >
         <X />
       </Button>
-      <motion.span
-        aria-hidden
-        className="absolute inset-x-0 bottom-0 h-px origin-left bg-line-strong"
-        initial={{ scaleX: 1 }}
-        animate={{ scaleX: 0 }}
-        transition={{ duration: OFFER_MS / 1000, ease: 'linear' }}
-      />
-    </div>
+    </TimedNotice>
   );
 }

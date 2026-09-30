@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   cardsIn,
   isOptAvailable,
@@ -70,12 +70,6 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
   const [chainMode, setChainMode] = useState(false);
   const here = selected?.id ?? START_ID;
   const prompt = queue[0]?.at === here ? queue[0] : null;
-
-  useEffect(() => {
-    if (!offer) return;
-    const timer = setTimeout(() => setOffer(null), OFFER_MS);
-    return () => clearTimeout(timer);
-  }, [offer]);
 
   const play = useCallback(
     (intent: PlayIntent) => {
