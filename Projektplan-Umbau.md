@@ -14,7 +14,7 @@ DuelPath wird ein Werkzeug, um Yu-Gi-Oh!-Combos als **Baumdiagramm auf einem Can
 - **Nur lokal.** Kein Hosting, kein Deployment. Datenbank ist PostgreSQL lokal.
 - **Ein Zug pro Combo.** Eine Combo deckt genau einen eigenen Zug ab. Kein Zugwechsel, kein Phasenmodell über den Zug hinaus.
 - **Keine vollständige Regel-Engine.** DuelPath prüft nicht jeden Zug auf Legalität. Eindeutige Mechaniken (OPT, Negierungsarten, Chain-Auflösung) werden berechnet; alles andere beschreibt der Nutzer.
-- **Kein Duellmodus** als eigene Seite. Die alten Spielfeld-Komponenten sind entfernt; das Zustandspanel wird in M5 neu auf gebaut (Vorlage in der Git-Historie).
+- **Kein Duellmodus** als eigene Seite. Die alten Spielfeld-Komponenten sind entfernt; das Zustandspanel wird in M5 neu auf `GameState` gebaut (Vorlage in der Git-Historie).
 - **Auth bleibt.** NextAuth bleibt unverändert, damit ein späteres Hosting ohne Umbau möglich ist.
 
 ## 3. Bestandsaufnahme
