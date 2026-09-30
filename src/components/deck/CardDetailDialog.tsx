@@ -176,41 +176,23 @@ export function CardDetailDialog({ card, open, onOpenChange, onAddToDeck }: Card
                 </div>
               )}
 
-              {/* Banlist-Info */}
-              {shown.banlistInfo && (
+              {/* TCG-Banlist */}
+              {shown.banTcg && (
                 <>
                   <Separator />
                   <div className="space-y-2">
-                    <h3 className="text-lg font-semibold">Banlist-Status</h3>
-                    <div className="text-sm">
-                      {(() => {
-                        try {
-                          const banlist = JSON.parse(shown.banlistInfo);
-                          return (
-                            <div className="space-y-1">
-                              {Object.entries(banlist).map(([format, status]) => (
-                                <div key={format}>
-                                  <span className="font-medium">{format}:</span>{' '}
-                                  <Badge
-                                    variant={
-                                      status === 'Forbidden'
-                                        ? 'destructive'
-                                        : status === 'Limited'
-                                          ? 'default'
-                                          : 'secondary'
-                                    }
-                                  >
-                                    {String(status)}
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        } catch {
-                          return <Badge variant="secondary">{shown.banlistInfo}</Badge>;
-                        }
-                      })()}
-                    </div>
+                    <h3 className="text-lg font-semibold">Banlist-Status (TCG)</h3>
+                    <Badge
+                      variant={
+                        shown.banTcg === 'Forbidden'
+                          ? 'destructive'
+                          : shown.banTcg === 'Limited'
+                            ? 'default'
+                            : 'secondary'
+                      }
+                    >
+                      {shown.banTcg}
+                    </Badge>
                   </div>
                 </>
               )}

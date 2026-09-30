@@ -17,7 +17,7 @@ import { createHash } from 'crypto';
  * - atk: Angriffspunkte
  * - def: Verteidigungspunkte
  * - archetype: Archetype-Name
- * - banlistInfo: Banlist-Status
+ * - banTcg: TCG-Banlist-Status (Forbidden, Limited, Semi-Limited)
  * - page: Seitennummer (default: 1)
  * - limit: Anzahl pro Seite (default: 50, max: 100)
  * - sortBy: Sortierfeld (name, type, level, atk, def, archetype)
@@ -182,8 +182,8 @@ export async function GET(request: NextRequest) {
       filter.archetype = archetypeParams.length === 1 ? archetypeParams[0] : archetypeParams;
     }
 
-    const banlistInfo = searchParams.get('banlistInfo');
-    if (banlistInfo) filter.banlistInfo = banlistInfo;
+    const banTcg = searchParams.get('banTcg');
+    if (banTcg) filter.banTcg = banTcg;
 
     // Pagination
     const page = parseInt(searchParams.get('page') || '1', 10);

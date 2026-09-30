@@ -161,8 +161,8 @@ export class CardSearchService {
       where.AND = andConditions;
     }
 
-    if (filter.banlistInfo) {
-      where.banlistInfo = filter.banlistInfo;
+    if (filter.banTcg) {
+      where.banTcg = filter.banTcg;
     }
 
     // Typisierte Sortierung
