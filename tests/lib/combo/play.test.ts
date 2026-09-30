@@ -10,9 +10,12 @@ import {
   buildStep,
   costMovesFor,
   dropMeaning,
+  freeEmz,
+  fusionMoves,
   insertBefore,
   needsDiscard,
   replaceMain,
+  resultMoves,
   triggerOffers,
 } from '@/lib/combo/play';
 
@@ -212,5 +215,35 @@ describe('dropMeaning', () => {
   it('beschwört aus dem Friedhof speziell und bewegt sonst frei', () => {
     expect(dropMeaning(s, all, 'gy', mz)?.label).toBe('specialSummon');
     expect(dropMeaning(s, all, 'alu', { player: 'self', zone: 'GY' })?.label).toBe('move');
+  });
+});
+
+describe('Abfrage-Ergebnisse', () => {
+  it('beschwört in die nächsten freien Zonen und sucht auf die Hand', () => {
+    const state = initialState(start);
+    expect(resultMoves('MONSTER', ['alu', 'bf'], state, 'self').map((m) => m.slot)).toEqual([1, 2]);
+    expect(resultMoves('HAND', ['bf'], state, 'self')[0]).toMatchObject({
+      from: 'HAND',
+      to: 'HAND',
+    });
+  });
+
+  it('gibt bei der Fusion die Zone der Materialien frei', () => {
+    const state = initialState(start);
+    const moves = fusionMoves('alu', ['occupied'], state, 'self');
+    expect(moves[0]).toMatchObject({ instanceId: 'occupied', to: 'GY' });
+    expect(moves[1]).toMatchObject({ instanceId: 'alu', to: 'MONSTER', slot: 0 });
+  });
+
+  it('nimmt die linke Extra Monster Zone zuerst', () => {
+    const state = initialState(start);
+    expect(freeEmz(state)).toBe(5);
+    const taken = initialState({
+      cards: [
+        ...start.cards,
+        { instanceId: 'x', cardId: 'ALU', owner: 'self', zone: 'MONSTER', slot: 5 },
+      ],
+    });
+    expect(freeEmz(taken)).toBe(6);
   });
 });

@@ -8,7 +8,7 @@ import {
   type Position,
   type Zone,
 } from '@/lib/combo/state';
-import { boardOf, MAIN_ZONES } from '@/lib/combo/board';
+import { boardOf, EMZ_LEFT, EMZ_RIGHT, MAIN_ZONES } from '@/lib/combo/board';
 import { childrenOf, nextRank } from '@/lib/combo/lines';
 import { newNode } from '@/lib/combo/tree';
 
@@ -403,4 +403,61 @@ export function dropMeaning(
     label: 'move',
     intent: { kind: 'move', instanceId, to: zone, slot, controller: player },
   };
+}
+
+/** Freie Extra Monster Zone, links zuerst; eine belegt der Gegner aus seiner Sicht gespiegelt */
+export function freeEmz(state: GameState): number | undefined {
+  const mine = boardOf(state, 'self').extraMonsters;
+  const theirs = boardOf(state, 'opponent').extraMonsters;
+  if (!mine[0] && !theirs[1]) return EMZ_LEFT;
+  if (!mine[1] && !theirs[0]) return EMZ_RIGHT;
+  return undefined;
+}
+
+/**
+ * Bewegungen aus einer beantworteten Abfrage (UX-Plan 6.4): gesuchte Karten auf die Hand,
+ * beschworene in freie Monsterzonen, der Reihe nach.
+ */
+export function resultMoves(
+  to: Zone,
+  picked: string[],
+  state: GameState,
+  player: Player
+): CardMove[] {
+  const taken = new Set<number>();
+  const row = boardOf(state, player).monsters;
+  return compact(
+    picked.map((id) => {
+      const card = state.cards[id];
+      if (!card) return null;
+      if (to !== 'MONSTER') return moveOf(state, id, to);
+      const slot = row.findIndex((c, i) => c === null && !taken.has(i));
+      if (slot >= 0) taken.add(slot);
+      return moveOf(state, id, 'MONSTER', {
+        ...(slot >= 0 && { slot }),
+        position: 'ATK',
+        ...(card.owner !== player && { controller: player }),
+      });
+    })
+  );
+}
+
+/** Fusion: Materialien auf den Friedhof, das Fusionsmonster in die frei gewordene oder nächste Zone */
+export function fusionMoves(
+  fusionId: string,
+  materials: string[],
+  state: GameState,
+  player: Player
+): CardMove[] {
+  const toGy = compact(materials.map((id) => moveOf(state, id, 'GY')));
+  const freed: GameState = {
+    ...state,
+    cards: Object.fromEntries(
+      Object.entries(state.cards).map(([id, c]) => [
+        id,
+        materials.includes(id) ? { ...c, zone: 'GY' as const, slot: undefined } : c,
+      ])
+    ),
+  };
+  return [...toGy, ...resultMoves('MONSTER', [fusionId], freed, player)];
 }

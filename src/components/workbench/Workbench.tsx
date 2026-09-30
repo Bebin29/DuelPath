@@ -14,17 +14,21 @@ import {
   type NodeKind,
   type Player,
   type StartState,
-  type Zone,
 } from '@/lib/combo/state';
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import { START_ID, newNode, removeSubtree, updateNode } from '@/lib/combo/tree';
 import { childrenOf, lineSteps, lineThrough, nextRank, rootAlternatives } from '@/lib/combo/lines';
 import { reactionNode, type Staple } from '@/lib/combo/reactions';
 import { candidateEffects, toSuggestionInput, type Candidate } from '@/lib/combo/suggestions';
+import { dropMeaning, type DropTarget } from '@/lib/combo/play';
 import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/combo.actions';
 import { NodeEditor, StartStateEditor, type MoveTarget } from '@/components/combo/NodeEditor';
 import { SuggestionPanel } from '@/components/combo/SuggestionPanel';
-import { BoardView, type BoardMove } from './BoardView';
+import { BoardView } from './BoardView';
+import { CardMenu, type MenuAnchor } from './CardMenu';
+import { cardActions } from './card-actions';
+import { QuickSelect } from './QuickSelect';
+import { usePlay, type Prompt } from './use-play';
 import { Inspector } from './Inspector';
 import { LineList } from './LineList';
 import { StepBar } from './StepBar';
@@ -38,8 +42,6 @@ interface Doc {
   startState: StartState;
   nodes: ComboNodeData[];
 }
-
-const FIELD_ZONES: Zone[] = ['MONSTER', 'SPELL_TRAP', 'FIELD'];
 
 /** Karten, die im Schritt ihren Ort gewechselt haben (UX-Plan 4.7: Was hat sich geändert?) */
 function changedCards(before: GameState, after: GameState): Set<string> {
@@ -101,6 +103,8 @@ export function Workbench({
   );
   const [mode, setMode] = useState<WorkbenchMode>(initialView === 'tree' ? 'tree' : 'board');
   const [inspectedId, setInspectedId] = useState<string | null>(null);
+  // Kürzel lesen die Karte unter dem Zeiger sofort, auch wenn der Hover noch nicht gerendert ist
+  const hovered = useRef<string | null>(null);
   const [moveTarget, setMoveTarget] = useState<MoveTarget>('resolveMoves');
   const [status, setStatus] = useState<SaveStatus>('saved');
   const [saveAttempt, setSaveAttempt] = useState(0);
@@ -186,10 +190,21 @@ export function Workbench({
     window.history.replaceState(null, '', url);
   }, [mode, selected]);
 
-  const select = useCallback((id: string) => {
+  const focus = useCallback((id: string) => {
     setSelectedId(id);
     setInspectedId(null);
   }, []);
+  const flow = usePlay({ nodes, selected, before, state: after, cards, setNodes, focus });
+  const { clear: clearPrompts } = flow;
+  const select = useCallback(
+    (id: string) => {
+      clearPrompts();
+      focus(id);
+    },
+    [clearPrompts, focus]
+  );
+  const [menu, setMenu] = useState<MenuAnchor | null>(null);
+  const [quick, setQuick] = useState(false);
 
   const registerCard = (card: ComboCard) =>
     setCards((prev) => (prev.has(card.id) ? prev : new Map(prev).set(card.id, card)));
@@ -232,41 +247,37 @@ export function Workbench({
     setMoveTarget('costMoves');
   };
 
-  /** Karte auf dem Board in eine Zone gezogen; im Startzustand direkt, sonst als Bewegung des Schritts */
-  const handleMove = ({ instanceId, zone: to, player, slot }: BoardMove) => {
-    const onField = FIELD_ZONES.includes(to);
-    if (!selected) {
-      setDoc((d) => ({
-        ...d,
-        startState: {
-          cards: d.startState.cards.map((c) =>
-            c.instanceId === instanceId
-              ? {
-                  ...c,
-                  zone: to,
-                  slot: onField ? slot : undefined,
-                  controller: onField ? player : undefined,
-                }
-              : c
-          ),
-        },
-      }));
-      return;
-    }
-    if (selected.kind !== 'ACTION' && selected.kind !== 'ACTIVATE') return;
-    const card = after.cards[instanceId];
-    if (!card) return;
-    const key = selected.kind === 'ACTIVATE' ? moveTarget : 'resolveMoves';
-    const move = {
+  /** Ablegen am Board spielt den Schritt (UX-Plan 6.3); die Starthand legt der Editor fest */
+  const handleDrop = (instanceId: string, target: DropTarget, shift: boolean) => {
+    const meaning = dropMeaning(after, cards, instanceId, target, shift);
+    if (!meaning) return;
+    if (meaning.label === 'extraSummon') flow.startMaterials(meaning.instanceId, meaning.slot);
+    else flow.play(meaning.intent);
+  };
+  const describeDrop = (instanceId: string, target: DropTarget, shift: boolean) => {
+    const meaning = dropMeaning(after, cards, instanceId, target, shift);
+    return meaning ? t(`workbench.drop.${meaning.label}`) : null;
+  };
+
+  const { prompt, candidates: promptCards } = flow;
+  const pickable = useMemo(() => new Set(promptCards.map((c) => c.instanceId)), [promptCards]);
+  const handleCardClick = (instanceId: string, at: { x: number; y: number }) => {
+    if (prompt && pickable.has(instanceId)) flow.pick(instanceId);
+    else setMenu({ instanceId, ...at });
+  };
+  const openMenuFor = (instanceId: string) => {
+    setQuick(false);
+    const placed = after.cards[instanceId];
+    // Karten in Stapeln haben kein eigenes Element; dann sitzt das Menü am Stapel
+    const el =
+      document.querySelector(`[data-instance="${instanceId}"]`) ??
+      (placed && document.querySelector(`[data-drop="${placed.owner}:${placed.zone}"]`));
+    const rect = el?.getBoundingClientRect();
+    setMenu({
       instanceId,
-      cardId: card.cardId,
-      from: card.zone,
-      to,
-      ...(onField && slot !== undefined && { slot }),
-      ...(onField && player !== card.owner && { controller: player }),
-      ...(to === 'MONSTER' && { position: 'ATK' as const }),
-    };
-    setNodes((prev) => updateNode(prev, selected.id, { [key]: [...(selected[key] ?? []), move] }));
+      x: rect ? rect.right + 4 : window.innerWidth / 2,
+      y: rect ? rect.top : window.innerHeight / 2,
+    });
   };
 
   const goTo = useCallback(
@@ -296,6 +307,69 @@ export function Workbench({
         return;
       }
       if (mod || e.altKey || isTyping(e.target)) return;
+      // Das offene Aktionsmenü führt selbst mit Pfeilen, Enter und Esc
+      if (
+        menu &&
+        ['Enter', 'Escape', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)
+      )
+        return;
+      const key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+      if (prompt) {
+        if (/^[1-9]$/.test(key) && promptCards[Number(key) - 1]) {
+          e.preventDefault();
+          flow.pick(promptCards[Number(key) - 1].instanceId);
+          return;
+        }
+        if (key === 'Enter') {
+          e.preventDefault();
+          flow.confirm();
+          return;
+        }
+        if (key === 'Escape') {
+          flow.later();
+          return;
+        }
+      }
+      const onControl =
+        e.target instanceof HTMLElement && e.target.closest('button, a, [role="button"]');
+      if (key === 'Escape' && flow.chainMode) {
+        flow.setChainMode(false);
+        return;
+      }
+      if (key === '/') {
+        e.preventDefault();
+        setQuick(true);
+        return;
+      }
+      if (key === 'Enter' && !onControl && after.chain.length > 0) {
+        e.preventDefault();
+        flow.play({ kind: 'resolve' });
+        return;
+      }
+      if (key === 'C' && after.chain.length > 0) {
+        flow.setChainMode((on) => !on);
+        return;
+      }
+      if (key === 'O' && selected) {
+        addChild('OPPONENT');
+        return;
+      }
+      if (key === 'E') {
+        flow.play({ kind: 'end' });
+        return;
+      }
+      // Kürzel wirken auf die Karte im Menü oder unter dem Zeiger (UX-Plan 9)
+      const target = menu?.instanceId ?? hovered.current;
+      if (target && /^[1-9NSAPGBHD]$/.test(key)) {
+        const { effects, other } = cardActions(after, cards, target);
+        const action = [...effects, ...other].find((a) => a.key === key);
+        if (action) {
+          e.preventDefault();
+          setMenu(null);
+          flow.run(action, target);
+          return;
+        }
+      }
       if (e.key === 'v' || e.key === 'V') {
         setMode((m) => (m === 'board' ? 'tree' : 'board'));
       } else if (e.key === 'ArrowRight') {
@@ -324,13 +398,20 @@ export function Workbench({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [undo, redo, goTo, position, steps, select, ancestors, selected, nodes]);
+  });
 
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inspect = (id: string | null) => {
     if (leaveTimer.current) clearTimeout(leaveTimer.current);
-    if (id) setInspectedId(id);
-    else leaveTimer.current = setTimeout(() => setInspectedId(null), 300);
+    if (id) {
+      hovered.current = id;
+      setInspectedId(id);
+    } else {
+      leaveTimer.current = setTimeout(() => {
+        hovered.current = null;
+        setInspectedId(null);
+      }, 300);
+    }
   };
   const inspected = inspectedId ? (after.cards[inspectedId] ?? null) : null;
 
@@ -364,7 +445,7 @@ export function Workbench({
           className="resize-y rounded-md border border-line bg-transparent px-2.5 py-2 font-hand text-[15px] leading-snug text-opponent outline-none placeholder:font-sans placeholder:text-sm placeholder:text-text-subtle focus-visible:border-line-strong"
         />
       </label>
-      <details open className="group">
+      <details className="group">
         <summary className="cursor-pointer font-display text-base">
           {t('workbench.editStep')}
         </summary>
@@ -459,7 +540,10 @@ export function Workbench({
               onSelectStart={() => select(START_ID)}
             />
           </div>
-          <div className="flex min-h-0 min-w-0 flex-col" onMouseLeave={() => inspect(null)}>
+          <div
+            className="relative flex min-h-0 min-w-0 flex-col"
+            onMouseLeave={() => inspect(null)}
+          >
             <div className="min-h-0 flex-1">
               <BoardView
                 state={after}
@@ -467,16 +551,84 @@ export function Workbench({
                 changed={changed}
                 inspectedId={inspectedId}
                 onInspect={inspect}
-                onMove={handleMove}
+                onDrop={handleDrop}
+                describeDrop={describeDrop}
+                onCardClick={handleCardClick}
+                picking={
+                  prompt
+                    ? {
+                        pickable,
+                        picked: new Set(
+                          'picked' in prompt
+                            ? [
+                                ...prompt.picked,
+                                ...(prompt.kind === 'fusion' && prompt.fusionId
+                                  ? [prompt.fusionId]
+                                  : []),
+                              ]
+                            : []
+                        ),
+                      }
+                    : null
+                }
               />
             </div>
             <StepBar
               position={position}
               total={steps.length}
-              chainLength={after.chain.length}
               onPrev={() => goTo(position - 1)}
               onNext={() => goTo(position + 1)}
+              cards={cards}
+              onInspect={inspect}
+              prompt={
+                prompt && {
+                  question: questionOf(prompt, after, cards, cardLanguage, t),
+                  candidates: promptCards,
+                  picked: 'picked' in prompt ? prompt.picked : [],
+                  multi:
+                    prompt.kind === 'materials' ||
+                    (prompt.kind === 'fusion' && Boolean(prompt.fusionId)) ||
+                    (prompt.kind === 'result' && prompt.spec.count > 1),
+                  all: prompt.kind === 'result' ? prompt.all : undefined,
+                }
+              }
+              onPick={flow.pick}
+              onConfirm={() => flow.confirm()}
+              onAll={prompt?.kind === 'result' ? flow.showAll : undefined}
+              onLater={flow.later}
+              chainLength={after.chain.length}
+              chainMode={flow.chainMode}
+              onResolve={() => flow.play({ kind: 'resolve' })}
+              onChain={() => flow.setChainMode((on) => !on)}
+              onOpponent={() => addChild('OPPONENT')}
+              triggers={flow.triggers}
+              onTrigger={(offer) =>
+                flow.play({
+                  kind: 'activate',
+                  instanceId: offer.instanceId,
+                  effectIndex: offer.effectIndex,
+                })
+              }
+              offer={Boolean(flow.offer)}
+              onInsert={() => flow.accept('insert')}
+              onReplace={() => flow.accept('replace')}
+              onDismissOffer={flow.dismissOffer}
               onAdd={addChild}
+            />
+            {quick && (
+              <QuickSelect
+                state={after}
+                cards={cards}
+                onPick={openMenuFor}
+                onClose={() => setQuick(false)}
+              />
+            )}
+            <CardMenu
+              anchor={menu}
+              state={after}
+              cards={cards}
+              onRun={(action) => menu && flow.run(action, menu.instanceId)}
+              onClose={() => setMenu(null)}
             />
           </div>
           <div className="min-h-0 border-l border-line bg-surface-1">
@@ -516,4 +668,33 @@ export function Workbench({
       )}
     </div>
   );
+}
+
+/** Frage der Schrittleiste zur offenen Abfrage (UX-Plan 6.4) */
+function questionOf(
+  prompt: Prompt,
+  state: GameState,
+  cards: Map<string, ComboCard>,
+  language: 'en' | 'de',
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  switch (prompt.kind) {
+    case 'discard':
+      return t('workbench.prompt.discard');
+    case 'result':
+      return t(`workbench.prompt.${prompt.spec.verb}`);
+    case 'fusion':
+      return prompt.fusionId
+        ? t('workbench.prompt.fusionMaterials', {
+            name: displayName(cards.get(state.cards[prompt.fusionId]?.cardId ?? ''), language),
+            picked: prompt.picked.length,
+            count: prompt.spec.materials?.count ?? 2,
+          })
+        : t('workbench.prompt.fusion');
+    case 'materials':
+      return t('workbench.prompt.materials', {
+        name: displayName(cards.get(state.cards[prompt.instanceId]?.cardId ?? ''), language),
+        picked: prompt.picked.length,
+      });
+  }
 }
