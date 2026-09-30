@@ -289,6 +289,14 @@
       "opponent": "Quick pick: opponent responds with",
       "answer": "Quick pick: respond with",
       "other": "Other card"
+    },
+    "suggestions": {
+      "title": "Suggestions (Jev)",
+      "loading": "Jev is checking activatable effects …",
+      "none": "No activatable effects found.",
+      "noneAbove": "Jev considers none of the effects safely activatable.",
+      "hidden": "{{count}} more below {{threshold}} % hidden",
+      "error": "No suggestions: {{message}}"
     }
   }
 }

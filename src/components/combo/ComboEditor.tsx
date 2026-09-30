@@ -19,10 +19,12 @@ import {
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import { START_ID, newNode, removeSubtree, updateNode } from '@/lib/combo/tree';
 import { reactionNode, type Staple } from '@/lib/combo/reactions';
+import { candidateEffects, toSuggestionInput, type Candidate } from '@/lib/combo/suggestions';
 import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/combo.actions';
 import { ComboCanvas } from './ComboCanvas';
 import { NodeEditor, StartStateEditor, type MoveTarget } from './NodeEditor';
 import { StatePanel } from './StatePanel';
+import { SuggestionPanel } from './SuggestionPanel';
 
 type SaveStatus = 'saved' | 'saving' | 'error';
 
@@ -45,6 +47,11 @@ export function ComboEditor({ initial, staples }: { initial: LoadedCombo; staple
   const parentId = ancestors.at(-1)?.id;
   const before = (parentId && states.get(parentId)) || start;
   const after = (selected && states.get(selected.id)) || start;
+
+  // Vorschläge für den nächsten Schritt: am Gegner-Knoten für den Gegner, sonst für den eigenen Zug
+  const actor: Player = selected?.kind === 'OPPONENT' ? 'opponent' : 'self';
+  const candidates = useMemo(() => candidateEffects(after, actor, cards), [after, actor, cards]);
+  const suggestionInput = useMemo(() => toSuggestionInput(after, candidates), [after, candidates]);
 
   // Automatisch speichern, kurz nach der letzten Änderung
   const firstRender = useRef(true);
@@ -80,6 +87,19 @@ export function ComboEditor({ initial, staples }: { initial: LoadedCombo; staple
     const child = {
       ...reactionNode(selected, card, staple, player, after, [...ancestors, selected]),
       edgeLabel: displayName(card, i18n.language),
+    };
+    setNodes((prev) => [...prev, child]);
+    setSelectedId(child.id);
+    setMoveTarget('costMoves');
+  };
+
+  const addSuggestion = (candidate: Candidate) => {
+    const child = {
+      ...newNode(selected ?? null, 'ACTIVATE'),
+      player: candidate.player,
+      instanceId: candidate.instanceId,
+      cardId: candidate.cardId,
+      effectIndex: candidate.effectIndex,
     };
     setNodes((prev) => [...prev, child]);
     setSelectedId(child.id);
@@ -178,6 +198,13 @@ export function ComboEditor({ initial, staples }: { initial: LoadedCombo; staple
               onRegisterCard={registerCard}
             />
           )}
+
+          <SuggestionPanel
+            input={suggestionInput}
+            candidates={candidates}
+            cards={cards}
+            onPick={addSuggestion}
+          />
 
           <div className="border-t pt-3">
             <h2 className="mb-2 font-semibold">{t('combo.state.title')}</h2>

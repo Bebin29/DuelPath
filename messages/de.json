@@ -321,6 +321,14 @@
       "opponent": "Schnellauswahl: Gegner reagiert mit",
       "answer": "Schnellauswahl: Antwort darauf",
       "other": "Andere Karte"
+    },
+    "suggestions": {
+      "title": "Vorschläge (Jev)",
+      "loading": "Jev prüft die aktivierbaren Effekte …",
+      "none": "Keine aktivierbaren Effekte gefunden.",
+      "noneAbove": "Jev hält keinen der Effekte für sicher aktivierbar.",
+      "hidden": "{{count}} weitere unter {{threshold}} % ausgeblendet",
+      "error": "Keine Vorschläge: {{message}}"
     }
   }
 }
