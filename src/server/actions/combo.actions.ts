@@ -7,6 +7,7 @@ import type { ParsedEffects } from '@/lib/cards/effects';
 import type { CardMove, ComboNodeData, StartState } from '@/lib/combo/state';
 import { sortByDepth, toComboCard, type ComboCard } from '@/lib/combo/cards';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
+import { startStateFromDeck, type DeckEntry } from '@/lib/combo/deck';
 import { saveComboSchema, type SaveComboInput } from '@/lib/validations/combo.schema';
 
 type Result<T> = { data: T; error?: undefined } | { data?: undefined; error: string };
@@ -40,13 +41,27 @@ export async function listCombos(): Promise<
   };
 }
 
-export async function createCombo(title: string): Promise<Result<{ id: string }>> {
+/** Legt eine Combo an; mit Deck wird es gleich in den Startzustand geladen */
+export async function createCombo(title: string, deckId?: string): Promise<Result<{ id: string }>> {
   const userId = await currentUserId();
   if (!userId) return { error: 'Unauthorized' };
   const trimmed = title.trim().slice(0, 100);
   if (!trimmed) return { error: 'Titel fehlt' };
+
+  let startState: StartState = { cards: [] };
+  if (deckId) {
+    const deck = await getDeckForCombo(deckId);
+    if (!deck.data) return { error: deck.error };
+    startState = startStateFromDeck(startState, deck.data.entries);
+  }
+
   const combo = await prisma.combo.create({
-    data: { title: trimmed, userId, startState: { cards: [] } },
+    data: {
+      title: trimmed,
+      userId,
+      deckId: deckId ?? null,
+      startState: startState as unknown as Prisma.InputJsonValue,
+    },
     select: { id: true },
   });
   return { data: combo };
@@ -62,6 +77,7 @@ export async function deleteCombo(comboId: string): Promise<Result<true>> {
 export interface LoadedCombo {
   id: string;
   title: string;
+  deckId: string | null;
   startState: StartState;
   nodes: ComboNodeData[];
   cards: ComboCard[];
@@ -119,6 +135,7 @@ export async function getCombo(comboId: string): Promise<Result<LoadedCombo>> {
     data: {
       id: combo.id,
       title: combo.title,
+      deckId: combo.deckId,
       startState,
       nodes,
       cards: cards.map((c) => ({
@@ -135,7 +152,12 @@ export async function saveCombo(comboId: string, input: SaveComboInput): Promise
 
   const parsed = saveComboSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültige Daten' };
-  const { title, startState, nodes } = parsed.data;
+  const { title, deckId, startState, nodes } = parsed.data;
+
+  if (deckId) {
+    const deck = await prisma.deck.findUnique({ where: { id: deckId }, select: { userId: true } });
+    if (!deck || deck.userId !== owned.combo.userId) return { error: 'Deck nicht gefunden' };
+  }
 
   const ids = new Set(nodes.map((n) => n.id));
   if (ids.size !== nodes.length) return { error: 'Doppelte Knoten-IDs' };
@@ -156,7 +178,7 @@ export async function saveCombo(comboId: string, input: SaveComboInput): Promise
     }),
     prisma.combo.update({
       where: { id: comboId },
-      data: { title, startState: startState as Prisma.InputJsonValue },
+      data: { title, deckId, startState: startState as Prisma.InputJsonValue },
     }),
   ]);
   return { data: true };
@@ -189,4 +211,59 @@ export async function getStaples(): Promise<StapleCard[]> {
     const card = byName.get(staple.name);
     return card ? [{ card, staple }] : [];
   });
+}
+
+/** Decks des Nutzers für die Zuordnung im Editor */
+export async function listDeckOptions(): Promise<{ id: string; name: string }[]> {
+  const userId = await currentUserId();
+  if (!userId) return [];
+  return prisma.deck.findMany({
+    where: { userId },
+    orderBy: { name: 'asc' },
+    select: { id: true, name: true },
+  });
+}
+
+/** Main und Extra Deck eines eigenen Decks mit Effektdaten für den Startzustand */
+export async function getDeckForCombo(
+  deckId: string
+): Promise<Result<{ entries: DeckEntry[]; cards: ComboCard[] }>> {
+  const userId = await currentUserId();
+  if (!userId) return { error: 'Unauthorized' };
+  const deck = await prisma.deck.findUnique({
+    where: { id: deckId },
+    select: {
+      userId: true,
+      deckCards: {
+        where: { deckSection: { in: ['MAIN', 'EXTRA'] } },
+        select: {
+          quantity: true,
+          deckSection: true,
+          card: {
+            select: {
+              id: true,
+              name: true,
+              nameDe: true,
+              type: true,
+              race: true,
+              imageSmall: true,
+              effects: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!deck || deck.userId !== userId) return { error: 'Deck nicht gefunden' };
+
+  return {
+    data: {
+      entries: deck.deckCards.map((dc) => ({
+        cardId: dc.card.id,
+        quantity: dc.quantity,
+        section: dc.deckSection as DeckEntry['section'],
+      })),
+      cards: deck.deckCards.map((dc) => toComboCard(dc.card)),
+    },
+  };
 }

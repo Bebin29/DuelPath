@@ -30,9 +30,18 @@ type SaveStatus = 'saved' | 'saving' | 'error';
 
 const FIELD_ZONES: Zone[] = ['MONSTER', 'SPELL_TRAP', 'FIELD'];
 
-export function ComboEditor({ initial, staples }: { initial: LoadedCombo; staples: StapleCard[] }) {
+export function ComboEditor({
+  initial,
+  staples,
+  decks,
+}: {
+  initial: LoadedCombo;
+  staples: StapleCard[];
+  decks: { id: string; name: string }[];
+}) {
   const { t, i18n } = useTranslation();
   const [title, setTitle] = useState(initial.title);
+  const [deckId, setDeckId] = useState<string | null>(initial.deckId);
   const [startState, setStartState] = useState<StartState>(initial.startState);
   const [nodes, setNodes] = useState<ComboNodeData[]>(initial.nodes);
   const [cards, setCards] = useState(() => new Map(initial.cards.map((c) => [c.id, c])));
@@ -62,11 +71,11 @@ export function ComboEditor({ initial, staples }: { initial: LoadedCombo; staple
     }
     const timer = setTimeout(async () => {
       setStatus('saving');
-      const result = await saveCombo(initial.id, { title, startState, nodes });
+      const result = await saveCombo(initial.id, { title, deckId, startState, nodes });
       setStatus(result.error ? 'error' : 'saved');
     }, 800);
     return () => clearTimeout(timer);
-  }, [initial.id, title, startState, nodes]);
+  }, [initial.id, title, deckId, startState, nodes]);
 
   const registerCard = (card: ComboCard) =>
     setCards((prev) => (prev.has(card.id) ? prev : new Map(prev).set(card.id, card)));
@@ -149,6 +158,19 @@ export function ComboEditor({ initial, staples }: { initial: LoadedCombo; staple
           onChange={(e) => setTitle(e.target.value)}
           className="max-w-md text-lg font-semibold"
         />
+        <select
+          className="h-9 rounded-md border bg-background px-2 text-sm"
+          value={deckId ?? ''}
+          onChange={(e) => setDeckId(e.target.value || null)}
+          title={t('combo.deck.label')}
+        >
+          <option value="">{t('combo.deck.none')}</option>
+          {decks.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.name}
+            </option>
+          ))}
+        </select>
         <span
           className={
             status === 'error' ? 'text-sm text-destructive' : 'text-sm text-muted-foreground'
@@ -196,6 +218,7 @@ export function ComboEditor({ initial, staples }: { initial: LoadedCombo; staple
               onChange={setStartState}
               onAddChild={addChild}
               onRegisterCard={registerCard}
+              deckId={deckId}
             />
           )}
 

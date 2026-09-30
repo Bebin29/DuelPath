@@ -19,7 +19,8 @@ import type {
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import { newInstanceId } from '@/lib/combo/tree';
 import type { Staple } from '@/lib/combo/reactions';
-import type { StapleCard } from '@/server/actions/combo.actions';
+import { getDeckForCombo, type StapleCard } from '@/server/actions/combo.actions';
+import { drawFromDeck, startStateFromDeck } from '@/lib/combo/deck';
 import { CardSearchBox } from './CardSearchBox';
 
 export type MoveTarget = 'costMoves' | 'resolveMoves';
@@ -383,21 +384,66 @@ export function StartStateEditor({
   onChange,
   onAddChild,
   onRegisterCard,
+  deckId,
 }: {
   startState: StartState;
   cards: Map<string, ComboCard>;
   onChange: (next: StartState) => void;
   onAddChild: (kind: NodeKind) => void;
   onRegisterCard: (card: ComboCard) => void;
+  deckId: string | null;
 }) {
   const { t, i18n } = useTranslation();
   const [player, setPlayer] = useState<Player>('self');
   const [zone, setZone] = useState<Zone>('HAND');
+  const [deckError, setDeckError] = useState<string | null>(null);
+
+  const loadDeck = async () => {
+    if (!deckId) return;
+    const result = await getDeckForCombo(deckId);
+    if (!result.data) return setDeckError(result.error ?? null);
+    setDeckError(null);
+    result.data.cards.forEach(onRegisterCard);
+    onChange(startStateFromDeck(startState, result.data.entries));
+  };
+
+  // Eigenes Deck im Startzustand, je Karte gezählt: daraus wird die Starthand gezogen
+  const deckCounts = new Map<string, number>();
+  for (const c of startState.cards) {
+    if (c.owner === 'self' && c.zone === 'DECK') {
+      deckCounts.set(c.cardId, (deckCounts.get(c.cardId) ?? 0) + 1);
+    }
+  }
 
   return (
     <div className="space-y-3 text-sm">
       <h2 className="font-semibold">{t('combo.start')}</h2>
       <p className="text-xs text-muted-foreground">{t('combo.startEditor.hint')}</p>
+      {deckId && (
+        <div className="space-y-2 rounded-md border p-2">
+          <Button size="sm" variant="outline" onClick={loadDeck}>
+            {t('combo.deck.load')}
+          </Button>
+          {deckError && <p className="text-xs text-destructive">{deckError}</p>}
+          {deckCounts.size > 0 && (
+            <>
+              <span className="block text-xs text-muted-foreground">{t('combo.deck.draw')}</span>
+              <div className="flex flex-wrap gap-1">
+                {[...deckCounts].map(([cardId, count]) => (
+                  <Button
+                    key={cardId}
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => onChange(drawFromDeck(startState, cardId))}
+                  >
+                    {displayName(cards.get(cardId), i18n.language)} ×{count}
+                  </Button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <select
           className={selectClass}

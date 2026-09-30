@@ -17,6 +17,7 @@ import {
   closestCenter,
 } from '@dnd-kit/core';
 import { getDeckById, importYdkToDeck } from '@/server/actions/deck.actions';
+import { createCombo } from '@/server/actions/combo.actions';
 import { CardSearch } from './CardSearch';
 import { CardSearchErrorBoundary } from '@/components/error/CardSearchErrorBoundary';
 import { DeckListSection } from './DeckListSection';
@@ -33,6 +34,7 @@ import {
   Upload,
   Trash2,
   Move,
+  GitBranch,
 } from 'lucide-react';
 import { HistoryTimeline } from './HistoryTimeline';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -969,6 +971,18 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
                     title={t('deck.export.ydk')}
                   >
                     <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    title={t('deck.newCombo')}
+                    onClick={async () => {
+                      if (!optimisticDeck) return;
+                      const result = await createCombo(optimisticDeck.name, optimisticDeck.id);
+                      if (result.data) router.push(`/combos/${result.data.id}`);
+                    }}
+                  >
+                    <GitBranch className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

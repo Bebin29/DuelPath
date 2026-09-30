@@ -64,6 +64,7 @@ export const startStateSchema = z.object({
 
 export const saveComboSchema = z.object({
   title: z.string().trim().min(1).max(100),
+  deckId: id.nullable().default(null),
   startState: startStateSchema,
   // ponytail: ganzer Baum pro Speichern; bei sehr großen Bäumen auf Diff-Speichern umstellen
   nodes: z.array(comboNodeSchema).max(500),

@@ -141,7 +141,8 @@
       "cardAdded": "Karte erfolgreich hinzugefügt",
       "cardRemoved": "Karte erfolgreich entfernt",
       "quantityUpdated": "Anzahl erfolgreich aktualisiert"
-    }
+    },
+    "newCombo": "Neue Combo mit diesem Deck"
   },
   "dashboard": {
     "welcome": "Willkommen bei DuelPath",
@@ -331,6 +332,12 @@
       "noneAbove": "Jev hält keinen der Effekte für sicher aktivierbar.",
       "hidden": "{{count}} weitere unter {{threshold}} % ausgeblendet",
       "error": "Keine Vorschläge: {{message}}"
+    },
+    "deck": {
+      "label": "Deck der Combo",
+      "none": "Kein Deck",
+      "load": "Deck in den Startzustand laden",
+      "draw": "Auf die Starthand ziehen:"
     }
   }
 }

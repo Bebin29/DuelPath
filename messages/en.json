@@ -141,7 +141,8 @@
       "ydk": "Export YDK",
       "success": "Deck exported",
       "successDescription": "The deck was exported as a YDK file"
-    }
+    },
+    "newCombo": "New combo with this deck"
   },
   "dashboard": {
     "welcome": "Welcome to DuelPath",
@@ -331,6 +332,12 @@
       "noneAbove": "Jev considers none of the effects safely activatable.",
       "hidden": "{{count}} more below {{threshold}} % hidden",
       "error": "No suggestions: {{message}}"
+    },
+    "deck": {
+      "label": "Deck of the combo",
+      "none": "No deck",
+      "load": "Load deck into starting state",
+      "draw": "Draw into starting hand:"
     }
   }
 }
