@@ -63,6 +63,7 @@ export function CardDetailDialog({ card, open, onOpenChange, onAddToDeck }: Card
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch on mount; move to SWR when the deck UI is reworked
       loadCardDetails();
     }
   }, [open, loadCardDetails]);

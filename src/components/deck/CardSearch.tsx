@@ -498,6 +498,7 @@ export function CardSearch({ onCardSelect, showAddButton = true }: CardSearchPro
 
   // Reset page when filters change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one extra render on filter change is acceptable here
     setPage(1);
   }, [debouncedSearchQuery, filters, sortOptions]);
 

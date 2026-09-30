@@ -220,6 +220,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
   }, [deckId, t, addToast]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch on mount; move to SWR when the deck UI is reworked
     loadDeck();
   }, [loadDeck]);
 
