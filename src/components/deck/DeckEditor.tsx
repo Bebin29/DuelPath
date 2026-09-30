@@ -16,7 +16,7 @@ import {
   useSensors,
   closestCenter,
 } from '@dnd-kit/core';
-import { getDeckById } from '@/server/actions/deck.actions';
+import { getDeckById, importYdkToDeck } from '@/server/actions/deck.actions';
 import { CardSearch } from './CardSearch';
 import { CardSearchErrorBoundary } from '@/components/error/CardSearchErrorBoundary';
 import { DeckListSection } from './DeckListSection';
@@ -617,36 +617,27 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
       if (!file || !optimisticDeck) return;
 
       try {
-        const text = await file.text();
-        const { main: mainSection, extra: extraSection, side: sideSection } = parseYDKFile(text);
+        // Der Import ersetzt den Deckinhalt; ohne Bestätigung passiert nichts
+        if (!confirm(t('deck.import.confirmReplace'))) return;
 
-        // Finde Karten anhand Passcode
-        const cardMap = new Map<string, string>(); // passcode -> cardId
-        // TODO: Lade alle Karten einmalig für bessere Performance
+        const sections = parseYDKFile(await file.text());
+        const result = await importYdkToDeck(optimisticDeck.id, sections);
+        if (!result.data) throw new Error(result.error);
 
-        const importedCount = 0;
-        const errors: string[] = [];
-
-        // Import Main Deck
-        for (const passcode of mainSection) {
-          if (!passcode) continue;
-          // TODO: Finde Karte anhand Passcode und füge hinzu
-          // Für jetzt: Skip (benötigt Card-Lookup)
-        }
-
-        if (importedCount > 0) {
-          addToast({
-            variant: 'success',
-            title: t('deck.import.success'),
-            description: t('deck.import.successDescription', { count: importedCount }),
-          });
-        }
-
-        if (errors.length > 0) {
+        await loadDeck();
+        addToast({
+          variant: 'success',
+          title: t('deck.import.success'),
+          description: t('deck.import.successDescription', { count: result.data.imported }),
+        });
+        if (result.data.missing.length > 0) {
           addToast({
             variant: 'warning',
             title: t('deck.import.warning'),
-            description: errors.slice(0, 5).join(', '),
+            description: t('deck.import.missing', {
+              count: result.data.missing.length,
+              passcodes: result.data.missing.slice(0, 5).join(', '),
+            }),
           });
         }
       } catch (error) {
@@ -660,7 +651,7 @@ export function DeckEditor({ deckId }: DeckEditorProps) {
       // Reset file input
       event.target.value = '';
     },
-    [optimisticDeck, t, addToast]
+    [optimisticDeck, t, addToast, loadDeck]
   );
 
   const handleDragStart = useCallback(

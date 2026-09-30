@@ -10,6 +10,7 @@ import {
   updateCardQuantitySchema,
   removeCardFromDeckSchema,
   batchOperationsSchema,
+  ydkImportSchema,
   type CreateDeckInput,
   type UpdateDeckInput,
   type AddCardToDeckInput,
@@ -18,6 +19,7 @@ import {
   type BatchOperationsInput,
   type BatchOperation,
   type DeckSection,
+  type YdkImportInput,
 } from '@/lib/validations/deck.schema';
 import type { Card } from '@/generated/prisma/client';
 
@@ -1076,4 +1078,63 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
     }
     return { error: 'Failed to execute batch operations' };
   }
+}
+
+/**
+ * Server Action: Importiert eine YDK-Datei und ersetzt den Inhalt des Decks
+ *
+ * Passcodes ohne passende TCG-Karte werden zurückgemeldet; mehr als 3 Kopien werden auf 3 begrenzt.
+ */
+export async function importYdkToDeck(
+  deckId: string,
+  input: YdkImportInput
+): Promise<{ data?: { imported: number; missing: string[] }; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: 'Unauthorized' };
+
+  const deck = await prisma.deck.findUnique({ where: { id: deckId }, select: { userId: true } });
+  if (!deck || deck.userId !== session.user.id) return { error: 'Deck not found' };
+
+  const parsed = ydkImportSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültige YDK-Datei' };
+
+  // Manche Programme schreiben Passcodes mit führenden Nullen
+  const normalize = (p: string) => String(Number(p));
+  const sections = {
+    MAIN: parsed.data.main.map(normalize),
+    EXTRA: parsed.data.extra.map(normalize),
+    SIDE: parsed.data.side.map(normalize),
+  } as const;
+
+  const all = [...new Set(Object.values(sections).flat())];
+  const cards = await prisma.card.findMany({
+    where: { passcode: { in: all } },
+    select: { id: true, passcode: true },
+  });
+  const idByPasscode = new Map(cards.map((c) => [c.passcode, c.id]));
+
+  const rows: Prisma.DeckCardCreateManyInput[] = [];
+  for (const [deckSection, passcodes] of Object.entries(sections)) {
+    const counts = new Map<string, number>();
+    for (const p of passcodes) {
+      const cardId = idByPasscode.get(p);
+      if (cardId) counts.set(cardId, (counts.get(cardId) ?? 0) + 1);
+    }
+    for (const [cardId, count] of counts) {
+      rows.push({ deckId, cardId, deckSection, quantity: Math.min(count, 3) });
+    }
+  }
+
+  await prisma.$transaction([
+    prisma.deckCard.deleteMany({ where: { deckId } }),
+    prisma.deckCard.createMany({ data: rows }),
+    prisma.deck.update({ where: { id: deckId }, data: { updatedAt: new Date() } }),
+  ]);
+
+  return {
+    data: {
+      imported: rows.reduce((sum, r) => sum + (r.quantity ?? 1), 0),
+      missing: all.filter((p) => !idByPasscode.has(p)),
+    },
+  };
 }
