@@ -10,6 +10,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { useTranslation } from '@/lib/i18n/hooks';
+import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
 import {
   cardsIn,
@@ -31,7 +32,8 @@ interface StatePanelProps {
 }
 
 export function StatePanel({ state, cards, warnings, onDrop }: StatePanelProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
   // Klicks bleiben Klicks; Ziehen startet erst nach ein paar Pixeln
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -42,7 +44,7 @@ export function StatePanel({ state, cards, warnings, onDrop }: StatePanelProps) 
   };
 
   const name = (cardId?: string) =>
-    displayName(cardId ? cards.get(cardId) : undefined, i18n.language);
+    displayName(cardId ? cards.get(cardId) : undefined, cardLanguage);
   const usedOpts = Object.entries(state.optUsage).filter(([, count]) => count > 0);
 
   return (

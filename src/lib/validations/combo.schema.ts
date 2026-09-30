@@ -32,6 +32,7 @@ const negationSchema = z.discriminatedUnion('type', [
 export const comboNodeSchema = z.object({
   id,
   parentId: id.nullable(),
+  rank: z.number().int().min(0).max(999).default(0),
   kind: z.enum(['ACTION', 'ACTIVATE', 'OPPONENT', 'RESOLVE', 'END']),
   player,
   edgeLabel: z.string().max(100).nullish(),

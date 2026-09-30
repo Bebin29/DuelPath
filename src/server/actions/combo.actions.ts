@@ -90,11 +90,13 @@ export async function getCombo(comboId: string): Promise<Result<LoadedCombo>> {
 
   const rows = await prisma.comboNode.findMany({
     where: { comboId },
-    orderBy: { createdAt: 'asc' },
+    orderBy: [{ rank: 'asc' }, { createdAt: 'asc' }],
   });
   const nodes: ComboNodeData[] = rows.map((n) => ({
     id: n.id,
     parentId: n.parentId,
+    rank: n.rank,
+    note: n.note,
     kind: n.kind as ComboNodeData['kind'],
     player: n.player as ComboNodeData['player'],
     edgeLabel: n.edgeLabel,

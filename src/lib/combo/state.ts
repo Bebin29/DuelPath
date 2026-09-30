@@ -61,6 +61,10 @@ export type Negation =
 export interface ComboNodeData {
   id: string;
   parentId: string | null;
+  /** Reihenfolge unter Geschwistern; das Kind mit dem kleinsten Rang setzt die Hauptline fort */
+  rank?: number;
+  /** Warum dieser Schritt (UX-Plan 6.6), erscheint beim Nachspielen */
+  note?: string | null;
   kind: NodeKind;
   player: Player;
   edgeLabel?: string | null;

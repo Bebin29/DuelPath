@@ -3,7 +3,8 @@
     "home": "Start",
     "decks": "Decks",
     "combos": "Combos",
-    "profile": "Profile"
+    "profile": "Profile",
+    "settings": "Settings"
   },
   "deck": {
     "title": "Deck",
@@ -365,5 +366,18 @@
     "stepImport": "Import a deck via YDK",
     "stepHand": "Pick a starting hand",
     "stepPlay": "Play your first step"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Changes apply immediately",
+    "display": "Display",
+    "theme": "Theme",
+    "themeText": "Dark is meant for long sessions, light follows the paper look.",
+    "dark": "Dark",
+    "light": "Light",
+    "uiLanguage": "Interface language",
+    "uiLanguageText": "Menus, buttons and hints.",
+    "cardLanguage": "Card language",
+    "cardLanguageText": "Card names. Independent of the interface language; card texts stay English."
   }
 }

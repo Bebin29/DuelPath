@@ -51,6 +51,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String? // Gehasht, falls E-Mail/Passwort-Auth verwendet wird
+  settings      Json      @default("{}") // UserSettings: Design, Kartensprache (src/lib/settings.ts)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -157,6 +158,7 @@ model ComboNode {
   id           String   @id @default(cuid())
   comboId      String
   parentId     String? // null = Wurzel
+  rank         Int      @default(0) // Reihenfolge unter Geschwistern; 0 = Hauptline
   kind         String // ACTION | ACTIVATE | OPPONENT | RESOLVE | END
   player       String // self | opponent
   edgeLabel    String? // "Keine Reaktion", "Ash Blossom", ...

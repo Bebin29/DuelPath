@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/lib/i18n/hooks';
+import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import {
   initialState,
   pathTo,
@@ -18,6 +19,7 @@ import {
 } from '@/lib/combo/state';
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import { START_ID, newNode, removeSubtree, updateNode } from '@/lib/combo/tree';
+import { nextRank } from '@/lib/combo/lines';
 import { reactionNode, type Staple } from '@/lib/combo/reactions';
 import { candidateEffects, toSuggestionInput, type Candidate } from '@/lib/combo/suggestions';
 import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/combo.actions';
@@ -39,7 +41,8 @@ export function ComboEditor({
   staples: StapleCard[];
   decks: { id: string; name: string }[];
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
   const [title, setTitle] = useState(initial.title);
   const [deckId, setDeckId] = useState<string | null>(initial.deckId);
   const [startState, setStartState] = useState<StartState>(initial.startState);
@@ -81,7 +84,10 @@ export function ComboEditor({
     setCards((prev) => (prev.has(card.id) ? prev : new Map(prev).set(card.id, card)));
 
   const addChild = (kind: NodeKind) => {
-    const child = newNode(selected ?? null, kind);
+    const child = {
+      ...newNode(selected ?? null, kind),
+      rank: nextRank(nodes, selected?.id ?? null),
+    };
     setNodes((prev) => [...prev, child]);
     setSelectedId(child.id);
     setMoveTarget(kind === 'ACTIVATE' ? 'costMoves' : 'resolveMoves');
@@ -95,7 +101,8 @@ export function ComboEditor({
     const player: Player = selected.kind === 'OPPONENT' ? 'opponent' : 'self';
     const child = {
       ...reactionNode(selected, card, staple, player, after, [...ancestors, selected]),
-      edgeLabel: displayName(card, i18n.language),
+      rank: nextRank(nodes, selected.id),
+      edgeLabel: displayName(card, cardLanguage),
     };
     setNodes((prev) => [...prev, child]);
     setSelectedId(child.id);
@@ -105,6 +112,7 @@ export function ComboEditor({
   const addSuggestion = (candidate: Candidate) => {
     const child = {
       ...newNode(selected ?? null, 'ACTIVATE'),
+      rank: nextRank(nodes, selected?.id ?? null),
       player: candidate.player,
       instanceId: candidate.instanceId,
       cardId: candidate.cardId,

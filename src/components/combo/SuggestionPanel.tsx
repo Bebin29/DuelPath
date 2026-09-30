@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
+import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import {
   SUGGESTION_THRESHOLD,
@@ -20,7 +21,8 @@ interface SuggestionPanelProps {
 
 /** Jev-Vorschläge für den nächsten Schritt; lädt kurz nach jedem Wechsel des Zustands neu */
 export function SuggestionPanel({ input, candidates, cards, onPick }: SuggestionPanelProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
   const key = JSON.stringify(input);
   const [result, setResult] = useState<{ key: string; probabilities?: number[]; error?: string }>();
 
@@ -85,7 +87,7 @@ export function SuggestionPanel({ input, candidates, cards, onPick }: Suggestion
                     )}
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">
-                        {displayName(card, i18n.language)}
+                        {displayName(card, cardLanguage)}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
                         {t(`combo.zones.${candidate.zone}`)} · {effect?.text}

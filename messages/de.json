@@ -3,7 +3,8 @@
     "home": "Start",
     "decks": "Decks",
     "combos": "Combos",
-    "profile": "Profil"
+    "profile": "Profil",
+    "settings": "Einstellungen"
   },
   "deck": {
     "title": "Deck",
@@ -365,5 +366,18 @@
     "stepImport": "Deck per YDK importieren",
     "stepHand": "Starthand wählen",
     "stepPlay": "Ersten Schritt spielen"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "subtitle": "Änderungen gelten sofort",
+    "display": "Darstellung",
+    "theme": "Design",
+    "themeText": "Dunkel ist für lange Sessions gedacht, hell folgt dem Papier-Look.",
+    "dark": "Dunkel",
+    "light": "Hell",
+    "uiLanguage": "Oberflächensprache",
+    "uiLanguageText": "Menüs, Knöpfe und Hinweise.",
+    "cardLanguage": "Kartensprache",
+    "cardLanguageText": "Namen der Karten. Unabhängig von der Oberflächensprache; Kartentexte bleiben englisch."
   }
 }

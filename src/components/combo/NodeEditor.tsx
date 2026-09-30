@@ -5,6 +5,7 @@ import { Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/lib/i18n/hooks';
+import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
 import type {
   CardMove,
@@ -67,10 +68,11 @@ interface NodeEditorProps {
 
 export function NodeEditor(props: NodeEditorProps) {
   const { node, before, after, ancestors, cards, onChange } = props;
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
   const [pick, setPick] = useState('');
   const name = (cardId?: string | null) =>
-    displayName(cardId ? cards.get(cardId) : undefined, i18n.language);
+    displayName(cardId ? cards.get(cardId) : undefined, cardLanguage);
 
   const target: MoveTarget = node.kind === 'ACTIVATE' ? props.moveTarget : 'resolveMoves';
   const addMove = (move: CardMove) => onChange({ [target]: [...(node[target] ?? []), move] });
@@ -352,7 +354,8 @@ function ReactionPicker({
   staples: StapleCard[];
   onReact: (card: ComboCard, staple: Staple | null) => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
   return (
     <div className="space-y-2 rounded-md border border-red-300 p-2">
       <span className="text-xs font-semibold">{title}</span>
@@ -368,7 +371,7 @@ function ReactionPicker({
               // eslint-disable-next-line @next/next/no-img-element -- kleine Vorschau aus dem lokalen Bild-Cache
               <img src={card.imageSmall} alt="" className="h-8 w-6 shrink-0 object-cover" />
             )}
-            <span className="truncate">{displayName(card, i18n.language)}</span>
+            <span className="truncate">{displayName(card, cardLanguage)}</span>
           </button>
         ))}
       </div>
@@ -393,7 +396,8 @@ export function StartStateEditor({
   onRegisterCard: (card: ComboCard) => void;
   deckId: string | null;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
   const [player, setPlayer] = useState<Player>('self');
   const [zone, setZone] = useState<Zone>('HAND');
   const [deckError, setDeckError] = useState<string | null>(null);
@@ -436,7 +440,7 @@ export function StartStateEditor({
                     variant="secondary"
                     onClick={() => onChange(drawFromDeck(startState, cardId))}
                   >
-                    {displayName(cards.get(cardId), i18n.language)} ×{count}
+                    {displayName(cards.get(cardId), cardLanguage)} ×{count}
                   </Button>
                 ))}
               </div>
@@ -488,7 +492,7 @@ export function StartStateEditor({
         {startState.cards.map((c) => (
           <li key={c.instanceId} className="flex items-center justify-between gap-2">
             <span className="truncate">
-              {displayName(cards.get(c.cardId), i18n.language)}
+              {displayName(cards.get(c.cardId), cardLanguage)}
               <span className="text-muted-foreground">
                 {' '}
                 · {t(`combo.players.${c.owner}`)} · {t(`combo.zones.${c.zone}`)}

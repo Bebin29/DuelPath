@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/lib/hooks/use-debounce';
 import { useTranslation } from '@/lib/i18n/hooks';
+import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { displayName, toComboCard, type ComboCard } from '@/lib/combo/cards';
 
 /** Kartensuche über /api/cards; liefert die gewählte Karte mit zerlegten Effekten */
 export function CardSearchBox({ onPick }: { onPick: (card: ComboCard) => void }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ComboCard[]>([]);
   const debounced = useDebounce(query.trim(), 250);
@@ -52,7 +54,7 @@ export function CardSearchBox({ onPick }: { onPick: (card: ComboCard) => void })
                   // eslint-disable-next-line @next/next/no-img-element -- kleine Vorschau aus dem lokalen Bild-Cache
                   <img src={card.imageSmall} alt="" className="h-10 w-7 shrink-0 object-cover" />
                 )}
-                <span className="truncate">{displayName(card, i18n.language)}</span>
+                <span className="truncate">{displayName(card, cardLanguage)}</span>
               </button>
             </li>
           ))}

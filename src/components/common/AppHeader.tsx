@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
-import { useState } from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import { useLanguage, useTranslation } from '@/lib/i18n/hooks';
-import { applyTheme, parseTheme, type Theme } from '@/lib/theme';
+import { parseTheme } from '@/lib/theme';
+import { useSettings } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -28,12 +28,7 @@ export function AppHeader() {
   const { currentLanguage, changeLanguage } = useLanguage();
   const pathname = usePathname();
   const { data: session } = useSession();
-  // Das Menü rendert erst nach dem Öffnen, der Wert aus der <html>-Klasse ist dann sicher vorhanden
-  const [theme, setTheme] = useState<Theme>(() =>
-    typeof document !== 'undefined' && document.documentElement.classList.contains('light')
-      ? 'light'
-      : 'dark'
-  );
+  const { settings, update } = useSettings();
 
   const items = [
     { href: '/', label: t('navigation.home') },
@@ -87,12 +82,8 @@ export function AppHeader() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{t('shell.theme')}</DropdownMenuLabel>
               <DropdownMenuRadioGroup
-                value={theme}
-                onValueChange={(value) => {
-                  const next = parseTheme(value);
-                  applyTheme(next);
-                  setTheme(next);
-                }}
+                value={settings.theme}
+                onValueChange={(value) => update({ theme: parseTheme(value) })}
               >
                 <DropdownMenuRadioItem value="dark">{t('shell.themeDark')}</DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="light">{t('shell.themeLight')}</DropdownMenuRadioItem>
@@ -107,6 +98,12 @@ export function AppHeader() {
                 <DropdownMenuRadioItem value="en">English</DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings />
+                  {t('navigation.settings')}
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => signOut()}>
                 <LogOut />
                 {t('auth.signOut')}

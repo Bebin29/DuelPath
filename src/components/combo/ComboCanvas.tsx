@@ -15,6 +15,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { AlertTriangle } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
+import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
 import { NODE_HEIGHT, NODE_WIDTH, layoutTree } from '@/lib/combo/layout';
 import { START_ID } from '@/lib/combo/tree';
@@ -45,7 +46,8 @@ interface ComboCanvasProps {
 }
 
 export function ComboCanvas({ nodes, states, cards, selectedId, onSelect }: ComboCanvasProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
 
   const { flowNodes, flowEdges } = useMemo(() => {
     const items = [
@@ -84,7 +86,7 @@ export function ComboCanvas({ nodes, states, cards, selectedId, onSelect }: Comb
           type: 'step',
           position: positions.get(node.id)!,
           data: {
-            title: card ? displayName(card, i18n.language) : t(`combo.kind.${node.kind}`),
+            title: card ? displayName(card, cardLanguage) : t(`combo.kind.${node.kind}`),
             subtitle: card
               ? t(`combo.kind.${node.kind}`)
               : node.action
@@ -109,7 +111,7 @@ export function ComboCanvas({ nodes, states, cards, selectedId, onSelect }: Comb
       type: 'smoothstep',
     }));
     return { flowNodes, flowEdges };
-  }, [nodes, states, cards, selectedId, t, i18n.language]);
+  }, [nodes, states, cards, selectedId, t, cardLanguage]);
 
   return (
     <ReactFlow
