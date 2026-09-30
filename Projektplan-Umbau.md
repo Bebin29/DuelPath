@@ -140,7 +140,10 @@ function stateAt(nodes, nodeId, start: StartState, cards: Map<string, CardData>)
 
 - **React Flow (`@xyflow/react` v12)** für Canvas, Zoom, Pan, Minimap und eigene Knoten-Komponenten
 - **`@dagrejs/dagre`** für das automatische Baumlayout (Top-down). Kein manuelles Positionieren nötig; Layout wird bei jeder Änderung neu berechnet.
-- Eigene Knoten: Kartenbild, Kartenname, Effekt-Kurztext, OPT-Warnung, Chain-Link-Nummer. `OPPONENT`-Knoten und gegnerische Aktivierungen optisch abgesetzt, offene Chains als Gruppe.
+- Eigene Knoten: Kartenbild, Kartenname, Art des Schritts, Warnungszähler, Chain-Link-Nummer (`CL2`) bzw. „Chain offen: n“. `OPPONENT`-Knoten und gegnerische Aktivierungen rot abgesetzt. Offene Chains sind über diese Markierung sichtbar statt als eigene Gruppen-Container; Gruppen lassen sich mit dem automatischen Layout schlecht kombinieren.
+- Umgesetzt in `src/components/combo/` (`ComboEditor`, `ComboCanvas`, `NodeEditor`, `StatePanel`, `CardSearchBox`), Seiten unter `/combos`. Der Startzustand ist ein virtueller Wurzelknoten im Canvas und wird nicht als Knoten gespeichert.
+- **Speichern:** automatisch 800 ms nach der letzten Änderung über die Server Action `saveCombo`, die den ganzen Baum in einer Transaktion ersetzt (Eingaben per zod geprüft, nur eigene Combos).
+- **Zustand pro Knoten:** `statesForTree` berechnet alle Zustände in einem Durchlauf; das Panel zeigt den Zustand nach dem gewählten Knoten.
 
 **Layout des Editors:**
 
@@ -213,17 +216,17 @@ interface RulingMechanic {
 
 ## 5. Meilensteine
 
-| #      | Inhalt                                                                                                                                       | Fertig, wenn                                                                           |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren (**erledigt**)                        | `npm run build`, `lint`, `test` grün                                                   |
-| **M1** | PostgreSQL per Docker, Prisma 7 und Provider umstellen, Migrationen neu anlegen (**erledigt**)                                               | App startet gegen lokales Postgres                                                     |
-| **M2** | `RULING_MECHANICS` und PSCT-Muster aus `docs/research/rulings.md` übernehmen (**erledigt**)                                                  | alle Mechaniken aus der Recherche im Code, Test grün                                   |
-| **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder (**erledigt**) | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
-| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking (**erledigt**)                                             | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
-| **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop                                  | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
-| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand                                                                        | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
-| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert                                                                   | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
-| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen, YDK-Import fertigstellen (bisher nur ein Platzhalter)              | Combo aus einem Deck heraus starten                                                    |
+| #      | Inhalt                                                                                                                                                   | Fertig, wenn                                                                           |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren (**erledigt**)                                    | `npm run build`, `lint`, `test` grün                                                   |
+| **M1** | PostgreSQL per Docker, Prisma 7 und Provider umstellen, Migrationen neu anlegen (**erledigt**)                                                           | App startet gegen lokales Postgres                                                     |
+| **M2** | `RULING_MECHANICS` und PSCT-Muster aus `docs/research/rulings.md` übernehmen (**erledigt**)                                                              | alle Mechaniken aus der Recherche im Code, Test grün                                   |
+| **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder (**erledigt**)             | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
+| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking (**erledigt**)                                                         | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
+| **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop (**erledigt**, Chain-Gruppen als Markierung) | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
+| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand                                                                                    | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
+| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert                                                                               | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
+| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen, YDK-Import fertigstellen (bisher nur ein Platzhalter)                          | Combo aus einem Deck heraus starten                                                    |
 
 ## 6. Risiken
 
