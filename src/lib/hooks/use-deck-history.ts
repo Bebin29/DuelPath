@@ -45,45 +45,40 @@ interface HistoryEntry {
  * @returns History-Management-Funktionen
  */
 export function useDeckHistory(initialDeck: DeckWithCards | null, maxHistorySize: number = 50) {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  // Einträge und Index liegen in einem State, damit mehrere Aufrufe vor dem nächsten Render
+  // auf dem jeweils aktuellen Index aufbauen statt auf einem veralteten Closure-Wert.
+  const [{ history, historyIndex }, setState] = useState<{
+    history: HistoryEntry[];
+    historyIndex: number;
+  }>({ history: [], historyIndex: -1 });
   const [currentDeck, setCurrentDeck] = useState<DeckWithCards | null>(initialDeck);
+
+  const setHistoryIndex = useCallback(
+    (index: number) => setState((prev) => ({ ...prev, historyIndex: index })),
+    []
+  );
 
   /**
    * Fügt einen neuen History-Eintrag hinzu
    */
   const addHistoryEntry = useCallback(
     (action: HistoryAction, deckState: DeckWithCards) => {
-      setHistory((prev) => {
+      setState((prev) => {
         // Entferne alle Einträge nach dem aktuellen Index (wenn Undo gemacht wurde)
-        const newHistory = prev.slice(0, historyIndex + 1);
-
-        // Füge neuen Eintrag hinzu
+        const kept = prev.history.slice(0, prev.historyIndex + 1);
         const newEntry: HistoryEntry = {
           action,
-          deckState: JSON.parse(JSON.stringify(deckState)), // Deep clone
+          deckState: structuredClone(deckState),
           timestamp: Date.now(),
         };
-
-        const updated = [...newHistory, newEntry];
-
         // Begrenze History-Größe
-        if (updated.length > maxHistorySize) {
-          return updated.slice(-maxHistorySize);
-        }
-
-        return updated;
-      });
-
-      setHistoryIndex((prev) => {
-        const newIndex = prev + 1;
-        // Begrenze Index auf maxHistorySize
-        return Math.min(newIndex, maxHistorySize - 1);
+        const updated = [...kept, newEntry].slice(-maxHistorySize);
+        return { history: updated, historyIndex: updated.length - 1 };
       });
 
       setCurrentDeck(deckState);
     },
-    [historyIndex, maxHistorySize]
+    [maxHistorySize]
   );
 
   /**
@@ -106,7 +101,7 @@ export function useDeckHistory(initialDeck: DeckWithCards | null, maxHistorySize
     setHistoryIndex(previousIndex);
     setCurrentDeck(previousEntry.deckState);
     return previousEntry.deckState;
-  }, [history, historyIndex, initialDeck]);
+  }, [history, historyIndex, initialDeck, setHistoryIndex]);
 
   /**
    * Wiederholt die letzte rückgängig gemachte Aktion
@@ -121,7 +116,7 @@ export function useDeckHistory(initialDeck: DeckWithCards | null, maxHistorySize
     setHistoryIndex(nextIndex);
     setCurrentDeck(nextEntry.deckState);
     return nextEntry.deckState;
-  }, [history, historyIndex]);
+  }, [history, historyIndex, setHistoryIndex]);
 
   /**
    * Prüft ob Undo möglich ist
@@ -137,8 +132,7 @@ export function useDeckHistory(initialDeck: DeckWithCards | null, maxHistorySize
    * Setzt die History zurück
    */
   const resetHistory = useCallback((deck: DeckWithCards | null) => {
-    setHistory([]);
-    setHistoryIndex(-1);
+    setState({ history: [], historyIndex: -1 });
     setCurrentDeck(deck);
   }, []);
 
@@ -162,7 +156,7 @@ export function useDeckHistory(initialDeck: DeckWithCards | null, maxHistorySize
       setCurrentDeck(entry.deckState);
       return entry.deckState;
     },
-    [history, initialDeck]
+    [history, initialDeck, setHistoryIndex]
   );
 
   return {

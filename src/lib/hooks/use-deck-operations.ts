@@ -154,7 +154,7 @@ export function useDeckOperations({
       // Speichere aktuellen State für Rollback
       const operationKey = `${cardId}-${section}`;
       if (deck) {
-        optimisticStateRef.current.set(operationKey, JSON.parse(JSON.stringify(deck)));
+        optimisticStateRef.current.set(operationKey, structuredClone(deck));
       }
 
       // Markiere als pending
@@ -265,7 +265,7 @@ export function useDeckOperations({
       // Speichere aktuellen State für Rollback
       const operationKey = `${cardId}-${section}`;
       if (deck) {
-        optimisticStateRef.current.set(operationKey, JSON.parse(JSON.stringify(deck)));
+        optimisticStateRef.current.set(operationKey, structuredClone(deck));
       }
 
       // Markiere als pending
@@ -376,7 +376,7 @@ export function useDeckOperations({
       // Speichere aktuellen State für Rollback
       const operationKey = `${cardId}-${section}`;
       if (deck) {
-        optimisticStateRef.current.set(operationKey, JSON.parse(JSON.stringify(deck)));
+        optimisticStateRef.current.set(operationKey, structuredClone(deck));
       }
 
       setPendingOperations((prev) => new Map(prev).set(operationKey, 'remove'));
@@ -476,7 +476,7 @@ export function useDeckOperations({
       // Speichere aktuellen State für Rollback
       const operationKey = `${cardId}-${fromSection}`;
       if (deck) {
-        optimisticStateRef.current.set(operationKey, JSON.parse(JSON.stringify(deck)));
+        optimisticStateRef.current.set(operationKey, structuredClone(deck));
       }
 
       setPendingOperations((prev) => new Map(prev).set(operationKey, 'move'));
