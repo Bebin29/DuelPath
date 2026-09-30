@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/components/ui/card';
-import { Library, Zap, Swords } from 'lucide-react';
+import { Library, Zap } from 'lucide-react';
 
 /**
  * Startseite mit Willkommensnachricht und Schnellzugriff auf Hauptfunktionen
@@ -29,13 +29,13 @@ export default function Home() {
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           {session
-            ? 'Verwalte deine Decks, erstelle Kombos und teste sie im Duellmodus.'
+            ? 'Verwalte deine Decks und plane deine Kombos.'
             : 'Melde dich an, um deine Yu-Gi-Oh! Decks zu verwalten und Kombos zu erstellen.'}
         </p>
       </section>
 
       {/* Quick Access Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
         <Card>
           <CardHeader>
             <Library className="w-8 h-8 text-primary mb-2" />
@@ -61,21 +61,6 @@ export default function Home() {
             <Link href="/combos">
               <Button variant="default" className="w-full">
                 {session ? t('combo.createCombo') : t('navigation.combos')}
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <Swords className="w-8 h-8 text-primary mb-2" />
-            <CardTitle>{t('navigation.duel')}</CardTitle>
-            <CardDescription>Teste deine Decks und Kombos im Duellmodus</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/duel">
-              <Button variant="default" className="w-full">
-                {t('duel.startDuel')}
               </Button>
             </Link>
           </CardContent>

@@ -11,7 +11,7 @@ import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 /**
- * Hauptnavigation mit Links zu Decks, Kombos, Duell
+ * Hauptnavigation mit Links zu Decks und Kombos
  *
  * Active Link States: Nutzt --accent für aktive/hover Links
  * Focus Styles: Sichtbarer Focus-Ring (2px, --ring) für Tastaturnutzer
@@ -27,7 +27,6 @@ export function Navigation() {
     { href: '/', label: t('navigation.home') },
     { href: '/decks', label: t('navigation.decks') },
     { href: '/combos', label: t('navigation.combos') },
-    { href: '/duel', label: t('navigation.duel') },
   ];
 
   const isActive = (href: string) => {

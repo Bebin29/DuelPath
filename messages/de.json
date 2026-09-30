@@ -3,7 +3,6 @@
     "home": "Startseite",
     "decks": "Decks",
     "combos": "Kombos",
-    "duel": "Duell",
     "profile": "Profil"
   },
   "deck": {
@@ -154,7 +153,6 @@
     "steps": "Schritte",
     "addStep": "Schritt hinzufügen",
     "playCombo": "Kombo abspielen",
-    "step": "Schritt",
     "step": {
       "add": "Schritt hinzufügen",
       "edit": "Schritt bearbeiten",
@@ -221,7 +219,7 @@
     "filterByDeck": "Nach Deck filtern",
     "sortBy": "Sortieren nach",
     "sortByTitle": "Titel",
-    "sortByDate": "Datum",
+    "sortByDate": "Neueste zuerst",
     "sortBySteps": "Anzahl Schritte",
     "noSteps": "Keine Schritte vorhanden. Füge den ersten Schritt hinzu.",
     "createDescription": "Erstelle eine neue Kombo-Sequenz",
@@ -269,27 +267,13 @@
     "import": "Importieren",
     "imported": "Kombo importiert",
     "importedDescription": "Die Kombo wurde erfolgreich importiert",
-    "allDecks": "Alle Decks",
-    "sortByDate": "Neueste zuerst"
-  },
-  "duel": {
-    "title": "Duell",
-    "startDuel": "Duell starten",
-    "lifePoints": "Lebenspunkte",
-    "drawPhase": "Draw Phase",
-    "standbyPhase": "Standby Phase",
-    "mainPhase1": "Main Phase 1",
-    "battlePhase": "Battle Phase",
-    "mainPhase2": "Main Phase 2",
-    "endPhase": "End Phase",
-    "nextPhase": "Nächste Phase"
+    "allDecks": "Alle Decks"
   },
   "dashboard": {
     "welcome": "Willkommen bei DuelPath",
     "emptyState": {
       "decks": "Du hast noch keine Decks erstellt.",
-      "combos": "Du hast noch keine Kombos erstellt.",
-      "duels": "Du hast noch keine Duelle gespielt."
+      "combos": "Du hast noch keine Kombos erstellt."
     }
   },
   "auth": {
@@ -339,56 +323,6 @@
     "pending": "{{count}} Änderung(en) ausstehend",
     "syncSuccess": "Synchronisation erfolgreich",
     "syncError": "Synchronisation fehlgeschlagen"
-  },
-  "duel": {
-    "startNewDuel": "Neues Duell starten",
-    "startDuel": "Duell starten",
-    "selectDeck": "Deck auswählen",
-    "selectDeckDescription": "Wähle ein Deck aus, um das Duell zu beginnen",
-    "noDecksAvailable": "Keine Decks verfügbar. Erstelle zuerst ein Deck.",
-    "duelBoard": "Duell-Brett",
-    "yourTurn": "Dein Zug",
-    "opponentTurn": "Gegner-Zug",
-    "lifePoints": "Lebenspunkte",
-    "you": "Du",
-    "opponent": "Gegner",
-    "victory": "Sieg!",
-    "defeat": "Niederlage!",
-    "log": "Duell-Log",
-    "logEmpty": "Noch keine Aktionen",
-    "availableActions": "Verfügbare Aktionen",
-    "noActionsAvailable": "Keine Aktionen verfügbar",
-    "nextPhase": "Nächste Phase",
-    "phase": {
-      "DRAW": "Zieh-Phase",
-      "STANDBY": "Standby-Phase",
-      "MAIN1": "Hauptphase 1",
-      "BATTLE": "Kampfphase",
-      "MAIN2": "Hauptphase 2",
-      "END": "Endphase"
-    },
-    "action": {
-      "draw": "Ziehen",
-      "normalSummon": "Normal beschwören",
-      "setMonster": "Monster setzen",
-      "activateSpell": "Zauber aktivieren",
-      "setSpell": "Zauber setzen",
-      "attackLp": "Direkter Angriff",
-      "attack": "Angreifen",
-      "changePhase": "Phase wechseln",
-      "endDuel": "Duell beenden",
-      "unknown": "Unbekannte Aktion"
-    },
-    "error": {
-      "title": "Duell-Fehler",
-      "description": "Beim Duell ist ein Fehler aufgetreten. Das Spiel konnte nicht fortgesetzt werden.",
-      "retry": "Duell neu laden",
-      "backToDuel": "Zurück zum Duell",
-      "help": "Wenn das Problem weiterhin besteht, versuche die Seite neu zu laden oder starte ein neues Duell."
-    },
-    "saveAsCombo": "Als Combo speichern",
-    "saveAsComboDescription": "Konvertiere dein Duell in eine wiederverwendbare Combo",
-    "saveAsComboInfo": "Nur relevante Aktionen (Normal Summons, Attacks, etc.) werden in die Combo übernommen. Phase-Wechsel und Draws werden ausgefiltert."
   },
   "common": {
     "justNow": "Gerade eben",
