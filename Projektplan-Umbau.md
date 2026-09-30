@@ -134,7 +134,7 @@ function stateAt(nodes, nodeId, start: StartState, cards: Map<string, CardData>)
 
 **Negierungsarten und OPT:** Ob ein OPT verbraucht ist, hängt davon ab, ob die Aktivierung, der Effekt oder die Beschwörung negiert wurde, und von der OPT-Formulierung (Beispiel: Solemn Judgment negiert die Beschwörung, der On-Summon-Effekt wurde nie aktiviert und bleibt nach einer weiteren Beschwörung verfügbar). Die Regeln dafür stammen aus `RULING_MECHANICS` (Abschnitt 4.6). `optOverride` erlaubt pro Knoten den manuellen Eingriff.
 
-**Startzustand:** Starthand wird aus dem zugeordneten Deck gewählt, ohne Deck über die freie Kartensuche. Für Going Second kann das Gegnerboard vorbelegt werden.
+**Startzustand:** Eine Combo kann einem eigenen Deck zugeordnet werden (Auswahl im Editor-Kopf; im Deck-Editor legt „Neue Combo mit diesem Deck“ sie direkt an). Das Deck wird in den Startzustand geladen (Main Deck in DECK, Extra Deck in EXTRA, je Kopie eine Instanz; Karten, die schon auf der Hand liegen, werden abgezogen), und die Starthand wird per Klick aus dem Deck gezogen (`src/lib/combo/deck.ts`). Ohne Deck geht es über die freie Kartensuche. Für Going Second kann das Gegnerboard vorbelegt werden. Der YDK-Import im Deck-Editor ersetzt den Deckinhalt (nach Rückfrage), normalisiert Passcodes mit führenden Nullen, begrenzt auf 3 Kopien und meldet unbekannte Passcodes.
 
 ### 4.4 Canvas
 
@@ -236,7 +236,7 @@ interface RulingMechanic {
 | **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop (**erledigt**, Chain-Gruppen als Markierung) | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
 | **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand (**erledigt**)                                                                     | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
 | **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert (**erledigt**, Schwelle 0,5)                                                  | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
-| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen, YDK-Import fertigstellen (bisher nur ein Platzhalter)                          | Combo aus einem Deck heraus starten                                                    |
+| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen, YDK-Import fertigstellen (**erledigt**)                                        | Combo aus einem Deck heraus starten                                                    |
 
 ## 6. Risiken
 
