@@ -6,14 +6,16 @@ Dieser Plan beschreibt den Neuaufbau von DuelPath. Die bestehende `Projektplanun
 
 ## 1. Ziel
 
-DuelPath wird ein Werkzeug, um Yu-Gi-Oh!-Combos als **Baumdiagramm auf einem Canvas** zu planen. Jeder Schritt zeigt den **Gamestate** (Hand, Feld, Friedhof, Verbannt, Deck). An jedem Punkt kann die Combo sich verzweigen, zum Beispiel wenn der Gegner einen Effekt negiert. Beim Bauen schlägt **Jev** aktivierbare Effekte vor.
+DuelPath wird ein Werkzeug, um Yu-Gi-Oh!-Combos als **Baumdiagramm auf einem Canvas** zu planen. Jeder Schritt zeigt den **Gamestate** (Hand, Feld, Friedhof, Verbannt, Deck, offene Chain). An jedem Punkt kann die Combo sich verzweigen, zum Beispiel wenn der Gegner einen Effekt negiert. Beim Bauen schlägt **Jev** aktivierbare Effekte vor.
 
 ## 2. Abgrenzung
 
 - **Nur TCG.** OCG und Master Duel entfallen, inklusive Banlist und Kartenpool.
 - **Nur lokal.** Kein Hosting, kein Deployment. Datenbank ist PostgreSQL lokal.
-- **Keine Regel-Engine.** DuelPath prüft nicht, ob ein Zug regelkonform ist. Der Nutzer beschreibt, was passiert; das System rechnet den Zustand daraus aus und warnt nur bei offensichtlichen Fehlern (verbrauchter OPT, Karte nicht in der Zone).
+- **Ein Zug pro Combo.** Eine Combo deckt genau einen eigenen Zug ab. Kein Zugwechsel, kein Phasenmodell über den Zug hinaus.
+- **Keine vollständige Regel-Engine.** DuelPath prüft nicht jeden Zug auf Legalität. Eindeutige Mechaniken (OPT, Negierungsarten, Chain-Auflösung) werden berechnet; alles andere beschreibt der Nutzer.
 - **Kein Duellmodus** als eigene Seite. Die Spielfeld-Komponenten werden für die Zustandsansicht weiterverwendet.
+- **Auth bleibt.** NextAuth bleibt unverändert, damit ein späteres Hosting ohne Umbau möglich ist.
 
 ## 3. Bestandsaufnahme
 
@@ -45,28 +47,31 @@ DuelPath wird ein Werkzeug, um Yu-Gi-Oh!-Combos als **Baumdiagramm auf einem Can
 
 ### 4.1 Datenbank
 
-PostgreSQL lokal per Docker (`docker compose up -d`), eine `docker-compose.yml` mit einem einzigen Service. `DATABASE_URL` in `.env`.
+PostgreSQL lokal per Docker (`docker compose up -d`), eine `docker-compose.yml` mit einem einzigen Service. `DATABASE_URL` und `OPENROUTER_API_KEY` in `.env`.
 
 ### 4.2 Kartendatenbank
 
 Quelle bleibt die YGOPRODeck-API (`cardinfo.php?misc=yes`).
 
 - **TCG-Filter:** Nur Karten mit `tcg_date` werden importiert. Banlist aus `banlist_info.ban_tcg`.
-- **Effekte zerlegen:** Beim Import wird der Kartentext in einzelne Effekte geteilt und als `effects` (JSON) gespeichert:
+- **Sprache:** Englisch ist die Grundlage für Effektzerlegung, Rulings und Jev. Deutsche Namen und Texte werden zusätzlich importiert (`language=de`, Spalten `nameDe`, `descDe`) und sind in der Anzeige umschaltbar.
+- **Effekte zerlegen:** Beim Import wird der englische Kartentext in einzelne Effekte geteilt und als `effects` (JSON) gespeichert:
   ```ts
   type CardEffect = {
     index: number;
     text: string;
-    opt: 'NONE' | 'SOFT' | 'HARD'; // HARD = "of \"<Name>\" once per turn"
-    optGroup?: string; // bei "each effect ... once per turn" gemeinsame Gruppe
+    opt: 'NONE' | 'SOFT' | 'HARD';
+    optWording?: 'USE' | 'ACTIVATE' | 'ACTIVATE_CARD'; // "use" / "activate this effect" / "activate 1 X"
+    optGroup?: string; // bei "each effect" bzw. "1 X effect per turn" gemeinsame Gruppe
+    mechanics: string[]; // Keys aus RulingMechanic, z. B. "TRIGGER_IF", "QUICK"
   };
   ```
-  Die Zerlegung ist eine Heuristik über die PSCT-Struktur (Sätze mit `:` und `;`, Klauseln wie „You can only use this effect of … once per turn“). Pro Karte manuell korrigierbar.
+  Die Zerlegung ist eine Heuristik über die PSCT-Struktur (Sätze mit `:` und `;`, OPT-Klauseln). **Jev prüft mit:** Für jede Karte bewertet Jev, ob die Zerlegung plausibel ist (`noul`). Karten unter dem Schwellwert werden zur manuellen Prüfung markiert (`effectsReview = true`). Manuelle Korrekturen werden gesondert gespeichert und überleben einen Neuimport.
 - **Bilder lokal:** YGOPRODeck untersagt Hotlinking. Bilder werden einmalig heruntergeladen und unter `public/cards/<passcode>.jpg` abgelegt (nicht in Git).
 
 ### 4.3 Combo als Baum
 
-Kernentscheidung: **Der Gamestate wird nicht gespeichert, sondern berechnet.** Jeder Knoten speichert nur die Kartenbewegungen, die er auslöst. Der Zustand an einem Knoten ist der Startzustand plus alle Bewegungen auf dem Pfad von der Wurzel bis dorthin.
+Kernentscheidung: **Der Gamestate wird nicht gespeichert, sondern berechnet.** Jeder Knoten speichert nur, was er auslöst. Der Zustand an einem Knoten ist der Startzustand plus alle Knoten auf dem Pfad von der Wurzel bis dorthin.
 
 ```prisma
 model Combo {
@@ -74,23 +79,27 @@ model Combo {
   title      String
   userId     String
   deckId     String?
-  startState Json        // Starthand, optional vorbelegtes Feld
+  startState Json        // Starthand, optional Gegnerboard
   nodes      ComboNode[]
 }
 
 model ComboNode {
-  id          String      @id @default(cuid())
-  comboId     String
-  parentId    String?     // null = Wurzel
-  kind        String      // ACTION | OPPONENT | END
-  edgeLabel   String?     // "Keine Reaktion", "Ash Blossom", ...
-  cardId      String?
-  effectIndex Int?
-  moves       Json        // CardMove[]
-  note        String?
-  combo       Combo       @relation(fields: [comboId], references: [id], onDelete: Cascade)
-  parent      ComboNode?  @relation("Tree", fields: [parentId], references: [id], onDelete: Cascade)
-  children    ComboNode[] @relation("Tree")
+  id           String      @id @default(cuid())
+  comboId      String
+  parentId     String?     // null = Wurzel
+  kind         String      // ACTION | ACTIVATE | OPPONENT | RESOLVE | END
+  player       String      // SELF | OPPONENT
+  edgeLabel    String?     // "Keine Reaktion", "Ash Blossom", ...
+  cardId       String?
+  effectIndex  Int?
+  costMoves    Json        // CardMove[], bei Aktivierung
+  resolveMoves Json        // CardMove[], bei Auflösung
+  negates      Json?       // { nodeId, type: 'ACTIVATION' | 'EFFECT' | 'SUMMON' }
+  optOverride  Boolean?    // manueller Eingriff, falls die Regel nicht passt
+  note         String?
+  combo        Combo       @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  parent       ComboNode?  @relation("Tree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     ComboNode[] @relation("Tree")
 }
 ```
 
@@ -98,26 +107,38 @@ model ComboNode {
 type Zone = 'HAND' | 'DECK' | 'EXTRA' | 'MONSTER' | 'SPELL_TRAP' | 'FIELD' | 'GY' | 'BANISHED';
 type CardMove = { instanceId: string; from: Zone; to: Zone; slot?: number; position?: CardPosition };
 
+type GameState = {
+  self: PlayerState;
+  opponent: PlayerState;
+  chain: ChainLink[];      // offene Chain, CL1 zuerst
+  usedEffects: OptUsage[]; // für OPT-Tracking
+  normalSummonUsed: boolean;
+};
+
 function stateAt(combo: Combo, nodeId: string): GameState; // reine Funktion, voll getestet
 ```
 
 **Knotentypen:**
 
-| Typ | Bedeutung | Kinder |
+| Typ | Bedeutung | Wirkung in `stateAt` |
 |---|---|---|
-| `ACTION` | eigener Schritt: Karte, Effekt, Bewegungen | nächster Schritt oder `OPPONENT` |
-| `OPPONENT` | Verzweigungspunkt: Gegner kann reagieren | ein Kind pro Eventualität, beschriftet über `edgeLabel` |
+| `ACTION` | Handlung ohne Chain: Normal Summon, Special Summon per Beschwörungsverfahren, Setzen | `resolveMoves` sofort anwenden |
+| `ACTIVATE` | Effekt aktivieren, bildet einen Chain Link | `costMoves` sofort, Link auf die Chain legen, OPT eintragen |
+| `OPPONENT` | Verzweigungspunkt: Gegner kann reagieren | keine; Kinder sind die Eventualitäten, beschriftet über `edgeLabel` |
+| `RESOLVE` | Chain wird aufgelöst | Links rückwärts auflösen, `resolveMoves` je Link, negierte Links gemäß `negates` |
 | `END` | Endboard | keine |
 
-Gegnerische Reaktionen (Ash Blossom, Imperm, Nibiru, ...) sind normale Knoten mit Bewegungen, zum Beispiel „Ash Blossom: Hand → Friedhof“ beim Gegner und „Effekt von X wird negiert“ als Markierung. Der Gamestate kennt dafür auch die Gegnerseite.
+**Chains explizit:** Aktivierungen stapeln sich als Chain Links (CL1, CL2, ...), bis ein `RESOLVE`-Knoten kommt. Auf dem Canvas wird eine offene Chain als Gruppe dargestellt. Gegnerische Reaktionen (Ash Blossom, Imperm, Nibiru, ...) sind `ACTIVATE`-Knoten mit `player = OPPONENT` und `negates`.
 
-**Once per Turn:** `GameState` führt `usedEffects` mit (Kartenname + Effektindex bzw. `optGroup`). `stateAt` trägt jeden Effekt ein, der auf dem Pfad aktiviert wurde. Ein negierter Effekt gilt je nach Kartentext trotzdem als verbraucht; das ist die Voreinstellung und pro Knoten umschaltbar.
+**Negierungsarten und OPT:** Ob ein OPT verbraucht ist, hängt davon ab, ob die Aktivierung, der Effekt oder die Beschwörung negiert wurde, und von der OPT-Formulierung (Beispiel: Solemn Judgment negiert die Beschwörung, der On-Summon-Effekt wurde nie aktiviert und bleibt nach einer weiteren Beschwörung verfügbar). Die Regeln dafür stammen aus der Tabelle `RulingMechanic` (Abschnitt 4.6). `optOverride` erlaubt pro Knoten den manuellen Eingriff.
+
+**Startzustand:** Starthand wird aus dem zugeordneten Deck gewählt, ohne Deck über die freie Kartensuche. Für Going Second kann das Gegnerboard vorbelegt werden.
 
 ### 4.4 Canvas
 
 - **React Flow (`@xyflow/react` v12)** für Canvas, Zoom, Pan, Minimap und eigene Knoten-Komponenten
 - **`@dagrejs/dagre`** für das automatische Baumlayout (Top-down). Kein manuelles Positionieren nötig; Layout wird bei jeder Änderung neu berechnet.
-- Eigene Knoten: Kartenbild, Kartenname, Effekt-Kurztext, OPT-Warnung. `OPPONENT`-Knoten optisch abgesetzt.
+- Eigene Knoten: Kartenbild, Kartenname, Effekt-Kurztext, OPT-Warnung, Chain-Link-Nummer. `OPPONENT`-Knoten und gegnerische Aktivierungen optisch abgesetzt, offene Chains als Gruppe.
 
 **Layout des Editors:**
 
@@ -125,6 +146,7 @@ Gegnerische Reaktionen (Ash Blossom, Imperm, Nibiru, ...) sind normale Knoten mi
 ┌──────────────────────────────────┬───────────────────────┐
 │                                  │  Zustand am Knoten    │
 │        Baum (React Flow)         │  Gegner: Feld / GY    │
+│                                  │  Chain: CL1, CL2, ... │
 │                                  │  ───────────────────  │
 │                                  │  Eigenes Feld         │
 │                                  │  Hand · GY · Banished │
@@ -133,21 +155,47 @@ Gegnerische Reaktionen (Ash Blossom, Imperm, Nibiru, ...) sind normale Knoten mi
 └───────────────────────────────────────────────────────────┘
 ```
 
-Klick auf einen Knoten setzt das Zustandspanel auf `stateAt(combo, node)`. Neuer Schritt: Effekt aus den Vorschlägen wählen oder frei eine Karte suchen, dann Bewegungen per Drag & Drop im Zustandspanel festlegen.
+**Eingabe eines Schritts:**
+
+1. Effekt aus den Vorschlägen wählen oder frei eine Karte suchen.
+2. Bewegungen über **Schnellaktionen** festlegen (Suchen, Beschwören, Senden, Verbannen, Abwerfen, Zurück ins Deck).
+3. Alles, was die Schnellaktionen nicht abdecken, per **Drag & Drop** im Zustandspanel.
+
+**Gegnerreaktionen:** Am `OPPONENT`-Knoten gibt es eine Schnellauswahl gängiger TCG-Handtraps und Unterbrechungen (`src/lib/staples.ts`, fest hinterlegt, erweiterbar) und zusätzlich die freie Kartensuche.
 
 ### 4.5 Effektvorschläge mit Jev
 
 Zugang über **OpenRouter**, Modell `typesafe/jev-1.13` (fest gepinnt, nicht `~typesafe/jev-latest`, damit sich das Verhalten nicht unbemerkt ändert). Jev läuft über die **Decisions API** (`POST https://openrouter.ai/api/alpha/decisions`), nicht über den Chat-Endpunkt; das OpenAI-SDK funktioniert dafür nicht. Kontextfenster 32k Tokens, abgerechnet werden nur Input-Tokens.
 
+Jev wird an zwei Stellen genutzt: beim Import zur Prüfung der Effektzerlegung (4.2) und im Editor für Vorschläge. Beide Aufrufe laufen über dieselbe Datei `src/server/jev.ts`.
+
 **Ablauf pro Knoten:**
 
-1. **Vorfilter ohne Jev.** Kandidaten sind Effekte von Karten in Hand, Feld, Friedhof und Verbannt. Effekte mit verbrauchtem OPT fallen raus.
-2. **Eine Anfrage pro Knoten.** `state` = kompakt serialisierter Gamestate, `questions` = je Kandidat ein `noul` („Kann Effekt n von Karte X in diesem Zustand aktiviert werden?“ plus Effekttext). Alle Kandidaten in einer Anfrage spart Input-Tokens, weil der State nur einmal gesendet wird.
-3. **Schwellwert.** Vorschlag nur bei Wahrscheinlichkeit ≥ 0,8 (einstellbar), sortiert nach Wahrscheinlichkeit.
+1. **Vorfilter ohne Jev.** Kandidaten sind Effekte von Karten in Hand, Feld, Friedhof und Verbannt. Effekte mit verbrauchtem OPT fallen raus, ebenso Effekte, deren Spell Speed nicht zur offenen Chain passt.
+2. **Eine Anfrage pro Knoten.** `state` = kompakt serialisierter Gamestate plus relevante Ruling-Hinweise der Kandidaten, `questions` = je Kandidat ein `noul` („Kann Effekt n von Karte X in diesem Zustand aktiviert werden?“ plus Effekttext). Alle Kandidaten in einer Anfrage spart Input-Tokens, weil der State nur einmal gesendet wird.
+3. **Schwellwert.** Vorschläge unter 0,8 (einstellbar) werden ausgeblendet, der Rest nach Wahrscheinlichkeit sortiert.
 4. **Cache.** Antworten werden über einen Hash aus State und Kandidaten zwischengespeichert (Tabelle `JevCache`).
-5. **Nur serverseitig.** Aufruf über eine Server Action, `OPENROUTER_API_KEY` bleibt auf dem Server. Ohne Key läuft der Editor normal weiter, nur ohne Vorschläge.
+5. **Nur serverseitig.** `OPENROUTER_API_KEY` bleibt auf dem Server. Ohne Key läuft der Editor normal weiter, nur ohne Vorschläge.
 
 **Qualitätsprüfung:** Vor dem Einschalten ein Testset aus etwa 30 bekannten Situationen (State, Effekt, erwartetes Ja/Nein) anlegen und Trefferquote sowie sinnvollen Schwellwert messen. Die Leistungsangaben stammen vom Hersteller und sind unabhängig noch nicht bestätigt.
+
+### 4.6 Rulings
+
+Kuratierte Tabelle der **allgemeinen Mechaniken**, keine kartenbezogenen Einzelrulings. Grundlage ist die Recherche in `docs/research/rulings.md`.
+
+```prisma
+model RulingMechanic {
+  key           String  @id // z. B. "NEGATE_ACTIVATION", "NEGATE_SUMMON", "OPT_USE", "TRIGGER_WHEN"
+  description   String
+  deterministic Boolean // true = stateAt rechnet es, false = nur Jev-Kontext
+  effect        Json    // Auswirkung auf OPT, Kosten, Karte, Trigger
+  pattern       String? // Erkennungsmuster im Kartentext
+}
+```
+
+- **Deterministische Mechaniken** rechnet `stateAt` direkt (zum Beispiel: Beschwörung negiert, also kein Trigger und OPT unverbraucht; Aktivierung negiert, also Kosten bezahlt und OPT verbraucht).
+- **Nicht deterministische Mechaniken** gehen als kurzer Hinweistext in die Jev-Anfrage.
+- Die Tabelle wird per Seed befüllt und im Repo versioniert.
 
 ## 5. Meilensteine
 
@@ -155,23 +203,43 @@ Zugang über **OpenRouter**, Modell `typesafe/jev-1.13` (fest gepinnt, nicht `~t
 |---|---|---|
 | **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren | `npm run build`, `lint`, `test` grün |
 | **M1** | PostgreSQL per Docker, Prisma-Provider umstellen, Migrationen neu anlegen | App startet gegen lokales Postgres |
-| **M2** | Kartenimport nur TCG, Effektzerlegung mit OPT-Erkennung, lokale Bilder | alle TCG-Karten mit `effects` in der DB, Suche funktioniert |
-| **M3** | Combo-Schema, `GameState`, `stateAt` inklusive OPT-Tracking | Unit-Tests für Bewegungen, Verzweigungen, OPT grün |
-| **M4** | Canvas: React Flow, dagre-Layout, eigene Knoten, Zustandspanel | Combo mit Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar |
-| **M5** | Gegner-Knoten: Handtrap-Auswahl, Negierung, Zweige beschriften | Combo mit „Keine Reaktion“ und „Ash Blossom“-Zweig darstellbar |
-| **M6** | Jev: Server Action, Vorfilter, Cache, Testset, Schwellwert | Vorschläge erscheinen im Editor, Trefferquote dokumentiert |
-| **M7** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen | Combo aus einem Deck heraus starten |
+| **M2** | Ruling-Recherche auswerten, `RulingMechanic` anlegen und befüllen | Tabelle mit allen Mechaniken aus der Recherche im Seed |
+| **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
+| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün |
+| **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar |
+| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar |
+| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert | Vorschläge erscheinen im Editor, Trefferquote dokumentiert |
+| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen | Combo aus einem Deck heraus starten |
 
 ## 6. Risiken
 
 | Risiko | Umgang |
 |---|---|
-| Effektzerlegung aus dem Kartentext ist ungenau | Heuristik plus manuelle Korrektur pro Karte; später Jev als `choice` zur Zuordnung |
+| Effektzerlegung aus dem Kartentext ist ungenau | Heuristik, Jev-Prüfung, manuelle Korrektur pro Karte |
+| Ruling-Sonderfälle passen nicht in allgemeine Mechaniken | `optOverride` pro Knoten, Hinweistext an Jev, Tabelle bei Bedarf erweitern |
+| Explizite Chains machen die Eingabe umständlich | `RESOLVE` automatisch vorschlagen, sobald niemand mehr reagiert |
 | Jev ist Early Access, API als `alpha` markiert | Integration in einer einzigen Datei kapseln, Modell-ID pinnen, Editor funktioniert auch ohne |
-| Jev-Trefferquote reicht nicht | Testset vor dem Einschalten, Schwellwert anheben oder Vorschläge nur als Hinweis zeigen |
-| Bewegungen per Hand erfassen ist mühsam | häufige Muster als Schnellaktionen (Suchen, Beschwören, Senden, Verbannen) |
+| Jev-Trefferquote reicht nicht | Testset vor dem Einschalten, Schwellwert anheben |
 
-## 7. Offen
+## 7. Entscheidungen
 
-- Welche Handtraps stehen in der Schnellauswahl für Gegner-Knoten? Vorschlag: aus den aktuellen TCG-Staples fest hinterlegt, erweiterbar.
-- Sollen Combos später teilbar sein (Export als Bild oder Link)? Aktuell nicht geplant.
+| Frage | Entscheidung |
+|---|---|
+| Zugumfang | ein eigener Zug pro Combo |
+| Auth | bleibt |
+| Gegnerreaktionen | Staple-Liste plus freie Suche |
+| Eingabe der Bewegungen | Schnellaktionen plus Drag & Drop |
+| Starthand | aus dem Deck wählen |
+| Going Second | Gegnerboard im Startzustand möglich |
+| Jev unter Schwellwert | ausblenden |
+| Chains | explizit mit Chain Links |
+| OPT bei Negierung | abhängig von Negierungsart und Formulierung, Regeln aus `RulingMechanic` |
+| Rulings | allgemeine Mechaniken kuratiert; deterministisch im Code, sonst Jev-Kontext |
+| Effektzerlegung | Heuristik, Jev prüft mit |
+| Kartensprache | Englisch, Deutsch umschaltbar |
+| Extras | deutsche Kartentexte; kein Bildexport, kein JSON-Export, kein Abspielmodus |
+
+## 8. Offen
+
+- Inhalt der Staple-Liste für Gegnerreaktionen.
+- Ergebnisse der Ruling-Recherche einarbeiten (`docs/research/rulings.md`).
