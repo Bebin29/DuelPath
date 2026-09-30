@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Minus, Trash2, ArrowRight, Loader2, AlertTriangle } from 'lucide-react';
 import { Checkbox as UICheckbox } from '@/components/ui/checkbox';
-import type { DeckCard } from '@prisma/client';
+import type { DeckCard } from '@/generated/prisma/client';
 import type { DeckSection } from '@/lib/validations/deck.schema';
 import type { CardForDeck } from '@/lib/hooks/use-deck-history';
 import Image from 'next/image';

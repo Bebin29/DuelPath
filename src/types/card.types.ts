@@ -1,4 +1,4 @@
-import type { Card } from '@prisma/client';
+import type { Card } from '@/generated/prisma/client';
 
 /**
  * Karten-Suchfilter

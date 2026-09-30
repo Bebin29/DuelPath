@@ -1,5 +1,5 @@
 import { useRef, useCallback } from 'react';
-import type { Card } from '@prisma/client';
+import type { Card } from '@/generated/prisma/client';
 import type { CardForDeck } from './use-deck-history';
 
 interface CachedCard {

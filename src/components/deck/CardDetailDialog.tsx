@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { Card } from '@prisma/client';
+import type { Card } from '@/generated/prisma/client';
 import type { CardForDeck } from '@/lib/hooks/use-deck-history';
 import Image from 'next/image';
 

@@ -3,7 +3,7 @@
 import { useState, memo } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import type { Card } from '@prisma/client';
+import type { Card } from '@/generated/prisma/client';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import Image from 'next/image';

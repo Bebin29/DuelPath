@@ -7,7 +7,7 @@ import { getUserDecks, deleteDeck } from '@/server/actions/deck.actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Library, Edit, Trash2 } from 'lucide-react';
-import type { Deck } from '@prisma/client';
+import type { Deck } from '@/generated/prisma/client';
 import { useToast } from '@/components/ui/toast';
 
 type DeckWithCount = Deck & {

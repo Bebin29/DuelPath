@@ -25,7 +25,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CardItem } from './CardItem';
-import type { Card } from '@prisma/client';
+import type { Card } from '@/generated/prisma/client';
 import type { CardSearchFilter, CardSortOptions, CardListResult } from '@/types/card.types';
 import { Search, X, Loader2, AlertCircle } from 'lucide-react';
 import { useClickOutside } from '@/lib/hooks/use-click-outside';

@@ -2,7 +2,7 @@
 
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
 import {
   createDeckSchema,
   updateDeckSchema,
@@ -19,7 +19,7 @@ import {
   type BatchOperation,
   type DeckSection,
 } from '@/lib/validations/deck.schema';
-import type { Card } from '@prisma/client';
+import type { Card } from '@/generated/prisma/client';
 
 /**
  * Bestimmt die passende Deck-Sektion für eine Karte basierend auf ihrem Typ

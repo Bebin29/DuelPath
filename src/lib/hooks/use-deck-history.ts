@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Deck, DeckCard, Card } from '@prisma/client';
+import type { Deck, DeckCard, Card } from '@/generated/prisma/client';
 
 export type CardForDeck = Pick<
   Card,

@@ -22,7 +22,7 @@ import { CardSearchErrorBoundary } from '@/components/error/CardSearchErrorBound
 import { DeckListSection } from './DeckListSection';
 import { validateDeckSizes } from '@/lib/validations/deck.schema';
 import type { DeckSection } from '@/lib/validations/deck.schema';
-import type { Card } from '@prisma/client';
+import type { Card } from '@/generated/prisma/client';
 import {
   AlertCircle,
   CheckCircle2,

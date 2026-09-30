@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CardSearchService } from '@/server/services/card-search.service';
 import { prisma } from '@/lib/prisma/client';
-import type { Card } from '@prisma/client';
+import type { Card } from '@/generated/prisma/client';
 import type { CardSearchFilter, CardSortOptions } from '@/types/card.types';
 
 // Mock Prisma
@@ -188,7 +188,7 @@ describe('CardSearchService', () => {
       expect(mockPrisma.card.findMany).toHaveBeenCalled();
       const callArgs = mockPrisma.card.findMany.mock.calls[0][0];
       expect(callArgs?.where).toMatchObject({
-        nameLower: expect.objectContaining({ contains: 'dragon' }),
+        name: expect.objectContaining({ contains: 'dragon', mode: 'insensitive' }),
         type: expect.objectContaining({ contains: 'Effect Monster' }),
         attribute: 'LIGHT',
         level: 4,
@@ -211,8 +211,9 @@ describe('CardSearchService', () => {
       expect(mockPrisma.card.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            nameLower: {
+            name: {
               contains: 'blue-eyes',
+              mode: 'insensitive',
             },
           },
           select: {

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma/client';
 import type { CardSearchFilter, CardListResult, CardSortOptions } from '@/types/card.types';
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
 import { cardNameCache, archetypeCache, raceCache } from './autocomplete-cache.service';
 
 /**
@@ -42,12 +42,13 @@ export class CardSearchService {
 
       if (filter.useRegex) {
         // Für Regex-Suche verwende case-insensitive contains als Fallback
-        // Echte Regex-Unterstützung könnte in Zukunft mit PostgreSQL hinzugefügt werden
-        where.nameLower = {
+        // Echte Regex-Suche wäre mit PostgreSQL per Raw-Query möglich
+        where.name = {
           contains: searchTerm.toLowerCase(),
+          mode: 'insensitive',
         };
       } else {
-        // Case-insensitive Suche: Verwende nameLower für optimierte Suche
+        // Case-insensitive Suche über mode: insensitive (ILIKE)
         const normalizedSearchTerm = searchTerm.toLowerCase();
 
         // Verbesserte Suche: Unterstützt mehrere Wörter
@@ -57,15 +58,17 @@ export class CardSearchService {
           // Mehrere Suchbegriffe: Alle müssen vorkommen
           andConditions.push({
             AND: searchTerms.map((term) => ({
-              nameLower: {
+              name: {
                 contains: term,
+                mode: 'insensitive',
               },
             })),
           });
         } else {
           // Einzelner Suchbegriff
-          where.nameLower = {
+          where.name = {
             contains: normalizedSearchTerm,
+            mode: 'insensitive',
           };
         }
       }
@@ -76,15 +79,16 @@ export class CardSearchService {
       const searchTerm = filter.type.trim();
       where.type = {
         contains: searchTerm,
+        mode: 'insensitive',
       };
     }
 
     if (filter.race) {
       // Case-insensitive Suche für Race
-      // SQLite ist standardmäßig case-insensitive für String-Vergleiche
       andConditions.push({
         race: {
           contains: filter.race.trim(),
+          mode: 'insensitive',
         },
       });
     }
@@ -136,6 +140,7 @@ export class CardSearchService {
               .map((arch) => ({
                 archetype: {
                   contains: arch.trim(),
+                  mode: 'insensitive',
                 },
               })),
           });
@@ -145,6 +150,7 @@ export class CardSearchService {
         andConditions.push({
           archetype: {
             contains: filter.archetype.trim(),
+            mode: 'insensitive',
           },
         });
       }
@@ -211,7 +217,7 @@ export class CardSearchService {
       return [];
     }
 
-    // Case-insensitive Suche für Autocomplete mit nameLower
+    // Case-insensitive Suche für Autocomplete
     const normalizedQuery = query.trim().toLowerCase();
     const cacheKey = `${normalizedQuery}:${limit}`;
 
@@ -223,8 +229,9 @@ export class CardSearchService {
 
     const cards = await prisma.card.findMany({
       where: {
-        nameLower: {
+        name: {
           contains: normalizedQuery,
+          mode: 'insensitive',
         },
       },
       select: {
@@ -294,11 +301,11 @@ export class CardSearchService {
     }
 
     // Case-insensitive Suche für Race
-    // SQLite ist standardmäßig case-insensitive für String-Vergleiche
     const cards = await prisma.card.findMany({
       where: {
         race: {
           contains: query.trim(),
+          mode: 'insensitive',
           not: null,
         },
       },
@@ -350,11 +357,11 @@ export class CardSearchService {
     }
 
     // Case-insensitive Suche für Archetype
-    // SQLite ist standardmäßig case-insensitive für String-Vergleiche
     const cards = await prisma.card.findMany({
       where: {
         archetype: {
           contains: query.trim(),
+          mode: 'insensitive',
           not: null,
         },
       },

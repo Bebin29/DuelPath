@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Card, Deck, DeckCard, User } from '@prisma/client';
+import type { Card, Deck, DeckCard, User } from '@/generated/prisma/client';
 import type { Mock } from 'vitest';
 import {
   createDeck,
