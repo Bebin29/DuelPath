@@ -223,5 +223,99 @@
     "toast": {
       "close": "Schließen"
     }
+  },
+  "combo": {
+    "title": "Combos",
+    "subtitle": "Plane Combos als Baum mit Verzweigungen",
+    "new": "Neue Combo",
+    "titlePlaceholder": "Titel der Combo",
+    "create": "Anlegen",
+    "empty": "Noch keine Combos angelegt.",
+    "delete": "Löschen",
+    "confirmDelete": "Combo wirklich löschen?",
+    "back": "Zurück zu den Combos",
+    "saving": "Speichert …",
+    "saved": "Gespeichert",
+    "saveError": "Speichern fehlgeschlagen",
+    "start": "Startzustand",
+    "addChild": "Nächster Schritt",
+    "deleteNode": "Schritt löschen",
+    "edgeLabel": "Beschriftung der Kante",
+    "player": "Spieler",
+    "card": "Karte",
+    "effect": "Effekt",
+    "negates": "Negiert",
+    "none": "keine",
+    "searchCard": "Karte suchen …",
+    "noResults": "Keine Treffer",
+    "openChain": "Chain offen: {{count}}",
+    "chainLink": "CL{{n}}",
+    "kind": {
+      "ACTION": "Aktion",
+      "ACTIVATE": "Aktivierung",
+      "OPPONENT": "Gegner reagiert",
+      "RESOLVE": "Chain auflösen",
+      "END": "Endboard"
+    },
+    "players": {
+      "self": "Ich",
+      "opponent": "Gegner"
+    },
+    "action": {
+      "label": "Art",
+      "NORMAL_SUMMON": "Normal Summon",
+      "SPECIAL_SUMMON": "Special Summon",
+      "SET": "Setzen",
+      "OTHER": "Sonstiges"
+    },
+    "negation": {
+      "ACTIVATION": "Aktivierung von {{name}}",
+      "EFFECT": "Effekt von {{name}}",
+      "SUMMON": "Beschwörung von {{name}}",
+      "CARD": "Effekte von {{name}} bis Zugende"
+    },
+    "opt": {
+      "label": "OPT",
+      "auto": "nach Regel",
+      "counts": "zählt",
+      "free": "zählt nicht"
+    },
+    "moves": {
+      "action": "Bewegungen",
+      "cost": "Bei Aktivierung (Kosten, Karte aufs Feld)",
+      "resolve": "Bei Auflösung",
+      "target": "Gezogene Karten landen in",
+      "hint": "Karten im Zustandspanel in eine Zone ziehen oder eine Schnellaktion wählen.",
+      "fromDeck": "Karte aus dem Deck"
+    },
+    "quick": {
+      "toHand": "Auf die Hand",
+      "summon": "Beschwören",
+      "toField": "Aufs Feld",
+      "toGy": "Friedhof",
+      "banish": "Verbannen",
+      "toDeck": "Ins Deck"
+    },
+    "zones": {
+      "HAND": "Hand",
+      "DECK": "Deck",
+      "EXTRA": "Extra Deck",
+      "MONSTER": "Monster",
+      "SPELL_TRAP": "Zauber/Falle",
+      "FIELD": "Spielfeld",
+      "GY": "Friedhof",
+      "BANISHED": "Verbannt"
+    },
+    "state": {
+      "title": "Zustand",
+      "chain": "Offene Chain",
+      "warnings": "Warnungen",
+      "opt": "Verbrauchte OPTs",
+      "normalSummon": "Normal Summon verbraucht"
+    },
+    "startEditor": {
+      "add": "Karte in den Startzustand",
+      "hint": "Starthand und Gegnerboard festlegen. Karten lassen sich im Zustandspanel zwischen Zonen ziehen."
+    }
   }
 }

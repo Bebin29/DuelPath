@@ -191,5 +191,99 @@
     "toast": {
       "close": "Close"
     }
+  },
+  "combo": {
+    "title": "Combos",
+    "subtitle": "Plan combos as a tree with branches",
+    "new": "New combo",
+    "titlePlaceholder": "Combo title",
+    "create": "Create",
+    "empty": "No combos yet.",
+    "delete": "Delete",
+    "confirmDelete": "Really delete this combo?",
+    "back": "Back to combos",
+    "saving": "Saving …",
+    "saved": "Saved",
+    "saveError": "Saving failed",
+    "start": "Starting state",
+    "addChild": "Next step",
+    "deleteNode": "Delete step",
+    "edgeLabel": "Edge label",
+    "player": "Player",
+    "card": "Card",
+    "effect": "Effect",
+    "negates": "Negates",
+    "none": "none",
+    "searchCard": "Search card …",
+    "noResults": "No results",
+    "openChain": "Open chain: {{count}}",
+    "chainLink": "CL{{n}}",
+    "kind": {
+      "ACTION": "Action",
+      "ACTIVATE": "Activation",
+      "OPPONENT": "Opponent responds",
+      "RESOLVE": "Resolve chain",
+      "END": "End board"
+    },
+    "players": {
+      "self": "Me",
+      "opponent": "Opponent"
+    },
+    "action": {
+      "label": "Type",
+      "NORMAL_SUMMON": "Normal Summon",
+      "SPECIAL_SUMMON": "Special Summon",
+      "SET": "Set",
+      "OTHER": "Other"
+    },
+    "negation": {
+      "ACTIVATION": "Activation of {{name}}",
+      "EFFECT": "Effect of {{name}}",
+      "SUMMON": "Summon of {{name}}",
+      "CARD": "Effects of {{name}} until end of turn"
+    },
+    "opt": {
+      "label": "OPT",
+      "auto": "by rule",
+      "counts": "counts",
+      "free": "does not count"
+    },
+    "moves": {
+      "action": "Moves",
+      "cost": "On activation (costs, card to field)",
+      "resolve": "On resolution",
+      "target": "Dragged cards go to",
+      "hint": "Drag cards between zones in the state panel or pick a quick action.",
+      "fromDeck": "Card from the deck"
+    },
+    "quick": {
+      "toHand": "To hand",
+      "summon": "Summon",
+      "toField": "To field",
+      "toGy": "Graveyard",
+      "banish": "Banish",
+      "toDeck": "To deck"
+    },
+    "zones": {
+      "HAND": "Hand",
+      "DECK": "Deck",
+      "EXTRA": "Extra Deck",
+      "MONSTER": "Monsters",
+      "SPELL_TRAP": "Spell/Trap",
+      "FIELD": "Field Zone",
+      "GY": "Graveyard",
+      "BANISHED": "Banished"
+    },
+    "state": {
+      "title": "State",
+      "chain": "Open chain",
+      "warnings": "Warnings",
+      "opt": "Used OPTs",
+      "normalSummon": "Normal Summon used"
+    },
+    "startEditor": {
+      "add": "Add card to starting state",
+      "hint": "Set the starting hand and the opponent board. Drag cards between zones in the state panel."
+    }
   }
 }

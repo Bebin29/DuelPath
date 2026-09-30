@@ -1,9 +1,36 @@
+import type { ParsedEffects } from '@/lib/cards/effects';
 import type { CardData, ComboNodeData } from '@/lib/combo/state';
 
 /** Kartendaten im Combo-Editor: Regeldaten für stateAt plus Anzeige */
 export interface ComboCard extends CardData {
   nameDe: string | null;
   imageSmall: string | null;
+}
+
+/** Karte aus /api/cards (effects als ParsedEffects-JSON) */
+export function toComboCard(row: {
+  id: string;
+  name: string;
+  nameDe?: string | null;
+  type: string;
+  race?: string | null;
+  imageSmall?: string | null;
+  effects?: unknown;
+}): ComboCard {
+  return {
+    id: row.id,
+    name: row.name,
+    nameDe: row.nameDe ?? null,
+    type: row.type,
+    race: row.race ?? null,
+    imageSmall: row.imageSmall ?? null,
+    effects: (row.effects as ParsedEffects | null)?.effects ?? [],
+  };
+}
+
+export function displayName(card: ComboCard | undefined, language: string): string {
+  if (!card) return '?';
+  return language.startsWith('de') && card.nameDe ? card.nameDe : card.name;
 }
 
 /** Eltern vor Kindern, damit Fremdschlüssel beim Einfügen immer auflösbar sind */

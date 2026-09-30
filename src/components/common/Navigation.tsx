@@ -26,6 +26,7 @@ export function Navigation() {
   const navItems = [
     { href: '/', label: t('navigation.home') },
     { href: '/decks', label: t('navigation.decks') },
+    { href: '/combos', label: t('navigation.combos') },
   ];
 
   const isActive = (href: string) => {

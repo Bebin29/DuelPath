@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Library } from 'lucide-react';
+import { GitBranch, Library } from 'lucide-react';
 
 /**
  * Startseite mit Willkommensnachricht und Schnellzugriff auf Hauptfunktionen
@@ -29,7 +29,22 @@ export default function Home() {
       </section>
 
       {/* Quick Access Cards */}
-      <section className="grid grid-cols-1 gap-6 mb-12">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <Card>
+          <CardHeader>
+            <GitBranch className="w-8 h-8 text-primary mb-2" />
+            <CardTitle>{t('navigation.combos')}</CardTitle>
+            <CardDescription>{t('combo.subtitle')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/combos">
+              <Button variant="default" className="w-full">
+                {t('navigation.combos')}
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <Library className="w-8 h-8 text-primary mb-2" />
