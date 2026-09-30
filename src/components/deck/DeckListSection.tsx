@@ -456,11 +456,11 @@ export const DeckListSection = memo(
       prevProps.onMove === nextProps.onMove &&
       prevProps.selectedCardIds?.size === nextProps.selectedCardIds?.size &&
       (prevProps.selectedCardIds === nextProps.selectedCardIds ||
-        !!(prevProps.selectedCardIds &&
+        !!(
+          prevProps.selectedCardIds &&
           nextProps.selectedCardIds &&
-          Array.from(prevProps.selectedCardIds).every((id) =>
-            nextProps.selectedCardIds!.has(id)
-          ))) &&
+          Array.from(prevProps.selectedCardIds).every((id) => nextProps.selectedCardIds!.has(id))
+        )) &&
       prevProps.onToggleCardSelection === nextProps.onToggleCardSelection
     );
   }

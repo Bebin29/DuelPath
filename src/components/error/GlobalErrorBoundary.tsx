@@ -2,13 +2,7 @@
 
 import { type ReactNode } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';

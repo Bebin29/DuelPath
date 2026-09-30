@@ -105,12 +105,18 @@ model ComboNode {
 
 ```ts
 type Zone = 'HAND' | 'DECK' | 'EXTRA' | 'MONSTER' | 'SPELL_TRAP' | 'FIELD' | 'GY' | 'BANISHED';
-type CardMove = { instanceId: string; from: Zone; to: Zone; slot?: number; position?: CardPosition };
+type CardMove = {
+  instanceId: string;
+  from: Zone;
+  to: Zone;
+  slot?: number;
+  position?: CardPosition;
+};
 
 type GameState = {
   self: PlayerState;
   opponent: PlayerState;
-  chain: ChainLink[];      // offene Chain, CL1 zuerst
+  chain: ChainLink[]; // offene Chain, CL1 zuerst
   usedEffects: OptUsage[]; // für OPT-Tracking
   normalSummonUsed: boolean;
 };
@@ -120,13 +126,13 @@ function stateAt(combo: Combo, nodeId: string): GameState; // reine Funktion, vo
 
 **Knotentypen:**
 
-| Typ | Bedeutung | Wirkung in `stateAt` |
-|---|---|---|
-| `ACTION` | Handlung ohne Chain: Normal Summon, Special Summon per Beschwörungsverfahren, Setzen | `resolveMoves` sofort anwenden |
-| `ACTIVATE` | Effekt aktivieren, bildet einen Chain Link | `costMoves` sofort, Link auf die Chain legen, OPT eintragen |
-| `OPPONENT` | Verzweigungspunkt: Gegner kann reagieren | keine; Kinder sind die Eventualitäten, beschriftet über `edgeLabel` |
-| `RESOLVE` | Chain wird aufgelöst | Links rückwärts auflösen, `resolveMoves` je Link, negierte Links gemäß `negates` |
-| `END` | Endboard | keine |
+| Typ        | Bedeutung                                                                            | Wirkung in `stateAt`                                                             |
+| ---------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `ACTION`   | Handlung ohne Chain: Normal Summon, Special Summon per Beschwörungsverfahren, Setzen | `resolveMoves` sofort anwenden                                                   |
+| `ACTIVATE` | Effekt aktivieren, bildet einen Chain Link                                           | `costMoves` sofort, Link auf die Chain legen, OPT eintragen                      |
+| `OPPONENT` | Verzweigungspunkt: Gegner kann reagieren                                             | keine; Kinder sind die Eventualitäten, beschriftet über `edgeLabel`              |
+| `RESOLVE`  | Chain wird aufgelöst                                                                 | Links rückwärts auflösen, `resolveMoves` je Link, negierte Links gemäß `negates` |
+| `END`      | Endboard                                                                             | keine                                                                            |
 
 **Chains explizit:** Aktivierungen stapeln sich als Chain Links (CL1, CL2, ...), bis ein `RESOLVE`-Knoten kommt. Auf dem Canvas wird eine offene Chain als Gruppe dargestellt. Gegnerische Reaktionen (Ash Blossom, Imperm, Nibiru, ...) sind `ACTIVATE`-Knoten mit `player = OPPONENT` und `negates`.
 
@@ -204,45 +210,45 @@ model RulingMechanic {
 
 ## 5. Meilensteine
 
-| # | Inhalt | Fertig, wenn |
-|---|---|---|
-| **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren | `npm run build`, `lint`, `test` grün |
-| **M1** | PostgreSQL per Docker, Prisma-Provider umstellen, Migrationen neu anlegen | App startet gegen lokales Postgres |
-| **M2** | `RulingMechanic` anlegen und aus `docs/research/rulings.md` befüllen | Tabelle mit allen Mechaniken aus der Recherche im Seed |
+| #      | Inhalt                                                                                                                        | Fertig, wenn                                                                           |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **M0** | Aufräumen: Entfallendes löschen, `dev.db` aus Git, UI-Ordner verschieben, Abhängigkeiten aktualisieren                        | `npm run build`, `lint`, `test` grün                                                   |
+| **M1** | PostgreSQL per Docker, Prisma-Provider umstellen, Migrationen neu anlegen                                                     | App startet gegen lokales Postgres                                                     |
+| **M2** | `RulingMechanic` anlegen und aus `docs/research/rulings.md` befüllen                                                          | Tabelle mit allen Mechaniken aus der Recherche im Seed                                 |
 | **M3** | Kartenimport nur TCG, deutsche Texte, Effektzerlegung mit OPT-Erkennung, Jev-Client, Jev-Prüfung der Zerlegung, lokale Bilder | alle TCG-Karten mit `effects` in der DB, unsichere Karten markiert, Suche funktioniert |
-| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün |
-| **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar |
-| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar |
-| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert | Vorschläge erscheinen im Editor, Trefferquote dokumentiert |
-| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen | Combo aus einem Deck heraus starten |
+| **M4** | Combo-Schema, `GameState`, `stateAt` mit Chains, Negierungsarten und OPT-Tracking                                             | Unit-Tests für Bewegungen, Chains, Negierungen, OPT grün                               |
+| **M5** | Canvas: React Flow, dagre-Layout, eigene Knoten, Chain-Gruppen, Zustandspanel, Schnellaktionen, Drag & Drop                   | Combo mit Chain und Verzweigung anlegen, speichern, Zustand pro Knoten sichtbar        |
+| **M6** | Gegner-Knoten: Staple-Liste, freie Suche, Gegnerboard im Startzustand                                                         | Combo mit „Keine Reaktion“- und „Ash Blossom“-Zweig darstellbar                        |
+| **M7** | Jev-Vorschläge: Vorfilter, Anfrage pro Knoten, Cache, Testset, Schwellwert                                                    | Vorschläge erscheinen im Editor, Trefferquote dokumentiert                             |
+| **M8** | Deck-Anbindung: Combo einem Deck zuordnen, Starthand aus dem Deck wählen                                                      | Combo aus einem Deck heraus starten                                                    |
 
 ## 6. Risiken
 
-| Risiko | Umgang |
-|---|---|
-| Effektzerlegung aus dem Kartentext ist ungenau | Heuristik, Jev-Prüfung, manuelle Korrektur pro Karte |
-| Ruling-Sonderfälle passen nicht in allgemeine Mechaniken | `optOverride` pro Knoten, Hinweistext an Jev, Tabelle bei Bedarf erweitern |
-| Explizite Chains machen die Eingabe umständlich | `RESOLVE` automatisch vorschlagen, sobald niemand mehr reagiert |
-| Jev ist Early Access, API als `alpha` markiert | Integration in einer einzigen Datei kapseln, Modell-ID pinnen, Editor funktioniert auch ohne |
-| Jev-Trefferquote reicht nicht | Testset vor dem Einschalten, Schwellwert anheben |
+| Risiko                                                   | Umgang                                                                                       |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Effektzerlegung aus dem Kartentext ist ungenau           | Heuristik, Jev-Prüfung, manuelle Korrektur pro Karte                                         |
+| Ruling-Sonderfälle passen nicht in allgemeine Mechaniken | `optOverride` pro Knoten, Hinweistext an Jev, Tabelle bei Bedarf erweitern                   |
+| Explizite Chains machen die Eingabe umständlich          | `RESOLVE` automatisch vorschlagen, sobald niemand mehr reagiert                              |
+| Jev ist Early Access, API als `alpha` markiert           | Integration in einer einzigen Datei kapseln, Modell-ID pinnen, Editor funktioniert auch ohne |
+| Jev-Trefferquote reicht nicht                            | Testset vor dem Einschalten, Schwellwert anheben                                             |
 
 ## 7. Entscheidungen
 
-| Frage | Entscheidung |
-|---|---|
-| Zugumfang | ein eigener Zug pro Combo |
-| Auth | bleibt |
-| Gegnerreaktionen | Staple-Liste plus freie Suche. Handtraps: Ash Blossom, Imperm, Nibiru, Veiler, Ghost Belle, Ghost Ogre, Ghost Mourner, Droll, D.D. Crow, PSY-Framegear Gamma, Mulcharmy Fuwalos, Mulcharmy Purulia, Dimension Shifter. Feld: Solemn Judgment, Solemn Strike, Solemn Warning, Skill Drain, Evenly Matched. Eigene Seite: Called by the Grave, Crossout Designator, Forbidden Droplet. Verbotene Karten fallen über `ban_tcg` raus. |
-| Eingabe der Bewegungen | Schnellaktionen plus Drag & Drop |
-| Starthand | aus dem Deck wählen |
-| Going Second | Gegnerboard im Startzustand möglich |
-| Jev unter Schwellwert | ausblenden |
-| Chains | explizit mit Chain Links |
-| OPT bei Negierung | abhängig von Negierungsart und Formulierung, Regeln aus `RulingMechanic` |
-| Rulings | allgemeine Mechaniken kuratiert; deterministisch im Code, sonst Jev-Kontext |
-| Effektzerlegung | Heuristik, Jev prüft mit |
-| Kartensprache | Englisch, Deutsch umschaltbar |
-| Extras | deutsche Kartentexte; kein Bildexport, kein JSON-Export, kein Abspielmodus |
+| Frage                  | Entscheidung                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Zugumfang              | ein eigener Zug pro Combo                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Auth                   | bleibt                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Gegnerreaktionen       | Staple-Liste plus freie Suche. Handtraps: Ash Blossom, Imperm, Nibiru, Veiler, Ghost Belle, Ghost Ogre, Ghost Mourner, Droll, D.D. Crow, PSY-Framegear Gamma, Mulcharmy Fuwalos, Mulcharmy Purulia, Dimension Shifter. Feld: Solemn Judgment, Solemn Strike, Solemn Warning, Skill Drain, Evenly Matched. Eigene Seite: Called by the Grave, Crossout Designator, Forbidden Droplet. Verbotene Karten fallen über `ban_tcg` raus. |
+| Eingabe der Bewegungen | Schnellaktionen plus Drag & Drop                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Starthand              | aus dem Deck wählen                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Going Second           | Gegnerboard im Startzustand möglich                                                                                                                                                                                                                                                                                                                                                                                               |
+| Jev unter Schwellwert  | ausblenden                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Chains                 | explizit mit Chain Links                                                                                                                                                                                                                                                                                                                                                                                                          |
+| OPT bei Negierung      | abhängig von Negierungsart und Formulierung, Regeln aus `RulingMechanic`                                                                                                                                                                                                                                                                                                                                                          |
+| Rulings                | allgemeine Mechaniken kuratiert; deterministisch im Code, sonst Jev-Kontext                                                                                                                                                                                                                                                                                                                                                       |
+| Effektzerlegung        | Heuristik, Jev prüft mit                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Kartensprache          | Englisch, Deutsch umschaltbar                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Extras                 | deutsche Kartentexte; kein Bildexport, kein JSON-Export, kein Abspielmodus                                                                                                                                                                                                                                                                                                                                                        |
 
 ## 8. Offen
 

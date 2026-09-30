@@ -63,26 +63,29 @@ export function HistoryTimeline({
     };
   }, [t]);
 
-  const formatTime = useCallback((timestamp: number): string => {
-    const date = new Date(timestamp);
-    const now = Date.now();
-    const diff = now - timestamp;
+  const formatTime = useCallback(
+    (timestamp: number): string => {
+      const date = new Date(timestamp);
+      const now = Date.now();
+      const diff = now - timestamp;
 
-    if (diff < 60000) {
-      // Weniger als 1 Minute
-      return t('common.justNow');
-    } else if (diff < 3600000) {
-      // Weniger als 1 Stunde
-      const minutes = Math.floor(diff / 60000);
-      return t('common.minutesAgo', { count: minutes });
-    } else if (diff < 86400000) {
-      // Weniger als 1 Tag
-      const hours = Math.floor(diff / 3600000);
-      return t('common.hoursAgo', { count: hours });
-    } else {
-      return date.toLocaleTimeString();
-    }
-  }, [t]);
+      if (diff < 60000) {
+        // Weniger als 1 Minute
+        return t('common.justNow');
+      } else if (diff < 3600000) {
+        // Weniger als 1 Stunde
+        const minutes = Math.floor(diff / 60000);
+        return t('common.minutesAgo', { count: minutes });
+      } else if (diff < 86400000) {
+        // Weniger als 1 Tag
+        const hours = Math.floor(diff / 3600000);
+        return t('common.hoursAgo', { count: hours });
+      } else {
+        return date.toLocaleTimeString();
+      }
+    },
+    [t]
+  );
 
   if (history.length === 0) {
     return (
