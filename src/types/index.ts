@@ -3,5 +3,4 @@
  */
 
 export * from './deck.types';
-export * from './combo.types';
 export * from './card.types';

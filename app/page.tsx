@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/components/ui/card';
-import { Library, Zap } from 'lucide-react';
+import { Library } from 'lucide-react';
 
 /**
  * Startseite mit Willkommensnachricht und Schnellzugriff auf Hauptfunktionen
@@ -35,7 +35,7 @@ export default function Home() {
       </section>
 
       {/* Quick Access Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+      <section className="grid grid-cols-1 gap-6 mb-12">
         <Card>
           <CardHeader>
             <Library className="w-8 h-8 text-primary mb-2" />
@@ -46,21 +46,6 @@ export default function Home() {
             <Link href="/decks">
               <Button variant="default" className="w-full">
                 {session ? t('deck.createDeck') : t('navigation.decks')}
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <Zap className="w-8 h-8 text-primary mb-2" />
-            <CardTitle>{t('navigation.combos')}</CardTitle>
-            <CardDescription>Erstelle und visualisiere Kombos Schritt für Schritt</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/combos">
-              <Button variant="default" className="w-full">
-                {session ? t('combo.createCombo') : t('navigation.combos')}
               </Button>
             </Link>
           </CardContent>
