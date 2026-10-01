@@ -23,7 +23,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <CommandPaletteProvider>
             <div className="flex min-h-dvh flex-col">
               <AppHeader />
-              <main id="main" className="mx-auto w-full max-w-[1280px] flex-1 px-8 pb-16 pt-10">
+              <main
+                id="main"
+                className="mx-auto w-full max-w-[1280px] flex-1 px-4 pb-24 pt-6 sm:px-6 sm:pb-16 sm:pt-10 lg:px-8"
+              >
                 {children}
               </main>
             </div>

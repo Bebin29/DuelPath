@@ -20,6 +20,7 @@ import {
 import { CardView } from '@/components/cards/CardView';
 import { createDeck, deleteDeck, importYdkToDeck } from '@/server/actions/deck.actions';
 import type { DeckSummary } from '@/server/actions/deck-view.actions';
+import { PageHeader } from '@/components/ui/page-header';
 
 /**
  * Decks (UX-Plan 11, UI-Plan 7.5.4): YDK-Import ist der Hauptknopf, weil fast jeder seine Liste
@@ -79,17 +80,19 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
           e.target.value = '';
         }}
       />
-      <header className="flex items-end gap-3">
-        <div className="flex-1">
-          <h1 className="font-display text-[40px] leading-none">{t('decks.title')}</h1>
-          <p className="mt-2 text-text-muted">{t('decks.count', { count: decks.length })}</p>
-        </div>
-        <Button variant="line" onClick={createEmpty} disabled={busy}>
-          <Plus />
-          {t('decks.new')}
-        </Button>
-        {importButton}
-      </header>
+      <PageHeader
+        title={t('decks.title')}
+        meta={t('decks.count', { count: decks.length })}
+        actions={
+          <>
+            <Button variant="line" onClick={createEmpty} disabled={busy}>
+              <Plus />
+              {t('decks.new')}
+            </Button>
+            {importButton}
+          </>
+        }
+      />
 
       {visible.length === 0 ? (
         <div className="flex flex-col items-start gap-3 border-t border-line pt-6">

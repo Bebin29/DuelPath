@@ -1,7 +1,6 @@
 'use client';
 
 import { Component, type ReactNode } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import { logError, getErrorMessage, isRetryableError } from '@/lib/utils/error-logger';
@@ -146,62 +145,58 @@ function ErrorFallback({
   const errorMessage = error ? getErrorMessage(error, t('common.error')) : t('common.error');
 
   return (
-    <Card className="border-destructive">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-destructive">
-          <AlertCircle className="h-5 w-5" />
+    <section
+      role="alert"
+      className="flex flex-col gap-4 rounded-lg border border-opponent/40 bg-surface-1 p-5"
+    >
+      <div>
+        <h2 className="flex items-center gap-2 font-display text-2xl text-opponent">
+          <AlertCircle className="size-5" />
           {t('error.title')}
-        </CardTitle>
-        <CardDescription>{errorMessage}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {showDetails && error && (
-          <div className="rounded-md bg-muted p-3 text-sm">
-            <p className="font-mono text-xs break-all">{error.message}</p>
-            {error.stack && (
-              <details className="mt-2">
-                <summary className="cursor-pointer text-xs text-muted-foreground">
-                  Stack Trace
-                </summary>
-                <pre className="mt-2 text-xs overflow-auto max-h-40">{error.stack}</pre>
-              </details>
-            )}
-            {errorInfo?.componentStack && (
-              <details className="mt-2">
-                <summary className="cursor-pointer text-xs text-muted-foreground">
-                  Component Stack
-                </summary>
-                <pre className="mt-2 text-xs overflow-auto max-h-40 whitespace-pre-wrap">
-                  {errorInfo.componentStack}
-                </pre>
-              </details>
-            )}
-          </div>
-        )}
+        </h2>
+        <p className="mt-1 text-sm text-text-muted">{errorMessage}</p>
+      </div>
 
-        <div className="flex flex-wrap gap-2">
-          {canRetry && retryCount < 3 && (
-            <Button onClick={onReset} variant="default">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              {t('error.retry')}
-            </Button>
+      {showDetails && error && (
+        <div className="rounded-md bg-surface-2 p-3 text-sm">
+          <p className="break-all font-mono text-xs">{error.message}</p>
+          {error.stack && (
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs text-text-subtle">Stack Trace</summary>
+              <pre className="mt-2 max-h-40 overflow-auto text-xs">{error.stack}</pre>
+            </details>
           )}
-          <Button onClick={onReload} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {t('error.reload')}
-          </Button>
-          <Link href="/">
-            <Button variant="outline">
-              <Home className="h-4 w-4 mr-2" />
-              {t('error.home')}
-            </Button>
-          </Link>
+          {errorInfo?.componentStack && (
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs text-text-subtle">Component Stack</summary>
+              <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-xs">
+                {errorInfo.componentStack}
+              </pre>
+            </details>
+          )}
         </div>
+      )}
 
-        {retryCount >= 3 && (
-          <p className="text-sm text-muted-foreground">{t('error.maxRetries')}</p>
+      <div className="flex flex-wrap gap-2">
+        {canRetry && retryCount < 3 && (
+          <Button onClick={onReset}>
+            <RefreshCw />
+            {t('error.retry')}
+          </Button>
         )}
-      </CardContent>
-    </Card>
+        <Button onClick={onReload} variant="line">
+          <RefreshCw />
+          {t('error.reload')}
+        </Button>
+        <Button asChild variant="line">
+          <Link href="/">
+            <Home />
+            {t('error.home')}
+          </Link>
+        </Button>
+      </div>
+
+      {retryCount >= 3 && <p className="text-sm text-text-muted">{t('error.maxRetries')}</p>}
+    </section>
   );
 }

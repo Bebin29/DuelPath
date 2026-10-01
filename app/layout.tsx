@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { Instrument_Sans, Instrument_Serif, JetBrains_Mono, Kalam } from 'next/font/google';
 import './globals.css';
@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   title: 'DuelPath',
   description: 'Yu-Gi-Oh!-Lines planen, stresstesten und nachspielen.',
 };
+
+// viewport-fit=cover, damit die Leiste unten auf dem Handy die Safe-Area kennt
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);

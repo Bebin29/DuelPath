@@ -6,6 +6,7 @@ import { Segmented } from '@/components/ui/segmented';
 import { Button } from '@/components/ui/button';
 import { AUTOPLAY_SPEEDS, speedLabel, type AutoplaySpeed, type CardLanguage } from '@/lib/settings';
 import type { Theme } from '@/lib/theme';
+import { PageHeader } from '@/components/ui/page-header';
 
 function Row({
   title,
@@ -35,10 +36,7 @@ export function SettingsView() {
 
   return (
     <div className="flex flex-col">
-      <header className="pb-8">
-        <h1 className="font-display text-[40px] leading-none">{t('settings.title')}</h1>
-        <p className="mt-2 text-text-muted">{t('settings.subtitle')}</p>
-      </header>
+      <PageHeader title={t('settings.title')} meta={t('settings.subtitle')} className="pb-8" />
       <section className="max-w-[720px]">
         <h2 className="mb-1 font-display text-2xl">{t('settings.display')}</h2>
         <Row title={t('settings.theme')} text={t('settings.themeText')}>

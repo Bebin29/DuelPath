@@ -168,8 +168,27 @@
       "weakPassword": "Password is too weak",
       "passwordMismatch": "Passwords do not match",
       "required": "This field is required",
-      "invalidEmail": "Invalid email address"
-    }
+      "invalidEmail": "Invalid email address",
+      "missing": "Email and password are required",
+      "generic": "Something went wrong. Please try again.",
+      "Configuration": "There is a problem with the server configuration.",
+      "AccessDenied": "You have no access to this account.",
+      "Verification": "The verification link has expired or was already used.",
+      "CredentialsSignin": "Invalid credentials. Please check your email and password."
+    },
+    "back": "Back to the start page",
+    "signInText": "Sign in to reach your decks and combos.",
+    "signUpText": "Create an account to manage your decks and combos.",
+    "confirmPassword": "Confirm password",
+    "namePlaceholder": "Your name",
+    "emailPlaceholder": "you@email.com",
+    "passwordMin": "At least 8 characters",
+    "passwordRepeat": "Repeat password",
+    "registered": "Account created. You can sign in now.",
+    "errorTitle": "Sign-in failed",
+    "errorCode": "Error code: {{code}}",
+    "toSignIn": "To sign in",
+    "toHome": "To the start page"
   },
   "error": {
     "title": "An error occurred",
@@ -191,7 +210,11 @@
     "combo": {
       "description": "An error occurred while loading the combo. Please try again."
     },
-    "backToCombos": "Back to Combos"
+    "backToCombos": "Back to Combos",
+    "notFound": {
+      "title": "This page does not exist",
+      "text": "The combo or deck may have been deleted, or the link is incomplete."
+    }
   },
   "common": {
     "appName": "DuelPath",
@@ -346,6 +369,7 @@
   "shell": {
     "skipToContent": "Skip to content",
     "mainNavigation": "Main navigation",
+    "search": "Search",
     "userMenu": "User menu",
     "theme": "Theme",
     "themeDark": "Dark",

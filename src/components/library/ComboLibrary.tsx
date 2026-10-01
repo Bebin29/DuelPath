@@ -43,6 +43,7 @@ import { deleteCombo, duplicateCombo } from '@/server/actions/combo.actions';
 import { NewComboButton } from './NewComboButton';
 import { StartHandStrip } from './StartHandStrip';
 import { StatusChip } from './StatusChip';
+import { PageHeader } from '@/components/ui/page-header';
 
 const UNDO_MS = 6000;
 const COLUMNS = 'grid-cols-[132px_minmax(0,1fr)_160px_64px_80px_112px_120px_40px]';
@@ -205,13 +206,11 @@ export function ComboLibrary({
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-end gap-4">
-        <div className="flex-1">
-          <h1 className="font-display text-[40px] leading-none">{t('combo.title')}</h1>
-          <p className="mt-2 text-text-muted">{t('library.count', { count: entries.length })}</p>
-        </div>
-        <NewComboButton decks={decks} />
-      </header>
+      <PageHeader
+        title={t('combo.title')}
+        meta={t('library.count', { count: entries.length })}
+        actions={<NewComboButton decks={decks} />}
+      />
 
       <section aria-label={t('library.filters')} className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">

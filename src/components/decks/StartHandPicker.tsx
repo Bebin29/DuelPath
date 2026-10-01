@@ -17,6 +17,7 @@ import { createCombo } from '@/server/actions/combo.actions';
 import { CardTile } from './CardTile';
 import { CardSearchPanel } from './CardSearchPanel';
 import { Segmented } from '@/components/ui/segmented';
+import { PageHeader } from '@/components/ui/page-header';
 
 const MAX_HAND = 6;
 type OppZone = 'MONSTER' | 'SPELL_TRAP' | 'FIELD';
@@ -122,21 +123,25 @@ export function StartHandPicker({
 
   return (
     <div className="flex flex-col gap-6 pb-24">
-      <header>
-        <p className="font-mono text-2xs text-text-subtle">{deck.name}</p>
-        <h1 className="font-display text-[40px] leading-none">{t('newCombo.title')}</h1>
-        <p className="mt-2 text-text-muted">{t('newCombo.text')}</p>
-        <Segmented<'first' | 'second'>
-          className="mt-4"
-          label={t('decks.going')}
-          value={going}
-          onChange={setGoing}
-          options={[
-            { value: 'first', label: t('decks.first') },
-            { value: 'second', label: t('decks.second') },
-          ]}
-        />
-      </header>
+      <PageHeader
+        eyebrow={deck.name}
+        title={t('newCombo.title')}
+        meta={
+          <>
+            <p>{t('newCombo.text')}</p>
+            <Segmented<'first' | 'second'>
+              className="mt-4"
+              label={t('decks.going')}
+              value={going}
+              onChange={setGoing}
+              options={[
+                { value: 'first', label: t('decks.first') },
+                { value: 'second', label: t('decks.second') },
+              ]}
+            />
+          </>
+        }
+      />
 
       {going === 'second' && (
         <section className="grid grid-cols-[minmax(0,1fr)_300px] gap-6 rounded-lg border border-opponent/40 p-4">
