@@ -218,6 +218,7 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
   const showAll = () => patch((p) => (p.kind === 'result' ? { ...p, all: !p.all } : p));
   // Mehrteilige Effekte: „Später“ überspringt nur diesen Teil, die nächste Frage folgt
   const later = shift;
+  const clear = () => setQueue([]);
 
   const accept = useCallback(
     (how: 'insert' | 'replace') => {
@@ -259,6 +260,7 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
     confirm,
     showAll,
     later,
+    clear,
     offer,
     accept,
     dismissOffer: () => setOffer(null),
