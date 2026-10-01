@@ -191,7 +191,7 @@ export function WorkbenchHeader({
 }
 
 /** Status und Tags der Combo (UX-Plan 7.2); der Status-Chip ist zugleich der Auslöser */
-function MetaMenu({
+export function MetaMenu({
   status,
   onStatus,
   tags,

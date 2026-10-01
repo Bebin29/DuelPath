@@ -891,5 +891,21 @@
     "stapleRail": "Zieh eine Handtrap aus der Leiste links auf einen Schritt, um einen Branch anzulegen.",
     "stress": "Die Chips zeigen, welche Staples wo treffen. Klick legt den Branch an, Rechtsklick entfernt den Treffer.",
     "tree": "Hier siehst du alle Lines auf einmal. Doppelklick auf einen Knoten öffnet ihn im Board."
+  },
+  "reader": {
+    "back": "Zurück zu den Combos",
+    "position": "Schritt {{n}} von {{total}}",
+    "stops": "Hier stoppt: {{staples}}",
+    "note": "Notiz",
+    "noteAdd": "Notiz hinzufügen",
+    "notePlaceholder": "Warum dieser Schritt?",
+    "editHint": "Schritte bearbeiten geht ab 1024 px Breite, etwa am Rechner oder auf dem Tablet quer. Notiz, Status und Tags lassen sich hier ändern.",
+    "controls": "Schritte",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "play": "Abspielen",
+    "pause": "Anhalten",
+    "def": "DEF",
+    "emptyField": "Noch keine Karten auf dem Feld"
   }
 }
