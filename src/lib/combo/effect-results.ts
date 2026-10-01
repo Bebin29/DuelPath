@@ -7,7 +7,7 @@ import { isExtraDeckMonster, isMonster, isSpell, isTrap } from '@/lib/combo/play
  * Eine Heuristik über PSCT; wenn nichts passt, bleibt die freie Bewegung am Board.
  */
 
-export type ResultVerb = 'search' | 'summon' | 'send' | 'banish' | 'fusion';
+export type ResultVerb = 'search' | 'summon' | 'send' | 'banish' | 'place' | 'fusion';
 
 export interface ResultSpec {
   verb: ResultVerb;
@@ -24,8 +24,9 @@ export interface ResultSpec {
 }
 
 const COUNT: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3 };
+// „as many … as possible“ zählt wie eine volle Reihe
 const countOf = (word: string | undefined) =>
-  word ? Number(word) || COUNT[word.toLowerCase()] || 1 : 1;
+  word ? Number(word) || COUNT[word.toLowerCase()] || (word.toLowerCase() === 'as' ? 5 : 1) : 1;
 
 const ZONE_WORDS: [RegExp, Zone][] = [
   [/\bhand\b/i, 'HAND'],
@@ -33,6 +34,7 @@ const ZONE_WORDS: [RegExp, Zone][] = [
   [/\b(?:GY|Graveyard)\b/, 'GY'],
   [/\bfield\b/i, 'MONSTER'],
   [/\bbanished\b/i, 'BANISHED'],
+  [/Spell & Trap Zones?/i, 'SPELL_TRAP'],
 ];
 const zonesIn = (phrase: string) => ZONE_WORDS.filter(([re]) => re.test(phrase)).map(([, z]) => z);
 
@@ -63,9 +65,18 @@ function objectFilter(
   return { names, except: exceptMatch ? [exceptMatch[1]] : [], kind };
 }
 
+/** Erstes Ergebnis eines Effekts, etwa für den Stresstest */
 export function resultSpec(card: CardData | undefined, effectIndex: number): ResultSpec | null {
+  return resultSpecs(card, effectIndex)[0] ?? null;
+}
+
+/**
+ * Alle Ergebnisse eines Effekts in Reihenfolge des Texts. Weitere zählen nur im selben Satz wie
+ * das erste, etwa „Add 1 … to your hand, and place 1 … in your Spell & Trap Zone“ (Crystal Bond).
+ */
+export function resultSpecs(card: CardData | undefined, effectIndex: number): ResultSpec[] {
   const text = card?.effects[effectIndex]?.text;
-  if (!text) return null;
+  if (!text) return [];
   const part = resolutionPart(text);
 
   const fusion = /Fusion Summon (?:1|one) Fusion Monster/i.exec(part);
@@ -75,19 +86,21 @@ export function resultSpec(card: CardData | undefined, effectIndex: number): Res
         part
       );
     const zones = using ? zonesIn(using[2]) : [];
-    return {
-      verb: 'fusion',
-      from: ['EXTRA'],
-      to: 'MONSTER',
-      count: 1,
-      names: [],
-      except: [],
-      kind: 'monster',
-      materials: {
-        from: zones.length ? zones : ['HAND', 'MONSTER'],
-        count: using?.[1] ? countOf(using[1]) : 2,
+    return [
+      {
+        verb: 'fusion',
+        from: ['EXTRA'],
+        to: 'MONSTER',
+        count: 1,
+        names: [],
+        except: [],
+        kind: 'monster',
+        materials: {
+          from: zones.length ? zones : ['HAND', 'MONSTER'],
+          count: using?.[1] ? countOf(using[1]) : 2,
+        },
       },
-    };
+    ];
   }
 
   const patterns: [RegExp, ResultVerb, (m: RegExpExecArray) => { from: Zone[]; to: Zone }][] = [
@@ -116,16 +129,42 @@ export function resultSpec(card: CardData | undefined, effectIndex: number): Res
       'banish',
       (m) => ({ from: zonesIn(m[3]), to: 'BANISHED' }),
     ],
+    [
+      /place (\w+) (.+?) from your ([^.;]+?) face-up in your Spell & Trap Zone/i,
+      'place',
+      (m) => ({ from: zonesIn(m[3]), to: 'SPELL_TRAP' }),
+    ],
   ];
+  const found: (ResultSpec & { at: number; end: number })[] = [];
   for (const [re, verb, zones] of patterns) {
     const m = re.exec(part);
     if (!m || /\bthis card\b/i.test(m[2])) continue;
     const { from, to } = zones(m);
     if (!from.length) continue;
     const sentence = part.slice(m.index).split(/(?<=\.)\s/)[0];
-    return { verb, from, to, count: countOf(m[1]), ...objectFilter(m[2], sentence) };
+    found.push({
+      verb,
+      from,
+      to,
+      count: countOf(m[1]),
+      ...objectFilter(m[2], sentence),
+      at: m.index,
+      end: m.index + m[0].length,
+    });
   }
-  return null;
+  found.sort((a, b) => a.at - b.at);
+  const first = found[0];
+  if (!first) return [];
+  const sentenceEnd = first.at + part.slice(first.at).split(/(?<=\.)\s/)[0].length;
+  const out: ResultSpec[] = [];
+  let last = -1;
+  for (const { at, end, ...spec } of found) {
+    // Nur im Satz des ersten Ergebnisses und ohne Überlappung mit dem vorigen Treffer
+    if (at >= sentenceEnd || at < last) continue;
+    out.push(spec);
+    last = end;
+  }
+  return out;
 }
 
 function matches(spec: ResultSpec, card: CardData): boolean {

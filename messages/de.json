@@ -538,7 +538,8 @@
       "later": "Später",
       "confirm": "Bestätigen",
       "none": "Keine passende Karte. „Alle Karten“ zeigt alles.",
-      "discardEffect": "Welche Karte wirfst du ab?"
+      "discardEffect": "Welche Karte wirfst du ab?",
+      "place": "Was hast du in die Zauber/Fallen-Zone gelegt?"
     },
     "offer": {
       "branch": "Als Branch angelegt",

@@ -292,8 +292,8 @@ export function BoardView({
         onDragEnd={handleDragEnd}
       >
         <div ref={boardRef} className="@container relative h-full overflow-auto bg-felt">
-          {/* Reicht die Breite nicht für Board und Chain nebeneinander, rückt die Chain darunter */}
-          <div className="flex min-h-full w-fit min-w-full flex-col items-center justify-center gap-6 p-6 @min-[860px]:flex-row">
+          {/* Board (624 px) und Chain (144 px) brauchen 816 px nebeneinander, sonst rückt die Chain darunter */}
+          <div className="flex min-h-full w-fit min-w-full flex-col items-center justify-center gap-6 p-6 @min-[816px]:flex-row @min-[816px]:gap-4 @min-[816px]:px-4">
             <div className="flex flex-col items-center gap-3">
               <SideLabel player="opponent" label={t('workbench.opponent')} lp={state.lp.opponent}>
                 <Hand
@@ -731,7 +731,7 @@ function ChainColumn({
   return (
     <section
       aria-label={t('workbench.chain')}
-      className="flex w-full max-w-[624px] shrink-0 flex-col gap-2 self-center @min-[860px]:w-40"
+      className="flex w-full max-w-[624px] shrink-0 flex-col gap-2 self-center @min-[816px]:w-36"
     >
       <h3 className="font-display text-lg">{t('workbench.chain')}</h3>
       {count === 0 && (

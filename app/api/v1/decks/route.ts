@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma/client';
-import { ok, route } from '@/server/api/http';
+import { body, ok, route } from '@/server/api/http';
+import { createDeckFromRequest, createDeckSchema, deckView } from '@/server/api/deck-api';
 
 /** GET /api/v1/decks: eigene Decks mit Kartenzahl */
 export const GET = route(async ({ userId }) => {
@@ -25,4 +26,14 @@ export const GET = route(async ({ userId }) => {
       ),
     }))
   );
+});
+
+/**
+ * POST /api/v1/decks: Deck anlegen, aus YDK-Inhalt oder aus Kartenlisten mit Name, Spitzname
+ * oder Passcode. Extra-Deck-Karten im Main Deck wandern ins Extra Deck.
+ */
+export const POST = route(async ({ request, userId }) => {
+  const input = createDeckSchema.parse(await body(request));
+  const { id, matched } = await createDeckFromRequest(userId, input);
+  return ok({ ...(await deckView(userId, id)), ...(matched.length && { matched }) }, 201);
 });
