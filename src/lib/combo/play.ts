@@ -274,7 +274,8 @@ export function costMovesFor(
   const text = card?.effects[effectIndex]?.text ?? '';
   const cost = costPart(text);
   if (!cost) return [];
-  if (/\bbanish this card\b/i.test(cost)) return compact([moveOf(state, instanceId, 'BANISHED')]);
+  if (/\bbanish this (?:card|Continuous Spell|Continuous Trap)\b/i.test(cost))
+    return compact([moveOf(state, instanceId, 'BANISHED')]);
   const detach = /\bdetach (\d+|one|two) (?:Xyz )?materials? from this card\b/i.exec(cost);
   if (detach) {
     const n = Number(detach[1]) || (detach[1].toLowerCase() === 'two' ? 2 : 1);
@@ -287,7 +288,7 @@ export function costMovesFor(
         to: 'GY' as const,
       }));
   }
-  if (/\b(?:Tribute|discard|send) this card\b/i.test(cost))
+  if (/\b(?:Tribute|discard|send) this (?:card|Continuous Spell|Continuous Trap)\b/i.test(cost))
     return compact([moveOf(state, instanceId, 'GY')]);
   return [];
 }
@@ -508,9 +509,13 @@ export function resultMoves(
   to: Zone,
   picked: string[],
   state: GameState,
-  player: Player
+  player: Player,
+  /** Schon eingetragene Bewegungen desselben Schritts: deren Zonen sind belegt */
+  pending: CardMove[] = []
 ): CardMove[] {
-  const taken = new Set<number>();
+  const taken = new Set(
+    pending.filter((m) => m.to === 'MONSTER' && m.slot !== undefined).map((m) => m.slot!)
+  );
   const row = boardOf(state, player).monsters;
   return compact(
     picked.map((id) => {

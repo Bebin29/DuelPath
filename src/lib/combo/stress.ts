@@ -8,7 +8,7 @@ import {
   type Zone,
 } from '@/lib/combo/state';
 import { isMonster, isSpell, isTrap, resultMoves } from '@/lib/combo/play';
-import { resolutionPart, resultSpec } from '@/lib/combo/effect-results';
+import { resolutionPart, resultSpecs } from '@/lib/combo/effect-results';
 import { reactionNode, type HitPattern, type Staple } from '@/lib/combo/reactions';
 
 /**
@@ -303,11 +303,12 @@ export function stressTest(
           }
           case 'SUMMONING_EFFECT': {
             if (!act) break;
-            const spec = resultSpec(act.card, act.effectIndex);
-            const text =
-              spec?.verb === 'summon' || spec?.verb === 'fusion'
-                ? (/(?:Fusion |Special )Summon[^.;]*/i.exec(resolutionPart(act.text))?.[0] ?? null)
-                : null;
+            const summoning = resultSpecs(act.card, act.effectIndex).some(
+              (s) => s.verb === 'summon' || s.verb === 'fusion'
+            );
+            const text = summoning
+              ? (/(?:Fusion |Special )Summon[^.;]*/i.exec(resolutionPart(act.text))?.[0] ?? null)
+              : null;
             if (text) add({ ...base, target: act.instanceId, phrase: phrase(text) });
             break;
           }

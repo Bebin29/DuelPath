@@ -21,6 +21,8 @@ export interface ResultSpec {
   kind: 'monster' | 'spell' | 'trap' | 'spellTrap' | 'any';
   /** Nur bei Fusion: Materialzonen und Anzahl */
   materials?: { from: Zone[]; count: number };
+  /** „…, but negate its effects“: die beschworene Karte ist negiert */
+  negate?: boolean;
 }
 
 const COUNT: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3 };
@@ -63,9 +65,14 @@ function objectFilter(
   return { names, except: exceptMatch ? [exceptMatch[1]] : [], kind };
 }
 
-export function resultSpec(card: CardData | undefined, effectIndex: number): ResultSpec | null {
+/**
+ * Alle Wirkungsteile eines Effekts in Textreihenfolge, etwa Crystal Beast Rainbow Dragon:
+ * „Special Summon 1 … from your Deck, …, and if you do, add 1 … from your Deck to your hand“.
+ * Die Schrittleiste fragt sie nacheinander ab, alles landet im selben Schritt.
+ */
+export function resultSpecs(card: CardData | undefined, effectIndex: number): ResultSpec[] {
   const text = card?.effects[effectIndex]?.text;
-  if (!text) return null;
+  if (!text) return [];
   const part = resolutionPart(text);
 
   const fusion = /Fusion Summon (?:1|one) Fusion Monster/i.exec(part);
@@ -75,19 +82,21 @@ export function resultSpec(card: CardData | undefined, effectIndex: number): Res
         part
       );
     const zones = using ? zonesIn(using[2]) : [];
-    return {
-      verb: 'fusion',
-      from: ['EXTRA'],
-      to: 'MONSTER',
-      count: 1,
-      names: [],
-      except: [],
-      kind: 'monster',
-      materials: {
-        from: zones.length ? zones : ['HAND', 'MONSTER'],
-        count: using?.[1] ? countOf(using[1]) : 2,
+    return [
+      {
+        verb: 'fusion',
+        from: ['EXTRA'],
+        to: 'MONSTER',
+        count: 1,
+        names: [],
+        except: [],
+        kind: 'monster',
+        materials: {
+          from: zones.length ? zones : ['HAND', 'MONSTER'],
+          count: using?.[1] ? countOf(using[1]) : 2,
+        },
       },
-    };
+    ];
   }
 
   const patterns: [RegExp, ResultVerb, (m: RegExpExecArray) => { from: Zone[]; to: Zone }][] = [
@@ -117,15 +126,30 @@ export function resultSpec(card: CardData | undefined, effectIndex: number): Res
       (m) => ({ from: zonesIn(m[3]), to: 'BANISHED' }),
     ],
   ];
+  const found: { index: number; m: RegExpExecArray; verb: ResultVerb; from: Zone[]; to: Zone }[] =
+    [];
   for (const [re, verb, zones] of patterns) {
-    const m = re.exec(part);
-    if (!m || /\bthis card\b/i.test(m[2])) continue;
-    const { from, to } = zones(m);
-    if (!from.length) continue;
-    const sentence = part.slice(m.index).split(/(?<=\.)\s/)[0];
-    return { verb, from, to, count: countOf(m[1]), ...objectFilter(m[2], sentence) };
+    for (const m of part.matchAll(new RegExp(re.source, 'gi'))) {
+      if (/\bthis card\b/i.test(m[2])) continue;
+      const { from, to } = zones(m);
+      if (from.length) found.push({ index: m.index, m, verb, from, to });
+    }
   }
-  return null;
+  found.sort((a, b) => a.index - b.index);
+  return found.map(({ index, m, verb, from, to }, i) => {
+    const sentence = part.slice(index).split(/(?<=\.)\s/)[0];
+    // Bis zum nächsten Teil: „but negate its effects“ gehört zu diesem
+    const clause = part.slice(index, found[i + 1]?.index ?? part.length);
+    return {
+      verb,
+      from,
+      to,
+      count: countOf(m[1]),
+      ...objectFilter(m[2], sentence),
+      ...(verb === 'summon' &&
+        /\bnegate (?:its|their) effects\b/i.test(clause) && { negate: true }),
+    };
+  });
 }
 
 function matches(spec: ResultSpec, card: CardData): boolean {

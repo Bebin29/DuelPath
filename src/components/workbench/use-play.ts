@@ -24,7 +24,7 @@ import {
   type PlayIntent,
 } from '@/lib/combo/play';
 import { materialCandidates, resultCandidates, type ResultSpec } from '@/lib/combo/effect-results';
-import { promptsFor } from '@/lib/combo/prompts';
+import { promptsFor, withResult } from '@/lib/combo/prompts';
 import type { CardAction } from '@/lib/combo/card-actions';
 
 /** Offene Frage der Schrittleiste; `at` ist der Schritt, zu dem sie gehört */
@@ -158,10 +158,12 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
       if (!prompt) return;
       switch (prompt.kind) {
         case 'result':
-          addMoves(
-            prompt.at,
-            'resolveMoves',
-            resultMoves(prompt.spec.to, picked ?? prompt.picked, state, prompt.player)
+          setNodes((prev) =>
+            prev.map((n) =>
+              n.id === prompt.at
+                ? withResult(n, prompt.spec, picked ?? prompt.picked, state, prompt.player)
+                : n
+            )
           );
           return shift();
         case 'fusion':
@@ -183,7 +185,7 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
           return;
       }
     },
-    [prompt, state, addMoves, play]
+    [prompt, state, addMoves, setNodes, play]
   );
 
   const pick = useCallback(
@@ -214,7 +216,8 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
   );
 
   const showAll = () => patch((p) => (p.kind === 'result' ? { ...p, all: !p.all } : p));
-  const later = () => setQueue([]);
+  // Mehrteilige Effekte: „Später“ überspringt nur diesen Teil, die nächste Frage folgt
+  const later = shift;
 
   const accept = useCallback(
     (how: 'insert' | 'replace') => {
@@ -256,7 +259,6 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
     confirm,
     showAll,
     later,
-    clear: later,
     offer,
     accept,
     dismissOffer: () => setOffer(null),
