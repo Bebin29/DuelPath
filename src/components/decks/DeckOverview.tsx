@@ -104,9 +104,9 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
           {visible.map((d) => (
             <li
               key={d.id}
-              className="relative flex h-20 items-center gap-5 border-b [contain-intrinsic-size:auto_80px] [content-visibility:auto] border-line px-2 transition-colors duration-(--motion-fast) hover:bg-surface-1"
+              className="relative flex min-h-20 items-center gap-3 border-b [contain-intrinsic-size:auto_80px] [content-visibility:auto] border-line py-3 transition-colors duration-(--motion-fast) hover:bg-surface-1 sm:gap-5 sm:px-2"
             >
-              <span className="flex -space-x-5">
+              <span className="flex shrink-0 -space-x-5">
                 {d.cover.map((img, i) => (
                   <CardView
                     key={i}
@@ -121,22 +121,27 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/decks/${d.id}`}
-                  className="block truncate font-display text-2xl leading-tight after:absolute after:inset-0 hover:underline"
+                  className="block truncate font-display text-xl leading-tight after:absolute after:inset-0 hover:underline sm:text-2xl"
                 >
                   {d.name}
                 </Link>
-                <p className="font-mono text-xs text-text-muted">
+                <p className="truncate font-mono text-xs text-text-muted">
                   {t('decks.section.MAIN')} {d.main} · {t('decks.section.EXTRA')} {d.extra} ·{' '}
                   {t('decks.section.SIDE')} {d.side}
                 </p>
+                {/* Auf schmalen Bildschirmen stehen Combos und Datum unter den Kennzahlen */}
+                <p className="truncate font-mono text-xs text-text-muted sm:hidden">
+                  {t('decks.combosCount', { count: d.combos })} ·{' '}
+                  {relativeTime(new Date(d.updatedAt), new Date(), i18n.language)}
+                </p>
               </div>
-              <span className="font-mono text-xs text-text-muted">
+              <span className="hidden shrink-0 font-mono text-xs text-text-muted sm:inline">
                 {t('decks.combosCount', { count: d.combos })}
               </span>
-              <span className="w-28 text-right font-mono text-xs text-text-muted">
+              <span className="hidden w-28 shrink-0 text-right font-mono text-xs text-text-muted sm:inline">
                 {relativeTime(new Date(d.updatedAt), new Date(), i18n.language)}
               </span>
-              <div className="relative z-10">
+              <div className="relative z-10 shrink-0">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button

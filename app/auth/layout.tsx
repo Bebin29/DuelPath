@@ -11,7 +11,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <main className="flex min-h-dvh items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex items-center gap-4">
-          <Link href="/" className="font-display text-3xl leading-none text-ink">
+          <Link
+            href="/"
+            className="flex items-center font-display text-3xl leading-none text-ink pointer-coarse:min-h-10"
+          >
             {t('common.appName')}
           </Link>
           <span className="flex-1" />

@@ -18,8 +18,8 @@ function Row({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-6 border-b border-line py-4">
-      <div className="flex-1">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-line py-4">
+      <div className="min-w-0 flex-1 basis-60">
         <p className="font-medium">{title}</p>
         <p className="mt-0.5 text-text-muted">{text}</p>
       </div>
@@ -37,7 +37,7 @@ export function SettingsView() {
   return (
     <div className="flex flex-col">
       <PageHeader title={t('settings.title')} meta={t('settings.subtitle')} className="pb-8" />
-      <section className="max-w-[720px]">
+      <section id="display" className="max-w-[720px] scroll-mt-20">
         <h2 className="mb-1 font-display text-2xl">{t('settings.display')}</h2>
         <Row title={t('settings.theme')} text={t('settings.themeText')}>
           <Segmented<Theme>
@@ -73,7 +73,7 @@ export function SettingsView() {
           />
         </Row>
       </section>
-      <section className="mt-10 max-w-[720px]">
+      <section id="workbench" className="mt-10 max-w-[720px] scroll-mt-20">
         <h2 className="mb-1 font-display text-2xl">{t('settings.workbench')}</h2>
         <Row title={t('settings.autoplay')} text={t('settings.autoplayText')}>
           <Segmented<string>

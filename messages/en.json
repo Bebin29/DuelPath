@@ -439,7 +439,10 @@
     "apiUsed": "used {{time}}",
     "apiUnused": "never used",
     "apiRevoke": "Revoke {{name}}",
-    "apiDocs": "Send requests with Authorization: Bearer <token> to /api/v1. Description at /api/v1/openapi.json."
+    "apiDocs": "Send requests with Authorization: Bearer <token> to /api/v1. Description at /api/v1/openapi.json.",
+    "showAll": "Show all {{count}}",
+    "showLess": "Show less",
+    "sections": "Sections"
   },
   "workbench": {
     "board": "Board",
@@ -670,7 +673,10 @@
     "tags": "Tags",
     "newTag": "New tag, Enter",
     "deckChanged_one": "{{count}} card no longer in the deck",
-    "deckChanged_other": "{{count}} cards no longer in the deck"
+    "deckChanged_other": "{{count}} cards no longer in the deck",
+    "endboardCount": "Endboard {{count}}",
+    "statusGroup": "Status",
+    "filtersActive": "{{count}} active"
   },
   "decks": {
     "title": "Decks",
@@ -749,7 +755,10 @@
     "coverageText": "In {{percent}} of hands you have a saved line. Computed over {{runs}} simulated hands, {{going}}.",
     "first": "going first",
     "second": "going second",
-    "notInDeck": "{{name}} is no longer in the deck"
+    "notInDeck": "{{name}} is no longer in the deck",
+    "addCards": "Add cards",
+    "addToSide": "{{name}} to the Side Deck",
+    "searchHintTouch": "Tap: Main or Extra · Side button: Side"
   },
   "newCombo": {
     "title": "Choose a starting hand",

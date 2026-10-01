@@ -11,6 +11,7 @@ import { relativeTime } from '@/lib/utils/relative-time';
 import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
 import { NewComboButton } from '@/components/library/NewComboButton';
 import { StartHandStrip } from '@/components/library/StartHandStrip';
+import { ComboListItem } from '@/components/library/ComboListItem';
 
 /**
  * Start (UI-Plan 7.5.1): links Illustration und Headline als seltene Fläche,
@@ -67,7 +68,7 @@ export function StartView({
           <>
             <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface-1 p-6">
               <span className="font-mono text-2xs text-text-subtle">{t('start.resume')}</span>
-              <div className="flex items-start gap-4">
+              <div className="flex flex-col items-start gap-4 sm:flex-row">
                 <StartHandStrip cardIds={latest.stats.startHand} cards={cards} size="sm" max={3} />
                 <div className="min-w-0">
                   <h2 className="font-display text-3xl leading-none">{latest.title}</h2>
@@ -90,40 +91,15 @@ export function StartView({
             </div>
 
             <div>
-              <div className="flex items-end pb-2">
+              <div className="flex items-end gap-3 pb-2">
                 <h2 className="flex-1 font-display text-2xl">
                   {recent.length > 0 && t('start.recent')}
                 </h2>
                 <NewComboButton decks={decks} variant="line" />
               </div>
-              <ul>
+              <ul className="border-t border-line">
                 {recent.map((c) => (
-                  <li key={c.id}>
-                    <Link
-                      href={`/combos/${c.id}`}
-                      className="flex h-15 items-center gap-5 border-b border-line px-1 transition-colors duration-(--motion-fast) hover:bg-surface-1"
-                    >
-                      <StartHandStrip cardIds={c.stats.startHand} cards={cards} max={3} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-display text-lg leading-tight">
-                          {c.title}
-                        </span>
-                        <span className="text-xs text-text-muted">
-                          {c.deckName ?? t('start.noDeck')} ·{' '}
-                          {t('start.lines', { count: c.stats.lines })}
-                        </span>
-                      </span>
-                      <span
-                        className="font-display text-xl leading-none"
-                        title={t('library.col.endboard')}
-                      >
-                        {c.stats.endboard ?? ''}
-                      </span>
-                      <span className="w-24 text-right font-mono text-xs text-text-muted">
-                        {when(c.updatedAt)}
-                      </span>
-                    </Link>
-                  </li>
+                  <ComboListItem key={c.id} combo={c} cards={cards} />
                 ))}
               </ul>
             </div>

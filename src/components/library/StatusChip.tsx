@@ -16,7 +16,7 @@ export function StatusChip({ status, className }: { status: ComboStatus; classNa
   return (
     <span
       className={cn(
-        'inline-flex h-5 items-center whitespace-nowrap rounded-sm border px-1.5 font-mono text-[10.5px]',
+        'inline-flex h-5 items-center whitespace-nowrap rounded-sm border px-1.5 font-mono text-2xs',
         TONE[status],
         className
       )}

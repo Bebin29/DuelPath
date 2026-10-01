@@ -121,10 +121,18 @@ const METRICS = (width, touch, phone) => `(() => {
   if (${touch})
     for (const el of document.querySelectorAll('a, button, input, select, textarea, [role=button], [role=tab], [role=radio], [role=checkbox], [role=menuitem]')) {
       if (!visible(el) || el.closest('p, li > span') && el.tagName === 'A') continue;
-      const r = el.getBoundingClientRect();
-      // Größere unsichtbare Trefferfläche über ::after zählt mit
+      // Ein Feld in einem Label zählt mit der Fläche des Labels
+      let r = (el.tagName === 'INPUT' && el.closest('label')) ? el.closest('label').getBoundingClientRect() : el.getBoundingClientRect();
+      // Größere unsichtbare Trefferfläche über ::after zählt mit, etwa ganze Listenzeilen
       const after = getComputedStyle(el, '::after');
-      const pad = after.position === 'absolute' ? Math.max(0, -parseFloat(after.top) || 0) * 2 : 0;
+      let pad = 0;
+      if (after.position === 'absolute') {
+        if (after.top === '0px') {
+          let host = el;
+          while (host && host !== document.body && getComputedStyle(host).position === 'static') host = host.parentElement;
+          if (host) r = host.getBoundingClientRect();
+        } else pad = Math.max(0, -parseFloat(after.top) || 0) * 2;
+      }
       if (Math.min(r.width + pad, r.height + pad) < 40) small.push(label(el) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height));
     }
   const tiny = [];

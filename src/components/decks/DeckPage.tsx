@@ -3,7 +3,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Redo2, TriangleAlert, Undo2, Upload } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  MoreHorizontal,
+  Redo2,
+  TriangleAlert,
+  Undo2,
+  Upload,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useHistory } from '@/lib/hooks/use-history';
 import { Button } from '@/components/ui/button';
@@ -233,14 +247,48 @@ export function DeckPage({
                 e.target.value = '';
               }}
             />
-            <Button variant="line" size="sm" onClick={() => fileRef.current?.click()}>
+            <Button
+              variant="line"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={() => fileRef.current?.click()}
+            >
               <Upload />
               {t('decks.importYdk')}
             </Button>
-            <Button variant="line" size="sm" onClick={exportYdk} disabled={entries.length === 0}>
+            <Button
+              variant="line"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={exportYdk}
+              disabled={entries.length === 0}
+            >
               <Download />
               {t('decks.exportYdk')}
             </Button>
+            {/* Handy: seltene Aktionen im Menü */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="sm:hidden"
+                  aria-label={t('library.actions', { title: name })}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => fileRef.current?.click()}>
+                  <Upload />
+                  {t('decks.importYdk')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={exportYdk} disabled={entries.length === 0}>
+                  <Download />
+                  {t('decks.exportYdk')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         }
       />

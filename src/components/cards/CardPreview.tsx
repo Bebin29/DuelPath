@@ -62,13 +62,13 @@ export function CardPreview({ card, children }: { card: PreviewCard; children: R
         <div className="flex min-w-0 flex-1 flex-col gap-2.5">
           <div>
             <h3 className="font-display text-xl leading-tight">{name}</h3>
-            <p className="mt-1 font-mono text-[10.5px] text-text-muted">
+            <p className="mt-1 font-mono text-2xs text-text-muted">
               {[card.type, ...stats].join(' · ')}
             </p>
           </div>
           <span
             className={cn(
-              'self-start rounded-sm px-1.5 py-0.5 font-mono text-[10.5px]',
+              'self-start rounded-sm px-1.5 py-0.5 font-mono text-2xs',
               card.banTcg ? BAN_STYLE[card.banTcg] : 'bg-surface-3 text-text-muted'
             )}
           >
@@ -84,7 +84,7 @@ export function CardPreview({ card, children }: { card: PreviewCard; children: R
                 <span className="flex-1">
                   <span lang="en">{effect.text}</span>
                   {effect.opt && (
-                    <span className="ml-1.5 whitespace-nowrap font-mono text-[10px] text-text-subtle">
+                    <span className="ml-1.5 whitespace-nowrap font-mono text-2xs text-text-subtle">
                       {effect.opt.kind === 'HARD' ? 'HOPT' : 'SOPT'}
                     </span>
                   )}

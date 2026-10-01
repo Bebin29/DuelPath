@@ -127,7 +127,7 @@ function CardSheetBody({
           {cardLanguage === 'de' && card.nameDe && (
             <p className="text-xs text-text-subtle">{card.name}</p>
           )}
-          <p className="mt-1 font-mono text-[10.5px] text-text-muted">
+          <p className="mt-1 font-mono text-2xs text-text-muted">
             {[card.type, ...stats].join(' · ')}
           </p>
         </div>
@@ -144,7 +144,7 @@ function CardSheetBody({
         </div>
         <span
           className={cn(
-            'self-start rounded-sm px-1.5 py-0.5 font-mono text-[10.5px]',
+            'self-start rounded-sm px-1.5 py-0.5 font-mono text-2xs',
             card.banTcg === 'Forbidden'
               ? 'bg-opponent-tint text-opponent'
               : card.banTcg
@@ -211,7 +211,7 @@ function CardSheetBody({
                     <p lang="en" className="text-[12.5px] leading-[1.45]">
                       {effect.text}
                     </p>
-                    <span className="flex items-center gap-2 font-mono text-[10.5px] text-text-subtle">
+                    <span className="flex items-center gap-2 font-mono text-2xs text-text-subtle">
                       {effect.activated && t('cardSheet.chainLink')}
                       {effect.opt && (
                         <span className="flex items-center gap-1">

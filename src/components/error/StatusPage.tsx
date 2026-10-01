@@ -24,7 +24,10 @@ export function StatusPage({
 }) {
   return (
     <main className={cn('flex min-h-dvh flex-col px-4 py-6 sm:px-8', className)}>
-      <Link href="/" className="font-display text-2xl leading-none text-ink">
+      <Link
+        href="/"
+        className="flex w-fit items-center font-display text-2xl leading-none text-ink pointer-coarse:min-h-10"
+      >
         {appName}
       </Link>
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-3 py-16">

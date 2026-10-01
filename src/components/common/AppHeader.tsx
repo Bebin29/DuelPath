@@ -51,7 +51,10 @@ export function AppHeader() {
         {t('shell.skipToContent')}
       </a>
       <header className="flex h-14 items-center gap-7 border-b border-line px-4 sm:px-8">
-        <Link href="/" className="font-display text-2xl leading-none text-ink">
+        <Link
+          href="/"
+          className="flex items-center font-display text-2xl leading-none text-ink pointer-coarse:min-h-10"
+        >
           {t('common.appName')}
         </Link>
         <nav
@@ -66,7 +69,7 @@ export function AppHeader() {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex items-center text-sm transition-colors duration-(--motion-fast)',
+                  'flex items-center text-sm transition-colors duration-(--motion-fast) pointer-coarse:px-1.5',
                   active
                     ? 'font-semibold text-ink shadow-[inset_0_-1.5px_0_var(--ink)]'
                     : 'text-text-muted hover:text-ink'
@@ -82,7 +85,7 @@ export function AppHeader() {
           <button
             type="button"
             onClick={() => palette.open()}
-            className="mr-4 hidden h-8 w-full max-w-64 items-center gap-2 rounded-md border border-line bg-surface-1 px-2.5 text-sm text-text-subtle hover:border-line-strong sm:flex"
+            className="mr-4 hidden h-8 w-full max-w-64 items-center gap-2 rounded-md border border-line bg-surface-1 px-2.5 text-sm text-text-subtle hover:border-line-strong pointer-coarse:h-10 sm:flex"
           >
             <Search className="size-3.5" />
             <span className="flex-1 truncate text-left">{t('palette.open')}</span>
