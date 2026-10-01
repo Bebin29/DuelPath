@@ -1,15 +1,9 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslation } from '@/lib/i18n/hooks';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/components/ui/card';
-import { Button } from '@/components/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 /**
@@ -17,7 +11,7 @@ import Link from 'next/link';
  *
  * Zeigt Fehlermeldungen von NextAuth an
  */
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
 
@@ -60,5 +54,16 @@ export default function AuthErrorPage() {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * useSearchParams braucht beim statischen Rendern eine Suspense-Grenze
+ */
+export default function AuthErrorPage() {
+  return (
+    <Suspense>
+      <AuthErrorContent />
+    </Suspense>
   );
 }

@@ -1,451 +1,77 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  createCombo,
-  updateCombo,
-  deleteCombo,
-  getCombo,
-  getCombosByUser,
-  getCombosByDeck,
-  addComboStep,
-  updateComboStep,
-  deleteComboStep,
-  reorderComboSteps,
-} from '@/server/actions/combo.actions';
-import { auth } from '@/lib/auth/auth';
-import { prisma } from '@/lib/prisma/client';
+// @vitest-environment node
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock dependencies
-vi.mock('@/lib/auth/auth');
-vi.mock('@/lib/prisma/client', () => ({
-  prisma: {
-    user: {
-      findUnique: vi.fn(),
-    },
-    combo: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      $transaction: vi.fn(),
-    },
-    comboStep: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    deck: {
-      findUnique: vi.fn(),
-    },
-    card: {
-      findUnique: vi.fn(),
-    },
-  },
-}));
-
-const mockAuth = vi.mocked(auth);
-const mockPrisma = vi.mocked(prisma);
-
-describe('Combo Actions', () => {
-  const mockUserId = 'user-123';
-  const mockSession = {
-    user: {
-      id: mockUserId,
-      email: 'test@example.com',
-    },
+const prisma = vi.hoisted(() => {
+  const p = {
+    combo: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    deck: { findUnique: vi.fn() },
+    comboNode: { deleteMany: vi.fn(), createMany: vi.fn() },
+    $transaction: vi.fn(),
   };
+  // Interaktive Transaktion: der Callback bekommt denselben Client
+  p.$transaction.mockImplementation((fn: (tx: typeof p) => unknown) => fn(p));
+  return p;
+});
+const auth = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/prisma/client', () => ({ prisma }));
+vi.mock('@/lib/auth/auth', () => ({ auth }));
 
+import { saveCombo } from '@/server/actions/combo.actions';
+import type { SaveComboInput } from '@/lib/validations/combo.schema';
+
+// Absichtlich ungeprüfte Daten, wie sie von einem Client kommen könnten
+const input = (nodes: object[]) =>
+  ({ title: 'Test', startState: { cards: [] }, nodes }) as unknown as SaveComboInput;
+const node = (id: string, parentId: string | null) => ({
+  id,
+  parentId,
+  kind: 'ACTION',
+  player: 'self',
+});
+
+describe('saveCombo', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.mockResolvedValue(mockSession as { user: { id: string; email: string; name: string } });
+    prisma.$transaction.mockImplementation((fn: (tx: typeof prisma) => unknown) => fn(prisma));
+    auth.mockResolvedValue({ user: { id: 'user-1' } });
+    prisma.combo.updateMany.mockResolvedValue({ count: 1 });
+    prisma.combo.findUnique.mockResolvedValue({ revision: 4 });
   });
 
-  describe('createCombo', () => {
-    it('should create a combo successfully', async () => {
-      const comboData = {
-        title: 'Test Combo',
-        description: 'A test combo',
-        deckId: 'deck-123',
-        steps: [
-          {
-            cardId: 'card-1',
-            actionType: 'NORMAL_SUMMON' as const,
-            order: 1,
-            description: 'Summon card',
-          },
-        ],
-      };
+  it('lehnt fremde Combos ab', async () => {
+    prisma.combo.updateMany.mockResolvedValue({ count: 0 });
+    prisma.combo.findFirst.mockResolvedValue(null);
+    expect(await saveCombo('c1', input([]))).toEqual({ error: 'Not found' });
+    expect(prisma.comboNode.createMany).not.toHaveBeenCalled();
+    expect(prisma.combo.updateMany.mock.calls[0][0].where).toMatchObject({ userId: 'user-1' });
+  });
 
-      const mockCombo = {
-        id: 'combo-123',
-        title: comboData.title,
-        description: comboData.description,
-        deckId: comboData.deckId,
-        userId: mockUserId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+  it('lehnt nicht angemeldete Nutzer ab', async () => {
+    auth.mockResolvedValue(null);
+    expect(await saveCombo('c1', input([]))).toEqual({ error: 'Unauthorized' });
+  });
 
-      const mockStep = {
-        id: 'step-1',
-        comboId: 'combo-123',
-        cardId: 'card-1',
-        actionType: 'NORMAL_SUMMON',
-        order: 1,
-        description: 'Summon card',
-        targetCardId: null,
-      };
-
-      mockPrisma.user.findUnique.mockResolvedValue({ id: mockUserId } as Prisma.User);
-      mockPrisma.deck.findUnique.mockResolvedValue({
-        id: 'deck-123',
-        userId: mockUserId,
-      } as Prisma.Deck);
-      mockPrisma.combo.$transaction.mockImplementation(async (callback) => {
-        return callback({
-          combo: {
-            create: vi.fn().mockResolvedValue(mockCombo),
-          },
-          comboStep: {
-            create: vi.fn().mockResolvedValue(mockStep),
-          },
-        } as Prisma.Deck);
-      });
-
-      const result = await createCombo(comboData);
-
-      expect(result.success).toBe(true);
-      expect(result.combo).toBeDefined();
-    });
-
-    it('should return error if unauthorized', async () => {
-      mockAuth.mockResolvedValue(null);
-
-      const result = await createCombo({
-        title: 'Test Combo',
-        steps: [
-          {
-            cardId: 'card-1',
-            actionType: 'NORMAL_SUMMON',
-            order: 1,
-          },
-        ],
-      });
-
-      expect(result.error).toBe('Unauthorized');
-    });
-
-    it('should return error if deck not found', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: mockUserId } as Prisma.User);
-      mockPrisma.deck.findUnique.mockResolvedValue(null);
-
-      const result = await createCombo({
-        title: 'Test Combo',
-        deckId: 'deck-123',
-        steps: [
-          {
-            cardId: 'card-1',
-            actionType: 'NORMAL_SUMMON',
-            order: 1,
-          },
-        ],
-      });
-
-      expect(result.error).toBe('Deck not found');
+  it('lehnt ungültige Knoten und unbekannte Eltern ab', async () => {
+    expect(
+      (await saveCombo('c1', input([{ ...node('a', null), kind: 'HACK' }]))).error
+    ).toBeTruthy();
+    expect(await saveCombo('c1', input([node('a', 'missing')]))).toEqual({
+      error: 'Knoten verweist auf unbekannten Elternknoten',
     });
   });
 
-  describe('updateCombo', () => {
-    it('should update a combo successfully', async () => {
-      const mockCombo = {
-        id: 'combo-123',
-        title: 'Old Title',
-        userId: mockUserId,
-      };
-
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
-      mockPrisma.combo.update.mockResolvedValue({
-        ...mockCombo,
-        title: 'New Title',
-      } as Prisma.Deck);
-
-      const result = await updateCombo('combo-123', { title: 'New Title' });
-
-      expect(result.success).toBe(true);
-      expect(result.combo?.title).toBe('New Title');
-    });
-
-    it('should return error if combo not found', async () => {
-      mockPrisma.combo.findUnique.mockResolvedValue(null);
-
-      const result = await updateCombo('combo-123', { title: 'New Title' });
-
-      expect(result.error).toBe('Combo not found');
-    });
-
-    it('should return error if forbidden', async () => {
-      mockPrisma.combo.findUnique.mockResolvedValue({
-        id: 'combo-123',
-        userId: 'other-user',
-      } as Prisma.Deck);
-
-      const result = await updateCombo('combo-123', { title: 'New Title' });
-
-      expect(result.error).toBe('Forbidden');
-    });
+  it('speichert Eltern vor Kindern und liefert die neue Revision', async () => {
+    const result = await saveCombo('c1', input([node('c', 'b'), node('b', 'a'), node('a', null)]));
+    const data = prisma.comboNode.createMany.mock.calls[0][0].data as { id: string }[];
+    expect(data.map((n) => n.id)).toEqual(['a', 'b', 'c']);
+    expect(result).toEqual({ data: { revision: 4 } });
   });
 
-  describe('deleteCombo', () => {
-    it('should delete a combo successfully', async () => {
-      const mockCombo = {
-        id: 'combo-123',
-        userId: mockUserId,
-      };
-
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
-      mockPrisma.combo.delete.mockResolvedValue(mockCombo as Prisma.Combo);
-
-      const result = await deleteCombo('combo-123');
-
-      expect(result.success).toBe(true);
-      expect(mockPrisma.combo.delete).toHaveBeenCalledWith({
-        where: { id: 'combo-123' },
-      });
-    });
-
-    it('should return error if combo not found', async () => {
-      mockPrisma.combo.findUnique.mockResolvedValue(null);
-
-      const result = await deleteCombo('combo-123');
-
-      expect(result.error).toBe('Combo not found');
-    });
-  });
-
-  describe('getCombo', () => {
-    it('should get a combo successfully', async () => {
-      const mockCombo = {
-        id: 'combo-123',
-        title: 'Test Combo',
-        userId: mockUserId,
-        steps: [
-          {
-            id: 'step-1',
-            order: 1,
-            card: { id: 'card-1', name: 'Test Card' },
-          },
-        ],
-      };
-
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
-
-      const result = await getCombo('combo-123');
-
-      expect(result.success).toBe(true);
-      expect(result.combo).toEqual(mockCombo);
-    });
-
-    it('should return error if combo not found', async () => {
-      mockPrisma.combo.findUnique.mockResolvedValue(null);
-
-      const result = await getCombo('combo-123');
-
-      expect(result.error).toBe('Combo not found');
-    });
-  });
-
-  describe('getCombosByUser', () => {
-    it('should get combos by user successfully', async () => {
-      const mockCombos = [
-        {
-          id: 'combo-1',
-          title: 'Combo 1',
-          userId: mockUserId,
-          steps: [],
-        },
-        {
-          id: 'combo-2',
-          title: 'Combo 2',
-          userId: mockUserId,
-          steps: [],
-        },
-      ];
-
-      mockPrisma.combo.findMany.mockResolvedValue(mockCombos as Prisma.Combo[]);
-
-      const result = await getCombosByUser();
-
-      expect(result.success).toBe(true);
-      expect(result.combos).toEqual(mockCombos);
-    });
-
-    it('should filter by deckId if provided', async () => {
-      mockPrisma.combo.findMany.mockResolvedValue([]);
-
-      await getCombosByUser('deck-123');
-
-      expect(mockPrisma.combo.findMany).toHaveBeenCalledWith({
-        where: {
-          userId: mockUserId,
-          deckId: 'deck-123',
-        },
-        include: expect.any(Object),
-        orderBy: expect.any(Object),
-      });
-    });
-  });
-
-  describe('addComboStep', () => {
-    it('should add a step successfully', async () => {
-      const mockCombo = {
-        id: 'combo-123',
-        userId: mockUserId,
-      };
-
-      const mockStep = {
-        id: 'step-1',
-        comboId: 'combo-123',
-        cardId: 'card-1',
-        actionType: 'NORMAL_SUMMON',
-        order: 1,
-        description: null,
-        targetCardId: null,
-        card: { id: 'card-1', name: 'Test Card' },
-      };
-
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
-      mockPrisma.comboStep.findUnique.mockResolvedValue(null);
-      mockPrisma.card.findUnique.mockResolvedValue({ id: 'card-1' } as Prisma.Card);
-      mockPrisma.comboStep.create.mockResolvedValue(mockStep as Prisma.ComboStep);
-
-      const result = await addComboStep('combo-123', {
-        cardId: 'card-1',
-        actionType: 'NORMAL_SUMMON',
-        order: 1,
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.step).toEqual(mockStep);
-    });
-
-    it('should return error if step order already exists', async () => {
-      const mockCombo = {
-        id: 'combo-123',
-        userId: mockUserId,
-      };
-
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
-      mockPrisma.comboStep.findUnique.mockResolvedValue({
-        id: 'existing-step',
-      } as Prisma.Deck);
-
-      const result = await addComboStep('combo-123', {
-        cardId: 'card-1',
-        actionType: 'NORMAL_SUMMON',
-        order: 1,
-      });
-
-      expect(result.error).toBe('A step with this order already exists');
-    });
-  });
-
-  describe('updateComboStep', () => {
-    it('should update a step successfully', async () => {
-      const mockStep = {
-        id: 'step-1',
-        comboId: 'combo-123',
-        combo: {
-          userId: mockUserId,
-        },
-      };
-
-      const updatedStep = {
-        ...mockStep,
-        description: 'Updated description',
-        card: { id: 'card-1', name: 'Test Card' },
-      };
-
-      mockPrisma.comboStep.findUnique.mockResolvedValue(mockStep as Prisma.ComboStep);
-      mockPrisma.comboStep.findUnique
-        .mockResolvedValueOnce(mockStep as Prisma.ComboStep)
-        .mockResolvedValueOnce(null);
-      mockPrisma.comboStep.update.mockResolvedValue(updatedStep as Prisma.ComboStep);
-
-      const result = await updateComboStep('step-1', {
-        description: 'Updated description',
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.step?.description).toBe('Updated description');
-    });
-  });
-
-  describe('deleteComboStep', () => {
-    it('should delete a step successfully', async () => {
-      const mockStep = {
-        id: 'step-1',
-        comboId: 'combo-123',
-        combo: {
-          userId: mockUserId,
-        },
-      };
-
-      mockPrisma.comboStep.findUnique.mockResolvedValue(mockStep as Prisma.ComboStep);
-      mockPrisma.comboStep.delete.mockResolvedValue(mockStep as Prisma.ComboStep);
-
-      const result = await deleteComboStep('step-1');
-
-      expect(result.success).toBe(true);
-      expect(mockPrisma.comboStep.delete).toHaveBeenCalledWith({
-        where: { id: 'step-1' },
-      });
-    });
-  });
-
-  describe('reorderComboSteps', () => {
-    it('should reorder steps successfully', async () => {
-      const mockCombo = {
-        id: 'combo-123',
-        userId: mockUserId,
-      };
-
-      const mockSteps = [
-        { id: 'step-1', comboId: 'combo-123' },
-        { id: 'step-2', comboId: 'combo-123' },
-      ];
-
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
-      mockPrisma.comboStep.findMany.mockResolvedValue(mockSteps as Prisma.ComboStep[]);
-      mockPrisma.comboStep.update.mockResolvedValue({} as Partial<Prisma.ComboStep>);
-      mockPrisma.$transaction.mockImplementation(async (callback) => {
-        return callback({
-          comboStep: {
-            update: vi.fn().mockResolvedValue({}),
-          },
-        } as Prisma.Deck);
-      });
-
-      const result = await reorderComboSteps('combo-123', ['step-2', 'step-1']);
-
-      expect(result.success).toBe(true);
-    });
-
-    it("should return error if some steps don't belong to combo", async () => {
-      const mockCombo = {
-        id: 'combo-123',
-        userId: mockUserId,
-      };
-
-      mockPrisma.combo.findUnique.mockResolvedValue(mockCombo as Prisma.Combo);
-      mockPrisma.comboStep.findMany.mockResolvedValue([
-        { id: 'step-1', comboId: 'combo-123' },
-      ] as Prisma.ComboStep[]);
-
-      const result = await reorderComboSteps('combo-123', ['step-1', 'step-2']);
-
-      expect(result.error).toBe("Some steps don't belong to this combo");
-    });
+  it('meldet einen Konflikt, wenn jemand anderes inzwischen gespeichert hat', async () => {
+    prisma.combo.updateMany.mockResolvedValue({ count: 0 });
+    prisma.combo.findFirst.mockResolvedValue({ id: 'c1' });
+    expect(await saveCombo('c1', input([]), 2)).toEqual({ error: 'CONFLICT' });
+    expect(prisma.combo.updateMany.mock.calls[0][0].where).toMatchObject({ revision: 2 });
+    expect(prisma.comboNode.deleteMany).not.toHaveBeenCalled();
   });
 });

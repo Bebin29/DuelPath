@@ -2,7 +2,7 @@
 
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
 import {
   createDeckSchema,
   updateDeckSchema,
@@ -10,6 +10,7 @@ import {
   updateCardQuantitySchema,
   removeCardFromDeckSchema,
   batchOperationsSchema,
+  ydkImportSchema,
   type CreateDeckInput,
   type UpdateDeckInput,
   type AddCardToDeckInput,
@@ -18,8 +19,9 @@ import {
   type BatchOperationsInput,
   type BatchOperation,
   type DeckSection,
+  type YdkImportInput,
 } from '@/lib/validations/deck.schema';
-import type { Card } from '@prisma/client';
+import type { Card } from '@/generated/prisma/client';
 
 /**
  * Bestimmt die passende Deck-Sektion für eine Karte basierend auf ihrem Typ
@@ -28,26 +30,9 @@ import type { Card } from '@prisma/client';
  * @returns Deck-Sektion (MAIN, EXTRA oder SIDE)
  */
 function determineDeckSection(card: Card): DeckSection {
-  const extraDeckTypes = [
-    'Fusion Monster',
-    'Synchro Monster',
-    'XYZ Monster',
-    'Link Monster',
-    'Pendulum Effect Fusion Monster',
-    'Pendulum Effect Synchro Monster',
-    'Pendulum Effect XYZ Monster',
-    'Pendulum Effect Link Monster',
-    'Ritual Effect Monster',
-    'Ritual Monster',
-  ];
-
-  // Prüfe ob der Kartentyp Extra Deck Karten enthält
-  if (extraDeckTypes.some((type) => card.type.includes(type))) {
-    return 'EXTRA';
-  }
-
-  // Standard: Main Deck
-  return 'MAIN';
+  // Extra Deck: Fusion, Synchro, Xyz und Link, auch als Pendel ("Synchro Pendulum Effect Monster").
+  // Ritualmonster gehören ins Main Deck.
+  return /Fusion|Synchro|XYZ|Link/.test(card.type) ? 'EXTRA' : 'MAIN';
 }
 
 /**
@@ -226,6 +211,13 @@ export async function getUserDecks() {
                 def: true,
                 archetype: true,
                 imageSmall: true,
+
+                nameDe: true,
+
+                banTcg: true,
+
+                effects: true,
+                passcode: true,
               },
             },
           },
@@ -306,6 +298,13 @@ export async function getDeckById(deckId: string, options?: { skip?: number; tak
             def: true,
             archetype: true,
             imageSmall: true,
+
+            nameDe: true,
+
+            banTcg: true,
+
+            effects: true,
+            passcode: true,
             // desc wird nicht geladen, da es für Deck-Liste nicht benötigt wird
           },
         },
@@ -423,6 +422,13 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
                     def: true,
                     archetype: true,
                     imageSmall: true,
+
+                    nameDe: true,
+
+                    banTcg: true,
+
+                    effects: true,
+                    passcode: true,
                   },
                 },
               },
@@ -468,6 +474,13 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
               def: true,
               archetype: true,
               imageSmall: true,
+
+              nameDe: true,
+
+              banTcg: true,
+
+              effects: true,
+              passcode: true,
             },
           },
         },
@@ -496,6 +509,13 @@ export async function addCardToDeck(deckId: string, data: AddCardToDeckInput) {
               def: true,
               archetype: true,
               imageSmall: true,
+
+              nameDe: true,
+
+              banTcg: true,
+
+              effects: true,
+              passcode: true,
             },
           },
         },
@@ -574,6 +594,13 @@ export async function updateCardQuantity(deckId: string, data: UpdateCardQuantit
             def: true,
             archetype: true,
             imageSmall: true,
+
+            nameDe: true,
+
+            banTcg: true,
+
+            effects: true,
+            passcode: true,
           },
         },
       },
@@ -663,6 +690,13 @@ export async function moveCardBetweenSections(
               def: true,
               archetype: true,
               imageSmall: true,
+
+              nameDe: true,
+
+              banTcg: true,
+
+              effects: true,
+              passcode: true,
             },
           },
         },
@@ -697,6 +731,13 @@ export async function moveCardBetweenSections(
               def: true,
               archetype: true,
               imageSmall: true,
+
+              nameDe: true,
+
+              banTcg: true,
+
+              effects: true,
+              passcode: true,
             },
           },
         },
@@ -756,6 +797,13 @@ export async function removeCardFromDeck(deckId: string, data: RemoveCardFromDec
               def: true,
               archetype: true,
               imageSmall: true,
+
+              nameDe: true,
+
+              banTcg: true,
+
+              effects: true,
+              passcode: true,
             },
           },
         },
@@ -873,6 +921,13 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                         def: true,
                         archetype: true,
                         imageSmall: true,
+
+                        nameDe: true,
+
+                        banTcg: true,
+
+                        effects: true,
+                        passcode: true,
                       },
                     },
                   },
@@ -899,6 +954,13 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                         def: true,
                         archetype: true,
                         imageSmall: true,
+
+                        nameDe: true,
+
+                        banTcg: true,
+
+                        effects: true,
+                        passcode: true,
                       },
                     },
                   },
@@ -939,6 +1001,13 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                       def: true,
                       archetype: true,
                       imageSmall: true,
+
+                      nameDe: true,
+
+                      banTcg: true,
+
+                      effects: true,
+                      passcode: true,
                     },
                   },
                 },
@@ -968,6 +1037,13 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                       def: true,
                       archetype: true,
                       imageSmall: true,
+
+                      nameDe: true,
+
+                      banTcg: true,
+
+                      effects: true,
+                      passcode: true,
                     },
                   },
                 },
@@ -1030,11 +1106,18 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                         def: true,
                         archetype: true,
                         imageSmall: true,
+
+                        nameDe: true,
+
+                        banTcg: true,
+
+                        effects: true,
+                        passcode: true,
                       },
                     },
                   },
                 });
-                results.push({ success: true, operation, deckCard: updated });
+                results.push({ success: true, operation, deckCard: updated ?? undefined });
               } else {
                 const updated = await tx.deckCard.update({
                   where: { id: existing.id },
@@ -1052,6 +1135,13 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
                         def: true,
                         archetype: true,
                         imageSmall: true,
+
+                        nameDe: true,
+
+                        banTcg: true,
+
+                        effects: true,
+                        passcode: true,
                       },
                     },
                   },
@@ -1078,4 +1168,63 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
     }
     return { error: 'Failed to execute batch operations' };
   }
+}
+
+/**
+ * Server Action: Importiert eine YDK-Datei und ersetzt den Inhalt des Decks
+ *
+ * Passcodes ohne passende TCG-Karte werden zurückgemeldet; mehr als 3 Kopien werden auf 3 begrenzt.
+ */
+export async function importYdkToDeck(
+  deckId: string,
+  input: YdkImportInput
+): Promise<{ data?: { imported: number; missing: string[] }; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: 'Unauthorized' };
+
+  const deck = await prisma.deck.findUnique({ where: { id: deckId }, select: { userId: true } });
+  if (!deck || deck.userId !== session.user.id) return { error: 'Deck not found' };
+
+  const parsed = ydkImportSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültige YDK-Datei' };
+
+  // Manche Programme schreiben Passcodes mit führenden Nullen
+  const normalize = (p: string) => String(Number(p));
+  const sections = {
+    MAIN: parsed.data.main.map(normalize),
+    EXTRA: parsed.data.extra.map(normalize),
+    SIDE: parsed.data.side.map(normalize),
+  } as const;
+
+  const all = [...new Set(Object.values(sections).flat())];
+  const cards = await prisma.card.findMany({
+    where: { passcode: { in: all } },
+    select: { id: true, passcode: true },
+  });
+  const idByPasscode = new Map(cards.map((c) => [c.passcode, c.id]));
+
+  const rows: Prisma.DeckCardCreateManyInput[] = [];
+  for (const [deckSection, passcodes] of Object.entries(sections)) {
+    const counts = new Map<string, number>();
+    for (const p of passcodes) {
+      const cardId = idByPasscode.get(p);
+      if (cardId) counts.set(cardId, (counts.get(cardId) ?? 0) + 1);
+    }
+    for (const [cardId, count] of counts) {
+      rows.push({ deckId, cardId, deckSection, quantity: Math.min(count, 3) });
+    }
+  }
+
+  await prisma.$transaction([
+    prisma.deckCard.deleteMany({ where: { deckId } }),
+    prisma.deckCard.createMany({ data: rows }),
+    prisma.deck.update({ where: { id: deckId }, data: { updatedAt: new Date() } }),
+  ]);
+
+  return {
+    data: {
+      imported: rows.reduce((sum, r) => sum + (r.quantity ?? 1), 0),
+      missing: all.filter((p) => !idByPasscode.has(p)),
+    },
+  };
 }

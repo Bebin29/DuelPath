@@ -1,4 +1,4 @@
-import type { Card } from '@prisma/client';
+import type { Card } from '@/generated/prisma/client';
 
 /**
  * Karten-Suchfilter
@@ -16,7 +16,7 @@ export interface CardSearchFilter {
   defMin?: number; // Minimum DEF für Range
   defMax?: number; // Maximum DEF für Range
   archetype?: string | string[]; // Unterstützt einzelne oder mehrere Archetypes
-  banlistInfo?: string;
+  banTcg?: string;
   useRegex?: boolean; // Regex-Support für Name-Suche
 }
 

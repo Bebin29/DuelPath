@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>01 · Start</title>
+    <link rel="stylesheet" href="shared/tokens.css" />
+    <script src="shared/helpers.js"></script>
+    <script src="shared/illustration.js"></script>
+    <style>
+      .scene {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 40px;
+        padding: 36px 44px 44px;
+        align-items: center;
+      }
+      .hero {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .illu-wrap {
+        width: 380px;
+        height: 280px;
+      }
+      .illu {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      .illu path {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+      .pre {
+        color: var(--text-muted);
+        margin-top: 14px;
+      }
+      .headline {
+        font-family: var(--font-display);
+        font-size: 46px;
+        line-height: 1.08;
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+        margin-top: 2px;
+      }
+      .headline .w {
+        display: inline-block;
+      }
+      .slot {
+        position: relative;
+        display: inline-block;
+        width: 170px;
+        height: 1.15em;
+      }
+      .word {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        font-style: italic;
+        color: var(--opponent);
+        white-space: nowrap;
+      }
+      .slot svg {
+        position: absolute;
+        left: -4px;
+        overflow: visible;
+      }
+      .uline {
+        bottom: -8px;
+        width: 150px;
+        height: 14px;
+      }
+      .strike {
+        bottom: 12px;
+        width: 150px;
+        height: 16px;
+      }
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      .cont {
+        background: var(--surface-1);
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .cont .row {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+      .flipper {
+        width: 56px;
+        height: 82px;
+        position: relative;
+        transform-style: preserve-3d;
+        perspective: 600px;
+      }
+      .flipper .card {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+      }
+      .flipper .back {
+        transform: rotateY(180deg);
+      }
+      .title {
+        font-family: var(--font-display);
+        font-size: 30px;
+        line-height: 1;
+      }
+      .recent h3 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 21px;
+        margin-bottom: 6px;
+      }
+      .rrow {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        height: 48px;
+        border-bottom: 1px solid var(--line);
+      }
+      .rrow .card {
+        width: 24px;
+        height: 35px;
+      }
+      .rrow .t {
+        font-family: var(--font-display);
+        font-size: 17px;
+        flex: 1;
+      }
+      [data-in] {
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scene" id="scene">
+      <div class="hero">
+        <div class="illu-wrap" id="illu"></div>
+        <p class="pre" data-in>Deine Line steht. Die Frage ist nur:</p>
+        <div class="headline">
+          <span class="w" data-in>Wo</span><span class="w" data-in>stoppt</span
+          ><span class="w" data-in>dich</span>
+          <span class="slot" id="slot">
+            <span class="word" id="word">Ash?</span>
+            <svg class="strike" viewBox="0 0 150 16" fill="none">
+              <path
+                id="strike"
+                d="M 2 11 C 40 6 96 4 146 3"
+                stroke="#FF5A36"
+                stroke-width="2.6"
+                stroke-linecap="round"
+                pathLength="1"
+              />
+            </svg>
+            <svg class="uline" viewBox="0 0 140 14" fill="none">
+              <path
+                id="uline"
+                d="M 3 8 C 34 3 80 2 137 5 M 14 12 C 50 9 92 9 128 10"
+                stroke="#FF5A36"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                pathLength="1"
+              />
+            </svg>
+          </span>
+        </div>
+      </div>
+      <div class="side">
+        <div class="cont" data-in id="cont">
+          <span class="mono" data-in>Weiter bearbeiten</span>
+          <div class="row">
+            <div class="flipper" id="flipper">
+              <div
+                class="card front"
+                style="background-image: url(../assets/62962630_small.jpg)"
+              ></div>
+              <div class="card back" style="background-image: url(../assets/back.jpg)"></div>
+            </div>
+            <div>
+              <div class="title" data-in>Aluber 1-Card</div>
+              <div class="muted" data-in style="margin-top: 6px">
+                Branded Despia · zuletzt vor 2 h
+              </div>
+              <div class="mono" data-in style="margin-top: 4px">
+                Schritt <span id="step">1</span> von 9 · Endboard <span id="eb">0</span>
+              </div>
+            </div>
+          </div>
+          <div data-in>
+            <button class="btn primary">Weiter an Schritt 7 <span class="k">⏎</span></button>
+          </div>
+        </div>
+        <div class="recent">
+          <h3 data-in>Zuletzt bearbeitet</h3>
+          <div class="rrow" data-in>
+            <div class="card" style="background-image: url(../assets/68468459_small.jpg)"></div>
+            <span class="t">Albaz 2-Card</span><span class="mono">Endboard 4</span>
+          </div>
+          <div class="rrow" data-in>
+            <div class="card" style="background-image: url(../assets/36637374_small.jpg)"></div>
+            <span class="t">Aluber + Opening</span><span class="mono">Endboard 3</span>
+          </div>
+          <div class="rrow" data-in>
+            <div class="card" style="background-image: url(../assets/36577931_small.jpg)"></div>
+            <span class="t">Tragedy Grind</span><span class="mono">Endboard 2</span>
+          </div>
+        </div>
+      </div>
+      <div class="caption">
+        <b>01 · Start</b> · seltene Fläche · Tinte zeichnet, Rotstift korrigiert, Linien leben
+      </div>
+    </div>
+
+    <script type="module">
+      const dp = DPMotion(await import(MOTION_URL));
+      const { t, d, animate, draw, hide, wait, $, $$, swapText } = dp;
+      const scene = $('#scene');
+
+      // Illustration einsetzen, jede Tuschefläche bekommt eine unmaskierte Kopie zum "Setzen" der Tinte
+      $('#illu').innerHTML = DP_ILLUSTRATION;
+      const svg = $('#illu svg');
+      // Zeichenreihenfolge wie ein Zeichner: pro Figur oben beginnen, dann immer zum nächstgelegenen Teil
+      const byGroup = {};
+      $$('path.ink', svg).forEach((p) => (byGroup[p.dataset.g] ||= []).push(p));
+      const mid = (p) => {
+        const r = p.getBoundingClientRect();
+        return [r.left + r.width / 2, r.top + r.height / 2];
+      };
+      const inks = Object.keys(byGroup)
+        .sort()
+        .flatMap((g) => {
+          const rest = [...byGroup[g]];
+          let cur = rest.reduce((a, b) => (mid(b)[1] < mid(a)[1] ? b : a));
+          const out = [];
+          while (rest.length) {
+            rest.splice(rest.indexOf(cur), 1);
+            out.push(cur);
+            const [cx, cy] = mid(cur);
+            cur = rest.reduce(
+              (a, b) =>
+                !a ||
+                Math.hypot(mid(b)[0] - cx, mid(b)[1] - cy) <
+                  Math.hypot(mid(a)[0] - cx, mid(a)[1] - cy)
+                  ? b
+                  : a,
+              null
+            );
+          }
+          return out;
+        });
+      const settles = inks.map((p) => {
+        const c = p.cloneNode();
+        c.removeAttribute('mask');
+        c.classList.add('settle');
+        p.after(c);
+        return c;
+      });
+      const masks = inks.map((p) => $(p.getAttribute('mask').slice(4, -1) + ' path', svg));
+      const sketches = $$('path.sketch', svg);
+      // Die hochgehaltene Karte: oberste Fläche der rechten Figur
+      const right = inks.filter((p) => p.dataset.g === '2');
+      const raised = right.reduce((a, b) =>
+        b.getBoundingClientRect().top < a.getBoundingClientRect().top ? b : a
+      );
+
+      const words = ['Ash?', 'Imperm?', 'Nibiru?', 'Droll?'];
+      let boil;
+
+      function reset() {
+        clearInterval(boil);
+        hide(masks);
+        masks.forEach((p) => (p.style.opacity = 1));
+        settles.forEach((p) => (p.style.opacity = 0));
+        inks.forEach((p) => (p.style.opacity = 0));
+        hide(sketches);
+        sketches.forEach((p) => (p.style.translate = '0 0'));
+        $$('[data-in]').forEach((el) => {
+          el.style.opacity = 0;
+          el.style.transform = 'none';
+          el.style.filter = 'none';
+        });
+        $('#word').textContent = words[0];
+        $('#word').style.clipPath = 'inset(-20% 100% -20% 0)';
+        $('#word').style.opacity = 1;
+        $('#word').style.transform = 'none';
+        hide([$('#uline'), $('#strike')]);
+        $('#flipper').style.transform = 'rotateY(180deg)';
+        $('#step').textContent = '1';
+        $('#eb').textContent = '0';
+        svg.style.transform = 'none';
+      }
+
+      const rise = (el, delay = 0) =>
+        animate(
+          el,
+          { opacity: [0, 1], y: [10, 0], filter: ['blur(4px)', 'blur(0px)'] },
+          { duration: d(0.5), delay, ease: t.out }
+        );
+
+      async function drawIllustration() {
+        let at = 0;
+        const jobs = inks.map((p, i) => {
+          const len = p.getTotalLength();
+          const dur = Math.min(0.62, Math.max(0.2, len / 950));
+          const start = at;
+          at += dur * 0.62 + (inks[i + 1] && inks[i + 1].dataset.g !== p.dataset.g ? 0.18 : 0);
+          return (async () => {
+            await wait(start * 1000);
+            p.style.opacity = 1;
+            await draw(masks[i], { duration: d(dur), ease: t.ink });
+            animate(settles[i], { opacity: [0, 1] }, { duration: d(0.25) });
+            if (p === raised) {
+              animate(
+                [p, settles[i]],
+                { scale: [1, 1.18, 1], rotate: [0, -6, 0] },
+                { duration: d(0.45), ease: t.bounce }
+              );
+            }
+          })();
+        });
+        await Promise.all(jobs);
+      }
+
+      async function drawSketches() {
+        const order = [...sketches].sort(
+          (a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top
+        );
+        await Promise.all(
+          order.map((p, i) => draw(p, { duration: d(0.22), delay: d(i * 0.025), ease: t.smooth }))
+        );
+        // Line boil: kleine, schrittweise Versätze wie bei gezeichneter Animation
+        boil = setInterval(() => {
+          if (dp.reduced) return;
+          sketches.forEach((p) => {
+            p.style.translate = `${(Math.random() - 0.5) * 1.4}px ${(Math.random() - 0.5) * 1.4}px`;
+          });
+        }, 170);
+      }
+
+      async function writeWord() {
+        const w = $('#word');
+        w.style.clipPath = 'inset(-20% 100% -20% 0)';
+        await animate(
+          w,
+          { clipPath: ['inset(-20% 100% -20% 0)', 'inset(-20% 0% -20% 0)'] },
+          { duration: d(0.12 * w.textContent.length), ease: 'linear' }
+        );
+        await draw($('#uline'), { duration: d(0.45) });
+      }
+
+      async function nextWord(i) {
+        const w = $('#word');
+        await draw($('#strike'), { duration: d(0.28), ease: t.smooth });
+        await wait(260);
+        await Promise.all([
+          animate(
+            w,
+            { y: [0, -22], opacity: [1, 0], filter: ['blur(0px)', 'blur(5px)'] },
+            { duration: d(0.24), ease: t.smooth }
+          ),
+          animate($('#strike'), { opacity: [1, 0] }, { duration: d(0.2) }),
+          animate($('#uline'), { opacity: [1, 0] }, { duration: d(0.2) }),
+        ]);
+        hide([$('#uline'), $('#strike')]);
+        w.textContent = words[i];
+        w.style.clipPath = 'none';
+        await animate(
+          w,
+          { y: [22, 0], opacity: [0, 1], filter: ['blur(5px)', 'blur(0px)'] },
+          { duration: d(0.3), ease: t.out }
+        );
+        await draw($('#uline'), { duration: d(0.4) });
+      }
+
+      async function side() {
+        const cont = $('#cont');
+        await rise(cont);
+        const inner = $$('[data-in]', cont);
+        inner.forEach((el, i) => rise(el, d(0.05 * i)));
+        await wait(250);
+        await animate(
+          $('#flipper'),
+          { rotateY: [180, 0] },
+          { type: dp.m.spring, bounce: 0.3, visualDuration: 0.5 }
+        );
+        for (let s = 2; s <= 7; s++) {
+          swapText($('#step'), s);
+          await wait(70);
+        }
+        for (let e = 1; e <= 3; e++) {
+          swapText($('#eb'), e);
+          await wait(120);
+        }
+        const rows = $$('.recent [data-in]');
+        rows.forEach((el, i) => rise(el, d(0.07 * i)));
+      }
+
+      async function run() {
+        const ill = drawIllustration();
+        await wait(1400);
+        rise($('.pre'));
+        await wait(200);
+        $$('.headline .w').forEach((el, i) => rise(el, d(0.09 * i)));
+        await wait(420);
+        await writeWord();
+        const s = side();
+        await ill;
+        await drawSketches();
+        await s;
+        for (let i = 1; i < words.length; i++) {
+          await wait(1500);
+          await nextWord(i);
+        }
+        await wait(1200);
+      }
+
+      // Parallaxe mit dem Mauszeiger, sonst leichtes Schweben
+      scene.addEventListener('pointermove', (e) => {
+        if (dp.reduced) return;
+        const r = scene.getBoundingClientRect();
+        const nx = (e.clientX - r.left) / r.width - 0.5;
+        const ny = (e.clientY - r.top) / r.height - 0.5;
+        animate(svg, { x: nx * 10, y: ny * 6 }, t.soft);
+      });
+
+      dp.loop(reset, run, { pause: 800 });
+    </script>
+  </body>
+</html>

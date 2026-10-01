@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CardSearchService } from '@/server/services/card-search.service';
 import { prisma } from '@/lib/prisma/client';
+import type { Card } from '@/generated/prisma/client';
 import type { CardSearchFilter, CardSortOptions } from '@/types/card.types';
 
 // Mock Prisma
@@ -13,7 +14,7 @@ vi.mock('@/lib/prisma/client', () => ({
   },
 }));
 
-const mockPrisma = vi.mocked(prisma);
+const mockPrisma = vi.mocked(prisma, true);
 
 describe('CardSearchService', () => {
   let service: CardSearchService;
@@ -37,7 +38,7 @@ describe('CardSearchService', () => {
         },
       ];
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Card[]);
       mockPrisma.card.count.mockResolvedValue(1);
 
       const filter: CardSearchFilter = { name: 'Blue-Eyes' };
@@ -59,7 +60,7 @@ describe('CardSearchService', () => {
         },
       ];
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Card[]);
       mockPrisma.card.count.mockResolvedValue(1);
 
       const filter: CardSearchFilter = { type: 'Normal Monster' };
@@ -78,7 +79,7 @@ describe('CardSearchService', () => {
         },
       ];
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Card[]);
       mockPrisma.card.count.mockResolvedValue(1);
 
       const filter: CardSearchFilter = { attribute: 'LIGHT' };
@@ -96,7 +97,7 @@ describe('CardSearchService', () => {
         },
       ];
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Card[]);
       mockPrisma.card.count.mockResolvedValue(1);
 
       const filter: CardSearchFilter = { level: 8 };
@@ -186,12 +187,46 @@ describe('CardSearchService', () => {
 
       expect(mockPrisma.card.findMany).toHaveBeenCalled();
       const callArgs = mockPrisma.card.findMany.mock.calls[0][0];
-      expect(callArgs.where).toMatchObject({
-        name: expect.objectContaining({ contains: 'Dragon' }),
+      expect(callArgs?.where).toMatchObject({
+        OR: [
+          { name: expect.objectContaining({ contains: 'dragon', mode: 'insensitive' }) },
+          { nameDe: expect.objectContaining({ contains: 'dragon', mode: 'insensitive' }) },
+        ],
         type: expect.objectContaining({ contains: 'Effect Monster' }),
         attribute: 'LIGHT',
         level: 4,
       });
+    });
+  });
+
+  describe('Spitznamen und Kürzel', () => {
+    it('stellt die Karte hinter einem Spitznamen an den Anfang', async () => {
+      const ash = { id: '14558127', name: 'Ash Blossom & Joyous Spring' } as Card;
+      const other = { id: '1', name: 'Ashened City' } as Card;
+      mockPrisma.card.findMany.mockResolvedValueOnce([ash]).mockResolvedValueOnce([other, ash]);
+      mockPrisma.card.count.mockResolvedValue(2);
+
+      const result = await service.searchCards({ name: 'ash' }, 1, 50);
+
+      expect(mockPrisma.card.findMany.mock.calls[0][0]?.where).toMatchObject({
+        OR: [{ name: { in: ['Ash Blossom & Joyous Spring'] } }, { initials: 'ash' }],
+      });
+      expect(result.cards.map((c) => c.id)).toEqual(['14558127', '1']);
+      expect(result.total).toBe(2);
+    });
+
+    it('findet Kürzel aus Anfangsbuchstaben', async () => {
+      const bewd = { id: '89631139', name: 'Blue-Eyes White Dragon' } as Card;
+      mockPrisma.card.findMany.mockResolvedValueOnce([bewd]).mockResolvedValueOnce([]);
+      mockPrisma.card.count.mockResolvedValue(0);
+
+      const result = await service.searchCards({ name: 'bewd' }, 1, 50);
+
+      expect(mockPrisma.card.findMany.mock.calls[0][0]?.where).toMatchObject({
+        OR: [{ initials: 'bewd' }],
+      });
+      expect(result.cards).toEqual([bewd]);
+      expect(result.total).toBe(1);
     });
   });
 
@@ -202,7 +237,7 @@ describe('CardSearchService', () => {
         { name: 'Blue-Eyes Alternative White Dragon' },
       ];
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
+      mockPrisma.card.findMany.mockResolvedValue(mockCards as Card[]);
 
       const result = await service.autocompleteCardNames('Blue-Eyes', 10);
 
@@ -211,7 +246,7 @@ describe('CardSearchService', () => {
         expect.objectContaining({
           where: {
             name: {
-              contains: 'Blue-Eyes',
+              contains: 'blue-eyes',
               mode: 'insensitive',
             },
           },
@@ -242,7 +277,9 @@ describe('CardSearchService', () => {
         name: `Card ${i}`,
       }));
 
-      mockPrisma.card.findMany.mockResolvedValue(mockCards as Prisma.Card[]);
+      // Simuliert Prisma: take begrenzt die Ergebnisse
+      mockPrisma.card.findMany.mockImplementation((async (args: { take: number }) =>
+        mockCards.slice(0, args.take)) as never);
 
       const result = await service.autocompleteCardNames('Card', 5);
 
@@ -263,7 +300,7 @@ describe('CardSearchService', () => {
         type: 'Effect Monster',
       };
 
-      mockPrisma.card.findUnique = vi.fn().mockResolvedValue(mockCard as Prisma.Card);
+      mockPrisma.card.findUnique = vi.fn().mockResolvedValue(mockCard as Card);
 
       const result = await service.getCardById('12345');
 
@@ -289,7 +326,7 @@ describe('CardSearchService', () => {
         { id: '2', name: 'Card 2' },
       ];
 
-      mockPrisma.card.findMany = vi.fn().mockResolvedValue(mockCards as Prisma.Card[]);
+      mockPrisma.card.findMany = vi.fn().mockResolvedValue(mockCards as Card[]);
 
       const result = await service.getCardsByIds(['1', '2']);
 

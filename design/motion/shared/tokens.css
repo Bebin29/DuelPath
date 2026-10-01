@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600&family=Kalam:wght@400;700&display=swap');
+
+/* Tokens aus design/DuelPath.pen (Stil D, dunkel) */
+:root {
+  --bg: #121110;
+  --surface-1: #171614;
+  --surface-2: #1d1c19;
+  --surface-3: #24221f;
+  --felt: #151412;
+  --line: #2b2926;
+  --line-strong: #7e786f;
+  --zone: #6f6a61;
+  --ink: #f2efe8;
+  --text-muted: #a19d94;
+  --text-subtle: #958f86;
+  --primary: #f2efe8;
+  --on-primary: #121110;
+  --self: #6aa8ff;
+  --opponent: #ff5a36;
+  --chain: #a99bff;
+  --warning: #e8b04b;
+  --jev: #5cc8b8;
+  --self-tint: #172234;
+  --opponent-tint: #3a1c14;
+  --chain-tint: #241f38;
+
+  --font-display: 'Instrument Serif', serif;
+  --font: 'Instrument Sans', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --hand: 'Kalam', cursive;
+
+  --r-sm: 2px;
+  --r-md: 3px;
+  --r-lg: 4px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 13px;
+  height: 100%;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.mono {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.serif {
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+.hand {
+  font-family: var(--hand);
+  color: var(--opponent);
+}
+.muted {
+  color: var(--text-muted);
+}
+
+/* Karten */
+.card {
+  width: 48px;
+  height: 70px;
+  border-radius: var(--r-sm);
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  position: relative;
+  flex: none;
+  will-change: transform;
+}
+.art {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-sm);
+  background-size: 120% auto;
+  background-position: 50% 30%;
+  flex: none;
+}
+.zone {
+  width: 76px;
+  height: 76px;
+  border: 1px solid var(--zone);
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  position: relative;
+  flex: none;
+}
+.zone > * {
+  grid-area: 1 / 1;
+}
+.zone .lbl {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--text-subtle);
+}
+
+/* Knöpfe */
+.btn {
+  font: inherit;
+  font-weight: 600;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--r-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  white-space: nowrap;
+}
+.btn.primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.btn.primary .k {
+  opacity: 0.55;
+}
+.btn.text {
+  background: none;
+  color: var(--ink);
+  font-weight: 500;
+  padding: 0;
+}
+.k {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-subtle);
+  font-weight: 400;
+}
+.keycap {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 3px;
+  border-radius: var(--r-md);
+  padding: 2px 7px 1px;
+  display: inline-block;
+}
+
+/* Geister-Cursor, führt die Bedienung vor */
+.cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  z-index: 100;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.5));
+}
+.cursor .ring {
+  position: absolute;
+  left: -9px;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  opacity: 0;
+}
+
+/* Beschriftung der Szene */
+.caption {
+  position: absolute;
+  left: 20px;
+  bottom: 14px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-subtle);
+  z-index: 50;
+}
+.caption b {
+  color: var(--ink);
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor {
+    display: none;
+  }
+}

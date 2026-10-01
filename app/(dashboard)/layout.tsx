@@ -1,19 +1,35 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth/auth';
+import { AppHeader } from '@/components/common/AppHeader';
+import { SettingsProvider } from '@/components/providers/SettingsProvider';
+import { CardSheetProvider } from '@/components/cards/CardSheet';
+import { CommandPaletteProvider } from '@/components/command/CommandPalette';
+import { MotionProvider } from '@/components/motion/MotionProvider';
+import { getSettings } from '@/server/actions/settings.actions';
 
 /**
- * Dashboard-Layout
- * Geschützte Route: Nur für eingeloggte Nutzer
- *
- * Navigation wird im Root-Layout gerendert, daher hier nicht mehr nötig
+ * Verwaltungsseiten (Start, Combos, Decks): App-Kopfzeile und ein einziges <main>
+ * mit Inhaltsbreite bis 1280 px (UI-Plan 6.1). Nur für angemeldete Nutzer.
  */
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  // Prüfe Session - NextAuth v5
   const session = await auth();
+  if (!session) redirect('/auth/signin');
+  const settings = await getSettings();
 
-  if (!session) {
-    redirect('/auth/signin');
-  }
-
-  return <main className="flex-1 container mx-auto px-4 py-8">{children}</main>;
+  return (
+    <SettingsProvider initial={settings}>
+      <MotionProvider>
+        <CardSheetProvider>
+          <CommandPaletteProvider>
+            <div className="flex min-h-dvh flex-col">
+              <AppHeader />
+              <main id="main" className="mx-auto w-full max-w-[1280px] flex-1 px-8 pb-16 pt-10">
+                {children}
+              </main>
+            </div>
+          </CommandPaletteProvider>
+        </CardSheetProvider>
+      </MotionProvider>
+    </SettingsProvider>
+  );
 }

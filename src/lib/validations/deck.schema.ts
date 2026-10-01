@@ -28,7 +28,7 @@ export const createDeckSchema = z.object({
     .nullable(),
   format: z
     .enum(DECK_FORMAT, {
-      errorMap: () => ({ message: 'Format muss TCG, OCG oder Casual sein' }),
+      error: 'Format muss TCG, OCG oder Casual sein',
     })
     .default('TCG'),
 });
@@ -52,7 +52,7 @@ export const updateDeckSchema = z.object({
     .nullable(),
   format: z
     .enum(DECK_FORMAT, {
-      errorMap: () => ({ message: 'Format muss TCG, OCG oder Casual sein' }),
+      error: 'Format muss TCG, OCG oder Casual sein',
     })
     .optional(),
 });
@@ -70,7 +70,7 @@ export const addCardToDeckSchema = z.object({
     .min(1, 'Anzahl muss mindestens 1 sein')
     .max(3, 'Anzahl darf maximal 3 sein'),
   deckSection: z.enum(DECK_SECTION, {
-    errorMap: () => ({ message: 'Deck-Sektion muss MAIN, EXTRA oder SIDE sein' }),
+    error: 'Deck-Sektion muss MAIN, EXTRA oder SIDE sein',
   }),
 });
 
@@ -87,7 +87,7 @@ export const updateCardQuantitySchema = z.object({
     .min(1, 'Anzahl muss mindestens 1 sein')
     .max(3, 'Anzahl darf maximal 3 sein'),
   deckSection: z.enum(DECK_SECTION, {
-    errorMap: () => ({ message: 'Deck-Sektion muss MAIN, EXTRA oder SIDE sein' }),
+    error: 'Deck-Sektion muss MAIN, EXTRA oder SIDE sein',
   }),
 });
 
@@ -99,7 +99,7 @@ export type UpdateCardQuantityInput = z.infer<typeof updateCardQuantitySchema>;
 export const removeCardFromDeckSchema = z.object({
   cardId: z.string().min(1, 'Karten-ID ist erforderlich'),
   deckSection: z.enum(DECK_SECTION, {
-    errorMap: () => ({ message: 'Deck-Sektion muss MAIN, EXTRA oder SIDE sein' }),
+    error: 'Deck-Sektion muss MAIN, EXTRA oder SIDE sein',
   }),
 });
 
@@ -266,3 +266,15 @@ export function validateCardInDeck(
 
   return { isValid: true };
 }
+
+/**
+ * Schema für den YDK-Import (Passcodes je Sektion)
+ */
+const passcode = z.string().regex(/^\d{1,10}$/, 'Ungültiger Passcode');
+export const ydkImportSchema = z.object({
+  main: z.array(passcode).max(100),
+  extra: z.array(passcode).max(30),
+  side: z.array(passcode).max(30),
+});
+
+export type YdkImportInput = z.infer<typeof ydkImportSchema>;

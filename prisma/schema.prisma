@@ -1,18 +1,17 @@
 // Prisma Schema für DuelPath
-// Yu-Gi-Oh! Deck-Verwaltung, Kombo-Editor und Duellmodus
+// Yu-Gi-Oh! Kartendatenbank, Deck-Verwaltung und Combo-Editor (nur TCG)
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
 
-// Enums werden als String gespeichert (SQLite unterstützt keine Enums)
+// Aufzählungen bleiben vorerst Strings und werden per zod validiert
 // DeckSection: "MAIN" | "EXTRA" | "SIDE"
-// ActionType: "SUMMON" | "ACTIVATE" | "SET" | "ATTACK" | "DRAW" | "DISCARD" | "SPECIAL_SUMMON" | "TRIBUTE_SUMMON" | "NORMAL_SUMMON" | "FLIP_SUMMON" | "OTHER"
 
 // NextAuth Models
 model Account {
@@ -52,17 +51,31 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String? // Gehasht, falls E-Mail/Passwort-Auth verwendet wird
+  settings      Json      @default("{}") // UserSettings: Design, Kartensprache (src/lib/settings.ts)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  decks         Deck[]
-  combos        Combo[]
-  duels         Duel[]    @relation("PlayerDuels")
-  opponentDuels Duel[]    @relation("OpponentDuels")
+  accounts  Account[]
+  sessions  Session[]
+  decks     Deck[]
+  combos    Combo[]
+  apiTokens ApiToken[]
+}
 
-  @@index([email])
+// Persönlicher Zugang zur REST-API (/api/v1), etwa für Agenten. Gespeichert wird nur der Hash.
+model ApiToken {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  tokenHash  String    @unique // SHA-256 des Tokens
+  prefix     String // erste Zeichen zum Wiedererkennen, etwa "dp_7Kq2"
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -73,45 +86,42 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Yu-Gi-Oh! Card Model
+// Yu-Gi-Oh! Card Model (nur TCG-Karten)
 model Card {
-  id             String   @id @default(cuid())
-  name           String
-  nameLower      String? // Normalisierter Name für case-insensitive Suche
-  type           String // z.B. "Normal Monster", "Effect Monster", "Spell Card", etc.
-  typeLower      String? // Normalisierter Typ für case-insensitive Suche
-  race           String? // Monster-Typ oder Spell/Trap-Kategorie
-  raceLower      String? // Normalisierter Race für case-insensitive Suche
-  attribute      String? // LIGHT, DARK, EARTH, etc. (nur bei Monstern)
-  level          Int? // Level/Rang/Linkzahl
-  atk            Int? // Angriffspunkte
-  def            Int? // Verteidigungspunkte
-  desc           String? // Kartentext/Effektbeschreibung
-  archetype      String? // Archetype, falls vorhanden
-  archetypeLower String? // Normalisierter Archetype für case-insensitive Suche
-  banlistInfo    String? // Verboten/Limitiert-Status
-  imageUrl       String? // URL zum Kartenbild
-  imageSmall     String? // URL zum kleinen Thumbnail
-  passcode       String?  @unique // YGOPRODeck Passcode-ID
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  nameDe          String?
+  initials        String? // Kürzel aus Anfangsbuchstaben für die Suche, „bewd“ (src/lib/cards/nicknames.ts)
+  type            String // z.B. "Normal Monster", "Effect Monster", "Spell Card", etc.
+  race            String? // Monster-Typ oder Spell/Trap-Kategorie
+  attribute       String? // LIGHT, DARK, EARTH, etc. (nur bei Monstern)
+  level           Int? // Level/Rang/Linkzahl
+  linkMarkers     String[]  @default([]) // Link-Pfeile, etwa "Top", "Bottom-Left"
+  scale           Int? // Pendel-Scale
+  atk             Int? // Angriffspunkte
+  def             Int? // Verteidigungspunkte
+  desc            String? // Kartentext (englisch, Grundlage für die Effektzerlegung)
+  descDe          String?
+  archetype       String? // Archetype, falls vorhanden
+  banTcg          String? // "Forbidden" | "Limited" | "Semi-Limited", null = unbeschränkt
+  tcgDate         DateTime?
+  effects         Json? // ParsedEffects aus src/lib/cards/effects.ts
+  effectsOverride Json? // CardEffect[] von Hand korrigiert (UX-Plan 8); Vorrang vor effects, bleibt beim Neuimport
+  effectsReview   Boolean   @default(false) // Zerlegung unsicher, manuell prüfen
+  effectsJev      Float? // Jev-Bewertung der Zerlegung (0..1)
+  imageUrl        String? // lokaler Bild-Cache, /api/card-images/<passcode>.jpg
+  imageSmall      String? // lokaler Bild-Cache, /api/card-images/<passcode>_small.jpg
+  passcode        String?   @unique // YGOPRODeck Passcode-ID
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  deckCards  DeckCard[]
-  comboSteps ComboStep[]
+  deckCards DeckCard[]
 
+  // ponytail: Namenssuche per ILIKE ohne Trigramm-Index; bei ~14k Karten schnell genug, pg_trgm-GIN-Index wenn die Suche spürbar langsam wird
   @@index([name])
-  @@index([nameLower])
+  @@index([initials])
   @@index([type])
-  @@index([typeLower])
-  @@index([race])
-  @@index([raceLower])
   @@index([archetype])
-  @@index([archetypeLower])
-  @@index([passcode])
-  // Composite-Indizes für häufig verwendete Query-Patterns
-  @@index([nameLower, type, attribute]) // Für kombinierte Suchen
-  @@index([archetypeLower, type]) // Für Archetype-Filter
-  @@index([level, atk, def]) // Für numerische Filter
 }
 
 // Deck Model
@@ -119,16 +129,14 @@ model Deck {
   id          String   @id @default(cuid())
   name        String
   description String?
-  format      String   @default("TCG") // TCG, OCG, Casual
+  format      String   @default("TCG")
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deckCards     DeckCard[]
-  combos        Combo[]
-  duels         Duel[]     @relation("PlayerDeckDuels")
-  opponentDuels Duel[]     @relation("OpponentDeckDuels")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deckCards DeckCard[]
+  combos    Combo[]
 
   @@index([userId])
 }
@@ -145,86 +153,64 @@ model DeckCard {
   card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@unique([deckId, cardId, deckSection])
-  @@index([deckId])
-  @@index([cardId])
   @@index([deckId, deckSection])
-  @@index([deckId, deckSection, cardId]) // Composite-Index für schnellere Lookups
-}
-
-// Combo Model
-model Combo {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  userId      String
-  deckId      String? // Optional: Zuordnung zu einem Deck
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deck     Deck?          @relation(fields: [deckId], references: [id], onDelete: SetNull)
-  steps    ComboStep[]
-  versions ComboVersion[]
-
-  @@index([userId])
-  @@index([deckId])
-}
-
-// Combo Step Model
-model ComboStep {
-  id           String  @id @default(cuid())
-  comboId      String
-  order        Int // Reihenfolge (1, 2, 3, ...)
-  cardId       String
-  actionType   String // "SUMMON", "ACTIVATE", "SET", "ATTACK", etc.
-  description  String? // Freitext-Beschreibung des Schritts
-  targetCardId String? // Optional: Zielkarte, falls vorhanden
-
-  combo Combo @relation(fields: [comboId], references: [id], onDelete: Cascade)
-  card  Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
-
-  @@unique([comboId, order])
-  @@index([comboId])
   @@index([cardId])
 }
 
-// Combo Version Model - Speichert Snapshots von Combos für Versionshistorie
-model ComboVersion {
-  id          String   @id @default(cuid())
-  comboId     String
-  title       String
-  description String?
-  deckId      String?
-  snapshot    String // JSON-Snapshot der Combo mit allen Steps
-  version     Int // Versionsnummer (1, 2, 3, ...)
-  createdBy   String // User-ID, der die Version erstellt hat
-  createdAt   DateTime @default(now())
-  note        String? // Optional: Notiz zur Version
+// Combo als Baum. Der Gamestate wird nicht gespeichert, sondern mit stateAt
+// (src/lib/combo/state.ts) aus startState und den Knoten auf dem Pfad berechnet.
+model Combo {
+  id         String   @id @default(cuid())
+  title      String
+  userId     String
+  deckId     String?
+  startState Json // StartState: Starthand, optional Gegnerboard
+  tags       String[] @default([]) // freie Schlagworte wie "1-Card", "Going Second" (UX-Plan 7.2)
+  status     String   @default("DRAFT") // DRAFT | TESTED | TOURNAMENT
+  revision   Int      @default(0) // steigt mit jedem Speichern; schützt vor stillem Überschreiben
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  combo Combo @relation(fields: [comboId], references: [id], onDelete: Cascade)
-
-  @@unique([comboId, version])
-  @@index([comboId])
-  @@index([comboId, version])
-}
-
-// Duel Model (optional, für zukünftige Duell-Persistierung)
-model Duel {
-  id             String    @id @default(cuid())
-  userId         String // Initiator/Spieler
-  opponentId     String? // Optional: Gegner (bei KI null)
-  deckId         String // Eigenes Deck
-  opponentDeckId String? // Deck des Gegners
-  result         String? // "WIN", "LOSS", "DRAW", "ABANDONED"
-  log            String? // Zugfolge als JSON oder Textprotokoll
-  createdAt      DateTime  @default(now())
-  finishedAt     DateTime?
-
-  player       User  @relation("PlayerDuels", fields: [userId], references: [id], onDelete: Cascade)
-  opponent     User? @relation("OpponentDuels", fields: [opponentId], references: [id], onDelete: SetNull)
-  deck         Deck  @relation("PlayerDeckDuels", fields: [deckId], references: [id], onDelete: Cascade)
-  opponentDeck Deck? @relation("OpponentDeckDuels", fields: [opponentDeckId], references: [id], onDelete: SetNull)
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck  Deck?       @relation(fields: [deckId], references: [id], onDelete: SetNull)
+  nodes ComboNode[]
 
   @@index([userId])
   @@index([deckId])
+}
+
+model ComboNode {
+  id            String   @id @default(cuid())
+  comboId       String
+  parentId      String? // null = Wurzel
+  rank          Int      @default(0) // Reihenfolge unter Geschwistern; 0 = Hauptline
+  kind          String // ACTION | ACTIVATE | OPPONENT | RESOLVE | END
+  player        String // self | opponent
+  edgeLabel     String? // "Keine Reaktion", "Ash Blossom", ...
+  instanceId    String? // aktivierende Karteninstanz
+  cardId        String?
+  effectIndex   Int?
+  action        String? // NORMAL_SUMMON | SPECIAL_SUMMON | SET | OTHER
+  costMoves     Json     @default("[]") // CardMove[] bei Aktivierung
+  resolveMoves  Json     @default("[]") // CardMove[] bei Auflösung
+  negates       Json? // Negation
+  optOverride   Boolean? // manueller Eingriff in die OPT-Regel
+  note          String?
+  ignoredHits   Json? // Staple-Namen, deren Stresstest-Treffer an diesem Schritt entfernt sind
+  interruptions Json? // Endboard: Unterbrechungen pro Karteninstanz, überschreibt die Erkennung
+  createdAt     DateTime @default(now())
+
+  combo    Combo       @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  parent   ComboNode?  @relation("Tree", fields: [parentId], references: [id], onDelete: Cascade)
+  children ComboNode[] @relation("Tree")
+
+  @@index([comboId])
+  @@index([parentId])
+}
+
+// Cache für Jev-Antworten: gleiche Anfrage (Modell, Zustand, Fragen) wird nur einmal bezahlt
+model JevCache {
+  key       String   @id // sha256 der Anfrage
+  answers   Json
+  createdAt DateTime @default(now())
 }

@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>02 · Karte spielen</title>
+    <link rel="stylesheet" href="shared/tokens.css" />
+    <script src="shared/helpers.js"></script>
+    <style>
+      .scene {
+        display: grid;
+        grid-template-rows: 40px 1fr 56px;
+        grid-template-columns: 236px 1fr 150px;
+      }
+      header {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        background: var(--surface-1);
+        border-bottom: 1px solid var(--line);
+      }
+      header .title {
+        font-family: var(--font-display);
+        font-size: 19px;
+      }
+      header .grow {
+        flex: 1;
+      }
+      .tabs {
+        display: flex;
+        gap: 12px;
+        position: relative;
+      }
+      .tabs span {
+        font-size: 12px;
+        padding: 4px 1px;
+        color: var(--text-subtle);
+      }
+      .tabs span.on {
+        color: var(--ink);
+        font-weight: 600;
+        box-shadow: inset 0 -1.5px 0 var(--ink);
+      }
+      .save {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 96px;
+        justify-content: flex-end;
+      }
+      .save svg {
+        overflow: visible;
+      }
+      aside.lines {
+        background: var(--surface-1);
+        border-right: 1px solid var(--line);
+        padding: 12px 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .lhead {
+        display: flex;
+        align-items: flex-end;
+        padding: 0 16px 10px;
+      }
+      .lhead .n {
+        font-family: var(--font-display);
+        font-size: 18px;
+        flex: 1;
+      }
+      .hint {
+        padding: 6px 16px;
+        color: var(--text-subtle);
+        font-size: 12.5px;
+      }
+      .step {
+        height: 34px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 16px;
+        overflow: hidden;
+        position: relative;
+      }
+      .step .nr {
+        font-family: var(--mono);
+        font-size: 14px;
+        color: var(--text-subtle);
+        width: 12px;
+      }
+      .step.on {
+        background: var(--surface-3);
+        box-shadow: inset 2px 0 0 var(--ink);
+      }
+      .step.on .nr {
+        color: var(--ink);
+      }
+      .step.chain {
+        padding-left: 28px;
+      }
+      .step.chain::before {
+        content: '';
+        position: absolute;
+        left: 18px;
+        top: 6px;
+        bottom: 6px;
+        width: 1.5px;
+        background: var(--chain);
+        border-radius: 1px;
+      }
+      .felt {
+        background: var(--felt);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        position: relative;
+      }
+      .zrow {
+        display: flex;
+        gap: 6px;
+      }
+      .zone.opp {
+        opacity: 0.55;
+      }
+      .zone .drop {
+        position: absolute;
+        inset: -1px;
+        border-radius: var(--r-sm);
+        border: 1.5px solid var(--primary);
+        background: rgb(242 239 232 / 0.07);
+        opacity: 0;
+      }
+      .zone .will {
+        position: absolute;
+        bottom: -18px;
+        left: 50%;
+        translate: -50% 0;
+        white-space: nowrap;
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--ink);
+        opacity: 0;
+      }
+      .zone .dot {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--self);
+        scale: 0;
+      }
+      .zone .cl {
+        position: absolute;
+        top: -7px;
+        left: -7px;
+        font-family: var(--mono);
+        font-size: 9.5px;
+        font-weight: 600;
+        color: var(--chain);
+        background: var(--chain-tint);
+        border-radius: var(--r-sm);
+        padding: 1px 4px;
+        scale: 0;
+        z-index: 2;
+      }
+      .side {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 9.5px;
+        color: var(--text-subtle);
+        width: 404px;
+      }
+      .side i {
+        width: 3px;
+        height: 10px;
+        border-radius: 1px;
+      }
+      .hand {
+        display: flex;
+        gap: 6px;
+        height: 70px;
+        margin-top: 10px;
+      }
+      .chainc {
+        background: var(--felt);
+        border-left: 1px solid var(--line);
+        padding: 16px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .chainc h4 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 18px;
+      }
+      .link {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 8px;
+        border: 1px solid var(--chain);
+        border-radius: var(--r-sm);
+        background: var(--felt);
+        overflow: hidden;
+      }
+      .link .n {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--chain);
+      }
+      .link .art {
+        width: 16px;
+        height: 16px;
+      }
+      .link .e {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .empty {
+        font-size: 11.5px;
+        color: var(--text-subtle);
+        line-height: 1.4;
+      }
+      footer {
+        grid-column: 1 / -1;
+        background: var(--surface-1);
+        border-top: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 0 16px;
+        position: relative;
+        overflow: hidden;
+      }
+      .count {
+        min-width: 44px;
+      }
+      .sep {
+        width: 1px;
+        height: 18px;
+        background: var(--line);
+      }
+      .slot {
+        position: relative;
+        flex: 1;
+        height: 100%;
+      }
+      .state {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .choice {
+        display: flex;
+        gap: 8px;
+      }
+      .choice .c {
+        position: relative;
+      }
+      .choice .card {
+        width: 30px;
+        height: 44px;
+      }
+      .choice .num {
+        position: absolute;
+        top: -6px;
+        left: -5px;
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--ink);
+        background: var(--bg);
+        border-radius: 2px;
+        padding: 0 3px;
+        z-index: 2;
+      }
+      .hud {
+        position: absolute;
+        right: 18px;
+        bottom: 70px;
+        display: flex;
+        gap: 6px;
+        z-index: 60;
+      }
+      .hud .keycap {
+        font-size: 13px;
+        padding: 5px 10px 3px;
+        background: var(--surface-2);
+        opacity: 0;
+      }
+      .drag {
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 80;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scene" id="scene">
+      <header>
+        <span class="title">Aluber 1-Card</span
+        ><span class="muted" style="font-size: 12px">Branded Despia</span>
+        <span class="grow"></span>
+        <div class="tabs"><span class="on">Board</span><span>Baum</span></div>
+        <span class="grow"></span>
+        <div class="save mono">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path
+              id="tick"
+              d="M2 6.5 L4.8 9 L10 3"
+              stroke="#958F86"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              pathLength="1"
+            />
+          </svg>
+          <span id="saveText">gespeichert</span>
+        </div>
+      </header>
+
+      <aside class="lines">
+        <div class="lhead">
+          <span class="n">Goldfish</span><span class="mono">Endboard <span id="eb">0</span></span>
+        </div>
+        <div id="rows"></div>
+        <p class="hint" id="hint">Spiel eine Karte, um die Line zu beginnen.</p>
+      </aside>
+
+      <main class="felt" id="felt">
+        <div class="side"><i style="background: var(--opponent)"></i>GEGNER</div>
+        <div class="zrow" id="oppRow"></div>
+        <div class="zrow" id="myRow"></div>
+        <div class="side"><i style="background: var(--self)"></i>ICH</div>
+        <div class="hand" id="hand">
+          <div
+            class="card"
+            id="aluber"
+            style="background-image: url(../assets/62962630_small.jpg)"
+          ></div>
+          <div class="card" style="background-image: url(../assets/14558127_small.jpg)"></div>
+          <div class="card" style="background-image: url(../assets/10045474_small.jpg)"></div>
+          <div class="card" style="background-image: url(../assets/36637374_small.jpg)"></div>
+        </div>
+      </main>
+
+      <section class="chainc">
+        <h4>Chain</h4>
+        <div id="links"></div>
+        <p class="empty" id="chainEmpty">Keine offene Chain.</p>
+      </section>
+
+      <footer>
+        <span class="mono count" id="count">0 / 0</span>
+        <span class="sep"></span>
+        <div class="slot">
+          <div class="state" id="sIdle">
+            <span class="muted">Zieh eine Karte aufs Feld oder wähle einen Effekt.</span>
+          </div>
+          <div class="state" id="sTrigger">
+            <span
+              >Trigger: <b style="font-weight: 600">Aluber</b>
+              <span class="muted">· Suche</span></span
+            >
+            <button class="btn primary">Aktivieren <span class="k">⏎</span></button>
+          </div>
+          <div class="state" id="sChain">
+            <span class="mono" style="color: var(--chain)">Chain offen · CL1</span>
+            <button class="btn primary">Auflösen <span class="k">⏎</span></button>
+            <button class="btn text">Chainen <span class="k">C</span></button>
+            <button class="btn text">Gegner reagiert <span class="k">O</span></button>
+          </div>
+          <div class="state" id="sPick">
+            <span>Was hast du gesucht?</span>
+            <div class="choice" id="choice">
+              <div class="c">
+                <span class="num">1</span>
+                <div
+                  class="card"
+                  id="pickBF"
+                  style="background-image: url(../assets/44362883_small.jpg)"
+                ></div>
+              </div>
+              <div class="c">
+                <span class="num">2</span>
+                <div class="card" style="background-image: url(../assets/82738008_small.jpg)"></div>
+              </div>
+              <div class="c">
+                <span class="num">3</span>
+                <div class="card" style="background-image: url(../assets/36637374_small.jpg)"></div>
+              </div>
+            </div>
+            <span class="k">Esc später</span>
+          </div>
+        </div>
+      </footer>
+
+      <div class="hud" id="hud"><span class="keycap" id="key">⏎</span></div>
+      <div class="caption" style="left: 252px; bottom: 66px">
+        <b>02 · Karte spielen</b> · Hand → Zone 150 ms · Feder beim Einrasten · Aufleuchten 600 ms
+      </div>
+    </div>
+
+    <script type="module">
+      const dp = DPMotion(await import(MOTION_URL));
+      const { m, t, d, animate, draw, hide, wait, $, $$, swapText, cursor } = dp;
+      const scene = $('#scene');
+      const hand = $('#hand');
+      const aluber = $('#aluber');
+      const handCards = $$('.card', hand);
+
+      const zone = (label, opp) => {
+        const z = document.createElement('div');
+        z.className = 'zone' + (opp ? ' opp' : '');
+        z.innerHTML = `<span class="lbl">${label}</span><span class="drop"></span><span class="will">Normal Summon</span><span class="dot"></span><span class="cl">CL1</span>`;
+        return z;
+      };
+      for (let i = 0; i < 5; i++) $('#oppRow').append(zone('MZ', true));
+      const myZones = [...Array(5)].map(() => zone('MZ'));
+      myZones.forEach((z) => $('#myRow').append(z));
+      const target = myZones[2];
+      const cur = cursor(scene);
+
+      const states = ['#sIdle', '#sTrigger', '#sChain', '#sPick'];
+      async function showState(id) {
+        await Promise.all(
+          states
+            .filter((s) => s !== id && $(s).style.opacity !== '0')
+            .map((s) =>
+              animate(
+                $(s),
+                { opacity: 0, y: -10, filter: 'blur(3px)' },
+                { duration: d(0.14), ease: t.smooth }
+              )
+            )
+        );
+        const el = $(id);
+        const kids = [...el.children];
+        await animate(
+          el,
+          { opacity: [0, 1], y: [12, 0], filter: ['blur(3px)', 'blur(0px)'] },
+          { duration: d(0.26), ease: t.out }
+        );
+        return kids;
+      }
+
+      function reset() {
+        handCards.forEach((c) => {
+          hand.append(c);
+          c.style.cssText = c
+            .getAttribute('style')
+            .split(';')
+            .filter((p) => p.includes('background-image'))
+            .join(';');
+        });
+        $$('.hand .card')
+          .filter((c) => !handCards.includes(c))
+          .forEach((c) => c.remove());
+        $$('.drag').forEach((c) => c.remove());
+        myZones.forEach((z) => {
+          $$('.card', z).forEach((c) => c.remove());
+          $('.drop', z).style.opacity = 0;
+          $('.will', z).style.opacity = 0;
+          $('.dot', z).style.scale = 0;
+          $('.cl', z).style.scale = 0;
+        });
+        $('#rows').innerHTML = '';
+        $('#links').innerHTML = '';
+        $('#hint').style.opacity = 1;
+        $('#chainEmpty').style.opacity = 1;
+        $('#eb').textContent = '0';
+        $('#count').textContent = '0 / 0';
+        $('#saveText').textContent = 'gespeichert';
+        $('#tick').setAttribute('stroke-dashoffset', '0');
+        $('#tick').style.opacity = 1;
+        states.forEach((s) => ($(s).style.opacity = s === '#sIdle' ? 1 : 0));
+        $$('#choice .c').forEach((c) => (c.style.opacity = 1));
+        $('#key').style.opacity = 0;
+        m.animate(cur.el, { x: 900, y: 600 }, { duration: 0 });
+      }
+
+      // Schritt in der Line-Liste einfügen: Höhe wächst, Inhalt steigt auf
+      async function addStep(n, html, cls = '') {
+        const r = document.createElement('div');
+        r.className = 'step ' + cls;
+        r.innerHTML = `<span class="nr">${n}</span>${html}`;
+        $$('.step.on').forEach((s) => s.classList.remove('on'));
+        r.classList.add('on');
+        $('#rows').append(r);
+        await animate(
+          r,
+          { height: [0, 34], opacity: [0, 1] },
+          { duration: d(0.24), ease: t.smooth }
+        );
+        animate(
+          $$(':scope > *', r),
+          { y: [8, 0], filter: ['blur(3px)', 'blur(0px)'] },
+          { duration: d(0.3), delay: m.stagger(0.04), ease: t.out }
+        );
+        return r;
+      }
+
+      async function saved() {
+        await swapText($('#saveText'), 'speichert …');
+        hide($('#tick'));
+        await wait(650);
+        swapText($('#saveText'), 'gespeichert');
+        await draw($('#tick'), { duration: d(0.3), ease: t.smooth });
+      }
+
+      async function key(label) {
+        const k = $('#key');
+        k.textContent = label;
+        await animate(k, { opacity: [0, 1], y: [8, 0] }, { duration: d(0.18), ease: t.out });
+        await animate(k, { y: [0, 2], borderBottomWidth: ['3px', '1px'] }, { duration: d(0.07) });
+        await animate(k, { y: [2, 0], borderBottomWidth: ['1px', '3px'] }, { duration: d(0.12) });
+        animate(k, { opacity: 0 }, { duration: d(0.3), delay: d(0.35) });
+      }
+
+      // Hand-Karten gleiten nach, wenn eine Karte sie verlässt oder dazukommt
+      async function reflow(mutate) {
+        const cards = $$('.card', hand);
+        const before = new Map(cards.map((c) => [c, c.getBoundingClientRect()]));
+        mutate();
+        await Promise.all(
+          $$('.card', hand)
+            .filter((c) => before.has(c))
+            .map((c) => {
+              const a = before.get(c);
+              const b = c.getBoundingClientRect();
+              return dp.reduced ? null : m.animate(c, { x: [a.left - b.left, 0] }, t.card);
+            })
+        );
+      }
+
+      const rel = (el) => {
+        const r = el.getBoundingClientRect();
+        const s = scene.getBoundingClientRect();
+        return { x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height };
+      };
+
+      async function run() {
+        await wait(400);
+        // 1 · Hover
+        await cur.to(aluber, { duration: 0.9, dy: 8 });
+        animate(aluber, { y: -6, scale: 1.03 }, t.snappy);
+        await wait(380);
+
+        // 2 · Anheben und ziehen
+        await cur.press();
+        const a = rel(aluber);
+        const drag = aluber;
+        await reflow(() => {
+          drag.classList.add('drag');
+          scene.append(drag);
+          Object.assign(drag.style, { left: a.x + 'px', top: a.y + 'px' });
+        });
+        m.animate(
+          drag,
+          {
+            y: [-6, 0],
+            scale: [1.03, 1.08],
+            boxShadow: ['0 0 0 rgb(0 0 0 / 0)', '0 18px 30px rgb(0 0 0 / 0.55)'],
+          },
+          { duration: d(0.18) }
+        );
+        myZones.forEach((z, i) =>
+          animate(
+            $('.drop', z),
+            { opacity: z === target ? 0 : 0.35 },
+            { duration: d(0.2), delay: d(i * 0.03) }
+          )
+        );
+        const z = rel(target);
+        const dx = z.x + (z.w - a.w) / 2 - a.x;
+        const dy = z.y + (z.h - a.h) / 2 - a.y;
+        const path = { x: [0, dx * 0.35, dx * 0.8, dx], y: [0, dy * 0.55, dy * 0.95, dy] };
+        const dur = 0.75;
+        const ease = [0.45, 0, 0.2, 1];
+        const c0 = cur.pos;
+        animate(
+          cur.el,
+          { x: path.x.map((v) => c0.x + v), y: path.y.map((v) => c0.y + v) },
+          { duration: d(dur), ease }
+        );
+        animate(
+          drag,
+          { x: path.x, y: path.y, rotate: [0, dx > 0 ? 7 : -7, dx > 0 ? 3 : -3, 0] },
+          { duration: d(dur), ease }
+        );
+        await wait(dur * 1000 * 0.55);
+        animate($('.drop', target), { opacity: 1 }, { duration: d(0.15) });
+        animate(
+          $('.will', target),
+          { opacity: [0, 1], y: [4, 0] },
+          { duration: d(0.2), ease: t.out }
+        );
+        await wait(dur * 1000 * 0.5);
+
+        // 3 · Loslassen, Feder rastet ein
+        await cur.release();
+        myZones.forEach((zz) => animate($('.drop', zz), { opacity: 0 }, { duration: d(0.18) }));
+        animate($('.will', target), { opacity: 0 }, { duration: d(0.15) });
+        const fromRect = drag.getBoundingClientRect();
+        drag.classList.remove('drag');
+        drag.style.cssText = drag
+          .getAttribute('style')
+          .split(';')
+          .filter((p) => p.includes('background-image'))
+          .join(';');
+        target.prepend(drag);
+        const toRect = drag.getBoundingClientRect();
+        await m.animate(
+          drag,
+          {
+            x: [fromRect.left - toRect.left, 0],
+            y: [fromRect.top - toRect.top, 0],
+            scale: [1.08, 1],
+            rotate: [0, 0],
+          },
+          dp.reduced ? { duration: 0 } : t.card
+        );
+        animate(
+          drag,
+          {
+            boxShadow: [
+              '0 0 0 2px #6AA8FF, 0 0 22px 2px rgb(106 168 255 / 0.7)',
+              '0 0 0 0 rgb(106 168 255 / 0)',
+            ],
+          },
+          { duration: d(0.6), ease: 'easeOut' }
+        );
+        animate($('.dot', target), { scale: [0, 1.4, 1] }, { duration: d(0.35), ease: t.bounce });
+        animate($('#hint'), { opacity: 0, height: 0 }, { duration: d(0.2) });
+        cur.to({ x: 560, y: 470 }, { duration: 0.6 });
+        await addStep(
+          '1',
+          '<div class="art" style="background-image:url(../assets/62962630_small.jpg)"></div><span>NS Aluber</span>'
+        );
+        swapText($('#count'), '1 / 1');
+        saved();
+        await wait(250);
+
+        // 4 · Trigger per Tastatur
+        await showState('#sTrigger');
+        await wait(700);
+        await key('⏎');
+        const src = rel(drag);
+        const link = document.createElement('div');
+        link.className = 'link';
+        link.innerHTML =
+          '<span class="n">CL1</span><div class="art" style="background-image:url(../assets/62962630_small.jpg)"></div><span>Aluber</span>';
+        $('#links').append(link);
+        animate($('#chainEmpty'), { opacity: 0 }, { duration: d(0.15) });
+        const lr = rel(link);
+        await m.animate(
+          link,
+          {
+            x: [src.x - lr.x, 0],
+            y: [src.y - lr.y, 0],
+            scaleX: [src.w / lr.w, 1],
+            scaleY: [src.h / lr.h, 1],
+            opacity: [0.2, 1],
+          },
+          dp.reduced ? { duration: 0 } : { type: m.spring, bounce: 0.2, visualDuration: 0.42 }
+        );
+        animate($('.cl', target), { scale: [0, 1.3, 1] }, { duration: d(0.35), ease: t.bounce });
+        await addStep(
+          '2',
+          '<div class="art" style="background-image:url(../assets/62962630_small.jpg)"></div><span>Aluber ↯ Suche</span>',
+          'chain'
+        );
+        swapText($('#count'), '2 / 2');
+        const kids = await showState('#sChain');
+        animate(
+          kids,
+          { opacity: [0, 1], x: [-6, 0] },
+          { duration: d(0.25), delay: m.stagger(0.05), ease: t.out }
+        );
+        await wait(900);
+
+        // 5 · Auflösen: Chain schließt sich, Abfrage steigt auf
+        await key('⏎');
+        animate($('.cl', target), { scale: 0 }, { duration: d(0.15) });
+        await animate(
+          link,
+          {
+            height: [link.offsetHeight, 0],
+            opacity: [1, 0],
+            paddingTop: [5, 0],
+            paddingBottom: [5, 0],
+            marginTop: 0,
+          },
+          { duration: d(0.26), ease: t.smooth }
+        );
+        link.remove();
+        animate($('#chainEmpty'), { opacity: 1 }, { duration: d(0.2) });
+        await showState('#sPick');
+        const picks = $$('#choice .c');
+        await animate(
+          picks,
+          { opacity: [0, 1], y: [14, 0], scale: [0.92, 1] },
+          { duration: d(0.3), delay: m.stagger(0.05), ease: t.out }
+        );
+
+        // 6 · Suchziel wählen, Karte fliegt auf die Hand
+        const bf = $('#pickBF');
+        await cur.to(bf, { duration: 0.7, dy: 6 });
+        animate(bf, { y: -4, scale: 1.08 }, t.snappy);
+        await wait(250);
+        await cur.click();
+        const fr = rel(bf);
+        const flyer = bf.cloneNode(true);
+        flyer.removeAttribute('id');
+        flyer.style.width = '48px';
+        flyer.style.height = '70px';
+        animate(bf.parentElement, { opacity: 0, scale: 0.8 }, { duration: d(0.15) });
+        await reflow(() => hand.append(flyer));
+        const tr = rel(flyer);
+        await m.animate(
+          flyer,
+          { x: [fr.x - tr.x, 0], y: [fr.y - tr.y, -10, 0], scale: [fr.w / tr.w, 1.08, 1] },
+          dp.reduced ? { duration: 0 } : { duration: 0.42, ease: [0.3, 0, 0.2, 1] }
+        );
+        animate(
+          flyer,
+          {
+            boxShadow: [
+              '0 0 0 2px #6AA8FF, 0 0 18px rgb(106 168 255 / 0.6)',
+              '0 0 0 0 rgb(106 168 255 / 0)',
+            ],
+          },
+          { duration: d(0.6) }
+        );
+        await showState('#sIdle');
+        const last = $$('#rows .step').at(-1);
+        await swapText($('span:last-child', last), 'Aluber → Br. Fusion');
+        saved();
+        cur.to({ x: 900, y: 620 }, { duration: 0.9 });
+        await wait(1400);
+      }
+
+      dp.loop(reset, run, { pause: 900 });
+    </script>
+  </body>
+</html>

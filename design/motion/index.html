@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>DuelPath · Motion-System</title>
+    <link rel="stylesheet" href="shared/tokens.css" />
+    <style>
+      html,
+      body {
+        overflow: auto;
+        height: auto;
+      }
+      body {
+        padding: clamp(20px, 4vw, 56px);
+        max-width: 2120px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: clamp(36px, 5vw, 56px);
+        line-height: 1;
+      }
+      .lead {
+        color: var(--text-muted);
+        font-size: 16px;
+        margin: 10px 0 36px;
+      }
+      .grid6,
+      .grid4 {
+        display: grid;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .grid6 {
+        grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+      }
+      .grid4 {
+        grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+        margin-bottom: 48px;
+      }
+      .box {
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        padding: 18px;
+      }
+      .box.fill {
+        background: var(--surface-1);
+      }
+      .box .nr {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--opponent);
+      }
+      .box h3 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 22px;
+        margin: 6px 0 8px;
+      }
+      .box p {
+        color: var(--text-muted);
+        line-height: 1.45;
+      }
+      .tok {
+        display: grid;
+        grid-template-columns: 76px 170px 1fr;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        padding: 3px 0;
+      }
+      .tok span:nth-child(2) {
+        color: var(--text-muted);
+      }
+      .tok span:nth-child(3) {
+        font-family: var(--font);
+        font-size: 12px;
+        color: var(--text-subtle);
+      }
+      .scenes {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(900px, 100%), 1fr));
+        gap: 40px;
+      }
+      .scene-card h2 {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 26px;
+      }
+      .scene-card p {
+        color: var(--text-muted);
+        margin: 4px 0 10px;
+      }
+      .scene-card .frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 960 / 560;
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        overflow: hidden;
+      }
+      .scene-card iframe {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 960px;
+        height: 560px;
+        border: 0;
+        transform-origin: 0 0;
+      }
+      .scene-card a {
+        color: var(--text-subtle);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Motion-System</h1>
+    <p class="lead">
+      Tinte zeichnet, Rotstift korrigiert, Karten haben Gewicht. Alle Szenen laufen live mit
+      motion.dev.
+    </p>
+
+    <div class="grid6">
+      <div class="box">
+        <span class="nr">1</span>
+        <h3>Tinte zeichnet</h3>
+        <p>
+          Neues entsteht als Strich, der sich zieht. Illustration, Kanten, Häkchen, Unterstriche.
+        </p>
+      </div>
+      <div class="box">
+        <span class="nr">2</span>
+        <h3>Rotstift korrigiert</h3>
+        <p>
+          Was der Gegner tut oder wo die Line bricht, markiert die Hand: Kreis, Strich, Stempel,
+          Notiz.
+        </p>
+      </div>
+      <div class="box">
+        <span class="nr">3</span>
+        <h3>Karten haben Gewicht</h3>
+        <p>Federn statt Kurven. Karten heben sich, neigen sich im Zug und rasten ein.</p>
+      </div>
+      <div class="box">
+        <span class="nr">4</span>
+        <h3>Chains lesen sich</h3>
+        <p>Links stapeln sich sichtbar und lösen rückwärts auf, in der Reihenfolge der Regeln.</p>
+      </div>
+      <div class="box">
+        <span class="nr">5</span>
+        <h3>Werkzeug ruhig, Ergebnis feiert</h3>
+        <p>
+          Workbench höchstens 250 ms und ohne Choreografie. Start, Stresstest und Endboard dürfen
+          inszenieren.
+        </p>
+      </div>
+      <div class="box">
+        <span class="nr">6</span>
+        <h3>Nie allein</h3>
+        <p>
+          Bewegung ist nie die einzige Rückmeldung. Bei reduzierter Bewegung steht sofort der
+          Endzustand.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid4">
+      <div class="box fill">
+        <h3>Dauer</h3>
+        <div class="tok"><span>fast</span><span>100 ms</span><span>Hover, Fokus</span></div>
+        <div class="tok"><span>base</span><span>150 ms</span><span>Zonenwechsel, Menüs</span></div>
+        <div class="tok">
+          <span>slow</span><span>240 ms</span><span>Moduswechsel, Wechselwort</span>
+        </div>
+        <div class="tok"><span>draw</span><span>500 ms</span><span>Kreis, Unterstrich</span></div>
+        <div class="tok">
+          <span>flash</span><span>600 ms</span><span>Aufleuchten nach dem Schritt</span>
+        </div>
+      </div>
+      <div class="box fill">
+        <h3>Kurven</h3>
+        <div class="tok">
+          <span>smooth</span><span>0.2, 0, 0, 1</span><span>Standard für UI</span>
+        </div>
+        <div class="tok">
+          <span>out</span><span>0.16, 1, 0.3, 1</span><span>Einblenden, Aufsteigen</span>
+        </div>
+        <div class="tok">
+          <span>ink</span><span>0.65, 0, 0.35, 1</span><span>Striche ziehen</span>
+        </div>
+        <div class="tok">
+          <span>bounce</span><span>0.34, 1.36, 0.64, 1</span><span>Chips, Stempel, Punkte</span>
+        </div>
+      </div>
+      <div class="box fill">
+        <h3>Federn</h3>
+        <div class="tok">
+          <span>card</span><span>Bounce 0,28 · 0,32 s</span><span>Karte rastet ein</span>
+        </div>
+        <div class="tok">
+          <span>soft</span><span>Bounce 0 · 0,30 s</span><span>Parallaxe, ruhige Wege</span>
+        </div>
+        <div class="tok">
+          <span>snappy</span><span>Bounce 0,15 · 0,20 s</span><span>Tabs, Hover-Lift</span>
+        </div>
+      </div>
+      <div class="box fill">
+        <h3>Staffelung</h3>
+        <div class="tok">
+          <span>Einträge</span><span>25 bis 40 ms</span><span>Menüs, Chips</span>
+        </div>
+        <div class="tok">
+          <span>Zeilen</span><span>60 bis 90 ms</span><span>Listen, Headline-Wörter</span>
+        </div>
+        <div class="tok"><span>Karten</span><span>170 ms</span><span>Endboard geben</span></div>
+      </div>
+    </div>
+
+    <div class="scenes" id="scenes"></div>
+
+    <script>
+      const scenes = [
+        [
+          '01-start',
+          '01 · Start',
+          'Seltene Fläche. Die Illustration zeichnet sich mit Tusche, die Linien leben, das Wechselwort wird mit Rotstift gestrichen.',
+        ],
+        [
+          '02-karte-spielen',
+          '02 · Karte spielen',
+          'Kern der Workbench. Anheben, Ziehen mit Neigung, Einrasten per Feder, Schritt entsteht, Trigger und Suchziel.',
+        ],
+        [
+          '03-handtrap',
+          '03 · Handtrap auf einen Schritt',
+          'Ash auf Schritt 2 ziehen, Branch klappt auf, CL2 kommt vom Gegner, Chain löst rückwärts, Rotstift negiert.',
+        ],
+        [
+          '04-stresstest',
+          '04 · Stresstest',
+          'Seltene Fläche. Der Rotstift liest Korrektur, Kreise mit Stiftdruck, Zähler und Auswertung wachsen.',
+        ],
+        [
+          '05-moduswechsel',
+          '05 · Moduswechsel',
+          'Taste V. Dieselben Schritte wandern vom Board in den Baum, Kanten zeichnen sich nach Tiefe.',
+        ],
+        [
+          '06-endboard',
+          '06 · Endboard',
+          'Seltene Fläche. Karten werden gegeben, Unterbrecher eingekreist, Branches im Vergleich.',
+        ],
+        [
+          '07-aktionsmenue',
+          '07 · Aktionsmenü',
+          'Wächst aus der Karte, Hervorhebung gleitet, zieht sich beim Wählen in die Karte zurück.',
+        ],
+        [
+          '08-mikro',
+          '08 · Mikro-Interaktionen',
+          'Tabs, Speichern, Warnung, Schalter, Rückgängig, Zahl. Kurz und unterbrechbar.',
+        ],
+      ];
+      const root = document.getElementById('scenes');
+      root.innerHTML = scenes
+        .map(
+          ([f, h, p]) =>
+            `<section class="scene-card"><h2>${h}</h2><p>${p}</p><div class="frame"><iframe src="${f}.html" title="${h}" loading="lazy"></iframe></div><a href="${f}.html" target="_blank">${f}.html einzeln öffnen</a></section>`
+        )
+        .join('');
+      // Szenen sind für 960 × 560 gebaut und werden in die Kachel skaliert
+      const fit = () =>
+        document.querySelectorAll('.frame').forEach((fr) => {
+          fr.querySelector('iframe').style.transform = `scale(${fr.clientWidth / 960})`;
+        });
+      addEventListener('resize', fit);
+      fit();
+    </script>
+  </body>
+</html>

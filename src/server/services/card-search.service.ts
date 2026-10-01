@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma/client';
 import type { CardSearchFilter, CardListResult, CardSortOptions } from '@/types/card.types';
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
 import { cardNameCache, archetypeCache, raceCache } from './autocomplete-cache.service';
+import { looksLikeInitials, nicknameTargets } from '@/lib/cards/nicknames';
 
 /**
  * Service für die Kartensuche
@@ -13,6 +14,9 @@ import { cardNameCache, archetypeCache, raceCache } from './autocomplete-cache.s
  * - Autocomplete für Kartennamen
  */
 export class CardSearchService {
+  /** Eigene Spitznamen des Nutzers ergänzen die gepflegte Liste (UX-Plan 8) */
+  constructor(private readonly nicknames: Record<string, string[]> = {}) {}
+
   /**
    * Sucht Karten mit Filtern und Pagination
    *
@@ -42,12 +46,13 @@ export class CardSearchService {
 
       if (filter.useRegex) {
         // Für Regex-Suche verwende case-insensitive contains als Fallback
-        // Echte Regex-Unterstützung könnte in Zukunft mit PostgreSQL hinzugefügt werden
-        where.nameLower = {
+        // Echte Regex-Suche wäre mit PostgreSQL per Raw-Query möglich
+        where.name = {
           contains: searchTerm.toLowerCase(),
+          mode: 'insensitive',
         };
       } else {
-        // Case-insensitive Suche: Verwende nameLower für optimierte Suche
+        // Case-insensitive Suche über mode: insensitive (ILIKE)
         const normalizedSearchTerm = searchTerm.toLowerCase();
 
         // Verbesserte Suche: Unterstützt mehrere Wörter
@@ -57,16 +62,18 @@ export class CardSearchService {
           // Mehrere Suchbegriffe: Alle müssen vorkommen
           andConditions.push({
             AND: searchTerms.map((term) => ({
-              nameLower: {
+              name: {
                 contains: term,
+                mode: 'insensitive',
               },
             })),
           });
         } else {
-          // Einzelner Suchbegriff
-          where.nameLower = {
-            contains: normalizedSearchTerm,
-          };
+          // Einzelner Suchbegriff, englischer oder deutscher Name (UX-Plan 8)
+          where.OR = [
+            { name: { contains: normalizedSearchTerm, mode: 'insensitive' } },
+            { nameDe: { contains: normalizedSearchTerm, mode: 'insensitive' } },
+          ];
         }
       }
     }
@@ -76,15 +83,16 @@ export class CardSearchService {
       const searchTerm = filter.type.trim();
       where.type = {
         contains: searchTerm,
+        mode: 'insensitive',
       };
     }
 
     if (filter.race) {
       // Case-insensitive Suche für Race
-      // SQLite ist standardmäßig case-insensitive für String-Vergleiche
       andConditions.push({
         race: {
           contains: filter.race.trim(),
+          mode: 'insensitive',
         },
       });
     }
@@ -136,6 +144,7 @@ export class CardSearchService {
               .map((arch) => ({
                 archetype: {
                   contains: arch.trim(),
+                  mode: 'insensitive',
                 },
               })),
           });
@@ -145,6 +154,7 @@ export class CardSearchService {
         andConditions.push({
           archetype: {
             contains: filter.archetype.trim(),
+            mode: 'insensitive',
           },
         });
       }
@@ -155,8 +165,8 @@ export class CardSearchService {
       where.AND = andConditions;
     }
 
-    if (filter.banlistInfo) {
-      where.banlistInfo = filter.banlistInfo;
+    if (filter.banTcg) {
+      where.banTcg = filter.banTcg;
     }
 
     // Typisierte Sortierung
@@ -176,6 +186,12 @@ export class CardSearchService {
       orderBy.name = 'asc';
     }
 
+    // Spitznamen und Kürzel (UX-Plan 8): Treffer stehen auf der ersten Seite ganz oben
+    const aliasHits =
+      validPage === 1 && filter.name && !filter.useRegex
+        ? await this.aliasHits(filter.name, where)
+        : [];
+
     // Führe Abfrage aus
     const [cards, total] = await Promise.all([
       prisma.card.findMany({
@@ -187,15 +203,44 @@ export class CardSearchService {
       prisma.card.count({ where }),
     ]);
 
-    const totalPages = Math.ceil(total / validPageSize);
+    const aliasIds = new Set(aliasHits.map((c) => c.id));
+    const extra = aliasHits.filter((c) => !cards.some((x) => x.id === c.id)).length;
+    const merged = aliasHits.length
+      ? [...aliasHits, ...cards.filter((c) => !aliasIds.has(c.id))].slice(0, validPageSize)
+      : cards;
+    const totalWithAliases = total + extra;
+    const totalPages = Math.ceil(totalWithAliases / validPageSize);
 
     return {
-      cards,
-      total,
+      cards: merged,
+      total: totalWithAliases,
       page: validPage,
       pageSize: validPageSize,
       totalPages,
     };
+  }
+
+  /**
+   * Karten hinter einem Spitznamen („ash“) oder Kürzel („bewd“), mit denselben übrigen Filtern.
+   * Nur für kurze Eingaben, damit normale Suchen keine zusätzliche Abfrage kosten.
+   */
+  private async aliasHits(query: string, where: Prisma.CardWhereInput) {
+    const names = nicknameTargets(query, this.nicknames);
+    const initials = looksLikeInitials(query) ? query.trim().toLowerCase() : null;
+    if (!names.length && !initials) return [];
+    const { OR: _nameMatch, AND, ...rest } = where;
+    void _nameMatch;
+    const alias: Prisma.CardWhereInput[] = [
+      ...(names.length ? [{ name: { in: names } }] : []),
+      ...(initials ? [{ initials }] : []),
+    ];
+    const hits = await prisma.card.findMany({
+      where: { ...rest, ...(AND ? { AND } : {}), OR: alias },
+      take: 10,
+      orderBy: { name: 'asc' },
+    });
+    // Gepflegte Spitznamen vor automatisch erkannten Kürzeln
+    return hits.sort((a, b) => Number(names.includes(b.name)) - Number(names.includes(a.name)));
   }
 
   /**
@@ -206,11 +251,12 @@ export class CardSearchService {
    * @returns Array von Kartennamen
    */
   async autocompleteCardNames(query: string, limit: number = 5): Promise<string[]> {
-    if (!query || query.trim().length === 0) {
+    // Mindestens 2 Zeichen, sonst scannt `contains` praktisch die ganze Tabelle
+    if (!query || query.trim().length < 2) {
       return [];
     }
 
-    // Case-insensitive Suche für Autocomplete mit nameLower
+    // Case-insensitive Suche für Autocomplete
     const normalizedQuery = query.trim().toLowerCase();
     const cacheKey = `${normalizedQuery}:${limit}`;
 
@@ -222,8 +268,9 @@ export class CardSearchService {
 
     const cards = await prisma.card.findMany({
       where: {
-        nameLower: {
+        name: {
           contains: normalizedQuery,
+          mode: 'insensitive',
         },
       },
       select: {
@@ -235,7 +282,11 @@ export class CardSearchService {
       },
     });
 
-    const names = cards.map((card) => card.name);
+    // Spitznamen und Kürzel zuerst (UX-Plan 8)
+    const alias = await this.aliasHits(query, {});
+    const names = [
+      ...new Set([...alias.map((c) => c.name), ...cards.map((card) => card.name)]),
+    ].slice(0, limit);
 
     // Speichere im Cache
     cardNameCache.set(cacheKey, names);
@@ -293,11 +344,11 @@ export class CardSearchService {
     }
 
     // Case-insensitive Suche für Race
-    // SQLite ist standardmäßig case-insensitive für String-Vergleiche
     const cards = await prisma.card.findMany({
       where: {
         race: {
           contains: query.trim(),
+          mode: 'insensitive',
           not: null,
         },
       },
@@ -349,11 +400,11 @@ export class CardSearchService {
     }
 
     // Case-insensitive Suche für Archetype
-    // SQLite ist standardmäßig case-insensitive für String-Vergleiche
     const cards = await prisma.card.findMany({
       where: {
         archetype: {
           contains: query.trim(),
+          mode: 'insensitive',
           not: null,
         },
       },

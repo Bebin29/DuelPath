@@ -1,26 +1,23 @@
-'use client';
+import { ComboLibrary } from '@/components/library/ComboLibrary';
+import { parseFilter } from '@/lib/combo/library';
+import { listDeckOptions, listLibrary } from '@/server/actions/combo.actions';
 
-import { useTranslation } from '@/lib/i18n/hooks';
-import { ComboList } from '@/components/combo/ComboList';
-import { CreateComboDialog } from '@/components/combo/CreateComboDialog';
-
-/**
- * Übersichtsseite für Kombos
- */
-export default function CombosPage() {
-  const { t } = useTranslation();
-
+export default async function CombosPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [params, library, decks] = await Promise.all([
+    searchParams,
+    listLibrary(),
+    listDeckOptions(),
+  ]);
   return (
-    <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">{t('navigation.combos')}</h1>
-          <p className="text-muted-foreground">Erstelle und verwalte deine Kombos</p>
-        </div>
-        <CreateComboDialog />
-      </div>
-
-      <ComboList />
-    </div>
+    <ComboLibrary
+      entries={library.data?.entries ?? []}
+      cards={library.data?.cards ?? {}}
+      decks={decks}
+      initialFilter={parseFilter(params)}
+    />
   );
 }

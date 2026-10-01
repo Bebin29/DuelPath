@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
-import i18n from './config';
+// Initialisiert i18next einmal beim ersten Import
+import './config';
 
 /**
  * Wrapper Hook für useTranslation mit Typisierung
@@ -37,7 +38,7 @@ export function useLanguage() {
         i18n.changeLanguage(savedLanguage);
       }
     }
-  }, []);
+  }, [i18n]);
 
   return {
     currentLanguage: i18n.language as 'de' | 'en',

@@ -9,10 +9,13 @@ describe('error-logger', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     console.error = vi.fn();
+    // logError schreibt nur in der Entwicklung auf die Konsole
+    vi.stubEnv('NODE_ENV', 'development');
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   describe('logError', () => {
@@ -23,7 +26,7 @@ describe('error-logger', () => {
       logError(error, context);
 
       expect(console.error).toHaveBeenCalled();
-      const callArgs = (console.error as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const callArgs = (console.error as ReturnType<typeof vi.fn>).mock.calls[0][1];
       expect(callArgs).toMatchObject({
         message: 'Test error',
         context,

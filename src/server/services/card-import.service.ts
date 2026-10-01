@@ -1,308 +1,115 @@
+import { initialsOf } from '@/lib/cards/nicknames';
 import { prisma } from '@/lib/prisma/client';
+import { parseEffects } from '@/lib/cards/effects';
+import type { Prisma } from '@/generated/prisma/client';
 
 /**
- * YGOPRODeck API Card Response Interface
+ * Import der TCG-Kartendatenbank von YGOPRODeck
+ *
+ * Zwei Abrufe (englisch mit misc_info, deutsch), dann Upsert in Transaktionen.
+ * OCG-only-Karten (ohne tcg_date) werden übersprungen.
  */
-interface YGOPRODeckCard {
+
+const API_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
+const BATCH_SIZE = 500;
+
+export interface YGOPRODeckCard {
   id: number;
   name: string;
   type: string;
   race?: string;
   attribute?: string;
   level?: number;
+  linkval?: number;
+  linkmarkers?: string[];
+  scale?: number;
   atk?: number;
   def?: number;
   desc?: string;
   archetype?: string;
-  banlist_info?: string | Record<string, string>;
-  card_images?: Array<{
-    id: number;
-    image_url: string;
-    image_url_small: string;
-  }>;
+  banlist_info?: { ban_tcg?: string; ban_ocg?: string };
+  misc_info?: Array<{ tcg_date?: string }>;
 }
 
-interface YGOPRODeckResponse {
-  data: YGOPRODeckCard[];
-}
-
-/**
- * Import-Statistiken
- */
 export interface ImportStats {
-  total: number;
-  created: number;
-  updated: number;
-  errors: number;
-  skipped: number;
+  fetched: number;
+  imported: number;
+  skippedNonTcg: number;
+  needsReview: number;
 }
 
-/**
- * Service für den Import von Yu-Gi-Oh! Karten von der YGOPRODeck API
- *
- * Features:
- * - Batch-Import aller Karten
- * - Upsert-Logik (neue Karten einfügen, bestehende aktualisieren)
- * - Fehlerbehandlung und Retry-Logik
- * - Rate-Limiting (20 Requests/Sekunde)
- */
-export class CardImportService {
-  private readonly API_BASE_URL = 'https://db.ygoprodeck.com/api/v7';
-  private readonly RATE_LIMIT_DELAY = 50; // 50ms = 20 Requests/Sekunde
-  private readonly MAX_RETRIES = 3;
-  private readonly RETRY_DELAY = 1000; // 1 Sekunde
+async function fetchCards(query: string): Promise<YGOPRODeckCard[]> {
+  const res = await fetch(`${API_URL}?${query}`);
+  if (!res.ok) throw new Error(`YGOPRODeck request failed: ${res.status} ${res.statusText}`);
+  const json = (await res.json()) as { data?: YGOPRODeckCard[] };
+  if (!Array.isArray(json.data)) throw new Error('Invalid YGOPRODeck response');
+  return json.data;
+}
 
-  /**
-   * Lädt alle Karten von der YGOPRODeck API
-   *
-   * @returns Array von Karten-Daten
-   * @throws Error bei API-Fehlern
-   */
-  private async fetchAllCards(): Promise<YGOPRODeckCard[]> {
-    const url = `${this.API_BASE_URL}/cardinfo.php?misc=yes`;
+/** Wandelt eine YGOPRODeck-Karte in Card-Daten um; null für Karten ohne TCG-Release und Skill Cards */
+export function mapCard(
+  card: YGOPRODeckCard,
+  german?: Pick<YGOPRODeckCard, 'name' | 'desc'>
+): Prisma.CardCreateInput | null {
+  const tcgDate = card.misc_info?.[0]?.tcg_date;
+  if (!tcgDate) return null;
+  // Skill Cards gibt es nur im Speed Duel, nicht in TCG-Decks
+  if (card.type === 'Skill Card') return null;
 
-    let retries = 0;
-    while (retries < this.MAX_RETRIES) {
-      try {
-        const response = await fetch(url);
+  const passcode = String(card.id);
+  const parsed = parseEffects(card.desc ?? '', card);
 
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-        }
+  return {
+    id: passcode,
+    passcode,
+    name: card.name,
+    nameDe: german?.name ?? null,
+    initials: initialsOf(card.name),
+    type: card.type,
+    race: card.race ?? null,
+    attribute: card.attribute ?? null,
+    level: card.level ?? card.linkval ?? null,
+    linkMarkers: card.linkmarkers ?? [],
+    scale: card.scale ?? null,
+    atk: card.atk ?? null,
+    def: card.def ?? null,
+    desc: card.desc ?? null,
+    descDe: german?.desc ?? null,
+    archetype: card.archetype ?? null,
+    banTcg: card.banlist_info?.ban_tcg ?? null,
+    tcgDate: new Date(tcgDate),
+    effects: parsed as unknown as Prisma.InputJsonValue,
+    effectsReview: parsed.needsReview,
+    imageUrl: `/api/card-images/${passcode}.jpg`,
+    imageSmall: `/api/card-images/${passcode}_small.jpg`,
+  };
+}
 
-        const data: YGOPRODeckResponse = await response.json();
+export async function importTcgCards(
+  onProgress?: (done: number, total: number) => void
+): Promise<ImportStats> {
+  const [english, german] = await Promise.all([fetchCards('misc=yes'), fetchCards('language=de')]);
+  const germanById = new Map(german.map((c) => [c.id, c]));
 
-        if (!data.data || !Array.isArray(data.data)) {
-          throw new Error('Invalid API response format');
-        }
+  const cards = english
+    .map((c) => mapCard(c, germanById.get(c.id)))
+    .filter((c): c is Prisma.CardCreateInput => c !== null);
 
-        return data.data;
-      } catch (error) {
-        retries++;
-        if (retries >= this.MAX_RETRIES) {
-          throw new Error(
-            `Failed to fetch cards after ${this.MAX_RETRIES} retries: ${error instanceof Error ? error.message : String(error)}`
-          );
-        }
-
-        // Exponential backoff
-        await this.delay(this.RETRY_DELAY * retries);
-      }
-    }
-
-    throw new Error('Unexpected error in fetchAllCards');
+  for (let i = 0; i < cards.length; i += BATCH_SIZE) {
+    const batch = cards.slice(i, i + BATCH_SIZE);
+    // effectsJev bleibt beim Update erhalten; ein Neuimport setzt die Jev-Prüfung nicht zurück
+    await prisma.$transaction(
+      batch.map((data) =>
+        prisma.card.upsert({ where: { id: data.id }, create: data, update: data })
+      )
+    );
+    onProgress?.(Math.min(i + BATCH_SIZE, cards.length), cards.length);
   }
 
-  /**
-   * Konvertiert YGOPRODeck API-Daten in Prisma Card-Format
-   *
-   * @param apiCard - Karte von der API
-   * @returns Prisma Card-Daten
-   */
-  private mapApiCardToPrisma(apiCard: YGOPRODeckCard) {
-    const imageUrl = apiCard.card_images?.[0]?.image_url || null;
-    const imageSmall = apiCard.card_images?.[0]?.image_url_small || null;
-    const passcode = apiCard.id.toString();
-
-    // Serialisiere banlistInfo als JSON-String, falls es ein Objekt ist
-    let banlistInfo: string | null = null;
-    if (apiCard.banlist_info) {
-      if (typeof apiCard.banlist_info === 'string') {
-        banlistInfo = apiCard.banlist_info;
-      } else if (typeof apiCard.banlist_info === 'object') {
-        banlistInfo = JSON.stringify(apiCard.banlist_info);
-      }
-    }
-
-    return {
-      id: passcode, // Verwende Passcode als ID
-      name: apiCard.name,
-      nameLower: apiCard.name.toLowerCase(), // Normalisierter Name für optimierte Suche
-      type: apiCard.type,
-      typeLower: apiCard.type.toLowerCase(), // Normalisierter Typ für optimierte Suche
-      race: apiCard.race || null,
-      raceLower: apiCard.race ? apiCard.race.toLowerCase() : null, // Normalisierter Race für optimierte Suche
-      attribute: apiCard.attribute || null,
-      level: apiCard.level ?? null,
-      atk: apiCard.atk ?? null,
-      def: apiCard.def ?? null,
-      desc: apiCard.desc || null,
-      archetype: apiCard.archetype || null,
-      archetypeLower: apiCard.archetype ? apiCard.archetype.toLowerCase() : null, // Normalisierter Archetype für optimierte Suche
-      banlistInfo,
-      imageUrl,
-      imageSmall,
-      passcode,
-    };
-  }
-
-  /**
-   * Verzögerung für Rate-Limiting
-   *
-   * @param ms - Millisekunden
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Importiert eine einzelne Karte (Upsert)
-   *
-   * @param apiCard - Karte von der API
-   * @returns true wenn erstellt, false wenn aktualisiert
-   */
-  private async importCard(apiCard: YGOPRODeckCard): Promise<'created' | 'updated' | 'skipped'> {
-    try {
-      const cardData = this.mapApiCardToPrisma(apiCard);
-
-      // Prüfe ob Karte bereits existiert
-      const existingCard = await prisma.card.findUnique({
-        where: { id: cardData.id },
-      });
-
-      if (existingCard) {
-        // Update bestehende Karte
-        await prisma.card.update({
-          where: { id: cardData.id },
-          data: cardData,
-        });
-        return 'updated';
-      } else {
-        // Erstelle neue Karte
-        await prisma.card.create({
-          data: cardData,
-        });
-        return 'created';
-      }
-    } catch (error) {
-      // Bei Fehlern (z.B. Constraint-Verletzungen) überspringen
-      console.error(`Error importing card ${apiCard.name} (ID: ${apiCard.id}):`, error);
-      return 'skipped';
-    }
-  }
-
-  /**
-   * Importiert alle Karten von der YGOPRODeck API
-   *
-   * @param onProgress - Callback für Fortschritts-Updates (optional)
-   * @returns Import-Statistiken
-   */
-  async importAllCards(
-    onProgress?: (current: number, total: number) => void
-  ): Promise<ImportStats> {
-    const stats: ImportStats = {
-      total: 0,
-      created: 0,
-      updated: 0,
-      errors: 0,
-      skipped: 0,
-    };
-
-    try {
-      // Lade alle Karten von der API
-      const apiCards = await this.fetchAllCards();
-      stats.total = apiCards.length;
-
-      // Importiere Karten in Batches (mit Rate-Limiting)
-      for (let i = 0; i < apiCards.length; i++) {
-        const apiCard = apiCards[i];
-
-        // Rate-Limiting: Warte zwischen Requests
-        if (i > 0) {
-          await this.delay(this.RATE_LIMIT_DELAY);
-        }
-
-        const result = await this.importCard(apiCard);
-
-        switch (result) {
-          case 'created':
-            stats.created++;
-            break;
-          case 'updated':
-            stats.updated++;
-            break;
-          case 'skipped':
-            stats.skipped++;
-            stats.errors++;
-            break;
-        }
-
-        // Progress-Callback aufrufen
-        if (onProgress) {
-          onProgress(i + 1, stats.total);
-        }
-      }
-
-      return stats;
-    } catch (error) {
-      throw new Error(
-        `Card import failed: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  /**
-   * Importiert Karten in Batches (für große Imports)
-   *
-   * @param batchSize - Anzahl Karten pro Batch
-   * @param onProgress - Callback für Fortschritts-Updates (optional)
-   * @returns Import-Statistiken
-   */
-  async importCardsInBatches(
-    batchSize: number = 100,
-    onProgress?: (current: number, total: number) => void
-  ): Promise<ImportStats> {
-    const stats: ImportStats = {
-      total: 0,
-      created: 0,
-      updated: 0,
-      errors: 0,
-      skipped: 0,
-    };
-
-    try {
-      // Lade alle Karten von der API
-      const apiCards = await this.fetchAllCards();
-      stats.total = apiCards.length;
-
-      // Teile in Batches auf
-      for (let i = 0; i < apiCards.length; i += batchSize) {
-        const batch = apiCards.slice(i, i + batchSize);
-
-        // Importiere Batch
-        for (const apiCard of batch) {
-          const result = await this.importCard(apiCard);
-
-          switch (result) {
-            case 'created':
-              stats.created++;
-              break;
-            case 'updated':
-              stats.updated++;
-              break;
-            case 'skipped':
-              stats.skipped++;
-              stats.errors++;
-              break;
-          }
-        }
-
-        // Progress-Callback aufrufen
-        if (onProgress) {
-          onProgress(Math.min(i + batchSize, stats.total), stats.total);
-        }
-
-        // Rate-Limiting zwischen Batches
-        if (i + batchSize < apiCards.length) {
-          await this.delay(this.RATE_LIMIT_DELAY * 10); // Längere Pause zwischen Batches
-        }
-      }
-
-      return stats;
-    } catch (error) {
-      throw new Error(
-        `Card import failed: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
+  return {
+    fetched: english.length,
+    imported: cards.length,
+    skippedNonTcg: english.length - cards.length,
+    needsReview: cards.filter((c) => c.effectsReview).length,
+  };
 }

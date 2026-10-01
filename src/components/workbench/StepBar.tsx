@@ -1,0 +1,488 @@
+'use client';
+
+import { ChevronLeft, ChevronRight, GitBranch, Pause, Play, Plus, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { EASE } from '@/lib/motion';
+import { useCardLanguage } from '@/components/providers/SettingsProvider';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Kbd } from '@/components/ui/kbd';
+import { Segmented } from '@/components/ui/segmented';
+import { RollingNumber } from '@/components/motion/RollingNumber';
+import { AUTOPLAY_SPEEDS, speedLabel, type AutoplaySpeed } from '@/lib/settings';
+import type { LineBranch } from '@/lib/combo/lines';
+import { TimedNotice } from '@/components/ui/timed-notice';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { CardView } from '@/components/cards/CardView';
+import { displayName, type ComboCard } from '@/lib/combo/cards';
+import type { NodeKind, PlacedCard } from '@/lib/combo/state';
+import { OFFER_MS } from './use-play';
+
+const KINDS: NodeKind[] = ['ACTION', 'ACTIVATE', 'OPPONENT', 'RESOLVE', 'END'];
+
+export interface StepPrompt {
+  question: string;
+  candidates: PlacedCard[];
+  picked: string[];
+  /** Mehrfachauswahl braucht „Bestätigen“ bzw. Enter */
+  multi: boolean;
+  /** „Alle Karten“, wenn die Heuristik danebenliegt */
+  all?: boolean;
+}
+
+export interface TriggerOffer {
+  instanceId: string;
+  effectIndex: number;
+  cardId: string;
+}
+
+/** Antwort auf eine gegnerische Unterbrechung, etwa Called by the Grave von der Hand (UX-Plan 6.8) */
+export interface AnswerOffer {
+  staple: string;
+  cardId: string;
+  short: string;
+}
+
+interface StepBarProps {
+  position: number;
+  total: number;
+  onPrev: () => void;
+  onNext: () => void;
+  cards: Map<string, ComboCard>;
+  onInspect: (instanceId: string | null) => void;
+
+  prompt: StepPrompt | null;
+  onPick: (instanceId: string) => void;
+  onConfirm: () => void;
+  onAll?: () => void;
+  onLater: () => void;
+
+  chainLength: number;
+  chainMode: boolean;
+  onResolve: () => void;
+  onChain: () => void;
+  onOpponent: () => void;
+
+  triggers: TriggerOffer[];
+  onTrigger: (offer: TriggerOffer) => void;
+
+  answers: AnswerOffer[];
+  onAnswer: (offer: AnswerOffer) => void;
+
+  /** Erster Knoten des frisch angelegten Branches; null ohne Angebot */
+  offer: string | null;
+  onInsert: () => void;
+  onReplace: () => void;
+  onDismissOffer: () => void;
+
+  onAdd: (kind: NodeKind) => void;
+  /** Kurze Rückmeldung auf ein Kürzel, das gerade nicht geht */
+  hint?: string | null;
+
+  /** Nachspielen (UX-Plan 6.10): Leertaste spielt ab, Tempo 0,5× bis 2× */
+  playing: boolean;
+  onPlay: () => void;
+  speed: AutoplaySpeed;
+  onSpeed: (speed: AutoplaySpeed) => void;
+  /** Branches am aktuellen Schritt, ↓ wechselt in den ersten */
+  branches: LineBranch[];
+  onBranch: (nodeId: string) => void;
+}
+
+/**
+ * Schrittleiste (UI-Plan 7.2.4): links die Navigation, in der Mitte der Zustand
+ * (Frage, offene Chain, Trigger oder Hinweis), rechts das Angebot nach einem Branch.
+ */
+export function StepBar(props: StepBarProps) {
+  const { t } = useTranslation();
+  const { position, total, onPrev, onNext, prompt, chainLength } = props;
+  return (
+    <div className="flex h-14 shrink-0 items-center gap-4 border-t border-line bg-surface-1 px-4">
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onPrev}
+          disabled={position <= 0}
+          aria-label={t('workbench.prev')}
+        >
+          <ChevronLeft />
+        </Button>
+        <span className="min-w-12 text-center font-mono text-xs text-text-muted" aria-live="polite">
+          <RollingNumber value={position} /> / {total}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onNext}
+          disabled={position >= total}
+          aria-label={t('workbench.next')}
+        >
+          <ChevronRight />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={props.onPlay}
+          disabled={total === 0}
+          aria-pressed={props.playing}
+          aria-label={`${props.playing ? t('workbench.pause') : t('workbench.play')} (${t('workbench.space')})`}
+          title={`${props.playing ? t('workbench.pause') : t('workbench.play')} (${t('workbench.space')})`}
+        >
+          {props.playing ? <Pause /> : <Play />}
+        </Button>
+      </div>
+      <span className="h-5 w-px shrink-0 bg-line" />
+      {/* Der Zustand der Leiste wechselt mit kurzem Aufsteigen (Szene „Karte spielen“: Abfrage steigt auf) */}
+      <div className="relative flex min-w-0 flex-1 items-center overflow-hidden" aria-live="polite">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={
+              props.playing
+                ? 'play'
+                : prompt
+                  ? `prompt:${prompt.question}`
+                  : props.hint
+                    ? 'hint'
+                    : chainLength > 0
+                      ? 'chain'
+                      : 'idle'
+            }
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15, ease: EASE.out }}
+            className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto"
+          >
+            {props.playing ? (
+              <PlayRow {...props} />
+            ) : prompt ? (
+              <PromptRow {...props} prompt={prompt} />
+            ) : props.hint ? (
+              <span role="status" className="truncate text-warning">
+                {props.hint}
+              </span>
+            ) : chainLength > 0 ? (
+              <ChainRow {...props} />
+            ) : (
+              <IdleRow {...props} />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      {props.offer ? (
+        <OfferNotice key={props.offer} {...props} />
+      ) : (
+        !prompt &&
+        !props.playing &&
+        chainLength === 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="line">
+                <Plus />
+                {t('workbench.addStep')}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="top">
+              {KINDS.map((kind) => (
+                <DropdownMenuItem key={kind} onSelect={() => props.onAdd(kind)}>
+                  {t(`combo.kind.${kind}`)}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      )}
+    </div>
+  );
+}
+
+function PromptRow({
+  prompt,
+  cards,
+  onInspect,
+  onPick,
+  onConfirm,
+  onAll,
+  onLater,
+}: StepBarProps & { prompt: StepPrompt }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <span className="shrink-0 font-display text-base">{prompt.question}</span>
+      <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto py-1">
+        {prompt.candidates.length === 0 && (
+          <span className="text-xs text-text-subtle">{t('workbench.prompt.none')}</span>
+        )}
+        {prompt.candidates.map((c, i) => (
+          <CandidateChip
+            key={c.instanceId}
+            placed={c}
+            card={cards.get(c.cardId)}
+            index={i}
+            picked={prompt.picked.includes(c.instanceId)}
+            onPick={() => onPick(c.instanceId)}
+            onInspect={onInspect}
+          />
+        ))}
+      </div>
+      {onAll && (
+        <Button
+          variant="text"
+          size="sm"
+          onClick={onAll}
+          aria-pressed={prompt.all}
+          className={cn(prompt.all && 'text-primary')}
+        >
+          {t('workbench.prompt.allCards')}
+        </Button>
+      )}
+      {prompt.multi && (
+        <Button size="sm" onClick={onConfirm} disabled={prompt.picked.length === 0}>
+          {t('workbench.prompt.confirm')} <Kbd>⏎</Kbd>
+        </Button>
+      )}
+      <Button variant="ghost" size="sm" onClick={onLater}>
+        {t('workbench.prompt.later')} <Kbd>Esc</Kbd>
+      </Button>
+    </>
+  );
+}
+
+/** Karte als Antwort auf eine Frage; die ersten neun tragen ihre Zifferntaste */
+function CandidateChip({
+  placed,
+  card,
+  index,
+  picked,
+  onPick,
+  onInspect,
+}: {
+  placed: PlacedCard;
+  card: ComboCard | undefined;
+  index: number;
+  picked: boolean;
+  onPick: () => void;
+  onInspect: (id: string | null) => void;
+}) {
+  const cardLanguage = useCardLanguage();
+  const name = displayName(card, cardLanguage);
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      onMouseEnter={() => onInspect(placed.instanceId)}
+      onMouseLeave={() => onInspect(null)}
+      aria-pressed={picked}
+      className={cn(
+        'flex max-w-52 shrink-0 items-center gap-1.5 rounded-sm border py-0.5 pl-0.5 pr-2 text-left text-xs transition-colors duration-(--motion-fast)',
+        picked ? 'border-primary bg-ink/7' : 'border-line hover:border-line-strong'
+      )}
+    >
+      <CardView image={card?.imageSmall} label={name} size="art" />
+      <span className="truncate">{name}</span>
+      {index < 9 && <Kbd>{index + 1}</Kbd>}
+    </button>
+  );
+}
+
+function ChainRow({
+  chainLength,
+  chainMode,
+  onResolve,
+  onChain,
+  onOpponent,
+  triggers,
+  cards,
+  onTrigger,
+  answers,
+  onAnswer,
+}: StepBarProps) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <span className="shrink-0 font-mono text-xs text-chain">
+        {t('workbench.chainOpen', { count: chainLength })}
+      </span>
+      <Button onClick={onResolve} className="shrink-0">
+        {t('workbench.resolve')} <Kbd>⏎</Kbd>
+      </Button>
+      <Button
+        variant="line"
+        onClick={onChain}
+        aria-pressed={chainMode}
+        className={cn('shrink-0', chainMode && 'border-chain text-chain')}
+      >
+        {chainMode ? t('workbench.chainArmed') : t('workbench.chainOn')} <Kbd>C</Kbd>
+      </Button>
+      <Button variant="line" onClick={onOpponent} className="shrink-0">
+        {t('workbench.opponentReacts')} <Kbd>O</Kbd>
+      </Button>
+      <Answers answers={answers} cards={cards} onAnswer={onAnswer} />
+      <Triggers triggers={triggers} cards={cards} onTrigger={onTrigger} />
+    </>
+  );
+}
+
+function PlayRow({ position, total, speed, onSpeed }: StepBarProps) {
+  const { t, i18n } = useTranslation();
+  return (
+    <>
+      <span className="font-mono text-xs text-text-muted">{t('workbench.playing')}</span>
+      <Segmented<string>
+        label={t('workbench.speed')}
+        value={String(speed)}
+        onChange={(value) => onSpeed(Number(value) as AutoplaySpeed)}
+        options={AUTOPLAY_SPEEDS.map((s) => ({
+          value: String(s),
+          label: speedLabel(s, i18n.language),
+        }))}
+      />
+      <span
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={position}
+        aria-label={t('workbench.stepCounter', { n: position, total })}
+        className="relative h-1 w-40 overflow-hidden rounded-full bg-line"
+      >
+        <span
+          className="absolute inset-y-0 left-0 bg-ink transition-[width] duration-(--motion-base)"
+          style={{ width: `${total ? (position / total) * 100 : 0}%` }}
+        />
+      </span>
+    </>
+  );
+}
+
+function Branches({ branches, onBranch }: Pick<StepBarProps, 'branches' | 'onBranch'>) {
+  const { t } = useTranslation();
+  return branches.slice(0, 3).map((b, i) => (
+    <Button
+      key={b.nodeId}
+      variant="line"
+      size="sm"
+      onClick={() => onBranch(b.nodeId)}
+      className="max-w-56 shrink-0"
+    >
+      <GitBranch />
+      <span className="truncate">
+        {t('workbench.branchHint', { letter: b.letter, label: b.label })}
+      </span>
+      {i === 0 && <Kbd>↓</Kbd>}
+    </Button>
+  ));
+}
+
+function IdleRow({
+  position,
+  triggers,
+  cards,
+  onTrigger,
+  answers,
+  onAnswer,
+  branches,
+  onBranch,
+}: StepBarProps) {
+  const { t } = useTranslation();
+  if (branches.length > 0 && triggers.length === 0 && answers.length === 0)
+    return <Branches branches={branches} onBranch={onBranch} />;
+  if (triggers.length > 0 || answers.length > 0)
+    return (
+      <>
+        <Answers answers={answers} cards={cards} onAnswer={onAnswer} />
+        <Triggers triggers={triggers} cards={cards} onTrigger={onTrigger} />
+      </>
+    );
+  return (
+    <span className="truncate text-text-muted">
+      {position === 0 ? t('workbench.startHint') : t('workbench.nextHint')}
+    </span>
+  );
+}
+
+function Triggers({
+  triggers,
+  cards,
+  onTrigger,
+}: Pick<StepBarProps, 'triggers' | 'cards' | 'onTrigger'>) {
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
+  if (triggers.length === 0) return null;
+  return (
+    <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto">
+      <span className="shrink-0 font-mono text-2xs text-text-subtle">{t('workbench.trigger')}</span>
+      {triggers.map((offer) => {
+        const card = cards.get(offer.cardId);
+        const name = displayName(card, cardLanguage);
+        return (
+          <Button
+            key={`${offer.instanceId}:${offer.effectIndex}`}
+            variant="line"
+            size="sm"
+            onClick={() => onTrigger(offer)}
+            className="max-w-60 shrink-0"
+          >
+            <CardView image={card?.imageSmall} label={name} size="art" />
+            <span className="truncate">
+              {name} · {t('workbench.actions.effect', { n: offer.effectIndex + 1 })}
+            </span>
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
+
+function Answers({
+  answers,
+  cards,
+  onAnswer,
+}: Pick<StepBarProps, 'answers' | 'cards' | 'onAnswer'>) {
+  const { t } = useTranslation();
+  const cardLanguage = useCardLanguage();
+  return answers.map((offer) => {
+    const card = cards.get(offer.cardId);
+    return (
+      <Button
+        key={offer.staple}
+        variant="line"
+        size="sm"
+        onClick={() => onAnswer(offer)}
+        className="shrink-0 border-self text-self"
+      >
+        <CardView image={card?.imageSmall} label={displayName(card, cardLanguage)} size="art" />
+        {t('stress.answerWith', { name: offer.short })}
+      </Button>
+    );
+  });
+}
+
+function OfferNotice({ onInsert, onReplace, onDismissOffer }: StepBarProps) {
+  const { t } = useTranslation();
+  return (
+    <TimedNotice duration={OFFER_MS} onExpire={onDismissOffer} className="shrink-0">
+      <span className="mr-1 text-xs text-text-muted">{t('workbench.offer.branch')}</span>
+      <Button variant="text" size="sm" onClick={onInsert}>
+        {t('workbench.offer.insert')}
+      </Button>
+      <Button variant="text" size="sm" onClick={onReplace}>
+        {t('workbench.offer.replace')}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={onDismissOffer}
+        aria-label={t('workbench.close')}
+      >
+        <X />
+      </Button>
+    </TimedNotice>
+  );
+}

@@ -1,12 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   createDeckSchema,
-  updateDeckSchema,
   addCardToDeckSchema,
-  updateCardQuantitySchema,
-  removeCardFromDeckSchema,
   validateDeckSizes,
-  DECK_VALIDATION_RULES,
 } from '@/lib/validations/deck.schema';
 
 describe('Deck Validation Schemas', () => {

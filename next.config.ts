@@ -2,14 +2,6 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.ygoprodeck.com',
-        port: '',
-        pathname: '/**',
-      },
-    ],
     // Bild-Optimierung aktivieren
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 Tage
@@ -59,8 +51,8 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // API-Routen: Kurze Cache-Zeit, keine Caching für dynamische Daten
-        source: '/api/:path*',
+        // API-Routen: kein Caching für dynamische Daten; Kartenbilder setzen ihre Header selbst
+        source: '/api/:path((?!card-images/).*)',
         headers: [
           {
             key: 'Cache-Control',
@@ -69,8 +61,8 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // HTML-Seiten: Kurze Cache-Zeit mit Revalidation
-        source: '/:path*',
+        // HTML-Seiten: Kurze Cache-Zeit mit Revalidation (API-Routen haben eigene Regeln)
+        source: '/:path((?!api/).*)',
         headers: [
           {
             key: 'Cache-Control',

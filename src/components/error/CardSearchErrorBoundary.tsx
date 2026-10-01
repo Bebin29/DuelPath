@@ -2,14 +2,8 @@
 
 import { type ReactNode } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/components/ui/card';
-import { Button } from '@/components/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 

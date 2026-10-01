@@ -1,14 +1,8 @@
 'use client';
 
 import { Component, type ReactNode } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/components/ui/card';
-import { Button } from '@/components/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import { logError, getErrorMessage, isRetryableError } from '@/lib/utils/error-logger';
 import { useTranslation } from '@/lib/i18n/hooks';
@@ -106,7 +100,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       if (this.props.fallback) {
         if (typeof this.props.fallback === 'function') {
           const error = this.state.error || new Error('An unknown error occurred');
-          return this.props.fallback({ error, resetError: this.resetErrorBoundary });
+          return this.props.fallback(error, this.resetErrorBoundary);
         }
         return this.props.fallback;
       }

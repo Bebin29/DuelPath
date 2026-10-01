@@ -32,22 +32,23 @@ export function getSectionTotal(deck: DeckWithCards | null, section: DeckSection
 }
 
 /**
- * Erstellt ein YDK-Format-String aus einem Deck
+ * Erstellt ein YDK-Format-String aus einem Deck. YDK referenziert Karten über den Passcode;
+ * Karten ohne Passcode werden ausgelassen.
  */
 export function createYDKContent(deck: DeckWithCards): string {
   const mainDeck = deck.deckCards
     .filter((dc) => dc.deckSection === 'MAIN')
-    .flatMap((dc) => Array(dc.quantity).fill(dc.cardId))
+    .flatMap((dc) => (dc.card.passcode ? Array(dc.quantity).fill(dc.card.passcode) : []))
     .join('\n');
 
   const extraDeck = deck.deckCards
     .filter((dc) => dc.deckSection === 'EXTRA')
-    .flatMap((dc) => Array(dc.quantity).fill(dc.cardId))
+    .flatMap((dc) => (dc.card.passcode ? Array(dc.quantity).fill(dc.card.passcode) : []))
     .join('\n');
 
   const sideDeck = deck.deckCards
     .filter((dc) => dc.deckSection === 'SIDE')
-    .flatMap((dc) => Array(dc.quantity).fill(dc.cardId))
+    .flatMap((dc) => (dc.card.passcode ? Array(dc.quantity).fill(dc.card.passcode) : []))
     .join('\n');
 
   return `#created by DuelPath

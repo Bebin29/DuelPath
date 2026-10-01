@@ -1,258 +1,108 @@
 import { z } from 'zod';
-import type { ActionType } from '@/types/combo.types';
 
 /**
- * Aktionstyp Enum für Validierung
+ * Validierung der Combo-Daten an der Grenze zum Server (Server Actions).
+ * Die Formen entsprechen den Typen in src/lib/combo/state.ts.
  */
-export const ACTION_TYPES = [
-  'SUMMON',
-  'ACTIVATE',
-  'SET',
-  'ATTACK',
-  'DRAW',
-  'DISCARD',
-  'SPECIAL_SUMMON',
-  'TRIBUTE_SUMMON',
-  'NORMAL_SUMMON',
-  'FLIP_SUMMON',
-  'OTHER',
-] as const;
 
-/**
- * Schema für Combo-Schritt Erstellung
- */
-export const createComboStepSchema = z.object({
-  cardId: z.string().min(1, 'Karten-ID ist erforderlich'),
-  actionType: z.enum(ACTION_TYPES, {
-    errorMap: () => ({ message: 'Ungültiger Aktionstyp' }),
-  }),
-  description: z
-    .string()
-    .max(1000, 'Beschreibung darf maximal 1000 Zeichen lang sein')
-    .optional()
-    .nullable(),
-  targetCardId: z.string().min(1).optional().nullable(),
-  order: z
-    .number()
-    .int('Reihenfolge muss eine ganze Zahl sein')
-    .min(1, 'Reihenfolge muss mindestens 1 sein'),
+const id = z.string().min(1).max(64);
+const player = z.enum(['self', 'opponent']);
+const zone = z.enum([
+  'HAND',
+  'DECK',
+  'EXTRA',
+  'MONSTER',
+  'SPELL_TRAP',
+  'FIELD',
+  'GY',
+  'BANISHED',
+  'MATERIAL',
+]);
+const position = z.enum(['ATK', 'DEF', 'SET']);
+
+export const cardMoveSchema = z.object({
+  instanceId: id,
+  cardId: id.optional(),
+  owner: player.optional(),
+  from: zone,
+  to: zone,
+  slot: z.number().int().min(0).max(6).optional(),
+  position: position.optional(),
+  controller: player.optional(),
+  attachTo: id.optional(),
+  token: z.boolean().optional(),
 });
 
-export type CreateComboStepInput = z.infer<typeof createComboStepSchema>;
+const negationSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('ACTIVATION'), nodeId: id }),
+  z.object({ type: z.literal('EFFECT'), nodeId: id }),
+  z.object({ type: z.literal('SUMMON'), nodeId: id }),
+  z.object({ type: z.literal('CARD'), instanceId: id }),
+  z.object({ type: z.literal('NAME'), cardId: id }),
+]);
 
-/**
- * Schema für Combo-Schritt Update
- */
-export const updateComboStepSchema = z.object({
-  cardId: z.string().min(1, 'Karten-ID ist erforderlich').optional(),
-  actionType: z
-    .enum(ACTION_TYPES, {
-      errorMap: () => ({ message: 'Ungültiger Aktionstyp' }),
-    })
-    .optional(),
-  description: z
-    .string()
-    .max(1000, 'Beschreibung darf maximal 1000 Zeichen lang sein')
-    .optional()
-    .nullable(),
-  targetCardId: z.string().min(1).optional().nullable(),
-  order: z
-    .number()
-    .int('Reihenfolge muss eine ganze Zahl sein')
-    .min(1, 'Reihenfolge muss mindestens 1 sein')
-    .optional(),
+export const comboNodeSchema = z.object({
+  id,
+  parentId: id.nullable(),
+  rank: z.number().int().min(0).max(999).default(0),
+  kind: z.enum(['ACTION', 'ACTIVATE', 'OPPONENT', 'RESOLVE', 'END']),
+  player,
+  edgeLabel: z.string().max(100).nullish(),
+  instanceId: id.nullish(),
+  cardId: id.nullish(),
+  effectIndex: z.number().int().min(0).max(20).nullish(),
+  action: z.enum(['NORMAL_SUMMON', 'SPECIAL_SUMMON', 'SET', 'OTHER']).nullish(),
+  costMoves: z.array(cardMoveSchema).max(40).default([]),
+  resolveMoves: z.array(cardMoveSchema).max(40).default([]),
+  negates: negationSchema.nullish(),
+  optOverride: z.boolean().nullish(),
+  note: z.string().max(1000).nullish(),
+  ignoredHits: z.array(z.string().max(100)).max(40).nullish(),
+  interruptions: z.record(id, z.number().int().min(0).max(9)).nullish(),
 });
 
-export type UpdateComboStepInput = z.infer<typeof updateComboStepSchema>;
-
-/**
- * Schema für Combo-Erstellung
- */
-export const createComboSchema = z
-  .object({
-    title: z
-      .string()
-      .min(1, 'Titel muss mindestens 1 Zeichen lang sein')
-      .max(200, 'Titel darf maximal 200 Zeichen lang sein')
-      .trim(),
-    description: z
-      .string()
-      .max(2000, 'Beschreibung darf maximal 2000 Zeichen lang sein')
-      .optional()
-      .nullable(),
-    deckId: z.string().min(1).optional().nullable(),
-    steps: z
-      .array(createComboStepSchema)
-      .max(100, 'Eine Kombo darf maximal 100 Schritte haben')
-      .optional()
-      .default([]),
-  })
-  .refine(
-    (data) => {
-      // Prüfe ob order-Werte eindeutig und sequenziell sind (nur wenn Steps vorhanden)
-      if (!data.steps || data.steps.length === 0) {
-        return true; // Keine Steps ist erlaubt beim Erstellen
-      }
-      const orders = data.steps.map((step) => step.order).sort((a, b) => a - b);
-      for (let i = 0; i < orders.length; i++) {
-        if (orders[i] !== i + 1) {
-          return false;
-        }
-      }
-      return true;
-    },
-    {
-      message: 'Reihenfolge-Werte müssen eindeutig und sequenziell sein (1, 2, 3, ...)',
-      path: ['steps'],
-    }
-  );
-
-export type CreateComboInput = z.infer<typeof createComboSchema>;
-
-/**
- * Schema für Combo-Update
- */
-export const updateComboSchema = z.object({
-  title: z
-    .string()
-    .min(1, 'Titel muss mindestens 1 Zeichen lang sein')
-    .max(200, 'Titel darf maximal 200 Zeichen lang sein')
-    .trim()
-    .optional(),
-  description: z
-    .string()
-    .max(2000, 'Beschreibung darf maximal 2000 Zeichen lang sein')
-    .optional()
-    .nullable(),
-  deckId: z.string().min(1).optional().nullable(),
-});
-
-export type UpdateComboInput = z.infer<typeof updateComboSchema>;
-
-/**
- * Schema für Step-Reihenfolge Update
- */
-export const comboStepOrderSchema = z.object({
-  stepIds: z
-    .array(z.string().min(1))
-    .min(1, 'Mindestens eine Step-ID ist erforderlich')
-    .max(100, 'Maximal 100 Steps können neu sortiert werden'),
-});
-
-export type ComboStepOrderInput = z.infer<typeof comboStepOrderSchema>;
-
-/**
- * Schema für Batch-Operationen auf Combo-Steps
- */
-export const batchComboStepOperationsSchema = z.object({
-  operations: z
+export const startStateSchema = z.object({
+  cards: z
     .array(
-      z.discriminatedUnion('type', [
-        z.object({
-          type: z.literal('delete'),
-          stepId: z.string().min(1),
-        }),
-        z.object({
-          type: z.literal('update'),
-          stepId: z.string().min(1),
-          data: updateComboStepSchema,
-        }),
-      ])
+      z.object({
+        instanceId: id,
+        cardId: id,
+        owner: player,
+        controller: player.optional(),
+        zone,
+        slot: z.number().int().min(0).max(6).optional(),
+        position: position.optional(),
+      })
     )
-    .min(1, 'Mindestens eine Operation ist erforderlich')
-    .max(50, 'Maximal 50 Operationen pro Batch erlaubt'),
+    .max(200),
 });
 
-export type BatchComboStepOperationsInput = z.infer<typeof batchComboStepOperationsSchema>;
+export const saveComboSchema = z.object({
+  title: z.string().trim().min(1).max(100),
+  deckId: id.nullable().default(null),
+  startState: startStateSchema,
+  tags: z.array(z.string().trim().min(1).max(30)).max(12).default([]),
+  status: z.enum(['DRAFT', 'TESTED', 'TOURNAMENT']).default('DRAFT'),
+  // ponytail: ganzer Baum pro Speichern; bei sehr großen Bäumen auf Diff-Speichern umstellen
+  nodes: z.array(comboNodeSchema).max(500),
+});
 
-/**
- * Combo-Validierungsregeln
- */
-export const COMBO_VALIDATION_RULES = {
-  MIN_STEPS: 1,
-  MAX_STEPS: 100,
-  TITLE_MIN_LENGTH: 1,
-  TITLE_MAX_LENGTH: 200,
-  DESCRIPTION_MAX_LENGTH: 2000,
-  STEP_DESCRIPTION_MAX_LENGTH: 1000,
-} as const;
+export type SaveComboInput = z.input<typeof saveComboSchema>;
 
-/**
- * Validiert eine Kombo gegen die Regeln
- */
-export interface ComboValidationResult {
-  isValid: boolean;
-  errors: string[];
-  warnings: string[];
-}
-
-/**
- * Validiert Combo-Schritte
- *
- * @param steps - Array von Combo-Schritten
- * @returns Validierungsergebnis
- */
-export function validateComboSteps(
-  steps: Array<{ cardId: string; actionType: ActionType; order: number }>
-): ComboValidationResult {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-
-  // Prüfe Mindestanzahl
-  if (steps.length < COMBO_VALIDATION_RULES.MIN_STEPS) {
-    errors.push(
-      `Kombo hat nur ${steps.length} Schritt(e). Mindestens ${COMBO_VALIDATION_RULES.MIN_STEPS} Schritt erforderlich.`
-    );
-  }
-
-  // Prüfe Maximalanzahl
-  if (steps.length > COMBO_VALIDATION_RULES.MAX_STEPS) {
-    errors.push(
-      `Kombo hat ${steps.length} Schritte. Maximal ${COMBO_VALIDATION_RULES.MAX_STEPS} Schritte erlaubt.`
-    );
-  }
-
-  // Prüfe ob order-Werte eindeutig und sequenziell sind
-  const orders = steps.map((step) => step.order).sort((a, b) => a - b);
-  const uniqueOrders = new Set(orders);
-
-  if (uniqueOrders.size !== orders.length) {
-    errors.push('Reihenfolge-Werte müssen eindeutig sein');
-  }
-
-  for (let i = 0; i < orders.length; i++) {
-    if (orders[i] !== i + 1) {
-      errors.push(
-        `Reihenfolge-Werte müssen sequenziell sein. Erwartet ${i + 1}, gefunden ${orders[i]}`
-      );
-      break;
-    }
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
-    warnings,
-  };
-}
-
-/**
- * Validiert ob eine Karte in einem Deck vorhanden ist
- *
- * @param cardId - ID der Karte
- * @param deckId - ID des Decks
- * @returns true wenn Karte im Deck vorhanden ist
- */
-export async function validateCardInDeck(
-  cardId: string,
-  deckId: string | null | undefined
-): Promise<{ isValid: boolean; error?: string }> {
-  if (!deckId) {
-    // Wenn kein Deck zugeordnet ist, ist Validierung nicht möglich
-    return { isValid: true };
-  }
-
-  // Diese Funktion wird in den Server Actions implementiert
-  // Hier nur die Signatur für die Validierung
-  return { isValid: true };
-}
+export const suggestionInputSchema = z.object({
+  board: z.array(z.object({ cardId: id, player, zone, position: position.optional() })).max(150),
+  chain: z
+    .array(
+      z.object({
+        cardId: id.optional(),
+        player,
+        effectIndex: z.number().int().min(0).max(20).optional(),
+        negated: z.boolean().optional(),
+      })
+    )
+    .max(20),
+  normalSummonUsed: z.boolean(),
+  candidates: z
+    .array(z.object({ cardId: id, effectIndex: z.number().int().min(0).max(20), player, zone }))
+    .max(30),
+});

@@ -1,32 +1,27 @@
-import { CardImportService } from '@/server/services/card-import.service';
+import { importTcgCards } from '@/server/services/card-import.service';
 
 /**
- * CLI-Script für initialen Batch-Import aller Karten
+ * Importiert alle TCG-Karten von YGOPRODeck
  *
- * Usage: tsx prisma/scripts/import-cards.ts
+ * Usage: npm run cards:import
  */
 async function main() {
-  console.log('Starting card import from YGOPRODeck API...');
+  console.log('Lade Karten von YGOPRODeck (englisch und deutsch)...');
 
-  const importService = new CardImportService();
+  const stats = await importTcgCards((done, total) => {
+    process.stdout.write(`\rGespeichert: ${done}/${total}`);
+  });
 
-  try {
-    const stats = await importService.importCardsInBatches(100, (current, total) => {
-      const percentage = Math.round((current / total) * 100);
-      process.stdout.write(`\rProgress: ${current}/${total} (${percentage}%)`);
-    });
-
-    console.log('\n\nImport completed!');
-    console.log(`Total cards: ${stats.total}`);
-    console.log(`Created: ${stats.created}`);
-    console.log(`Updated: ${stats.updated}`);
-    console.log(`Skipped/Errors: ${stats.skipped}`);
-
-    process.exit(0);
-  } catch (error) {
-    console.error('\n\nImport failed:', error);
-    process.exit(1);
-  }
+  console.log('\n\nImport abgeschlossen.');
+  console.log(`Abgerufen:           ${stats.fetched}`);
+  console.log(`Importiert (TCG):    ${stats.imported}`);
+  console.log(`Übersprungen (OCG):  ${stats.skippedNonTcg}`);
+  console.log(`Zerlegung prüfen:    ${stats.needsReview}`);
 }
 
-main();
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error('\nImport fehlgeschlagen:', error);
+    process.exit(1);
+  });
