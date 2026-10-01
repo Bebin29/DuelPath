@@ -347,13 +347,16 @@ export function AmSpieltisch({
 
   let inkIndex = 0;
   const inkCount = PATHS.filter((p) => p.kind === 'ink').length;
-  const drawEnd = inkCount * 0.035 + 0.6;
+  // Erst ziehen sich alle Umrisse als Strich, dann setzt sich die Tusche in die Flächen
+  const STEP = 0.045;
+  const outlineEnd = inkCount * STEP + 0.55;
+  const drawEnd = outlineEnd + 0.5;
 
   return (
     <svg viewBox="0 0 340 250" fill="none" role="img" aria-label={title} {...props}>
       {PATHS.map((p, i) => {
         if (p.kind === 'ink') {
-          const at = inkIndex++ * 0.035;
+          const at = inkIndex++ * STEP;
           if (!live) return <path key={i} d={p.d} transform={p.transform} fill="var(--ink)" />;
           return (
             <motion.path
@@ -362,13 +365,16 @@ export function AmSpieltisch({
               transform={p.transform}
               fill="var(--ink)"
               stroke="var(--ink)"
-              strokeWidth={0.6}
+              strokeWidth={1.3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
               initial={{ pathLength: 0, fillOpacity: 0, opacity: 0 }}
               animate={{ pathLength: 1, fillOpacity: 1, opacity: 1 }}
               transition={{
-                pathLength: { duration: 0.5, delay: at, ease: EASE.ink },
+                pathLength: { duration: 0.55, delay: at, ease: EASE.ink },
                 opacity: { duration: 0.01, delay: at },
-                fillOpacity: { duration: 0.25, delay: at + 0.35 },
+                fillOpacity: { duration: 0.45, delay: outlineEnd + (i % 6) * 0.03, ease: EASE.out },
               }}
             />
           );
