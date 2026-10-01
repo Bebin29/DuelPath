@@ -355,7 +355,13 @@ describe('Trigger nach passender Beschwörung', () => {
     const after = initialState({
       cards: [{ instanceId: 'a', cardId: 'ALB', owner: 'self', zone: 'MONSTER', slot: 5 }],
     });
-    return triggerOffers(before, after, all, () => true, () => true);
+    return triggerOffers(
+      before,
+      after,
+      all,
+      () => true,
+      () => true
+    );
   };
 
   it('bietet „Fusion Summoned“ nur nach der Beschwörung aus dem Extra Deck an', () => {

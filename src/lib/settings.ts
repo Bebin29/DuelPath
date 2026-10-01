@@ -59,7 +59,9 @@ export const settingsPatchSchema = z
     staples: z.array(z.string().max(100)).max(60).nullable().optional(),
     autoplaySpeed: z.union([z.literal(0.5), z.literal(1), z.literal(2)]).optional(),
     nicknames: z
-      .array(z.object({ alias: z.string().trim().min(1).max(30), card: z.string().min(1).max(200) }))
+      .array(
+        z.object({ alias: z.string().trim().min(1).max(30), card: z.string().min(1).max(200) })
+      )
       .max(200)
       .optional(),
     seenHints: z.array(z.string().max(40)).max(40).optional(),
