@@ -395,7 +395,12 @@
     "progress": "{{steps}} Schritte · Endboard {{endboard}}",
     "lines_one": "{{count}} Line",
     "lines_other": "{{count}} Lines",
-    "words": "Ash?|Imperm?|Nibiru?|Droll?"
+    "words": "Ash?|Imperm?|Nibiru?|Droll?",
+    "next": {
+      "title": "Als Nächstes",
+      "test": "„{{title}}“ testen und den Status setzen",
+      "firstCombo": "Erste Combo für {{deck}} anlegen"
+    }
   },
   "settings": {
     "title": "Einstellungen",

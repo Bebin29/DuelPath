@@ -678,7 +678,8 @@ function DraggableCard({
       whileHover={isDragging ? undefined : { y: -3 }}
       className={cn(
         'rounded-sm outline-none focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-primary',
-        env.draggable && 'cursor-grab'
+        // Auf Touch-Geräten zieht der Finger die Karte, statt das Board zu scrollen
+        env.draggable && 'cursor-grab touch-none'
       )}
     >
       {/* Eigenes Element für Flüge aus und in Stapel; die Feder beim Einrasten sitzt darunter */}

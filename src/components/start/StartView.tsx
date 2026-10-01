@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion, useSpring } from 'motion/react';
 import { EASE } from '@/lib/motion';
 import { useTranslation } from '@/lib/i18n/hooks';
@@ -12,6 +13,8 @@ import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
 import { NewComboButton } from '@/components/library/NewComboButton';
 import { StartHandStrip } from '@/components/library/StartHandStrip';
 import { ComboListItem } from '@/components/library/ComboListItem';
+
+const FEW_COMBOS = 6;
 
 /**
  * Start (UI-Plan 7.5.1): links Illustration und Headline als seltene Fläche,
@@ -32,6 +35,26 @@ export function StartView({
   const py = useSpring(0, { stiffness: 60, damping: 18 });
   const when = (iso: string) =>
     t('start.edited', { time: relativeTime(new Date(iso), new Date(), i18n.language) });
+  // Bei wenigen Combos endet die Seite nicht leer: was als Nächstes ansteht (UI-Sweep-Plan 5)
+  const nextUp =
+    combos.length >= FEW_COMBOS
+      ? []
+      : [
+          ...combos
+            .filter((c) => c.status === 'DRAFT')
+            .slice(0, 2)
+            .map((c) => ({
+              href: `/combos/${c.id}`,
+              label: t('start.next.test', { title: c.title }),
+            })),
+          ...decks
+            .filter((d) => !combos.some((c) => c.deckId === d.id))
+            .slice(0, 2)
+            .map((d) => ({
+              href: `/combos/new?deck=${d.id}`,
+              label: t('start.next.firstCombo', { deck: d.name }),
+            })),
+        ];
 
   return (
     <div className="grid items-center gap-16 lg:grid-cols-[1.1fr_1fr]">
@@ -103,6 +126,25 @@ export function StartView({
                 ))}
               </ul>
             </div>
+
+            {nextUp.length > 0 && (
+              <section aria-label={t('start.next.title')}>
+                <h2 className="pb-2 font-display text-2xl">{t('start.next.title')}</h2>
+                <ul className="border-t border-line">
+                  {nextUp.map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className="flex min-h-11 items-center gap-3 border-b border-line px-1 text-sm transition-colors duration-(--motion-fast) hover:bg-surface-1"
+                      >
+                        <ArrowRight className="size-4 shrink-0 text-text-subtle" />
+                        <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </>
         ) : (
           <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface-1 p-6">

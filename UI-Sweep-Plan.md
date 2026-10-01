@@ -286,3 +286,13 @@ Am 1. Oktober 2026 entschieden, jeweils nach Empfehlung:
 2. **Navigation auf dem Handy:** Leiste unten mit Start, Combos, Decks und Suche, alles mit dem Daumen erreichbar.
 3. **Bearbeiten auf dem Handy:** zunächst nur Notiz, Status und Tags. Schritte über die Befehlszeile wären später möglich, weil `commandMatches` und die REST-API das schon können.
 4. **Reihenfolge:** Phase 1, 2, 3, 4, 5.
+
+## 8. Stand der Umsetzung
+
+Alle fünf Phasen sind umgesetzt (1. Oktober 2026). Abweichungen vom Plan:
+
+- **Phase 1:** Auf dem Handy steht die Suche nur in der Leiste unten, nicht zusätzlich oben. Das `Sheet` kommt ab `sm` von rechts, weil 480 px auf dem Tablet gut passen.
+- **Phase 2:** Die Kachelaktionen im Deck bleiben auf dem Handy 32 px groß; drei Knöpfe zu 40 px passen nicht auf eine Karte in drei Spalten.
+- **Phase 3:** Die Zonen des Boards bleiben 84 px groß. Statt zu skalieren, liegt die Line-Liste unter 1440 px als Overlay, und die Chain rückt bei wenig Platz unter das Board. Damit reicht die Workbench schon ab 1024 px.
+- **Phase 4:** Der Reader zeigt nur belegte Reihen des Boards; die Position innerhalb einer Reihe bleibt wie am Tisch.
+- **Phase 5:** Langes Drücken braucht es nicht: Antippen öffnet das Kartenmenü bereits. Die Kartenvorschau beim Überfahren ersetzt auf Touch-Geräten der Tipp, der die Kartenansicht öffnet. Ziehbare Karten setzen `touch-action: none`.
