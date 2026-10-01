@@ -3,18 +3,26 @@
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
-import type { CardMove, ComboNodeData, StartState } from '@/lib/combo/state';
+import type { StartState } from '@/lib/combo/state';
 import { toComboCard, type ComboCard } from '@/lib/combo/cards';
 import { nodeRows } from '@/lib/prisma/node-rows';
+import {
+  cardIdsOf,
+  createComboFor,
+  isStoreError,
+  loadCombo,
+  loadDeckEntries,
+  nodeFromRow,
+  storeCombo,
+  type LoadedCombo,
+} from '@/server/services/combo-store.service';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
-import { drawFromDeck, startStateFromDeck, type DeckEntry } from '@/lib/combo/deck';
-import { newInstanceId } from '@/lib/combo/tree';
-import { saveComboSchema, type SaveComboInput } from '@/lib/validations/combo.schema';
+import type { DeckEntry } from '@/lib/combo/deck';
+import type { SaveComboInput } from '@/lib/validations/combo.schema';
 import { comboStats } from '@/lib/combo/summary';
 import { deckCounts, missingFromDeck } from '@/lib/deck/deck-check';
 import {
   parseStatus,
-  type ComboStatus,
   type LibraryCard,
   type LibraryEntry,
 } from '@/lib/combo/library';
@@ -33,43 +41,6 @@ async function ownCombo(comboId: string) {
   const combo = await prisma.combo.findUnique({ where: { id: comboId } });
   if (!combo || combo.userId !== userId) return { error: 'Not found' as const };
   return { combo };
-}
-
-type NodeRow = Awaited<ReturnType<typeof prisma.comboNode.findMany>>[number];
-
-function nodeFromRow(n: NodeRow): ComboNodeData {
-  return {
-    id: n.id,
-    parentId: n.parentId,
-    rank: n.rank,
-    note: n.note,
-    kind: n.kind as ComboNodeData['kind'],
-    player: n.player as ComboNodeData['player'],
-    edgeLabel: n.edgeLabel,
-    instanceId: n.instanceId,
-    cardId: n.cardId,
-    effectIndex: n.effectIndex,
-    action: n.action as ComboNodeData['action'],
-    costMoves: n.costMoves as unknown as CardMove[],
-    resolveMoves: n.resolveMoves as unknown as CardMove[],
-    negates: n.negates as unknown as ComboNodeData['negates'],
-    optOverride: n.optOverride,
-    ignoredHits: n.ignoredHits as string[] | null,
-    interruptions: n.interruptions as Record<string, number> | null,
-  };
-}
-
-/** Alle Karten, die im Startzustand oder in einem Knoten vorkommen */
-function cardIdsOf(startState: StartState, nodes: ComboNodeData[]): Set<string> {
-  const ids = new Set<string>(startState.cards.map((c) => c.cardId));
-  for (const n of nodes) {
-    if (n.cardId) ids.add(n.cardId);
-    for (const m of [...(n.costMoves ?? []), ...(n.resolveMoves ?? [])]) {
-      if (m.cardId) ids.add(m.cardId);
-    }
-    if (n.negates?.type === 'NAME') ids.add(n.negates.cardId);
-  }
-  return ids;
 }
 
 /**
@@ -203,46 +174,8 @@ export async function createCombo(
 ): Promise<Result<{ id: string }>> {
   const userId = await currentUserId();
   if (!userId) return { error: 'Unauthorized' };
-  const trimmed = title.trim().slice(0, 100);
-  if (!trimmed) return { error: 'Titel fehlt' };
-
-  let startState: StartState = { cards: [] };
-  if (deckId) {
-    const deck = await getDeckForCombo(deckId);
-    if (!deck.data) return { error: deck.error };
-    startState = startStateFromDeck(startState, deck.data.entries);
-    for (const cardId of startHand) startState = drawFromDeck(startState, cardId);
-  }
-  const slots = { MONSTER: 0, SPELL_TRAP: 0, FIELD: 0 };
-  for (const o of opponent.slice(0, 11)) {
-    if (!['MONSTER', 'SPELL_TRAP', 'FIELD'].includes(o.zone)) continue;
-    const slot = o.zone === 'FIELD' ? undefined : slots[o.zone]++;
-    if (slot !== undefined && slot > 4) continue;
-    startState = {
-      cards: [
-        ...startState.cards,
-        {
-          instanceId: newInstanceId(o.cardId),
-          cardId: o.cardId,
-          owner: 'opponent',
-          zone: o.zone,
-          ...(slot !== undefined && { slot }),
-          position: o.zone === 'MONSTER' ? 'ATK' : 'SET',
-        },
-      ],
-    };
-  }
-
-  const combo = await prisma.combo.create({
-    data: {
-      title: trimmed,
-      userId,
-      deckId: deckId ?? null,
-      startState: startState as unknown as Prisma.InputJsonValue,
-    },
-    select: { id: true },
-  });
-  return { data: combo };
+  const created = await createComboFor(userId, { title, deckId, startHand, opponent });
+  return isStoreError(created) ? { error: created.message } : { data: created };
 }
 
 export async function deleteCombo(comboId: string): Promise<Result<true>> {
@@ -252,87 +185,36 @@ export async function deleteCombo(comboId: string): Promise<Result<true>> {
   return { data: true };
 }
 
-export interface LoadedCombo {
-  id: string;
-  title: string;
-  deckId: string | null;
-  tags: string[];
-  status: ComboStatus;
-  startState: StartState;
-  nodes: ComboNodeData[];
-  cards: ComboCard[];
-}
+export type { LoadedCombo };
 
 export async function getCombo(comboId: string): Promise<Result<LoadedCombo>> {
-  const owned = await ownCombo(comboId);
-  if (owned.error) return { error: owned.error };
-  const { combo } = owned;
-
-  const rows = await prisma.comboNode.findMany({
-    where: { comboId },
-    orderBy: [{ rank: 'asc' }, { createdAt: 'asc' }],
-  });
-  const nodes = rows.map(nodeFromRow);
-  const startState = combo.startState as unknown as StartState;
-
-  const cardIds = cardIdsOf(startState, nodes);
-  const cards = await prisma.card.findMany({
-    where: { id: { in: [...cardIds] } },
-    select: {
-      id: true,
-      name: true,
-      nameDe: true,
-      type: true,
-      race: true,
-      imageSmall: true,
-      effects: true,
-      effectsOverride: true,
-      linkMarkers: true,
-    },
-  });
-
-  return {
-    data: {
-      id: combo.id,
-      title: combo.title,
-      deckId: combo.deckId,
-      tags: combo.tags,
-      status: parseStatus(combo.status),
-      startState,
-      nodes,
-      cards: cards.map(toComboCard),
-    },
-  };
+  const userId = await currentUserId();
+  if (!userId) return { error: 'Unauthorized' };
+  const combo = await loadCombo(userId, comboId);
+  return combo ? { data: combo } : { error: 'Not found' };
 }
 
-export async function saveCombo(comboId: string, input: SaveComboInput): Promise<Result<true>> {
-  const owned = await ownCombo(comboId);
-  if (owned.error) return { error: owned.error };
-
-  const parsed = saveComboSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültige Daten' };
-  const { title, deckId, startState, nodes, tags, status } = parsed.data;
-
-  if (deckId) {
-    const deck = await prisma.deck.findUnique({ where: { id: deckId }, select: { userId: true } });
-    if (!deck || deck.userId !== owned.combo.userId) return { error: 'Deck nicht gefunden' };
-  }
-
-  const ids = new Set(nodes.map((n) => n.id));
-  if (ids.size !== nodes.length) return { error: 'Doppelte Knoten-IDs' };
-  if (nodes.some((n) => n.parentId && !ids.has(n.parentId))) {
-    return { error: 'Knoten verweist auf unbekannten Elternknoten' };
-  }
-
-  await prisma.$transaction([
-    prisma.comboNode.deleteMany({ where: { comboId } }),
-    prisma.comboNode.createMany({ data: nodeRows(comboId, nodes) }),
-    prisma.combo.update({
-      where: { id: comboId },
-      data: { title, deckId, tags, status, startState: startState as Prisma.InputJsonValue },
-    }),
-  ]);
-  return { data: true };
+/**
+ * Autosave der Workbench. Mit `revision` schlägt das Speichern fehl (CONFLICT), wenn die Combo
+ * inzwischen anderswo geändert wurde, etwa über die API.
+ */
+export async function saveCombo(
+  comboId: string,
+  input: SaveComboInput,
+  revision?: number
+): Promise<Result<{ revision: number }>> {
+  const userId = await currentUserId();
+  if (!userId) return { error: 'Unauthorized' };
+  const stored = await storeCombo(userId, comboId, input, revision);
+  if (!isStoreError(stored)) return { data: stored };
+  return {
+    error:
+      stored.code === 'CONFLICT'
+        ? 'CONFLICT'
+        : stored.code === 'NOT_FOUND'
+          ? 'Not found'
+          : stored.message,
+  };
 }
 
 export interface StapleCard {
@@ -383,42 +265,6 @@ export async function getDeckForCombo(
 ): Promise<Result<{ entries: DeckEntry[]; cards: ComboCard[] }>> {
   const userId = await currentUserId();
   if (!userId) return { error: 'Unauthorized' };
-  const deck = await prisma.deck.findUnique({
-    where: { id: deckId },
-    select: {
-      userId: true,
-      deckCards: {
-        where: { deckSection: { in: ['MAIN', 'EXTRA'] } },
-        select: {
-          quantity: true,
-          deckSection: true,
-          card: {
-            select: {
-              id: true,
-              name: true,
-              nameDe: true,
-              type: true,
-              race: true,
-              imageSmall: true,
-              effects: true,
-              effectsOverride: true,
-              linkMarkers: true,
-            },
-          },
-        },
-      },
-    },
-  });
-  if (!deck || deck.userId !== userId) return { error: 'Deck nicht gefunden' };
-
-  return {
-    data: {
-      entries: deck.deckCards.map((dc) => ({
-        cardId: dc.card.id,
-        quantity: dc.quantity,
-        section: dc.deckSection as DeckEntry['section'],
-      })),
-      cards: deck.deckCards.map((dc) => toComboCard(dc.card)),
-    },
-  };
+  const deck = await loadDeckEntries(userId, deckId);
+  return deck ? { data: deck } : { error: 'Deck nicht gefunden' };
 }

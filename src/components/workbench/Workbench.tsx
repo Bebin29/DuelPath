@@ -44,11 +44,11 @@ import { useCardSheet } from '@/components/cards/CardSheet';
 import { AnimatePresence, motion } from 'motion/react';
 import { EASE } from '@/lib/motion';
 import { usePaletteSource, type PaletteItem } from '@/components/command/CommandPalette';
-import { matchCards, parseCommand, PREFERRED_ZONES } from '@/lib/combo/command';
+import { commandMatches, matchCards, parseCommand } from '@/lib/combo/command';
 import { nicknameMap } from '@/lib/settings';
 import { BoardView } from './BoardView';
 import { CardMenu, type MenuAnchor } from './CardMenu';
-import { cardActions } from './card-actions';
+import { cardActions } from '@/lib/combo/card-actions';
 import { QuickSelect } from './QuickSelect';
 import { usePlay, type Prompt } from './use-play';
 import { useStress } from './use-stress';
@@ -145,6 +145,7 @@ export function Workbench({
   const hovered = useRef<string | null>(null);
   const [moveTarget, setMoveTarget] = useState<MoveTarget>('resolveMoves');
   const [status, setStatus] = useState<SaveStatus>('saved');
+  const revision = useRef(initial.revision);
   const [saveAttempt, setSaveAttempt] = useState(0);
 
   const states = useMemo(() => statesForTree(nodes, startState, cards), [nodes, startState, cards]);
@@ -242,15 +243,21 @@ export function Workbench({
     }
     const timer = setTimeout(async () => {
       setStatus('saving');
-      const result = await saveCombo(initial.id, {
-        title,
-        deckId,
-        tags,
-        status: comboStatus,
-        startState,
-        nodes,
-      });
-      setStatus(result.error ? 'error' : 'saved');
+      // Mit Revision: hat jemand anderes (etwa die API) gespeichert, wird nichts still überschrieben
+      const result = await saveCombo(
+        initial.id,
+        {
+          title,
+          deckId,
+          tags,
+          status: comboStatus,
+          startState,
+          nodes,
+        },
+        revision.current
+      );
+      if (result.data) revision.current = result.data.revision;
+      setStatus(result.data ? 'saved' : result.error === 'CONFLICT' ? 'conflict' : 'error');
     }, 800);
     return () => clearTimeout(timer);
   }, [initial.id, title, deckId, tags, comboStatus, startState, nodes, saveAttempt]);
@@ -776,56 +783,7 @@ export function Workbench({
           )
         );
     }
-    const seen = new Set<string>();
-    const mine = Object.values(after.cards)
-      .filter((c) => c.owner === 'self' || c.controller === 'self')
-      .filter((c) => {
-        const key = `${c.zone}:${c.cardId}`;
-        if ((c.zone === 'DECK' || c.zone === 'EXTRA') && seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .map((c) => {
-        const card = cards.get(c.cardId);
-        return {
-          id: c.instanceId,
-          name: card?.name ?? '',
-          nameDe: card?.nameDe,
-          zone: c.zone,
-          card,
-        };
-      });
-    const pick = (instanceId: string) => {
-      const { effects, other } = cardActions(after, cards, instanceId);
-      const byId = (id: string) => other.find((a) => a.id === id);
-      switch (cmd.verb) {
-        case 'ns':
-          return byId('ns');
-        case 'set':
-          return byId('set');
-        case 'ss':
-          return byId('ss') ?? byId('xs');
-        case 'act':
-          return cmd.effect
-            ? effects.find((a) => a.id === `effect-${cmd.effect! - 1}`)
-            : (effects[0] ?? byId('activate'));
-        case 'gy':
-          return byId('gy');
-        case 'banish':
-          return byId('banish');
-        case 'hand':
-          return byId('hand');
-        case 'deck':
-          return byId('deck') ?? byId('extra');
-        case 'pos':
-          return byId('pos');
-      }
-    };
-    const found = matchCards(cmd.query, mine, PREFERRED_ZONES[cmd.verb], userNicknames).map(
-      (c) => ({ ...c, action: pick(c.id) })
-    );
-    // Nicht ausführbare Treffer nur zeigen, wenn es sonst nichts gibt
-    const usable = found.some((c) => c.action) ? found.filter((c) => c.action) : found;
+    const usable = commandMatches(cmd, after, cards, userNicknames);
     return usable.slice(0, 4).map((c) => {
       const { action } = c;
       const name = displayName(c.card, cardLanguage);
@@ -833,9 +791,9 @@ export function Workbench({
         ? t(`workbench.actions.${action.label}`, { n: action.key })
         : t('palette.notPossible');
       return item(
-        `${cmd.verb}:${c.id}`,
+        `${cmd.verb}:${c.instanceId}`,
         `${verb} · ${name}`,
-        () => action && flow.run(action, c.id),
+        () => action && flow.run(action, c.instanceId),
         {
           image: c.card?.imageSmall ?? null,
           hint: t(`combo.zones.${c.zone}`),

@@ -17,20 +17,15 @@ import {
   freeEmz,
   fusionMoves,
   insertBefore,
-  needsDiscard,
   replaceMain,
   resultMoves,
   triggerOffers,
   withMoves,
   type PlayIntent,
 } from '@/lib/combo/play';
-import {
-  materialCandidates,
-  resultCandidates,
-  resultSpec,
-  type ResultSpec,
-} from '@/lib/combo/effect-results';
-import type { CardAction } from './card-actions';
+import { materialCandidates, resultCandidates, type ResultSpec } from '@/lib/combo/effect-results';
+import { promptsFor } from '@/lib/combo/prompts';
+import type { CardAction } from '@/lib/combo/card-actions';
 
 /** Offene Frage der Schrittleiste; `at` ist der Schritt, zu dem sie gehört */
 export type Prompt =
@@ -91,28 +86,27 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
       setChainMode(false);
       setOffer((created[0].rank ?? 0) > 0 ? created[0].id : null);
 
-      const next: Prompt[] = [];
-      if (intent.kind === 'activate' && last.kind === 'ACTIVATE') {
-        const placed = state.cards[intent.instanceId];
-        const data = placed ? cards.get(placed.cardId) : undefined;
-        const player = placed?.controller ?? 'self';
-        const discard = needsDiscard(data, intent.effectIndex);
-        if (discard) {
-          next.push({
-            kind: 'discard',
-            at: last.id,
-            player,
-            exclude: intent.instanceId,
-            key: discard === 'cost' ? 'costMoves' : 'resolveMoves',
-          });
-        }
-        const spec = resultSpec(data, intent.effectIndex);
-        if (spec?.verb === 'fusion') {
-          next.push({ kind: 'fusion', at: last.id, player, spec, fusionId: null, picked: [] });
-        } else if (spec) {
-          next.push({ kind: 'result', at: last.id, player, spec, picked: [], all: false });
-        }
-      }
+      const next: Prompt[] = promptsFor(last, state, cards).map((p) =>
+        p.kind === 'discard'
+          ? { kind: 'discard', at: p.stepId, player: p.player, exclude: p.exclude, key: p.key }
+          : p.kind === 'fusion'
+            ? {
+                kind: 'fusion',
+                at: p.stepId,
+                player: p.player,
+                spec: p.spec,
+                fusionId: null,
+                picked: [],
+              }
+            : {
+                kind: 'result',
+                at: p.stepId,
+                player: p.player,
+                spec: p.spec,
+                picked: [],
+                all: false,
+              }
+      );
       setQueue(next);
     },
     [chainMode, state, nodes, selected, cards, setNodes, focus]

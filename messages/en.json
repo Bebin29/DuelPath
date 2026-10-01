@@ -340,7 +340,8 @@
       "none": "No deck",
       "load": "Load deck into starting state",
       "draw": "Draw into starting hand:"
-    }
+    },
+    "conflict": "Changed elsewhere · Reload"
   },
   "shell": {
     "skipToContent": "Skip to content",
@@ -402,7 +403,19 @@
     "hints": "Hints",
     "hintsText": "Show one-time hints again, e.g. at the staple rail.",
     "hintsReset": "Reset",
-    "aliasPlaceholder": "e.g. grave"
+    "aliasPlaceholder": "e.g. grave",
+    "api": "API tokens",
+    "apiText": "For agents and scripts that build combos through the REST API. A token has the same rights as your account.",
+    "apiName": "Name, e.g. “Claude”",
+    "apiCreate": "Create token",
+    "apiOnce": "The token is shown only now. Copy it, afterwards only its start is visible.",
+    "apiCopy": "Copy",
+    "apiCopied": "Copied",
+    "apiNone": "No token yet.",
+    "apiUsed": "used {{time}}",
+    "apiUnused": "never used",
+    "apiRevoke": "Revoke {{name}}",
+    "apiDocs": "Send requests with Authorization: Bearer <token> to /api/v1. Description at /api/v1/openapi.json."
   },
   "workbench": {
     "board": "Board",

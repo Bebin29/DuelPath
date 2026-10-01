@@ -1,12 +1,13 @@
 'use client';
 
-import { CloudOff } from 'lucide-react';
+import { CloudOff, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { cn } from '@/lib/utils';
 import { EASE } from '@/lib/motion';
 
-export type SaveStatus = 'saved' | 'saving' | 'error';
+/** conflict: seit dem Laden hat jemand anderes gespeichert, etwa ein Agent über die API */
+export type SaveStatus = 'saved' | 'saving' | 'error' | 'conflict';
 
 /**
  * Speicherstand (UI-Plan 7.1, Motion-Szene „Mikro“, Speichern): „speichert …“ schimmert,
@@ -29,7 +30,20 @@ export function SaveIndicator({
       className={cn('flex items-center justify-end gap-1.5 font-mono text-[11px]', className)}
     >
       <AnimatePresence mode="wait" initial={false}>
-        {status === 'error' ? (
+        {status === 'conflict' ? (
+          <motion.button
+            key="conflict"
+            type="button"
+            onClick={() => window.location.reload()}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-1.5 text-warning hover:underline"
+          >
+            <RefreshCw className="size-3" />
+            {t('combo.conflict')}
+          </motion.button>
+        ) : status === 'error' ? (
           <motion.button
             key="error"
             type="button"

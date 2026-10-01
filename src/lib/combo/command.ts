@@ -1,4 +1,5 @@
-import type { Zone } from '@/lib/combo/state';
+import type { CardData, GameState, Zone } from '@/lib/combo/state';
+import { cardActions, type CardAction } from '@/lib/combo/card-actions';
 import { initialsOf, nicknameTargets } from '@/lib/cards/nicknames';
 
 /**
@@ -125,4 +126,78 @@ export function matchCards<T extends NamedCard>(
     .filter(({ s }) => s >= 0)
     .sort((a, b) => a.s - b.s || zoneRank(a.c) - zoneRank(b.c))
     .map(({ c }) => c);
+}
+
+/** Die Aktion, die ein Befehl für eine bestimmte Karte meint, oder undefined */
+export function actionFor(
+  cmd: Command,
+  state: GameState,
+  cards: Map<string, CardData>,
+  instanceId: string
+): CardAction | undefined {
+  const { effects, other } = cardActions(state, cards, instanceId);
+  const byId = (id: string) => other.find((a) => a.id === id);
+  switch (cmd.verb) {
+    case 'ns':
+      return byId('ns');
+    case 'set':
+      return byId('set');
+    case 'ss':
+      return byId('ss') ?? byId('xs');
+    case 'act':
+      return cmd.effect
+        ? effects.find((a) => a.id === `effect-${cmd.effect! - 1}`)
+        : (effects.find((a) => a.free) ?? effects[0] ?? byId('activate'));
+    case 'gy':
+      return byId('gy');
+    case 'banish':
+      return byId('banish');
+    case 'hand':
+      return byId('hand');
+    case 'deck':
+      return byId('deck') ?? byId('extra');
+    case 'pos':
+      return byId('pos');
+    default:
+      return undefined;
+  }
+}
+
+export interface CommandMatch<C extends CardData> {
+  instanceId: string;
+  card: C | undefined;
+  zone: Zone;
+  action: CardAction | undefined;
+}
+
+/**
+ * Karten, die ein Befehl meinen kann, beste zuerst (Palette und API). Aus Deck und Extra Deck je
+ * Name nur eine Kopie; nicht ausführbare Treffer nur, wenn es keinen ausführbaren gibt.
+ */
+export function commandMatches<C extends CardData & { nameDe?: string | null }>(
+  cmd: Command,
+  state: GameState,
+  cards: Map<string, C>,
+  nicknames?: Record<string, string[]>
+): CommandMatch<C>[] {
+  const seen = new Set<string>();
+  const mine = Object.values(state.cards)
+    .filter((c) => c.owner === 'self' || c.controller === 'self')
+    .filter((c) => {
+      const key = `${c.zone}:${c.cardId}`;
+      if ((c.zone === 'DECK' || c.zone === 'EXTRA') && seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((c) => {
+      const card = cards.get(c.cardId);
+      return { id: c.instanceId, name: card?.name ?? '', nameDe: card?.nameDe, zone: c.zone, card };
+    });
+  const found = matchCards(cmd.query, mine, PREFERRED_ZONES[cmd.verb], nicknames).map((c) => ({
+    instanceId: c.id,
+    card: c.card,
+    zone: c.zone,
+    action: actionFor(cmd, state, cards, c.id),
+  }));
+  return found.some((c) => c.action) ? found.filter((c) => c.action) : found;
 }

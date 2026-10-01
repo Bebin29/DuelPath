@@ -55,10 +55,27 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  decks    Deck[]
-  combos   Combo[]
+  accounts  Account[]
+  sessions  Session[]
+  decks     Deck[]
+  combos    Combo[]
+  apiTokens ApiToken[]
+}
+
+// Persönlicher Zugang zur REST-API (/api/v1), etwa für Agenten. Gespeichert wird nur der Hash.
+model ApiToken {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  tokenHash  String    @unique // SHA-256 des Tokens
+  prefix     String // erste Zeichen zum Wiedererkennen, etwa "dp_7Kq2"
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -150,6 +167,7 @@ model Combo {
   startState Json // StartState: Starthand, optional Gegnerboard
   tags       String[] @default([]) // freie Schlagworte wie "1-Card", "Going Second" (UX-Plan 7.2)
   status     String   @default("DRAFT") // DRAFT | TESTED | TOURNAMENT
+  revision   Int      @default(0) // steigt mit jedem Speichern; schützt vor stillem Überschreiben
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

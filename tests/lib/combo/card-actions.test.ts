@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ComboCard } from '@/lib/combo/cards';
 import { initialState } from '@/lib/combo/state';
-import { cardActions } from '@/components/workbench/card-actions';
+import { cardActions } from '@/lib/combo/card-actions';
 
 const card = (id: string, type: string, effects: ComboCard['effects'] = []): ComboCard => ({
   id,

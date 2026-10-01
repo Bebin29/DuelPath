@@ -340,7 +340,8 @@
       "none": "Kein Deck",
       "load": "Deck in den Startzustand laden",
       "draw": "Auf die Starthand ziehen:"
-    }
+    },
+    "conflict": "Anderswo geändert · Neu laden"
   },
   "shell": {
     "skipToContent": "Zum Inhalt springen",
@@ -402,7 +403,19 @@
     "hints": "Hinweise",
     "hintsText": "Einmalige Hinweise, etwa an der Staple-Leiste, wieder zeigen.",
     "hintsReset": "Zurücksetzen",
-    "aliasPlaceholder": "etwa grave"
+    "aliasPlaceholder": "etwa grave",
+    "api": "API-Tokens",
+    "apiText": "Für Agenten und Skripte, die über die REST-API Combos bauen. Ein Token hat dieselben Rechte wie dein Konto.",
+    "apiName": "Name, etwa „Claude“",
+    "apiCreate": "Token anlegen",
+    "apiOnce": "Das Token erscheint nur jetzt. Kopiere es, danach ist nur noch der Anfang sichtbar.",
+    "apiCopy": "Kopieren",
+    "apiCopied": "Kopiert",
+    "apiNone": "Noch kein Token.",
+    "apiUsed": "benutzt {{time}}",
+    "apiUnused": "noch nie benutzt",
+    "apiRevoke": "{{name}} widerrufen",
+    "apiDocs": "Anfragen mit Authorization: Bearer <Token> an /api/v1. Beschreibung unter /api/v1/openapi.json."
   },
   "workbench": {
     "board": "Board",

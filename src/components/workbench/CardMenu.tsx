@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import type { GameState } from '@/lib/combo/state';
-import { cardActions, type CardAction } from './card-actions';
+import { cardActions, type CardAction } from '@/lib/combo/card-actions';
 
 export interface MenuAnchor {
   instanceId: string;
