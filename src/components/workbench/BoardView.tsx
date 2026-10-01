@@ -293,7 +293,7 @@ export function BoardView({
       >
         <div
           ref={boardRef}
-          className="relative flex h-full items-center justify-center gap-6 overflow-auto bg-felt p-6"
+          className="relative flex h-full items-center-safe justify-center-safe gap-6 overflow-auto bg-felt p-6"
         >
           <div className="flex flex-col items-center gap-3">
             <SideLabel player="opponent" label={t('workbench.opponent')} lp={state.lp.opponent}>
@@ -305,7 +305,8 @@ export function BoardView({
               />
             </SideLabel>
 
-            <div className="grid grid-cols-7 gap-1.5">
+            {/* Feste Spalten in Zonenbreite: schrumpfende Spalten ließen die Zonen überlappen */}
+            <div className="grid grid-cols-[repeat(7,84px)] gap-1.5">
               {pileCell('opponent', 'DECK', opp.deck, t('workbench.deck'))}
               {mirrored(opp.spellTraps).map(({ c, i }) =>
                 cell('opponent', 'SPELL_TRAP', c, `${st} ${i + 1}`, i)
