@@ -168,8 +168,27 @@
       "weakPassword": "Password is too weak",
       "passwordMismatch": "Passwords do not match",
       "required": "This field is required",
-      "invalidEmail": "Invalid email address"
-    }
+      "invalidEmail": "Invalid email address",
+      "missing": "Email and password are required",
+      "generic": "Something went wrong. Please try again.",
+      "Configuration": "There is a problem with the server configuration.",
+      "AccessDenied": "You have no access to this account.",
+      "Verification": "The verification link has expired or was already used.",
+      "CredentialsSignin": "Invalid credentials. Please check your email and password."
+    },
+    "back": "Back to the start page",
+    "signInText": "Sign in to reach your decks and combos.",
+    "signUpText": "Create an account to manage your decks and combos.",
+    "confirmPassword": "Confirm password",
+    "namePlaceholder": "Your name",
+    "emailPlaceholder": "you@email.com",
+    "passwordMin": "At least 8 characters",
+    "passwordRepeat": "Repeat password",
+    "registered": "Account created. You can sign in now.",
+    "errorTitle": "Sign-in failed",
+    "errorCode": "Error code: {{code}}",
+    "toSignIn": "To sign in",
+    "toHome": "To the start page"
   },
   "error": {
     "title": "An error occurred",
@@ -191,7 +210,11 @@
     "combo": {
       "description": "An error occurred while loading the combo. Please try again."
     },
-    "backToCombos": "Back to Combos"
+    "backToCombos": "Back to Combos",
+    "notFound": {
+      "title": "This page does not exist",
+      "text": "The combo or deck may have been deleted, or the link is incomplete."
+    }
   },
   "common": {
     "appName": "DuelPath",
@@ -346,6 +369,7 @@
   "shell": {
     "skipToContent": "Skip to content",
     "mainNavigation": "Main navigation",
+    "search": "Search",
     "userMenu": "User menu",
     "theme": "Theme",
     "themeDark": "Dark",
@@ -371,7 +395,12 @@
     "progress": "{{steps}} steps · endboard {{endboard}}",
     "lines_one": "{{count}} line",
     "lines_other": "{{count}} lines",
-    "words": "Ash?|Imperm?|Nibiru?|Droll?"
+    "words": "Ash?|Imperm?|Nibiru?|Droll?",
+    "next": {
+      "title": "Up next",
+      "test": "Test “{{title}}” and set its status",
+      "firstCombo": "Create the first combo for {{deck}}"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -415,7 +444,10 @@
     "apiUsed": "used {{time}}",
     "apiUnused": "never used",
     "apiRevoke": "Revoke {{name}}",
-    "apiDocs": "Send requests with Authorization: Bearer <token> to /api/v1. Description at /api/v1/openapi.json."
+    "apiDocs": "Send requests with Authorization: Bearer <token> to /api/v1. Description at /api/v1/openapi.json.",
+    "showAll": "Show all {{count}}",
+    "showLess": "Show less",
+    "sections": "Sections"
   },
   "workbench": {
     "board": "Board",
@@ -538,7 +570,14 @@
       "pickFirst": "{{key}} acts on a card: hover, click or pick one with / first.",
       "notPossible": "{{key}} is not possible for {{name}} here."
     },
-    "negatedLink": "will be negated"
+    "negatedLink": "will be negated",
+    "start": {
+      "current": "Start state",
+      "removeOne": "Remove one copy of {{name}}",
+      "filterDeck": "Search the deck …",
+      "side": "Side",
+      "zone": "Zone"
+    }
   },
   "preview": {
     "effects": "Effects",
@@ -646,7 +685,10 @@
     "tags": "Tags",
     "newTag": "New tag, Enter",
     "deckChanged_one": "{{count}} card no longer in the deck",
-    "deckChanged_other": "{{count}} cards no longer in the deck"
+    "deckChanged_other": "{{count}} cards no longer in the deck",
+    "endboardCount": "Endboard {{count}}",
+    "statusGroup": "Status",
+    "filtersActive": "{{count}} active"
   },
   "decks": {
     "title": "Decks",
@@ -725,7 +767,10 @@
     "coverageText": "In {{percent}} of hands you have a saved line. Computed over {{runs}} simulated hands, {{going}}.",
     "first": "going first",
     "second": "going second",
-    "notInDeck": "{{name}} is no longer in the deck"
+    "notInDeck": "{{name}} is no longer in the deck",
+    "addCards": "Add cards",
+    "addToSide": "{{name}} to the Side Deck",
+    "searchHintTouch": "Tap: Main or Extra · Side button: Side"
   },
   "newCombo": {
     "title": "Choose a starting hand",
@@ -842,7 +887,8 @@
       "edit": "Edit step",
       "command": "Type a command",
       "menuFocused": "Action menu of the focused card",
-      "unpick": "Clear the chosen card, shortcuts then act on hover only"
+      "unpick": "Clear the chosen card, shortcuts then act on hover only",
+      "lines": "Show or hide the line list (below 1440 px)"
     }
   },
   "hints": {
@@ -850,5 +896,21 @@
     "stapleRail": "Drag a handtrap from the rail on the left onto a step to create a branch.",
     "stress": "The chips show which staples hit where. Click creates the branch, right-click removes the hit.",
     "tree": "Here you see all lines at once. Double-click a node to open it on the board."
+  },
+  "reader": {
+    "back": "Back to combos",
+    "position": "Step {{n}} of {{total}}",
+    "stops": "Stopped here by: {{staples}}",
+    "note": "Note",
+    "noteAdd": "Add a note",
+    "notePlaceholder": "Why this step?",
+    "editHint": "Editing steps needs at least 1024 px, for example a computer or a tablet in landscape. Note, status and tags can be changed here.",
+    "controls": "Steps",
+    "prev": "Back",
+    "next": "Next",
+    "play": "Play",
+    "pause": "Pause",
+    "def": "DEF",
+    "emptyField": "No cards on the field yet"
   }
 }

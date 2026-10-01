@@ -10,7 +10,9 @@ import { displayName } from '@/lib/combo/cards';
 import { sectionCount, sectionFor, type Section } from '@/lib/deck/deck-rules';
 import type { DeckViewCard, DeckViewEntry } from '@/server/actions/deck-view.actions';
 import { CardSearchPanel } from './CardSearchPanel';
-import { CardTile, TileAction } from './CardTile';
+import { CardTile, TileAction, cardGrid } from './CardTile';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const GROUPS: { key: string; test: (type: string) => boolean }[] = [
   { key: 'monster', test: (type) => /Monster/.test(type) },
@@ -72,7 +74,7 @@ export function DeckListTab({
   };
 
   const grid = (list: DeckViewEntry[]) => (
-    <ul className="grid grid-cols-[repeat(auto-fill,120px)] gap-x-4 gap-y-4">
+    <ul className={cardGrid()}>
       {list.map((e) => (
         <li key={`${e.section}:${e.cardId}`}>
           <CardTile
@@ -80,6 +82,7 @@ export function DeckListTab({
             quantity={e.quantity}
             onClick={() => onOpenCard(e.cardId)}
             actions={actions(e)}
+            fluid
           />
         </li>
       ))}
@@ -93,7 +96,7 @@ export function DeckListTab({
         return (
           <li
             key={`${e.section}:${e.cardId}`}
-            className="flex h-9 items-center gap-2.5 border-b border-line text-sm"
+            className="flex min-h-9 items-center gap-2.5 border-b border-line text-sm"
           >
             <span className="w-6 font-mono text-xs text-text-muted">{e.quantity}×</span>
             <CardView image={card.imageSmall} label="" size="art" />
@@ -104,7 +107,9 @@ export function DeckListTab({
             >
               {displayName(card, cardLanguage)}
             </button>
-            <span className="font-mono text-2xs text-text-subtle">{card.type}</span>
+            <span className="hidden font-mono text-2xs text-text-subtle sm:inline">
+              {card.type}
+            </span>
             <span className="flex gap-0.5">{actions(e)}</span>
           </li>
         );
@@ -145,9 +150,26 @@ export function DeckListTab({
   };
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_300px] gap-8">
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex min-w-0 flex-col gap-8">
-        <div className="flex justify-end">
+        <div className="flex items-center gap-3">
+          {/* Unter lg kommt die Kartensuche als Sheet statt als Spalte */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="line" className="lg:hidden">
+                <Plus />
+                {t('decks.addCards')}
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              aria-describedby={undefined}
+              className="h-[85dvh] gap-3 p-5 pt-3 sm:h-auto"
+            >
+              <SheetTitle>{t('decks.addCards')}</SheetTitle>
+              <CardSearchPanel onAdd={onAdd} side />
+            </SheetContent>
+          </Sheet>
+          <span className="flex-1" />
           <Segmented<'grid' | 'list'>
             label={t('decks.view')}
             value={view}
@@ -160,8 +182,8 @@ export function DeckListTab({
         </div>
         {(['MAIN', 'EXTRA', 'SIDE'] as const).map(section)}
       </div>
-      <aside className="sticky top-6 flex max-h-[calc(100dvh-3rem)] flex-col self-start">
-        <CardSearchPanel onAdd={onAdd} />
+      <aside className="sticky top-6 hidden max-h-[calc(100dvh-3rem)] flex-col self-start lg:flex">
+        <CardSearchPanel onAdd={onAdd} side />
       </aside>
     </div>
   );

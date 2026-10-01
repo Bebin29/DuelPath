@@ -168,8 +168,27 @@
       "weakPassword": "Das Passwort ist zu schwach",
       "passwordMismatch": "Die Passwörter stimmen nicht überein",
       "required": "Dieses Feld ist erforderlich",
-      "invalidEmail": "Ungültige E-Mail-Adresse"
-    }
+      "invalidEmail": "Ungültige E-Mail-Adresse",
+      "missing": "E-Mail und Passwort sind erforderlich",
+      "generic": "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+      "Configuration": "Es gibt ein Problem mit der Server-Konfiguration.",
+      "AccessDenied": "Du hast keinen Zugriff auf diesen Account.",
+      "Verification": "Der Verifizierungslink ist abgelaufen oder wurde bereits verwendet.",
+      "CredentialsSignin": "Ungültige Anmeldedaten. Bitte überprüfe deine E-Mail und dein Passwort."
+    },
+    "back": "Zurück zur Startseite",
+    "signInText": "Melde dich an, um auf deine Decks und Combos zuzugreifen.",
+    "signUpText": "Erstelle ein Konto, um deine Decks und Combos zu verwalten.",
+    "confirmPassword": "Passwort bestätigen",
+    "namePlaceholder": "Dein Name",
+    "emailPlaceholder": "deine@email.de",
+    "passwordMin": "Mindestens 8 Zeichen",
+    "passwordRepeat": "Passwort wiederholen",
+    "registered": "Konto angelegt. Du kannst dich jetzt anmelden.",
+    "errorTitle": "Anmeldung fehlgeschlagen",
+    "errorCode": "Fehlercode: {{code}}",
+    "toSignIn": "Zur Anmeldung",
+    "toHome": "Zur Startseite"
   },
   "error": {
     "title": "Ein Fehler ist aufgetreten",
@@ -191,7 +210,11 @@
     "combo": {
       "description": "Beim Laden der Kombo ist ein Fehler aufgetreten. Bitte versuche es erneut."
     },
-    "backToCombos": "Zurück zu Kombos"
+    "backToCombos": "Zurück zu Kombos",
+    "notFound": {
+      "title": "Diese Seite gibt es nicht",
+      "text": "Vielleicht wurde die Combo oder das Deck gelöscht, oder der Link ist unvollständig."
+    }
   },
   "common": {
     "justNow": "Gerade eben",
@@ -346,6 +369,7 @@
   "shell": {
     "skipToContent": "Zum Inhalt springen",
     "mainNavigation": "Hauptnavigation",
+    "search": "Suche",
     "userMenu": "Nutzermenü",
     "theme": "Design",
     "themeDark": "Dunkel",
@@ -371,7 +395,12 @@
     "progress": "{{steps}} Schritte · Endboard {{endboard}}",
     "lines_one": "{{count}} Line",
     "lines_other": "{{count}} Lines",
-    "words": "Ash?|Imperm?|Nibiru?|Droll?"
+    "words": "Ash?|Imperm?|Nibiru?|Droll?",
+    "next": {
+      "title": "Als Nächstes",
+      "test": "„{{title}}“ testen und den Status setzen",
+      "firstCombo": "Erste Combo für {{deck}} anlegen"
+    }
   },
   "settings": {
     "title": "Einstellungen",
@@ -415,7 +444,10 @@
     "apiUsed": "benutzt {{time}}",
     "apiUnused": "noch nie benutzt",
     "apiRevoke": "{{name}} widerrufen",
-    "apiDocs": "Anfragen mit Authorization: Bearer <Token> an /api/v1. Beschreibung unter /api/v1/openapi.json."
+    "apiDocs": "Anfragen mit Authorization: Bearer <Token> an /api/v1. Beschreibung unter /api/v1/openapi.json.",
+    "showAll": "Alle {{count}} zeigen",
+    "showLess": "Weniger zeigen",
+    "sections": "Abschnitte"
   },
   "workbench": {
     "board": "Board",
@@ -538,7 +570,14 @@
       "pickFirst": "{{key}} wirkt auf eine Karte: erst überfahren, anklicken oder mit / wählen.",
       "notPossible": "{{key}} geht für {{name}} hier nicht."
     },
-    "negatedLink": "wird negiert"
+    "negatedLink": "wird negiert",
+    "start": {
+      "current": "Startzustand",
+      "removeOne": "Eine Kopie von {{name}} entfernen",
+      "filterDeck": "Im Deck suchen …",
+      "side": "Seite",
+      "zone": "Zone"
+    }
   },
   "preview": {
     "effects": "Effekte",
@@ -646,7 +685,10 @@
     "tags": "Tags",
     "newTag": "Neuer Tag, Enter",
     "deckChanged_one": "{{count}} Karte nicht mehr im Deck",
-    "deckChanged_other": "{{count}} Karten nicht mehr im Deck"
+    "deckChanged_other": "{{count}} Karten nicht mehr im Deck",
+    "endboardCount": "Endboard {{count}}",
+    "statusGroup": "Status",
+    "filtersActive": "{{count}} aktiv"
   },
   "decks": {
     "title": "Decks",
@@ -725,7 +767,10 @@
     "coverageText": "In {{percent}} der Hände hast du eine gespeicherte Line. Gerechnet über {{runs}} simulierte Hände, {{going}}.",
     "first": "Going First",
     "second": "Going Second",
-    "notInDeck": "{{name}} ist nicht mehr im Deck"
+    "notInDeck": "{{name}} ist nicht mehr im Deck",
+    "addCards": "Karten hinzufügen",
+    "addToSide": "{{name}} ins Side Deck",
+    "searchHintTouch": "Tippen: Main bzw. Extra · Side-Knopf: Side"
   },
   "newCombo": {
     "title": "Starthand wählen",
@@ -842,7 +887,8 @@
       "edit": "Schritt bearbeiten",
       "command": "Befehl eingeben",
       "menuFocused": "Aktionsmenü der fokussierten Karte",
-      "unpick": "Kartenwahl aufheben, Kürzel wirken dann nur beim Überfahren"
+      "unpick": "Kartenwahl aufheben, Kürzel wirken dann nur beim Überfahren",
+      "lines": "Line-Liste ein- und ausblenden (unter 1440 px)"
     }
   },
   "hints": {
@@ -850,5 +896,21 @@
     "stapleRail": "Zieh eine Handtrap aus der Leiste links auf einen Schritt, um einen Branch anzulegen.",
     "stress": "Die Chips zeigen, welche Staples wo treffen. Klick legt den Branch an, Rechtsklick entfernt den Treffer.",
     "tree": "Hier siehst du alle Lines auf einmal. Doppelklick auf einen Knoten öffnet ihn im Board."
+  },
+  "reader": {
+    "back": "Zurück zu den Combos",
+    "position": "Schritt {{n}} von {{total}}",
+    "stops": "Hier stoppt: {{staples}}",
+    "note": "Notiz",
+    "noteAdd": "Notiz hinzufügen",
+    "notePlaceholder": "Warum dieser Schritt?",
+    "editHint": "Schritte bearbeiten geht ab 1024 px Breite, etwa am Rechner oder auf dem Tablet quer. Notiz, Status und Tags lassen sich hier ändern.",
+    "controls": "Schritte",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "play": "Abspielen",
+    "pause": "Anhalten",
+    "def": "DEF",
+    "emptyField": "Noch keine Karten auf dem Feld"
   }
 }

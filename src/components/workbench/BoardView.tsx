@@ -291,75 +291,75 @@ export function BoardView({
         }}
         onDragEnd={handleDragEnd}
       >
-        <div
-          ref={boardRef}
-          className="relative flex h-full items-center justify-center gap-6 overflow-auto bg-felt p-6"
-        >
-          <div className="flex flex-col items-center gap-3">
-            <SideLabel player="opponent" label={t('workbench.opponent')} lp={state.lp.opponent}>
-              <Hand
-                player="opponent"
-                list={opp.hand}
-                env={env}
-                preview={previewOf(dropId('opponent', 'HAND'))}
-              />
-            </SideLabel>
+        <div ref={boardRef} className="@container relative h-full overflow-auto bg-felt">
+          {/* Reicht die Breite nicht für Board und Chain nebeneinander, rückt die Chain darunter */}
+          <div className="flex min-h-full w-fit min-w-full flex-col items-center justify-center gap-6 p-6 @min-[860px]:flex-row">
+            <div className="flex flex-col items-center gap-3">
+              <SideLabel player="opponent" label={t('workbench.opponent')} lp={state.lp.opponent}>
+                <Hand
+                  player="opponent"
+                  list={opp.hand}
+                  env={env}
+                  preview={previewOf(dropId('opponent', 'HAND'))}
+                />
+              </SideLabel>
 
-            <div className="grid grid-cols-7 gap-1.5">
-              {pileCell('opponent', 'DECK', opp.deck, t('workbench.deck'))}
-              {mirrored(opp.spellTraps).map(({ c, i }) =>
-                cell('opponent', 'SPELL_TRAP', c, `${st} ${i + 1}`, i)
+              <div className="grid grid-cols-7 gap-1.5">
+                {pileCell('opponent', 'DECK', opp.deck, t('workbench.deck'))}
+                {mirrored(opp.spellTraps).map(({ c, i }) =>
+                  cell('opponent', 'SPELL_TRAP', c, `${st} ${i + 1}`, i)
+                )}
+                {pileCell('opponent', 'EXTRA', opp.extra, t('workbench.extra'))}
+
+                {pileCell('opponent', 'GY', opp.gy, t('workbench.gy'))}
+                {mirrored(opp.monsters).map(({ c, i }) =>
+                  cell('opponent', 'MONSTER', c, `${mz} ${i + 1}`, i)
+                )}
+                {cell('opponent', 'FIELD', opp.field, t('workbench.fieldZone'))}
+
+                {pileCell('opponent', 'BANISHED', opp.banished, t('workbench.banished'))}
+                <span />
+                {cell('self', 'MONSTER', emzOf(EMZ_LEFT), `${t('workbench.emz')} 1`, EMZ_LEFT)}
+                <span />
+                {cell('self', 'MONSTER', emzOf(EMZ_RIGHT), `${t('workbench.emz')} 2`, EMZ_RIGHT)}
+                <span />
+                {pileCell('self', 'BANISHED', me.banished, t('workbench.banished'))}
+
+                {cell('self', 'FIELD', me.field, t('workbench.fieldZone'))}
+                {me.monsters.map((c, i) => cell('self', 'MONSTER', c, `${mz} ${i + 1}`, i))}
+                {pileCell('self', 'GY', me.gy, t('workbench.gy'))}
+
+                {pileCell('self', 'EXTRA', me.extra, t('workbench.extra'))}
+                {me.spellTraps.map((c, i) => cell('self', 'SPELL_TRAP', c, `${st} ${i + 1}`, i))}
+                {pileCell('self', 'DECK', me.deck, t('workbench.deck'))}
+              </div>
+
+              <SideLabel player="self" label={t('workbench.self')} lp={state.lp.self}>
+                <Hand
+                  player="self"
+                  list={me.hand}
+                  env={env}
+                  preview={previewOf(dropId('self', 'HAND'))}
+                />
+              </SideLabel>
+
+              {[...me.overflow, ...opp.overflow].length > 0 && (
+                <p className="font-mono text-2xs text-warning">
+                  {t('workbench.overflow')}:{' '}
+                  {[...me.overflow, ...opp.overflow]
+                    .map((c) => displayName(cards.get(c.cardId), cardLanguage))
+                    .join(', ')}
+                </p>
               )}
-              {pileCell('opponent', 'EXTRA', opp.extra, t('workbench.extra'))}
-
-              {pileCell('opponent', 'GY', opp.gy, t('workbench.gy'))}
-              {mirrored(opp.monsters).map(({ c, i }) =>
-                cell('opponent', 'MONSTER', c, `${mz} ${i + 1}`, i)
-              )}
-              {cell('opponent', 'FIELD', opp.field, t('workbench.fieldZone'))}
-
-              {pileCell('opponent', 'BANISHED', opp.banished, t('workbench.banished'))}
-              <span />
-              {cell('self', 'MONSTER', emzOf(EMZ_LEFT), `${t('workbench.emz')} 1`, EMZ_LEFT)}
-              <span />
-              {cell('self', 'MONSTER', emzOf(EMZ_RIGHT), `${t('workbench.emz')} 2`, EMZ_RIGHT)}
-              <span />
-              {pileCell('self', 'BANISHED', me.banished, t('workbench.banished'))}
-
-              {cell('self', 'FIELD', me.field, t('workbench.fieldZone'))}
-              {me.monsters.map((c, i) => cell('self', 'MONSTER', c, `${mz} ${i + 1}`, i))}
-              {pileCell('self', 'GY', me.gy, t('workbench.gy'))}
-
-              {pileCell('self', 'EXTRA', me.extra, t('workbench.extra'))}
-              {me.spellTraps.map((c, i) => cell('self', 'SPELL_TRAP', c, `${st} ${i + 1}`, i))}
-              {pileCell('self', 'DECK', me.deck, t('workbench.deck'))}
             </div>
 
-            <SideLabel player="self" label={t('workbench.self')} lp={state.lp.self}>
-              <Hand
-                player="self"
-                list={me.hand}
-                env={env}
-                preview={previewOf(dropId('self', 'HAND'))}
-              />
-            </SideLabel>
-
-            {[...me.overflow, ...opp.overflow].length > 0 && (
-              <p className="font-mono text-2xs text-warning">
-                {t('workbench.overflow')}:{' '}
-                {[...me.overflow, ...opp.overflow]
-                  .map((c) => displayName(cards.get(c.cardId), cardLanguage))
-                  .join(', ')}
-              </p>
-            )}
+            <ChainColumn
+              state={state}
+              cards={cards}
+              onInspect={onInspect}
+              negatedLinks={negatedLinks}
+            />
           </div>
-
-          <ChainColumn
-            state={state}
-            cards={cards}
-            onInspect={onInspect}
-            negatedLinks={negatedLinks}
-          />
 
           {pile && (
             <PileOverlay
@@ -678,7 +678,8 @@ function DraggableCard({
       whileHover={isDragging ? undefined : { y: -3 }}
       className={cn(
         'rounded-sm outline-none focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-primary',
-        env.draggable && 'cursor-grab'
+        // Auf Touch-Geräten zieht der Finger die Karte, statt das Board zu scrollen
+        env.draggable && 'cursor-grab touch-none'
       )}
     >
       {/* Eigenes Element für Flüge aus und in Stapel; die Feder beim Einrasten sitzt darunter */}
@@ -730,7 +731,7 @@ function ChainColumn({
   return (
     <section
       aria-label={t('workbench.chain')}
-      className="flex w-40 shrink-0 flex-col gap-2 self-center"
+      className="flex w-full max-w-[624px] shrink-0 flex-col gap-2 self-center @min-[860px]:w-40"
     >
       <h3 className="font-display text-lg">{t('workbench.chain')}</h3>
       {count === 0 && (

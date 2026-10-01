@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Lock, TriangleAlert, X } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
@@ -47,32 +48,30 @@ export function CardSheetProvider({ children }: { children: React.ReactNode }) {
   return (
     <CardSheetContext.Provider value={{ open: openCard }}>
       {children}
-      <Dialog.Root open={open} onOpenChange={setOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/35 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-          <Dialog.Content
-            aria-describedby={undefined}
-            className="fixed inset-y-0 right-0 z-50 flex w-[480px] max-w-full flex-col border-l border-line bg-surface-1 shadow-[0_0_60px_rgb(0_0_0/0.5)] outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-right"
-          >
-            {card ? (
-              <CardSheetBody
-                key={card.id}
-                card={card}
-                onSaved={(effects) => {
-                  setCard({ ...card, effects, overridden: true, reviewReasons: [] });
-                  onSaved.current?.(card.id, effects);
-                }}
-                onReset={(effects) => {
-                  setCard({ ...card, effects, overridden: false });
-                  onSaved.current?.(card.id, effects);
-                }}
-              />
-            ) : (
-              <Dialog.Title className="p-6 text-text-subtle">…</Dialog.Title>
-            )}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          aria-describedby={undefined}
+          closeLabel={false}
+          className="h-[92dvh] sm:h-auto"
+        >
+          {card ? (
+            <CardSheetBody
+              key={card.id}
+              card={card}
+              onSaved={(effects) => {
+                setCard({ ...card, effects, overridden: true, reviewReasons: [] });
+                onSaved.current?.(card.id, effects);
+              }}
+              onReset={(effects) => {
+                setCard({ ...card, effects, overridden: false });
+                onSaved.current?.(card.id, effects);
+              }}
+            />
+          ) : (
+            <Dialog.Title className="p-6 text-text-subtle">…</Dialog.Title>
+          )}
+        </SheetContent>
+      </Sheet>
     </CardSheetContext.Provider>
   );
 }
@@ -128,7 +127,7 @@ function CardSheetBody({
           {cardLanguage === 'de' && card.nameDe && (
             <p className="text-xs text-text-subtle">{card.name}</p>
           )}
-          <p className="mt-1 font-mono text-[10.5px] text-text-muted">
+          <p className="mt-1 font-mono text-2xs text-text-muted">
             {[card.type, ...stats].join(' · ')}
           </p>
         </div>
@@ -145,7 +144,7 @@ function CardSheetBody({
         </div>
         <span
           className={cn(
-            'self-start rounded-sm px-1.5 py-0.5 font-mono text-[10.5px]',
+            'self-start rounded-sm px-1.5 py-0.5 font-mono text-2xs',
             card.banTcg === 'Forbidden'
               ? 'bg-opponent-tint text-opponent'
               : card.banTcg
@@ -212,7 +211,7 @@ function CardSheetBody({
                     <p lang="en" className="text-[12.5px] leading-[1.45]">
                       {effect.text}
                     </p>
-                    <span className="flex items-center gap-2 font-mono text-[10.5px] text-text-subtle">
+                    <span className="flex items-center gap-2 font-mono text-2xs text-text-subtle">
                       {effect.activated && t('cardSheet.chainLink')}
                       {effect.opt && (
                         <span className="flex items-center gap-1">

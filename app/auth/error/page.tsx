@@ -1,65 +1,40 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { Button } from '@/components/ui/button';
+import { AuthCard } from '@/components/auth/AuthCard';
 
-/**
- * NextAuth Error-Seite
- *
- * Zeigt Fehlermeldungen von NextAuth an
- */
+const KNOWN = ['Configuration', 'AccessDenied', 'Verification', 'CredentialsSignin'];
+
+/** Fehler von NextAuth mit verständlicher Meldung und dem Weg zurück */
 function AuthErrorContent() {
-  const searchParams = useSearchParams();
-  const error = searchParams.get('error');
-
-  const getErrorMessage = (error: string | null): string => {
-    switch (error) {
-      case 'Configuration':
-        return 'Es gibt ein Problem mit der Server-Konfiguration.';
-      case 'AccessDenied':
-        return 'Du hast keinen Zugriff auf diesen Account.';
-      case 'Verification':
-        return 'Der Verifizierungslink ist abgelaufen oder wurde bereits verwendet.';
-      case 'CredentialsSignin':
-        return 'Ungültige Anmeldedaten. Bitte überprüfe deine E-Mail und dein Passwort.';
-      default:
-        return 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.';
-    }
-  };
+  const { t } = useTranslation();
+  const error = useSearchParams().get('error');
+  const message = t(`auth.errors.${error && KNOWN.includes(error) ? error : 'generic'}`);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Authentifizierungsfehler</CardTitle>
-        <CardDescription>{getErrorMessage(error)}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="text-sm text-muted-foreground">
-          {error && (
-            <p>
-              <strong>Fehlercode:</strong> {error}
-            </p>
-          )}
-        </div>
-        <div className="flex gap-4">
-          <Link href="/auth/signin">
-            <Button variant="default">Zur Anmeldung</Button>
-          </Link>
-          <Link href="/">
-            <Button variant="outline">Zur Startseite</Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+    <AuthCard title={t('auth.errorTitle')} text={message}>
+      {error && (
+        <p className="mb-4 font-mono text-xs text-text-subtle">
+          {t('auth.errorCode', { code: error })}
+        </p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button asChild>
+          <Link href="/auth/signin">{t('auth.toSignIn')}</Link>
+        </Button>
+        <Button asChild variant="line">
+          <Link href="/">{t('auth.toHome')}</Link>
+        </Button>
+      </div>
+    </AuthCard>
   );
 }
 
-/**
- * useSearchParams braucht beim statischen Rendern eine Suspense-Grenze
- */
+/** useSearchParams braucht beim statischen Rendern eine Suspense-Grenze */
 export default function AuthErrorPage() {
   return (
     <Suspense>
