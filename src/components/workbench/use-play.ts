@@ -18,6 +18,7 @@ import {
   fusionMoves,
   insertBefore,
   replaceMain,
+  resolveOf,
   resultMoves,
   triggerOffers,
   withMoves,
@@ -80,7 +81,12 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
         intent.kind === 'activate' ? { ...intent, chain: intent.chain ?? chaining } : intent;
       const created = buildStep(withChain, { nodes, parent: selected ?? null, state, cards });
       const last = created.at(-1);
-      if (!last) return;
+      if (!last) {
+        // Schon aufgelöst: dorthin springen, statt nichts zu tun
+        const resolved = intent.kind === 'resolve' && resolveOf(nodes, selected?.id ?? null);
+        if (resolved) focus(resolved.id);
+        return;
+      }
       setNodes((prev) => [...prev, ...created]);
       focus(last.id);
       setChainMode(false);

@@ -120,6 +120,20 @@ describe('buildStep', () => {
     expect(chained[0].player).toBe('opponent');
   });
 
+  it('nutzt eine vorhandene Auflösung, statt eine zweite als Branch anzulegen', () => {
+    const [ns] = buildStep({ kind: 'normalSummon', instanceId: 'alu' }, ctx([], null));
+    const [act] = buildStep({ kind: 'activate', instanceId: 'alu', effectIndex: 0 }, ctx([ns], ns));
+    const [res] = buildStep({ kind: 'resolve' }, ctx([ns, act], act));
+    const nodes = [ns, act, res];
+    // Zurück auf die Aktivierung (RESOLVE hat keine eigene Zeile): Auflösen legt nichts Neues an
+    expect(buildStep({ kind: 'resolve' }, ctx(nodes, act))).toEqual([]);
+    const [next] = buildStep(
+      { kind: 'activate', instanceId: 'bf', effectIndex: 0 },
+      ctx(nodes, act)
+    );
+    expect(next).toMatchObject({ kind: 'ACTIVATE', parentId: res.id, rank: 0 });
+  });
+
   it('wird zum Branch, wenn der Schritt schon eine Fortsetzung hat', () => {
     const [ns] = buildStep({ kind: 'normalSummon', instanceId: 'alu' }, ctx([], null));
     const [alt] = buildStep(

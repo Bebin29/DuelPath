@@ -112,11 +112,15 @@ export function buildStep(intent: PlayIntent, ctx: StepContext): ComboNodeData[]
   };
 
   const chaining = intent.kind === 'activate' && intent.chain;
+  // Eine Auflösung hat keine Wahl: Liegt am Schritt schon ein RESOLVE, geht es dort weiter,
+  // statt daneben einen zweiten als Branch anzulegen. Branches entstehen erst durch Reaktionen.
+  const resolved = resolveOf(ctx.nodes, parent?.id ?? null);
   if (state.chain.length > 0 && intent.kind !== 'resolve' && !chaining) {
-    push(newNode(parent, 'RESOLVE'));
+    if (resolved) parent = resolved;
+    else push(newNode(parent, 'RESOLVE'));
     // Der neue Schritt rechnet mit dem aufgelösten Zustand: Karten können sich dabei bewegt haben
     const byId = new Map([...ctx.nodes, ...nodes].map((n) => [n.id, n]));
-    state = applyNode(state, nodes[0], cards, byId);
+    state = applyNode(state, parent!, cards, byId);
   }
 
   const card = 'instanceId' in intent ? state.cards[intent.instanceId] : undefined;
@@ -252,13 +256,18 @@ export function buildStep(intent: PlayIntent, ctx: StepContext): ComboNodeData[]
       break;
     }
     case 'resolve':
-      if (state.chain.length > 0) push(newNode(parent, 'RESOLVE'));
+      if (state.chain.length > 0 && !resolved) push(newNode(parent, 'RESOLVE'));
       break;
     case 'end':
       push(newNode(parent, 'END'));
       break;
   }
   return nodes;
+}
+
+/** Vorhandene Auflösung der Chain direkt unter dem Schritt */
+export function resolveOf(nodes: ComboNodeData[], parentId: string | null) {
+  return childrenOf(nodes, parentId).find((c) => c.kind === 'RESOLVE');
 }
 
 /**
