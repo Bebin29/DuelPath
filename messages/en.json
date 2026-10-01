@@ -565,7 +565,14 @@
       "pickFirst": "{{key}} acts on a card: hover, click or pick one with / first.",
       "notPossible": "{{key}} is not possible for {{name}} here."
     },
-    "negatedLink": "will be negated"
+    "negatedLink": "will be negated",
+    "start": {
+      "current": "Start state",
+      "removeOne": "Remove one copy of {{name}}",
+      "filterDeck": "Search the deck …",
+      "side": "Side",
+      "zone": "Zone"
+    }
   },
   "preview": {
     "effects": "Effects",
@@ -875,7 +882,8 @@
       "edit": "Edit step",
       "command": "Type a command",
       "menuFocused": "Action menu of the focused card",
-      "unpick": "Clear the chosen card, shortcuts then act on hover only"
+      "unpick": "Clear the chosen card, shortcuts then act on hover only",
+      "lines": "Show or hide the line list (below 1440 px)"
     }
   },
   "hints": {

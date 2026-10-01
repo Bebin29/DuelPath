@@ -565,7 +565,14 @@
       "pickFirst": "{{key}} wirkt auf eine Karte: erst überfahren, anklicken oder mit / wählen.",
       "notPossible": "{{key}} geht für {{name}} hier nicht."
     },
-    "negatedLink": "wird negiert"
+    "negatedLink": "wird negiert",
+    "start": {
+      "current": "Startzustand",
+      "removeOne": "Eine Kopie von {{name}} entfernen",
+      "filterDeck": "Im Deck suchen …",
+      "side": "Seite",
+      "zone": "Zone"
+    }
   },
   "preview": {
     "effects": "Effekte",
@@ -875,7 +882,8 @@
       "edit": "Schritt bearbeiten",
       "command": "Befehl eingeben",
       "menuFocused": "Aktionsmenü der fokussierten Karte",
-      "unpick": "Kartenwahl aufheben, Kürzel wirken dann nur beim Überfahren"
+      "unpick": "Kartenwahl aufheben, Kürzel wirken dann nur beim Überfahren",
+      "lines": "Line-Liste ein- und ausblenden (unter 1440 px)"
     }
   },
   "hints": {

@@ -104,14 +104,14 @@ export function WorkbenchHeader({
         value={title}
         onChange={(e) => onTitle(e.target.value)}
         aria-label={t('combo.titlePlaceholder')}
-        className="min-w-0 max-w-80 rounded-md bg-transparent px-1 font-display text-xl leading-none text-ink outline-none hover:bg-surface-3/50 focus-visible:bg-surface-3/50"
+        className="min-w-24 max-w-80 shrink rounded-md bg-transparent px-1 font-display text-xl leading-none text-ink outline-none [field-sizing:content] hover:bg-surface-3/50 focus-visible:bg-surface-3/50"
       />
       <MetaMenu status={comboStatus} onStatus={onComboStatus} tags={tags} onTags={onTags} />
       <select
         value={deckId ?? ''}
         onChange={(e) => onDeck(e.target.value || null)}
         aria-label={t('combo.deck.label')}
-        className="rounded-md bg-transparent px-1 text-xs text-text-muted outline-none hover:bg-surface-3/50"
+        className="min-w-0 max-w-44 shrink truncate rounded-md bg-transparent px-1 text-xs text-text-muted outline-none hover:bg-surface-3/50 max-[1279px]:max-w-28"
       >
         <option value="">{t('combo.deck.none')}</option>
         {decks.map((d) => (
