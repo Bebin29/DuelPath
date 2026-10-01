@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { newNode, removeSubtree } from '@/lib/combo/tree';
+import { newId, newNode, removeSubtree } from '@/lib/combo/tree';
 
 describe('tree', () => {
   it('removeSubtree entfernt den Knoten und alle Nachfahren, nicht die Geschwister', () => {
@@ -19,5 +19,12 @@ describe('tree', () => {
     const opp = newNode(newNode(null, 'ACTION'), 'OPPONENT');
     expect(newNode(opp, 'ACTIVATE').player).toBe('opponent');
     expect(newNode(opp, 'RESOLVE').player).toBe('self');
+  });
+
+  it('newId liefert eindeutige UUID v4 ohne crypto.randomUUID', () => {
+    const ids = new Set(Array.from({ length: 100 }, newId));
+    expect(ids.size).toBe(100);
+    for (const id of ids)
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   });
 });

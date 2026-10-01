@@ -6,7 +6,7 @@ import type {
   Negation,
   Player,
 } from '@/lib/combo/state';
-import { newInstanceId } from '@/lib/combo/tree';
+import { newId, newInstanceId } from '@/lib/combo/tree';
 
 /**
  * Schnellauswahl für Reaktionen: gängige TCG-Handtraps und Unterbrechungen.
@@ -272,7 +272,7 @@ export function reactionNode(
   }
 
   return {
-    id: crypto.randomUUID(),
+    id: newId(),
     parentId: parent?.id ?? null,
     kind: 'ACTIVATE',
     player,
