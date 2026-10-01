@@ -511,6 +511,21 @@ export function resultMoves(
   player: Player
 ): CardMove[] {
   const taken = new Set<number>();
+  // Als Dauerzauber offen in die Zauber/Fallen-Zone, je Karte die nächste freie (Crystal Beasts)
+  if (to === 'SPELL_TRAP') {
+    const row = boardOf(state, player).spellTraps;
+    return compact(
+      picked.map((id) => {
+        const slot = row.findIndex((c, i) => c === null && !taken.has(i));
+        if (slot >= 0) taken.add(slot);
+        return moveOf(state, id, 'SPELL_TRAP', {
+          ...(slot >= 0 && { slot }),
+          position: 'ATK',
+          ...(state.cards[id] && state.cards[id].owner !== player && { controller: player }),
+        });
+      })
+    );
+  }
   const row = boardOf(state, player).monsters;
   return compact(
     picked.map((id) => {

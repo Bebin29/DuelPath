@@ -49,7 +49,7 @@ export const OPENAPI = {
       'summoned monster, fusion materials), triggered effects and warnings.',
       '',
       'Typical agent loop:',
-      '1. GET /decks, then POST /combos with deckId and startHand (card names or nicknames).',
+      '1. GET /decks or POST /decks with a card list, then POST /combos with deckId and startHand.',
       '2. POST /combos/{id}/steps with a command like "ns aluber", "act aluber 1", "ss albion",',
       '   "res" (resolve chain), "o ash" (opponent interrupts with Ash Blossom), "end".',
       '3. If the response lists prompts, answer them with POST /steps/{stepId}/answer and picks',
@@ -280,6 +280,41 @@ export const OPENAPI = {
     },
     '/decks': {
       get: { summary: 'Own decks', responses: { '200': okResponse('Decks'), ...errors } },
+      post: {
+        summary: 'Create a deck from YDK content or card lists',
+        requestBody: json({
+          type: 'object',
+          required: ['name'],
+          properties: {
+            name: { type: 'string' },
+            description: { type: 'string' },
+            ydk: { type: 'string', description: 'Content of a .ydk file; or use main/extra/side' },
+            main: {
+              type: 'array',
+              description:
+                'Card names, nicknames or passcodes, or { card, quantity }. Extra Deck cards move to extra.',
+              items: {
+                oneOf: [
+                  { type: 'string' },
+                  {
+                    type: 'object',
+                    properties: {
+                      card: { type: 'string' },
+                      quantity: { type: 'integer', minimum: 1, maximum: 3 },
+                    },
+                  },
+                ],
+              },
+            },
+            extra: { type: 'array', items: {} },
+            side: { type: 'array', items: {} },
+          },
+        }),
+        responses: {
+          '201': okResponse('Deck with warnings (deck size, copies, banlist) and fuzzy matches'),
+          ...errors,
+        },
+      },
     },
     '/decks/{id}': {
       get: {

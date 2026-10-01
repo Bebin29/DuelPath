@@ -538,7 +538,8 @@
       "later": "Later",
       "confirm": "Confirm",
       "none": "No matching card. “All cards” shows everything.",
-      "discardEffect": "Which card do you discard?"
+      "discardEffect": "Which card do you discard?",
+      "place": "What did you place in the Spell & Trap Zone?"
     },
     "offer": {
       "branch": "Added as branch",

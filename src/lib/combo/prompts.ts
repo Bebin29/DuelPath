@@ -10,7 +10,7 @@ import { fusionMoves, needsDiscard, resultMoves, withMoves } from '@/lib/combo/p
 import {
   materialCandidates,
   resultCandidates,
-  resultSpec,
+  resultSpecs,
   type ResultSpec,
 } from '@/lib/combo/effect-results';
 
@@ -53,8 +53,7 @@ export function promptsFor(
       key: discard === 'cost' ? 'costMoves' : 'resolveMoves',
     });
   }
-  const spec = resultSpec(data, effectIndex);
-  if (spec)
+  for (const spec of resultSpecs(data, effectIndex))
     out.push({ kind: spec.verb === 'fusion' ? 'fusion' : 'result', stepId: step.id, player, spec });
   return out;
 }
