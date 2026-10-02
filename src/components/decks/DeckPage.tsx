@@ -38,14 +38,22 @@ import { parseYDKFile } from '@/lib/utils/deck.utils';
 import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
 import { importYdkToDeck } from '@/server/actions/deck.actions';
 import {
+  createDeckVersion,
+  deleteDeckVersion,
   getDeckView,
   saveDeck,
+  type DeckVersionView,
   type DeckViewCard,
   type DeckViewEntry,
 } from '@/server/actions/deck-view.actions';
 import { DeckListTab } from './DeckListTab';
 import { DeckCombosTab } from './DeckCombosTab';
 import { HandTester } from './HandTester';
+import { RatiosTab, type RatioDoc } from './RatiosTab';
+import { SidePlanTab } from './SidePlanTab';
+import { DeckVersions, type BaselineKey } from './DeckVersions';
+import type { Roles } from '@/lib/deck/roles';
+import { diffEntries, type SidePlan } from '@/lib/deck/side-plan';
 
 import type { DeckTab } from '@/lib/deck/deck-tab';
 import { cn } from '@/lib/utils';
@@ -54,6 +62,8 @@ import { PAGE_TITLE, PageHeader } from '@/components/ui/page-header';
 interface Doc {
   name: string;
   entries: DeckViewEntry[];
+  roles: Roles;
+  sidePlans: SidePlan[];
 }
 
 /** Anzahl einer Karte in einem Bereich ändern, zwischen 0 und 3 Kopien */
@@ -85,20 +95,43 @@ export function DeckPage({
   combos,
   comboCards,
   handtraps,
+  staples,
   initialTab,
 }: {
-  deck: { id: string; name: string; entries: DeckViewEntry[]; cards: DeckViewCard[] };
+  deck: {
+    id: string;
+    name: string;
+    entries: DeckViewEntry[];
+    cards: DeckViewCard[];
+    roles: Roles;
+    sidePlans: SidePlan[];
+    versions: DeckVersionView[];
+  };
   combos: LibraryEntry[];
   comboCards: Record<string, LibraryCard>;
   handtraps: string[];
+  /** alle Staples, für die Rollen-Vorschläge */
+  staples: string[];
   initialTab: DeckTab;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const cardSheet = useCardSheet();
-  const history = useHistory<Doc>({ name: deck.name, entries: deck.entries });
-  const { name, entries } = history.state;
+  const history = useHistory<Doc>({
+    name: deck.name,
+    entries: deck.entries,
+    roles: deck.roles,
+    sidePlans: deck.sidePlans,
+  });
+  const { name, entries, roles, sidePlans } = history.state;
+  // Vergleichsstand der Ratios: beim Öffnen, ein Zwischenstand oder eine Version
+  const [baseline, setBaseline] = useState<{ key: BaselineKey; doc: RatioDoc }>({
+    key: 'open',
+    doc: { entries: deck.entries, roles: deck.roles },
+  });
+  const [versions, setVersions] = useState(deck.versions);
+  const [removed, setRemoved] = useState<{ id: number; version: DeckVersionView } | null>(null);
   const setDoc = history.set;
   const [cards, setCards] = useState(() => new Map(deck.cards.map((c) => [c.id, c])));
   const [tab, setTab] = useState(initialTab);
@@ -115,11 +148,11 @@ export function DeckPage({
     }
     const timer = setTimeout(async () => {
       setStatus('saving');
-      const result = await saveDeck(deck.id, { name, entries });
+      const result = await saveDeck(deck.id, { name, entries, roles, sidePlans });
       setStatus(result.error ? 'error' : 'saved');
     }, 700);
     return () => clearTimeout(timer);
-  }, [deck.id, name, entries]);
+  }, [deck.id, name, entries, roles, sidePlans]);
 
   const { undo, redo } = history;
   useEffect(() => {
@@ -185,6 +218,52 @@ export function DeckPage({
   }, [entries]);
   const pool = useMemo(() => expandDeck(entries.filter((e) => e.section === 'MAIN')), [entries]);
   const handtrapSet = useMemo(() => new Set(handtraps), [handtraps]);
+  const stapleSet = useMemo(() => new Set(staples), [staples]);
+  const ratioDoc = useMemo(() => ({ entries, roles }), [entries, roles]);
+  const diff = useMemo(() => diffEntries(baseline.doc.entries, entries), [baseline, entries]);
+  const compare = (key: BaselineKey) => {
+    const version = versions.find((v) => v.id === key);
+    if (key === 'open') setBaseline({ key, doc: { entries: deck.entries, roles: deck.roles } });
+    else if (version) setBaseline({ key, doc: version });
+    else setBaseline({ key: 'now', doc: ratioDoc });
+  };
+  const saveVersion = async (versionName: string, createdAt?: string) => {
+    const result = await createDeckVersion(deck.id, {
+      name: versionName,
+      entries,
+      roles,
+      createdAt,
+    });
+    if (!result.data) return false;
+    const v = result.data;
+    setVersions((prev) => [...prev, v].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    return true;
+  };
+  const removeVersion = async (id: string) => {
+    const version = versions.find((v) => v.id === id);
+    if (!version || (await deleteDeckVersion(id)).error) return;
+    setVersions((prev) => prev.filter((v) => v.id !== id));
+    if (baseline.key === id) compare('open');
+    setRemoved({ id: Date.now(), version });
+  };
+  // Rückgängig legt die Version mit Inhalt und Datum neu an
+  const undoRemove = async () => {
+    if (!removed) return;
+    const { version } = removed;
+    setRemoved(null);
+    const result = await createDeckVersion(deck.id, version);
+    if (result.data)
+      setVersions((prev) =>
+        [...prev, result.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      );
+  };
+  const openCard = (id: string) =>
+    cardSheet.open(id, (cardId, effects) =>
+      setCards((prev) => {
+        const card = prev.get(cardId);
+        return card ? new Map(prev).set(cardId, { ...card, effects }) : prev;
+      })
+    );
 
   return (
     <div className="flex flex-col gap-6">
@@ -302,6 +381,8 @@ export function DeckPage({
         onChange={changeTab}
         options={[
           { value: 'list', label: t('decks.tab.list') },
+          { value: 'ratios', label: t('decks.tab.ratios') },
+          { value: 'side', label: `${t('decks.tab.side')} · ${sidePlans.length}` },
           { value: 'combos', label: `${t('decks.tab.combos')} · ${combos.length}` },
           { value: 'hand', label: t('decks.tab.hand') },
         ]}
@@ -314,14 +395,46 @@ export function DeckPage({
             onAdd={add}
             onChange={change}
             onMove={move}
-            onOpenCard={(id) =>
-              cardSheet.open(id, (cardId, effects) =>
-                setCards((prev) => {
-                  const card = prev.get(cardId);
-                  return card ? new Map(prev).set(cardId, { ...card, effects }) : prev;
-                })
-              )
+            onOpenCard={openCard}
+          />
+        )}
+        {tab === 'ratios' && (
+          <RatiosTab
+            doc={ratioDoc}
+            baseline={baseline.doc}
+            cards={cards}
+            combos={combos}
+            staples={stapleSet}
+            onRoles={(patch) => setDoc((d) => ({ ...d, roles: { ...d.roles, ...patch } }))}
+            onChange={change}
+            comparison={
+              <DeckVersions
+                versions={versions}
+                baseline={baseline.key}
+                diff={diff}
+                cards={cards}
+                onCompare={compare}
+                onSave={saveVersion}
+                onRestore={(v) =>
+                  setDoc((d) => ({ ...d, entries: v.entries, roles: { ...d.roles, ...v.roles } }))
+                }
+                onDelete={(id) => void removeVersion(id)}
+              />
             }
+            onOpenCard={openCard}
+          />
+        )}
+        {tab === 'side' && (
+          <SidePlanTab
+            entries={entries}
+            roles={roles}
+            plans={sidePlans}
+            cards={cards}
+            combos={combos}
+            staples={stapleSet}
+            onPlans={(fn, group) => setDoc((d) => ({ ...d, sidePlans: fn(d.sidePlans) }), group)}
+            onRoles={(patch) => setDoc((d) => ({ ...d, roles: { ...d.roles, ...patch } }))}
+            onOpenCard={openCard}
           />
         )}
         {tab === 'combos' && (
@@ -363,6 +476,21 @@ export function DeckPage({
               setNotice(null);
             }}
           >
+            {t('workbench.undo')}
+          </Button>
+        </TimedNotice>
+      )}
+      {removed && (
+        <TimedNotice
+          key={removed.id}
+          duration={8000}
+          onExpire={() => setRemoved(null)}
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 shadow-[0_18px_40px_rgb(0_0_0/0.45)]"
+        >
+          <span className="mr-2 text-sm">
+            {t('decks.versions.deleted', { name: removed.version.name })}
+          </span>
+          <Button variant="text" size="sm" onClick={() => void undoRemove()}>
             {t('workbench.undo')}
           </Button>
         </TimedNotice>

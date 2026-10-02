@@ -18,6 +18,8 @@ describe('deck.utils', () => {
     name: 'Test Deck',
     description: 'Test Description',
     format: 'TCG',
+    roles: {},
+    sidePlans: [],
     userId: 'user-1',
     createdAt: new Date(),
     updatedAt: new Date(),

@@ -318,9 +318,51 @@ export const OPENAPI = {
     },
     '/decks/{id}': {
       get: {
-        summary: 'Deck list by section',
+        summary: 'Deck list by section with roles and side plans',
         parameters: [path('id', 'Deck id')],
         responses: { '200': okResponse('Deck'), ...errors },
+      },
+    },
+    '/decks/{id}/roles': {
+      patch: {
+        summary: 'Set card roles for ratios',
+        parameters: [path('id', 'Deck id')],
+        requestBody: json({
+          type: 'object',
+          properties: {
+            roles: {
+              type: 'object',
+              additionalProperties: {
+                enum: ['starter', 'extender', 'handtrap', 'breaker', 'garnet', 'other', null],
+              },
+              description: 'Card name, nickname or passcode → role; null clears the role',
+            },
+          },
+          required: ['roles'],
+        }),
+        responses: { '200': okResponse('Deck with roles'), ...errors },
+      },
+    },
+    '/decks/{id}/odds': {
+      get: {
+        summary:
+          'Exact opening-hand odds by role, coverage by saved combos, per-card value of ±1 copy (percentage points) and cheapest cuts',
+        parameters: [
+          path('id', 'Deck id'),
+          {
+            name: 'going',
+            in: 'query',
+            schema: { enum: ['first', 'second'] },
+            description: 'Default first (5 cards); second draws 6. With matchup: the plan decides',
+          },
+          {
+            name: 'matchup',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Side plan by matchup name: odds for the Main Deck after siding',
+          },
+        ],
+        responses: { '200': okResponse('Odds'), ...errors },
       },
     },
     '/combos': {

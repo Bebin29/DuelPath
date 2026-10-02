@@ -712,7 +712,9 @@
     "tab": {
       "list": "Deck list",
       "combos": "Combos",
-      "hand": "Hand tester"
+      "hand": "Hand tester",
+      "ratios": "Ratios",
+      "side": "Side plan"
     },
     "tabs": "Deck sections",
     "back": "Back to decks",
@@ -767,13 +769,91 @@
     "noMatch": "No saved line for this hand yet.",
     "newWithHand": "New combo with this hand",
     "coverage": "Coverage",
-    "coverageText": "In {{percent}} of hands you have a saved line. Computed over {{runs}} simulated hands, {{going}}.",
+    "coverageText": "In {{percent}} of hands you have a saved line. Computed exactly over all hands, {{going}}.",
     "first": "going first",
     "second": "going second",
     "notInDeck": "{{name}} is no longer in the deck",
     "addCards": "Add cards",
     "addToSide": "{{name}} to the Side Deck",
-    "searchHintTouch": "Tap: Main or Extra · Side button: Side"
+    "searchHintTouch": "Tap: Main or Extra · Side button: Side",
+    "ratios": {
+      "role": {
+        "starter": "Starter",
+        "extender": "Extender",
+        "handtrap": "Handtrap",
+        "breaker": "Board breaker",
+        "garnet": "Garnet",
+        "other": "Other"
+      },
+      "chooseRole": "Role: {{role}}, change",
+      "suggested_one": "{{count}} role suggested from your combos and the staples",
+      "suggested_other": "{{count}} roles suggested from your combos and the staples",
+      "accept": "Accept suggestions",
+      "tiers": "Opening hands",
+      "tier": {
+        "brick": "Brick",
+        "playable": "Playable",
+        "good": "Good",
+        "great": "Great"
+      },
+      "tierText": {
+        "first": "Playable: a starter. Good: plus an extender or handtrap. Great: both. Two copies of a hard once-per-turn starter count once.",
+        "second": "Playable: a starter or two board breakers. Good: starter plus breaker. Great: starter plus two breakers."
+      },
+      "metric": {
+        "starter": "At least 1 starter",
+        "starterHandtrap": "Starter plus handtrap",
+        "starterBreaker": "Starter plus breaker",
+        "brick": "Brick",
+        "garnet": "At least 1 garnet"
+      },
+      "margin": "Coverage with one copy less or more, in percentage points",
+      "breaks_one": "One copy less: {{count}} combo no longer works",
+      "breaks_other": "One copy less: {{count}} combos no longer work",
+      "cut": "Cheapest cuts",
+      "size": "Main Deck has {{count}} cards. Each card less that is in no starting hand: {{points}} points of coverage.",
+      "fewCombos": "Coverage is well below \"at least 1 starter\". Saved combos are probably missing.",
+      "noCombos": "Without combos for this deck there is no coverage and no value per card.",
+      "extraUse": "Extra Deck by use",
+      "unused": "in no combo",
+      "unusedHint": "Cards without a combo can still earn their slot, for going second or as an answer."
+    },
+    "versions": {
+      "compareWith": "Compare with",
+      "open": "State when opened",
+      "now": "Snapshot",
+      "setNow": "Set current state as comparison",
+      "same": "No changes compared to the comparison.",
+      "diff": "Changes compared to the comparison",
+      "name": "Version name",
+      "namePlaceholder": "e.g. before locals, 0 Gallant",
+      "save": "Save",
+      "title": "Versions",
+      "compare": "Compare with {{name}}",
+      "restore": "Restore {{name}}",
+      "delete": "Delete {{name}}",
+      "deleted": "Version \"{{name}}\" deleted"
+    },
+    "side": {
+      "plans": "Side plans",
+      "untitled": "Untitled",
+      "add": "Matchup",
+      "noSide": "The Side Deck is empty. Add cards to the Side Deck first.",
+      "empty": "Add a matchup and plan which cards go in and out.",
+      "matchup": "Matchup",
+      "matchupPlaceholder": "Matchup, e.g. Ryzeal",
+      "delete": "Delete side plan",
+      "in": "In",
+      "out": "Out",
+      "inLess": "One copy less in",
+      "inMore": "One copy more in",
+      "outLess": "One copy less out",
+      "outMore": "One copy more out",
+      "compare": "Numbers after siding, {{going}}, compared with the Main Deck without a plan.",
+      "unbalanced": "{{in}} in, {{out}} out: the Main Deck changes size.",
+      "notInSide": "{{name}}: fewer in the Side Deck than planned",
+      "notInMain": "{{name}}: fewer in the Main Deck than planned"
+    }
   },
   "newCombo": {
     "title": "Choose a starting hand",

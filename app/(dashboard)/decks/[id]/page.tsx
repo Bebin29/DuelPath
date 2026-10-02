@@ -24,6 +24,7 @@ export default async function DeckRoute({
       combos={library.data?.entries ?? []}
       comboCards={library.data?.cards ?? {}}
       handtraps={staples.filter((s) => s.staple.side === 'opponent').map((s) => s.card.id)}
+      staples={staples.map((s) => s.card.id)}
       initialTab={parseTab(tab)}
     />
   );

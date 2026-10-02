@@ -11,10 +11,9 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Segmented } from '@/components/ui/segmented';
 import { displayName } from '@/lib/combo/cards';
+import { coverageOdds } from '@/lib/deck/odds';
 import {
-  COVERAGE_RUNS,
   HAND_SIZE,
-  coverage,
   drawHand,
   handRoles,
   matchingCombos,
@@ -35,7 +34,7 @@ const ROLE_TONE: Record<HandRole, string> = {
 
 /**
  * Hand-Tester (UX-Plan 7.3, UI-Plan 7.5.4): Hand ziehen, passende Combos sehen, die übrigen Karten
- * als Handtrap oder Extender einordnen. Die Abdeckung rechnet über viele simulierte Hände.
+ * als Handtrap oder Extender einordnen. Die Abdeckung ist exakt über alle möglichen Hände gerechnet.
  */
 export function HandTester({
   deckId,
@@ -67,10 +66,15 @@ export function HandTester({
     () => combos.map((c) => ({ id: c.id, startHand: c.stats.required, combo: c })),
     [combos]
   );
-  const rate = useMemo(
-    () => coverage(pool, starters, size, COVERAGE_RUNS, seededRandom(pool.length * 31 + size)),
-    [pool, starters, size]
-  );
+  const rate = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const id of pool) counts.set(id, (counts.get(id) ?? 0) + 1);
+    return coverageOdds(
+      counts,
+      starters.map((s) => s.startHand),
+      size
+    ).base;
+  }, [pool, starters, size]);
   const matched = matchingCombos(hand, starters);
   const roles = handRoles(hand, matched, handtraps);
   const percent = new Intl.NumberFormat(i18n.language, { style: 'percent' }).format(rate);
@@ -204,7 +208,6 @@ export function HandTester({
         <p className="text-xs text-text-muted">
           {t('decks.coverageText', {
             percent,
-            runs: COVERAGE_RUNS.toLocaleString(i18n.language),
             going: t(going === 'first' ? 'decks.first' : 'decks.second'),
           })}
         </p>

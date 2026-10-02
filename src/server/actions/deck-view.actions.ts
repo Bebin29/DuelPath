@@ -5,6 +5,9 @@ import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
 import { toComboCard, type ComboCard } from '@/lib/combo/cards';
 import { deckCounts } from '@/lib/deck/deck-check';
+import { parseRoles, rolesSchema, type Roles } from '@/lib/deck/roles';
+import { parseSidePlans, sidePlansSchema, type SidePlan } from '@/lib/deck/side-plan';
+import type { Prisma } from '@/generated/prisma/client';
 
 type Result<T> = { data: T; error?: undefined } | { data?: undefined; error: string };
 export type DeckSection = 'MAIN' | 'EXTRA' | 'SIDE';
@@ -84,56 +87,6 @@ export async function listDeckSummaries(): Promise<Result<DeckSummary[]>> {
   };
 }
 
-export async function getDeckView(deckId: string): Promise<
-  Result<{
-    id: string;
-    name: string;
-    entries: DeckViewEntry[];
-    cards: DeckViewCard[];
-  }>
-> {
-  const uid = await userId();
-  if (!uid) return { error: 'Unauthorized' };
-  const deck = await prisma.deck.findUnique({
-    where: { id: deckId },
-    include: { deckCards: { include: { card: { select: CARD_SELECT } } } },
-  });
-  if (!deck || deck.userId !== uid) return { error: 'Not found' };
-  return {
-    data: {
-      id: deck.id,
-      name: deck.name,
-      entries: deck.deckCards.map((dc) => ({
-        cardId: dc.cardId,
-        quantity: dc.quantity,
-        section: dc.deckSection as DeckSection,
-      })),
-      cards: deck.deckCards.map((dc) => ({
-        ...toComboCard(dc.card),
-        banTcg: dc.card.banTcg,
-        passcode: dc.card.passcode,
-        archetype: dc.card.archetype,
-      })),
-    },
-  };
-}
-
-/** Karte für die Deckseite nachladen, etwa nach dem Hinzufügen aus der Suche */
-export async function getDeckCard(cardId: string): Promise<Result<DeckViewCard>> {
-  const uid = await userId();
-  if (!uid) return { error: 'Unauthorized' };
-  const card = await prisma.card.findUnique({ where: { id: cardId }, select: CARD_SELECT });
-  if (!card) return { error: 'Not found' };
-  return {
-    data: {
-      ...toComboCard(card),
-      banTcg: card.banTcg,
-      passcode: card.passcode,
-      archetype: card.archetype,
-    },
-  };
-}
-
 const entriesSchema = z
   .array(
     z.object({
@@ -144,13 +97,144 @@ const entriesSchema = z
   )
   .max(120);
 
+export interface DeckVersionView {
+  id: string;
+  name: string;
+  entries: DeckViewEntry[];
+  roles: Roles;
+  createdAt: string;
+}
+
+const toViewCard = (card: Prisma.CardGetPayload<{ select: typeof CARD_SELECT }>) => ({
+  ...toComboCard(card),
+  banTcg: card.banTcg,
+  passcode: card.passcode,
+  archetype: card.archetype,
+});
+
+const toVersion = (v: {
+  id: string;
+  name: string;
+  entries: unknown;
+  roles: unknown;
+  createdAt: Date;
+}): DeckVersionView => {
+  const entries = entriesSchema.safeParse(v.entries);
+  return {
+    id: v.id,
+    name: v.name,
+    entries: entries.success ? entries.data : [],
+    roles: parseRoles(v.roles),
+    createdAt: v.createdAt.toISOString(),
+  };
+};
+
+export async function getDeckView(deckId: string): Promise<
+  Result<{
+    id: string;
+    name: string;
+    entries: DeckViewEntry[];
+    /** Karten des Decks und seiner Versionen */
+    cards: DeckViewCard[];
+    roles: Roles;
+    sidePlans: SidePlan[];
+    versions: DeckVersionView[];
+  }>
+> {
+  const uid = await userId();
+  if (!uid) return { error: 'Unauthorized' };
+  const deck = await prisma.deck.findUnique({
+    where: { id: deckId },
+    include: {
+      deckCards: { include: { card: { select: CARD_SELECT } } },
+      versions: { orderBy: { createdAt: 'desc' } },
+    },
+  });
+  if (!deck || deck.userId !== uid) return { error: 'Not found' };
+  const versions = deck.versions.map(toVersion);
+  // Karten, die nur noch in einer Version stehen, braucht der Vergleich trotzdem
+  const known = new Set(deck.deckCards.map((dc) => dc.cardId));
+  const extra = [
+    ...new Set(
+      versions.flatMap((v) => v.entries.map((e) => e.cardId)).filter((id) => !known.has(id))
+    ),
+  ];
+  const old = extra.length
+    ? await prisma.card.findMany({ where: { id: { in: extra } }, select: CARD_SELECT })
+    : [];
+  return {
+    data: {
+      id: deck.id,
+      name: deck.name,
+      roles: parseRoles(deck.roles),
+      sidePlans: parseSidePlans(deck.sidePlans),
+      versions,
+      entries: deck.deckCards.map((dc) => ({
+        cardId: dc.cardId,
+        quantity: dc.quantity,
+        section: dc.deckSection as DeckSection,
+      })),
+      cards: [...deck.deckCards.map((dc) => toViewCard(dc.card)), ...old.map(toViewCard)],
+    },
+  };
+}
+
+/** Jetzigen Stand als Version sichern (Deckbau-Plan 3.5) */
+export async function createDeckVersion(
+  deckId: string,
+  /** createdAt nur beim Zurückholen einer gelöschten Version */
+  input: { name: string; entries: DeckViewEntry[]; roles: Roles; createdAt?: string }
+): Promise<Result<DeckVersionView>> {
+  const uid = await userId();
+  if (!uid) return { error: 'Unauthorized' };
+  const deck = await prisma.deck.findUnique({ where: { id: deckId }, select: { userId: true } });
+  if (!deck || deck.userId !== uid) return { error: 'Not found' };
+  const entries = entriesSchema.safeParse(input.entries);
+  const roles = rolesSchema.safeParse(input.roles);
+  const name = input.name.trim().slice(0, 60);
+  if (!entries.success || !roles.success || !name) return { error: 'Ungültige Version' };
+  const createdAt = input.createdAt ? new Date(input.createdAt) : undefined;
+  if (createdAt && Number.isNaN(createdAt.getTime())) return { error: 'Ungültiges Datum' };
+  const version = await prisma.deckVersion.create({
+    data: {
+      deckId,
+      name,
+      entries: entries.data,
+      roles: roles.data,
+      ...(createdAt && { createdAt }),
+    },
+  });
+  return { data: toVersion(version) };
+}
+
+export async function deleteDeckVersion(versionId: string): Promise<Result<true>> {
+  const uid = await userId();
+  if (!uid) return { error: 'Unauthorized' };
+  const version = await prisma.deckVersion.findUnique({
+    where: { id: versionId },
+    select: { deck: { select: { userId: true } } },
+  });
+  if (!version || version.deck.userId !== uid) return { error: 'Not found' };
+  await prisma.deckVersion.delete({ where: { id: versionId } });
+  return { data: true };
+}
+
+/** Karte für die Deckseite nachladen, etwa nach dem Hinzufügen aus der Suche */
+export async function getDeckCard(cardId: string): Promise<Result<DeckViewCard>> {
+  const uid = await userId();
+  if (!uid) return { error: 'Unauthorized' };
+  const card = await prisma.card.findUnique({ where: { id: cardId }, select: CARD_SELECT });
+  if (!card) return { error: 'Not found' };
+  return { data: toViewCard(card) };
+}
+
 /**
  * Speichert das ganze Deck auf einmal (Autosave der Deckseite, Rückgängig nach YDK-Import).
  * Regeln wie 40 bis 60 Karten oder die Banlist prüft die Seite als Hinweis, nicht hier.
  */
 export async function saveDeck(
   deckId: string,
-  input: { name?: string; entries: DeckViewEntry[] }
+  input: { name?: string; entries: DeckViewEntry[]; roles?: Roles; sidePlans?: SidePlan[] }
 ): Promise<Result<true>> {
   const uid = await userId();
   if (!uid) return { error: 'Unauthorized' };
@@ -158,6 +242,10 @@ export async function saveDeck(
   if (!deck || deck.userId !== uid) return { error: 'Not found' };
   const parsed = entriesSchema.safeParse(input.entries);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültiges Deck' };
+  const roles = rolesSchema.optional().safeParse(input.roles);
+  if (!roles.success) return { error: 'Ungültige Rollen' };
+  const sidePlans = sidePlansSchema.optional().safeParse(input.sidePlans);
+  if (!sidePlans.success) return { error: 'Ungültiger Side-Plan' };
   const name = input.name?.trim().slice(0, 100);
 
   // Doppelte Einträge je Bereich zusammenfassen, höchstens drei Kopien
@@ -179,7 +267,17 @@ export async function saveDeck(
     }),
     prisma.deck.update({
       where: { id: deckId },
-      data: { updatedAt: new Date(), ...(name && { name }) },
+      data: {
+        updatedAt: new Date(),
+        ...(name && { name }),
+        ...(sidePlans.data && { sidePlans: sidePlans.data }),
+        // Nur Rollen von Karten, die im Deck liegen
+        ...(roles.data && {
+          roles: Object.fromEntries(
+            Object.entries(roles.data).filter(([id]) => parsed.data.some((e) => e.cardId === id))
+          ),
+        }),
+      },
     }),
   ]);
   return { data: true };

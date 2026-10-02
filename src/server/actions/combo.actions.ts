@@ -3,11 +3,9 @@
 import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
-import type { StartState } from '@/lib/combo/state';
 import { toComboCard, type ComboCard } from '@/lib/combo/cards';
 import { nodeRows } from '@/lib/prisma/node-rows';
 import {
-  cardIdsOf,
   createComboFor,
   isStoreError,
   loadCombo,
@@ -19,9 +17,8 @@ import {
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
 import type { DeckEntry } from '@/lib/combo/deck';
 import type { SaveComboInput } from '@/lib/validations/combo.schema';
-import { comboStats } from '@/lib/combo/summary';
-import { deckCounts, missingFromDeck } from '@/lib/deck/deck-check';
-import { parseStatus, type LibraryCard, type LibraryEntry } from '@/lib/combo/library';
+import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
+import { loadLibrary } from '@/server/services/library.service';
 
 type Result<T> = { data: T; error?: undefined } | { data?: undefined; error: string };
 
@@ -48,64 +45,7 @@ export async function listLibrary(
 ): Promise<Result<{ entries: LibraryEntry[]; cards: Record<string, LibraryCard> }>> {
   const userId = await currentUserId();
   if (!userId) return { error: 'Unauthorized' };
-  const combos = await prisma.combo.findMany({
-    where: { userId, ...(deckId && { deckId }) },
-    orderBy: { updatedAt: 'desc' },
-    include: {
-      deck: {
-        select: {
-          name: true,
-          deckCards: { select: { cardId: true, quantity: true, deckSection: true } },
-        },
-      },
-      nodes: { orderBy: [{ rank: 'asc' }, { createdAt: 'asc' }] },
-    },
-  });
-  const parsed = combos.map((c) => ({
-    combo: c,
-    startState: c.startState as unknown as StartState,
-    nodes: c.nodes.map(nodeFromRow),
-  }));
-  const ids = new Set<string>();
-  for (const p of parsed) for (const id of cardIdsOf(p.startState, p.nodes)) ids.add(id);
-  const rows = await prisma.card.findMany({
-    where: { id: { in: [...ids] } },
-    select: {
-      id: true,
-      name: true,
-      nameDe: true,
-      type: true,
-      race: true,
-      imageSmall: true,
-      effects: true,
-      effectsOverride: true,
-      linkMarkers: true,
-    },
-  });
-  const full = new Map(rows.map((r) => [r.id, toComboCard(r)]));
-  const cards = Object.fromEntries(
-    rows.map((r) => [r.id, { name: r.name, nameDe: r.nameDe, imageSmall: r.imageSmall }])
-  );
-
-  return {
-    data: {
-      cards,
-      entries: parsed.map(({ combo, startState, nodes }) => {
-        const stats = comboStats(startState, nodes, full);
-        return {
-          id: combo.id,
-          title: combo.title,
-          deckId: combo.deckId,
-          deckName: combo.deck?.name ?? null,
-          updatedAt: combo.updatedAt.toISOString(),
-          tags: combo.tags,
-          status: parseStatus(combo.status),
-          stats,
-          missing: combo.deck ? missingFromDeck(stats, deckCounts(combo.deck.deckCards)).length : 0,
-        };
-      }),
-    },
-  };
+  return { data: await loadLibrary(userId, deckId) };
 }
 
 /** Kopie einer Combo mit neuen Knoten-IDs, etwa um eine Line mit anderer Starthand zu probieren */
