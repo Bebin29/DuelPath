@@ -27,7 +27,7 @@ export function SaveIndicator({
     <span
       role="status"
       aria-live="polite"
-      className={cn('flex items-center justify-end gap-1.5 font-mono text-[11px]', className)}
+      className={cn('flex items-center justify-end gap-1.5 font-mono text-2xs', className)}
     >
       <AnimatePresence mode="wait" initial={false}>
         {status === 'conflict' ? (

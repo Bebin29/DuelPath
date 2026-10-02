@@ -107,7 +107,8 @@ export function TreeCanvas({
         position: positions.get(n.id)!,
         data: {
           label: labelOf(n),
-          detail: detailOf(n),
+          // Gleicher Untertitel wie Titel („Endboard / Endboard“) bringt nichts
+          detail: detailOf(n) === labelOf(n) ? '' : detailOf(n),
           image: imageOf(n),
           opponent: n.player === 'opponent' || n.kind === 'OPPONENT',
           warnings: warningsOf(n.id),
@@ -135,13 +136,13 @@ export function TreeCanvas({
         labelStyle: {
           fill: opponent ? 'var(--opponent)' : 'var(--text-muted)',
           fontFamily: 'var(--font-mono)',
-          fontSize: 10.5,
+          fontSize: 12,
         },
         labelBgStyle: { fill: 'var(--bg)' },
         style: {
           stroke: opponent ? 'var(--opponent)' : main ? 'var(--text-muted)' : 'var(--line-strong)',
           strokeWidth: main ? 2 : 1.5,
-          opacity: onPath(n.id) ? 1 : 0.6,
+          opacity: onPath(n.id) ? 1 : 0.75,
           animationDelay: `${80 + depthOf(n.id) * 45}ms`,
         },
       };
@@ -159,7 +160,8 @@ export function TreeCanvas({
       onNodeClick={(_, node) => onSelect(node.id)}
       onNodeDoubleClick={(_, node) => onOpen(node.id)}
       fitView
-      fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
+      // Nicht kleiner als 0,7, damit die Knotentexte lesbar bleiben (UI-Sweep-Plan 3.10)
+      fitViewOptions={{ maxZoom: 1, minZoom: 0.7, padding: 0.2 }}
       minZoom={0.2}
       colorMode={theme}
       proOptions={{ hideAttribution: true }}
@@ -167,16 +169,19 @@ export function TreeCanvas({
     >
       <Background variant={BackgroundVariant.Dots} gap={18} size={1} color="var(--line)" />
       <Controls showInteractive={false} position="bottom-right" />
-      <MiniMap
-        pannable
-        zoomable
-        position="bottom-left"
-        bgColor="var(--surface-1)"
-        maskColor="rgb(0 0 0 / 0.35)"
-        nodeColor={(n) =>
-          (n.data as TreeNodeData).opponent ? 'var(--opponent)' : 'var(--line-strong)'
-        }
-      />
+      {nodes.length >= 10 && (
+        <MiniMap
+          pannable
+          zoomable
+          position="bottom-left"
+          bgColor="var(--surface-1)"
+          maskColor="rgb(0 0 0 / 0.35)"
+          nodeColor={(n) =>
+            (n.data as TreeNodeData).opponent ? 'var(--opponent)' : 'var(--line-strong)'
+          }
+          className="!rounded-md !border !border-line"
+        />
+      )}
     </ReactFlow>
   );
 }
@@ -185,7 +190,7 @@ function TreeNodeView({ data }: NodeProps<TreeNode>) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12, scale: 0.96 }}
-      animate={{ opacity: data.onPath ? 1 : 0.6, y: 0, scale: 1 }}
+      animate={{ opacity: data.onPath ? 1 : 0.8, y: 0, scale: 1 }}
       transition={{
         type: 'spring',
         bounce: 0.18,
@@ -214,13 +219,13 @@ function TreeNodeView({ data }: NodeProps<TreeNode>) {
       <div className="min-w-0 flex-1">
         <div
           className={cn(
-            'truncate text-[12.5px] font-medium',
+            'truncate text-[13px] font-medium',
             data.opponent ? 'text-opponent' : 'text-ink'
           )}
         >
           {data.label}
         </div>
-        {data.detail && <div className="truncate text-[11.5px] text-text-muted">{data.detail}</div>}
+        {data.detail && <div className="truncate text-xs text-text-muted">{data.detail}</div>}
       </div>
       {data.warnings > 0 && <TriangleAlert className="size-3.5 shrink-0 text-warning" />}
       <Handle type="source" position={Position.Bottom} className="!opacity-0" />

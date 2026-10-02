@@ -7,6 +7,7 @@ import { useSettings } from '@/components/providers/SettingsProvider';
 import { Button } from '@/components/ui/button';
 import { NICKNAMES } from '@/lib/cards/nicknames';
 import { CardSearchPanel } from '@/components/decks/CardSearchPanel';
+import { Input } from '@/components/ui/input';
 
 /**
  * Spitznamen-Pflege (UX-Plan 8 und 17, UX-6): eigene Kürzel für Suche und Befehlszeile.
@@ -43,7 +44,7 @@ export function NicknameSettings() {
               key={`${n.alias}:${n.card}`}
               className="flex h-10 items-center gap-3 border-b border-line"
             >
-              <span className="w-32 font-mono text-sm">{n.alias}</span>
+              <span className="w-24 shrink-0 truncate font-mono text-sm sm:w-32">{n.alias}</span>
               <span className="flex-1 truncate text-sm text-text-muted">{n.card}</span>
               <Button
                 variant="ghost"
@@ -58,15 +59,15 @@ export function NicknameSettings() {
         </ul>
       )}
 
-      <div className="grid grid-cols-[180px_minmax(0,1fr)] gap-4 rounded-lg border border-line p-4">
+      <div className="grid gap-4 rounded-lg border border-line p-4 sm:grid-cols-[180px_minmax(0,1fr)]">
         <label className="flex flex-col gap-1.5">
           <span className="text-xs text-text-muted">{t('settings.alias')}</span>
-          <input
+          <Input
             value={alias}
             onChange={(e) => setAlias(e.target.value)}
             maxLength={30}
             placeholder={t('settings.aliasPlaceholder')}
-            className="h-9 rounded-md border border-line bg-transparent px-2.5 font-mono text-sm outline-none focus:border-line-strong"
+            className="font-mono"
           />
         </label>
         <div className="flex max-h-72 flex-col">
@@ -83,7 +84,7 @@ export function NicknameSettings() {
         <summary className="cursor-pointer text-sm text-text-muted">
           {t('settings.builtInNicknames', { count: builtIn.length })}
         </summary>
-        <ul className="mt-2 grid grid-cols-2 gap-x-6 text-sm">
+        <ul className="mt-2 grid gap-x-6 text-sm sm:grid-cols-2">
           {builtIn.map(([key, names]) => (
             <li key={key} className="flex gap-3 border-b border-line py-1">
               <span className="w-24 font-mono">{key}</span>

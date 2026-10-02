@@ -11,6 +11,7 @@ import {
   revokeApiToken,
   type ApiTokenInfo,
 } from '@/server/actions/api-token.actions';
+import { Input } from '@/components/ui/input';
 
 /**
  * API-Tokens für Agenten und Skripte (REST-API unter /api/v1). Das Token erscheint nur einmal
@@ -41,15 +42,15 @@ export function ApiTokenSettings({ initial }: { initial: ApiTokenInfo[] }) {
       <h2 className="mb-1 font-display text-2xl">{t('settings.api')}</h2>
       <p className="mb-3 text-text-muted">{t('settings.apiText')}</p>
 
-      <div className="flex gap-2">
-        <input
+      <div className="flex flex-wrap gap-2">
+        <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && void create()}
           placeholder={t('settings.apiName')}
           aria-label={t('settings.apiName')}
           maxLength={60}
-          className="h-9 flex-1 rounded-md border border-line bg-transparent px-2.5 text-sm outline-none focus:border-line-strong"
+          className="flex-1 basis-48"
         />
         <Button onClick={create}>
           <KeyRound />
@@ -60,8 +61,8 @@ export function ApiTokenSettings({ initial }: { initial: ApiTokenInfo[] }) {
       {fresh && (
         <div role="status" className="mt-3 rounded-md border border-warning/40 bg-warning-tint p-3">
           <p className="mb-2 text-sm text-warning">{t('settings.apiOnce')}</p>
-          <div className="flex items-center gap-2">
-            <code className="min-w-0 flex-1 truncate rounded-sm bg-surface-2 px-2 py-1 font-mono text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="min-w-0 flex-1 basis-48 truncate rounded-sm bg-surface-2 px-2 py-1 font-mono text-xs">
               {fresh}
             </code>
             <Button
@@ -84,11 +85,14 @@ export function ApiTokenSettings({ initial }: { initial: ApiTokenInfo[] }) {
           <li className="py-3 text-sm text-text-subtle">{t('settings.apiNone')}</li>
         )}
         {tokens.map((token) => (
-          <li key={token.id} className="flex h-11 items-center gap-3 border-b border-line text-sm">
-            <span className="flex-1 truncate">{token.name}</span>
+          <li
+            key={token.id}
+            className="flex min-h-11 flex-wrap items-center gap-x-3 border-b border-line py-1.5 text-sm"
+          >
+            <span className="min-w-0 flex-1 basis-32 truncate">{token.name}</span>
             <code className="font-mono text-xs text-text-subtle">{token.prefix}…</code>
             <span
-              className="w-40 text-right font-mono text-2xs text-text-subtle"
+              className="text-right font-mono text-2xs text-text-subtle sm:w-40"
               suppressHydrationWarning
             >
               {token.lastUsedAt

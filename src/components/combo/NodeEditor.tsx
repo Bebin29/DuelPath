@@ -14,14 +14,12 @@ import type {
   Negation,
   NodeKind,
   Player,
-  StartState,
   Zone,
 } from '@/lib/combo/state';
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import { newInstanceId } from '@/lib/combo/tree';
 import type { Staple } from '@/lib/combo/reactions';
-import { getDeckForCombo, type StapleCard } from '@/server/actions/combo.actions';
-import { drawFromDeck, startStateFromDeck } from '@/lib/combo/deck';
+import type { StapleCard } from '@/server/actions/combo.actions';
 import { CardSearchBox } from './CardSearchBox';
 
 export type MoveTarget = 'costMoves' | 'resolveMoves';
@@ -35,17 +33,6 @@ const QUICK: { key: string; to: Zone }[] = [
   { key: 'banish', to: 'BANISHED' },
   { key: 'toDeck', to: 'DECK' },
 ];
-const START_ZONES: Zone[] = [
-  'HAND',
-  'MONSTER',
-  'SPELL_TRAP',
-  'FIELD',
-  'GY',
-  'BANISHED',
-  'DECK',
-  'EXTRA',
-];
-
 const selectClass = 'h-9 w-full rounded-md border bg-background px-2 text-sm';
 
 interface NodeEditorProps {
@@ -377,140 +364,6 @@ function ReactionPicker({
       </div>
       <span className="text-xs text-muted-foreground">{t('combo.reactions.other')}</span>
       <CardSearchBox onPick={(card) => onReact(card, null)} />
-    </div>
-  );
-}
-
-export function StartStateEditor({
-  startState,
-  cards,
-  onChange,
-  onAddChild,
-  onRegisterCard,
-  deckId,
-}: {
-  startState: StartState;
-  cards: Map<string, ComboCard>;
-  onChange: (next: StartState) => void;
-  onAddChild: (kind: NodeKind) => void;
-  onRegisterCard: (card: ComboCard) => void;
-  deckId: string | null;
-}) {
-  const { t } = useTranslation();
-  const cardLanguage = useCardLanguage();
-  const [player, setPlayer] = useState<Player>('self');
-  const [zone, setZone] = useState<Zone>('HAND');
-  const [deckError, setDeckError] = useState<string | null>(null);
-
-  const loadDeck = async () => {
-    if (!deckId) return;
-    const result = await getDeckForCombo(deckId);
-    if (!result.data) return setDeckError(result.error ?? null);
-    setDeckError(null);
-    result.data.cards.forEach(onRegisterCard);
-    onChange(startStateFromDeck(startState, result.data.entries));
-  };
-
-  // Eigenes Deck im Startzustand, je Karte gezählt: daraus wird die Starthand gezogen
-  const deckCounts = new Map<string, number>();
-  for (const c of startState.cards) {
-    if (c.owner === 'self' && c.zone === 'DECK') {
-      deckCounts.set(c.cardId, (deckCounts.get(c.cardId) ?? 0) + 1);
-    }
-  }
-
-  return (
-    <div className="space-y-3 text-sm">
-      <h2 className="font-semibold">{t('combo.start')}</h2>
-      <p className="text-xs text-muted-foreground">{t('combo.startEditor.hint')}</p>
-      {deckId && (
-        <div className="space-y-2 rounded-md border p-2">
-          <Button size="sm" variant="outline" onClick={loadDeck}>
-            {t('combo.deck.load')}
-          </Button>
-          {deckError && <p className="text-xs text-destructive">{deckError}</p>}
-          {deckCounts.size > 0 && (
-            <>
-              <span className="block text-xs text-muted-foreground">{t('combo.deck.draw')}</span>
-              <div className="flex flex-wrap gap-1">
-                {[...deckCounts].map(([cardId, count]) => (
-                  <Button
-                    key={cardId}
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => onChange(drawFromDeck(startState, cardId))}
-                  >
-                    {displayName(cards.get(cardId), cardLanguage)} ×{count}
-                  </Button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-      <div className="grid grid-cols-2 gap-2">
-        <select
-          className={selectClass}
-          value={player}
-          onChange={(e) => setPlayer(e.target.value as Player)}
-        >
-          <option value="self">{t('combo.players.self')}</option>
-          <option value="opponent">{t('combo.players.opponent')}</option>
-        </select>
-        <select
-          className={selectClass}
-          value={zone}
-          onChange={(e) => setZone(e.target.value as Zone)}
-        >
-          {START_ZONES.map((z) => (
-            <option key={z} value={z}>
-              {t(`combo.zones.${z}`)}
-            </option>
-          ))}
-        </select>
-      </div>
-      <CardSearchBox
-        onPick={(card) => {
-          onRegisterCard(card);
-          onChange({
-            cards: [
-              ...startState.cards,
-              {
-                instanceId: newInstanceId(card.id),
-                cardId: card.id,
-                owner: player,
-                zone,
-                ...(zone === 'MONSTER' && { position: 'ATK' as const }),
-                // Fallen und Zauber des Gegnerboards liegen in der Regel verdeckt
-                ...(zone === 'SPELL_TRAP' && { position: 'SET' as const }),
-              },
-            ],
-          });
-        }}
-      />
-      <ul className="space-y-1">
-        {startState.cards.map((c) => (
-          <li key={c.instanceId} className="flex items-center justify-between gap-2">
-            <span className="truncate">
-              {displayName(cards.get(c.cardId), cardLanguage)}
-              <span className="text-muted-foreground">
-                {' '}
-                · {t(`combo.players.${c.owner}`)} · {t(`combo.zones.${c.zone}`)}
-              </span>
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                onChange({ cards: startState.cards.filter((x) => x.instanceId !== c.instanceId) })
-              }
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </li>
-        ))}
-      </ul>
-      <AddChildButtons onAdd={onAddChild} />
     </div>
   );
 }

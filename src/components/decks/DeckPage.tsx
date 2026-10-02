@@ -3,7 +3,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Redo2, TriangleAlert, Undo2, Upload } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  MoreHorizontal,
+  Redo2,
+  TriangleAlert,
+  Undo2,
+  Upload,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useHistory } from '@/lib/hooks/use-history';
 import { Button } from '@/components/ui/button';
@@ -34,6 +48,8 @@ import { DeckCombosTab } from './DeckCombosTab';
 import { HandTester } from './HandTester';
 
 import type { DeckTab } from '@/lib/deck/deck-tab';
+import { cn } from '@/lib/utils';
+import { PAGE_TITLE, PageHeader } from '@/components/ui/page-header';
 
 interface Doc {
   name: string;
@@ -172,72 +188,110 @@ export function DeckPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex items-start gap-4">
-        <Button
-          asChild
-          variant="ghost"
-          size="icon-sm"
-          aria-label={t('decks.back')}
-          className="mt-2"
-        >
-          <Link href="/decks">
-            <ArrowLeft />
-          </Link>
-        </Button>
-        <div className="min-w-0 flex-1">
+      <PageHeader
+        align="start"
+        back={
+          <Button asChild variant="ghost" size="icon-sm" aria-label={t('decks.back')}>
+            <Link href="/decks">
+              <ArrowLeft />
+            </Link>
+          </Button>
+        }
+        title={
           <input
             value={name}
             onChange={(e) => setDoc((d) => ({ ...d, name: e.target.value }), 'name')}
             aria-label={t('decks.name')}
-            className="w-full rounded-md bg-transparent font-display text-[40px] leading-none outline-none hover:bg-surface-3/40 focus-visible:bg-surface-3/40"
+            className={cn(
+              PAGE_TITLE,
+              'w-full rounded-md bg-transparent outline-none hover:bg-surface-3/40 focus-visible:bg-surface-3/40'
+            )}
           />
-          <p className="mt-2 font-mono text-xs text-text-muted">
+        }
+        meta={
+          <p className="font-mono text-xs">
             {(['MAIN', 'EXTRA', 'SIDE'] as const)
               .map((s) => `${t(`decks.section.${s}`)} ${sectionCount(entries, s)}`)
               .join(' · ')}
           </p>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={history.undo}
-            disabled={!history.canUndo}
-            aria-label={t('workbench.undo')}
-          >
-            <Undo2 />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={history.redo}
-            disabled={!history.canRedo}
-            aria-label={t('workbench.redo')}
-          >
-            <Redo2 />
-          </Button>
-          <SaveIndicator status={status} className="mr-2 w-24" />
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".ydk,text/plain"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void importYdk(file);
-              e.target.value = '';
-            }}
-          />
-          <Button variant="line" size="sm" onClick={() => fileRef.current?.click()}>
-            <Upload />
-            {t('decks.importYdk')}
-          </Button>
-          <Button variant="line" size="sm" onClick={exportYdk} disabled={entries.length === 0}>
-            <Download />
-            {t('decks.exportYdk')}
-          </Button>
-        </div>
-      </header>
+        }
+        actions={
+          <>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={history.undo}
+              disabled={!history.canUndo}
+              aria-label={t('workbench.undo')}
+            >
+              <Undo2 />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={history.redo}
+              disabled={!history.canRedo}
+              aria-label={t('workbench.redo')}
+            >
+              <Redo2 />
+            </Button>
+            <SaveIndicator status={status} className="mr-2 w-24" />
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".ydk,text/plain"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void importYdk(file);
+                e.target.value = '';
+              }}
+            />
+            <Button
+              variant="line"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={() => fileRef.current?.click()}
+            >
+              <Upload />
+              {t('decks.importYdk')}
+            </Button>
+            <Button
+              variant="line"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={exportYdk}
+              disabled={entries.length === 0}
+            >
+              <Download />
+              {t('decks.exportYdk')}
+            </Button>
+            {/* Handy: seltene Aktionen im Menü */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="sm:hidden"
+                  aria-label={t('library.actions', { title: name })}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => fileRef.current?.click()}>
+                  <Upload />
+                  {t('decks.importYdk')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={exportYdk} disabled={entries.length === 0}>
+                  <Download />
+                  {t('decks.exportYdk')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        }
+      />
 
       {issues.length > 0 && <IssueList issues={issues} />}
 

@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@/lib/auth/auth';
+import { idsForPasscodes, writeDeckCards } from '@/server/services/deck-store.service';
 import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
 import {
@@ -1188,43 +1189,15 @@ export async function importYdkToDeck(
   const parsed = ydkImportSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültige YDK-Datei' };
 
-  // Manche Programme schreiben Passcodes mit führenden Nullen
-  const normalize = (p: string) => String(Number(p));
-  const sections = {
-    MAIN: parsed.data.main.map(normalize),
-    EXTRA: parsed.data.extra.map(normalize),
-    SIDE: parsed.data.side.map(normalize),
-  } as const;
-
-  const all = [...new Set(Object.values(sections).flat())];
-  const cards = await prisma.card.findMany({
-    where: { passcode: { in: all } },
-    select: { id: true, passcode: true },
-  });
-  const idByPasscode = new Map(cards.map((c) => [c.passcode, c.id]));
-
-  const rows: Prisma.DeckCardCreateManyInput[] = [];
-  for (const [deckSection, passcodes] of Object.entries(sections)) {
-    const counts = new Map<string, number>();
-    for (const p of passcodes) {
-      const cardId = idByPasscode.get(p);
-      if (cardId) counts.set(cardId, (counts.get(cardId) ?? 0) + 1);
-    }
-    for (const [cardId, count] of counts) {
-      rows.push({ deckId, cardId, deckSection, quantity: Math.min(count, 3) });
-    }
-  }
-
-  await prisma.$transaction([
-    prisma.deckCard.deleteMany({ where: { deckId } }),
-    prisma.deckCard.createMany({ data: rows }),
-    prisma.deck.update({ where: { id: deckId }, data: { updatedAt: new Date() } }),
+  const { map, missing } = await idsForPasscodes([
+    ...parsed.data.main,
+    ...parsed.data.extra,
+    ...parsed.data.side,
   ]);
-
-  return {
-    data: {
-      imported: rows.reduce((sum, r) => sum + (r.quantity ?? 1), 0),
-      missing: all.filter((p) => !idByPasscode.has(p)),
-    },
-  };
+  const { imported } = await writeDeckCards(deckId, {
+    MAIN: map(parsed.data.main),
+    EXTRA: map(parsed.data.extra),
+    SIDE: map(parsed.data.side),
+  });
+  return { data: { imported, missing } };
 }

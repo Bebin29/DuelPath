@@ -55,7 +55,10 @@ export function HandTester({
   const cardLanguage = useCardLanguage();
   const router = useRouter();
   const [going, setGoing] = useState<'first' | 'second'>('first');
-  const [hand, setHand] = useState<string[]>([]);
+  // Gleich beim Öffnen eine Beispielhand; fester Startwert, damit Server und Browser gleich ziehen
+  const example = (g: 'first' | 'second') =>
+    drawHand(pool, HAND_SIZE[g], seededRandom(pool.length * 7 + HAND_SIZE[g]));
+  const [hand, setHand] = useState<string[]>(() => example('first'));
   const [draws, setDraws] = useState(0);
   const [busy, setBusy] = useState(false);
   const size = HAND_SIZE[going];
@@ -85,9 +88,9 @@ export function HandTester({
   };
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_280px] gap-10">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-10">
       <div className="flex min-w-0 flex-col gap-6">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Button onClick={draw} disabled={pool.length === 0}>
             <Shuffle />
             {t('decks.drawHand')}
@@ -97,7 +100,7 @@ export function HandTester({
             value={going}
             onChange={(v) => {
               setGoing(v);
-              setHand([]);
+              setHand(example(v));
             }}
             options={[
               { value: 'first', label: t('decks.goingFirst', { n: HAND_SIZE.first }) },
@@ -153,22 +156,24 @@ export function HandTester({
                   {matched.map(({ combo }) => (
                     <li
                       key={combo.id}
-                      className="flex h-11 items-center gap-3 border-b border-line"
+                      className="relative flex min-h-11 flex-wrap items-center gap-x-3 border-b border-line py-2 hover:bg-surface-1"
                     >
                       <Link
                         href={`/combos/${combo.id}`}
-                        className="flex-1 truncate font-display text-lg hover:underline"
+                        className="min-w-0 flex-1 truncate font-display text-lg after:absolute after:inset-0 hover:underline"
                       >
                         {combo.title}
                       </Link>
-                      <span className="font-mono text-xs text-text-muted">
+                      <span className="order-last w-full truncate font-mono text-xs text-text-muted sm:order-none sm:w-auto">
                         {combo.stats.required
                           .map((id) => displayName(cards.get(id), cardLanguage))
                           .join(' + ')}
                       </span>
-                      <span className="w-8 text-right font-display text-xl">
-                        {combo.stats.endboard ?? ''}
-                      </span>
+                      {combo.stats.endboard != null && (
+                        <span className="font-mono text-xs text-text-muted">
+                          {t('library.endboardCount', { count: combo.stats.endboard })}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -178,7 +183,8 @@ export function HandTester({
         )}
       </div>
 
-      <aside className="flex flex-col gap-3 self-start rounded-lg border border-line bg-surface-1 p-5">
+      {/* Auf schmalen Bildschirmen steht die Abdeckung oben */}
+      <aside className="order-first flex flex-col gap-3 self-start rounded-lg border border-line bg-surface-1 p-5 lg:order-none">
         <span className="font-mono text-2xs text-text-subtle">{t('decks.coverage')}</span>
         <span className="font-display text-[56px] leading-[0.9]">{percent}</span>
         <span

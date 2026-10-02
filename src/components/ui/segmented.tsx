@@ -63,7 +63,7 @@ export function Segmented<T extends string>({
               }
             }}
             className={cn(
-              'relative py-1 text-sm transition-colors duration-(--motion-base)',
+              'relative py-1 text-sm transition-colors duration-(--motion-base) pointer-coarse:min-h-10 pointer-coarse:min-w-10 pointer-coarse:px-1',
               checked ? 'font-semibold text-ink' : 'text-text-subtle hover:text-ink'
             )}
           >

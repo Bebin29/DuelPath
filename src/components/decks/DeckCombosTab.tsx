@@ -1,15 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { TriangleAlert } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
-import { relativeTime } from '@/lib/utils/relative-time';
 import { missingFromDeck } from '@/lib/deck/deck-check';
 import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
 import { NewComboButton } from '@/components/library/NewComboButton';
-import { StartHandStrip } from '@/components/library/StartHandStrip';
-import { StatusChip } from '@/components/library/StatusChip';
+import { ComboListItem } from '@/components/library/ComboListItem';
 
 /**
  * Combos des Decks mit Deck-Abgleich (UX-Plan 7.4): Welche Karten aus Starthand und Lines
@@ -29,7 +26,7 @@ export function DeckCombosTab({
   /** Kopien je Karte in Main und Extra Deck */
   counts: Map<string, number>;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
   const nameOf = (id: string) =>
     (cardLanguage === 'de' && cards[id]?.nameDe) || cards[id]?.name || id;
@@ -38,8 +35,8 @@ export function DeckCombosTab({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-end gap-4">
-        <p className="flex-1 text-text-muted">
+      <div className="flex flex-wrap items-end gap-3">
+        <p className="min-w-0 flex-1 text-text-muted">
           {affected > 0 ? (
             <span className="flex items-center gap-1.5 text-warning">
               <TriangleAlert className="size-4" />
@@ -56,43 +53,21 @@ export function DeckCombosTab({
       ) : (
         <ul className="flex flex-col border-t border-line">
           {checked.map(({ combo, missing }) => (
-            <li key={combo.id} className="flex items-center gap-4 border-b border-line py-3">
-              <StartHandStrip cardIds={combo.stats.startHand} cards={cards} />
-              <div className="min-w-0 flex-1">
-                <Link
-                  href={`/combos/${combo.id}`}
-                  className="block truncate font-display text-lg leading-tight hover:underline"
-                >
-                  {combo.title}
-                </Link>
-                {missing.length > 0 && (
-                  <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-warning">
-                    {missing.map((m) => (
-                      <span key={m.cardId}>
-                        {t('decks.missingCard', {
-                          name: nameOf(m.cardId),
-                          have: m.have,
-                          need: m.need,
-                        })}
-                      </span>
-                    ))}
-                  </p>
-                )}
-              </div>
-              <span className="font-mono text-xs text-text-muted">
-                {t('start.lines', { count: combo.stats.lines })}
-              </span>
-              <span className="w-8 text-right font-display text-xl leading-none">
-                {combo.stats.endboard ?? ''}
-              </span>
-              <StatusChip status={combo.status} />
-              <span
-                className="w-24 text-right font-mono text-xs text-text-muted"
-                suppressHydrationWarning
-              >
-                {relativeTime(new Date(combo.updatedAt), new Date(), i18n.language)}
-              </span>
-            </li>
+            <ComboListItem key={combo.id} combo={combo} cards={cards} showDeck={false}>
+              {missing.length > 0 && (
+                <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-warning">
+                  {missing.map((m) => (
+                    <span key={m.cardId}>
+                      {t('decks.missingCard', {
+                        name: nameOf(m.cardId),
+                        have: m.have,
+                        need: m.need,
+                      })}
+                    </span>
+                  ))}
+                </p>
+              )}
+            </ComboListItem>
           ))}
         </ul>
       )}

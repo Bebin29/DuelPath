@@ -511,6 +511,11 @@ function KeyboardHelp({
                 </section>
               );
             })}
+            {/* Weiche Kante zeigt, dass die Liste weiter scrollt */}
+            <div
+              aria-hidden
+              className="pointer-events-none sticky bottom-0 col-span-2 -mt-10 h-10 bg-gradient-to-t from-surface-2"
+            />
           </div>
         </Dialog.Content>
       </Dialog.Portal>

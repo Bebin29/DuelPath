@@ -68,7 +68,7 @@ export function StapleRail({
                   >
                     <CardView image={s.card.imageSmall} label="" size="xs" />
                     {s.steps.length > 0 && (
-                      <span className="absolute -right-1 -top-1 grid size-3.5 place-items-center rounded-full bg-opponent font-mono text-[8.5px] font-semibold text-on-primary">
+                      <span className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-opponent px-0.5 font-mono text-[10.5px] font-semibold leading-none text-on-primary ring-2 ring-surface-1">
                         {s.steps.length}
                       </span>
                     )}

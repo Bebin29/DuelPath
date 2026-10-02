@@ -24,11 +24,12 @@ const buttonVariants = cva(
           'bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90',
       },
       size: {
-        default: 'h-8 px-3.5',
-        sm: 'h-7 gap-1.5 px-2.5 text-xs',
+        // Auf Touch-Geräten wachsen die Knöpfe auf mindestens 40 px (UI-Sweep-Plan 4.3)
+        default: 'h-8 px-3.5 pointer-coarse:h-10',
+        sm: 'h-7 gap-1.5 px-2.5 text-xs pointer-coarse:h-10 pointer-coarse:px-3',
         lg: 'h-10 px-5',
-        icon: 'size-8',
-        'icon-sm': 'size-7',
+        icon: 'size-8 pointer-coarse:size-10',
+        'icon-sm': 'size-7 pointer-coarse:size-10',
         'icon-lg': 'size-10',
       },
     },
