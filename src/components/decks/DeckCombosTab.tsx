@@ -86,7 +86,10 @@ export function DeckCombosTab({
                 {combo.stats.endboard ?? ''}
               </span>
               <StatusChip status={combo.status} />
-              <span className="w-24 text-right font-mono text-xs text-text-muted">
+              <span
+                className="w-24 text-right font-mono text-xs text-text-muted"
+                suppressHydrationWarning
+              >
                 {relativeTime(new Date(combo.updatedAt), new Date(), i18n.language)}
               </span>
             </li>

@@ -87,7 +87,10 @@ export function ApiTokenSettings({ initial }: { initial: ApiTokenInfo[] }) {
           <li key={token.id} className="flex h-11 items-center gap-3 border-b border-line text-sm">
             <span className="flex-1 truncate">{token.name}</span>
             <code className="font-mono text-xs text-text-subtle">{token.prefix}…</code>
-            <span className="w-40 text-right font-mono text-2xs text-text-subtle">
+            <span
+              className="w-40 text-right font-mono text-2xs text-text-subtle"
+              suppressHydrationWarning
+            >
               {token.lastUsedAt
                 ? t('settings.apiUsed', {
                     time: relativeTime(new Date(token.lastUsedAt), new Date(), i18n.language),

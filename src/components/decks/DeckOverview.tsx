@@ -130,7 +130,10 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
               <span className="font-mono text-xs text-text-muted">
                 {t('decks.combosCount', { count: d.combos })}
               </span>
-              <span className="w-28 text-right font-mono text-xs text-text-muted">
+              <span
+                className="w-28 text-right font-mono text-xs text-text-muted"
+                suppressHydrationWarning
+              >
                 {relativeTime(new Date(d.updatedAt), new Date(), i18n.language)}
               </span>
               <div className="relative z-10">

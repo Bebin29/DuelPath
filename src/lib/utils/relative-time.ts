@@ -7,7 +7,11 @@ const STEPS: [Intl.RelativeTimeFormatUnit, number][] = [
   ['minute', 60],
 ];
 
-/** „vor 2 Stunden“, „gestern“; unter einer Minute „jetzt“ */
+/**
+ * „vor 2 Stunden“, „gestern“; unter einer Minute „jetzt“.
+ * Server und Browser rechnen mit verschiedenem „jetzt“: das umgebende Element braucht
+ * suppressHydrationWarning, sonst schlägt die Hydration an Minutengrenzen fehl.
+ */
 export function relativeTime(date: Date, now: Date, language: string): string {
   const seconds = Math.round((date.getTime() - now.getTime()) / 1000);
   const format = new Intl.RelativeTimeFormat(language.startsWith('de') ? 'de' : 'en', {
