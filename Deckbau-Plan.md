@@ -1,6 +1,6 @@
 # DuelPath: Deckbau-Plan
 
-Stand: 02.10.2026 · D-1 und D-2 umgesetzt
+Stand: 02.10.2026 · D-1 bis D-4 umgesetzt
 
 Dieser Plan beschreibt, wie DuelPath vom Deck-Editor zum Werkzeug für **Ratios** wird. Er baut auf dem UX-Plan auf (Hand-Tester 7.3, Deck-Abgleich 7.4) und ändert nichts an der Workbench.
 
@@ -95,13 +95,15 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 ### 3.5 Versionen und Vergleich (Phase D-3)
 
 - **Version speichern** mit Namen („vor Locals“, „0 Gallant“). Gespeichert wird die Liste mit Rollen, nicht die Kennzahlen; die rechnet die App bei Bedarf neu.
-- **Vergleich** zweier Versionen nebeneinander: Differenzliste (+1 Golden Rule, −1 Kyoutou), Kennzahlen beider Versionen, Abdeckung beider Versionen.
-- **Variante anlegen** als Kopie eines Decks mit Verweis auf das Original, damit Combos sich weiter dem Original zuordnen lassen.
+- **Vergleich** des jetzigen Stands mit einer Version, dem Stand beim Öffnen oder einem Zwischenstand: Differenzliste (+1 Golden Rule, −1 Kyoutou) und alle Kennzahlen mit ihrer Änderung. Zwei ältere Versionen vergleicht man, indem man eine zurückholt; Strg+Z nimmt das zurück.
+- **Zurückholen** ersetzt die Liste und die Rollen durch die der Version. **Löschen** zeigt einige Sekunden „Rückgängig“ an und legt die Version dabei mit Inhalt und Datum neu an.
+- **Keine Varianten als eigene Decks.** Eine Version leistet dasselbe („3 Gallant“ sichern, umbauen, vergleichen), ohne dass sich Combos auf zwei Decks verteilen.
 
 ### 3.6 Side-Plan pro Matchup (Phase D-4)
 
 - Pro Matchup (freier Name, etwa „Ryzeal“, „Snake-Eye“) und Position: Karten rein, Karten raus.
-- Die App prüft, dass rein und raus gleich viele Karten sind und die Karten im Side bzw. Main Deck liegen.
+- Die App prüft, dass rein und raus gleich viele Karten sind und die Karten im Side bzw. Main Deck liegen. Sie verbietet nichts, sie sagt es.
+- Rollen der Side-Deck-Karten (Ash als Handtrap, Evenly Matched als Breaker) setzt man im Side-Plan selbst, mit denselben Vorschlägen wie im Tab Ratios.
 - Kennzahlen und Abdeckung lassen sich für die Liste nach dem Siden anzeigen: „Going second gegen Ryzeal: Starter oder 2 Breaker 78 %“.
 
 ## 4. Technik
@@ -109,8 +111,8 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 ### 4.1 Datenmodell
 
 - `Deck.roles Json @default("{}")`: Passcode auf Rolle. Ein Feld am Deck statt einer Spalte an `DeckCard`, weil dieselbe Karte in Main und Side Deck dieselbe Rolle hat und `DeckCard` pro Bereich eine Zeile hat. Beim Schreiben über ein Zod-Schema geprüft (Rollen als Enum, nur Karten, die im Deck liegen).
-- D-3: Modell `DeckVersion` mit `deckId`, `name`, `cards Json`, `roles Json`, `createdAt`. Varianten über `Deck.parentId`.
-- D-4: Modell `SidePlan` mit `deckId`, `matchup`, `going`, `in Json`, `out Json`.
+- D-3: Modell `DeckVersion` mit `deckId`, `name`, `entries Json`, `roles Json`, `createdAt`. Versionen liegen außerhalb des Verlaufs der Seite, weil Sichern und Löschen keine Bearbeitung der Liste sind.
+- D-4: `Deck.sidePlans Json` statt eigenem Modell, Liste von `{ id, matchup, going, in, out }`. So laufen Side-Pläne durch denselben Autosave und dasselbe Strg+Z wie Liste und Rollen; geprüft mit Zod beim Speichern.
 
 ### 4.2 Rechnung
 
@@ -129,6 +131,7 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 
 - `PATCH /api/v1/decks/:id/roles` und Rollen in `GET /api/v1/decks/:id`, damit Agenten Rollen setzen und Kennzahlen lesen können.
 - `GET /api/v1/decks/:id/odds?going=first|second` liefert die Kennzahlen und den Grenznutzen. So kann ein Agent „schlag mir einen Cut auf 40 vor“ mit echten Zahlen beantworten.
+- `&matchup=Ryzeal` rechnet für das Main Deck nach dem Side-Plan, die Zugfolge kommt dann aus dem Plan. Side-Pläne stehen auch in `GET /api/v1/decks/:id`. Versionen gibt es über die API nicht; dafür fehlt bisher ein Anlass.
 
 ## 5. Phasen
 
@@ -136,7 +139,7 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 | ------------------------------ | --------------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | **D-1 Rollen und Kennzahlen**  | Rollen mit Vorschlägen, exakte Wahrscheinlichkeiten, Stufen, Unterschied zum Vergleichsstand        | „Wie konsistent ist meine Liste?“         |
 | **D-2 Combos und Grenznutzen** | exakte Abdeckung, Grenznutzen pro Karte, Streichkandidaten, Deckgröße, Extra Deck nach Nutzung, API | „Welche Karte fliegt raus?“               |
-| **D-3 Versionen**              | Versionen speichern, Vergleich, Varianten                                                           | „War die Liste von letzter Woche besser?“ |
+| **D-3 Versionen**              | Versionen speichern, Vergleich, Zurückholen                                                         | „War die Liste von letzter Woche besser?“ |
 | **D-4 Side-Plan**              | Side-Plan pro Matchup und Position, Kennzahlen nach dem Siden                                       | Vorbereitung auf ein Turnier              |
 
 D-1 und D-2 sind der Kern und gehören zusammen in einen Branch: Ohne Rollen fehlt den Kennzahlen die Grundlage, ohne Abdeckung fehlt der Teil, den es woanders nicht gibt.
