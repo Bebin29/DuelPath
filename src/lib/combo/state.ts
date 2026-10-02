@@ -138,6 +138,8 @@ export interface GameState {
   /** OPT-Schlüssel -> Anzahl Nutzungen in diesem Zug */
   optUsage: Record<string, number>;
   normalSummonUsed: boolean;
+  /** Karten, deren zusätzlicher Normal Summon („in addition to your Normal Summon“) verbraucht ist */
+  extraSummonsUsed: string[];
   /** Karten mit negierten Effekten: instanceId -> Epoche, in der die Negierung gilt */
   negatedCards: Record<string, number>;
   negatedNames: string[];
@@ -158,6 +160,7 @@ export function initialState(start: StartState): GameState {
     chain: [],
     optUsage: {},
     normalSummonUsed: false,
+    extraSummonsUsed: [],
     negatedCards: {},
     negatedNames: [],
     warnings: [],
@@ -235,8 +238,15 @@ export function applyNode(
   switch (node.kind) {
     case 'ACTION': {
       if (node.action === 'NORMAL_SUMMON') {
-        if (state.normalSummonUsed) warn('Normal Summon in diesem Zug bereits verbraucht');
-        state.normalSummonUsed = true;
+        // Ein zusätzlicher Normal Summon zuerst: der reguläre bleibt für andere Monster frei
+        const grant =
+          node.instanceId ?? node.resolveMoves?.find((m) => m.to === 'MONSTER')?.instanceId;
+        const extra = grant ? extraSummonGrant(state, cards, grant) : undefined;
+        if (extra) state.extraSummonsUsed.push(extra);
+        else {
+          if (state.normalSummonUsed) warn('Normal Summon in diesem Zug bereits verbraucht');
+          state.normalSummonUsed = true;
+        }
       }
       applyMoves(state, node.resolveMoves ?? [], warn, cards);
       break;
@@ -348,6 +358,43 @@ function applyMoves(
 
 const DESTROY_ON_LEAVE =
   /\bWhen this card leaves the field, destroy (?:that|the equipped) monster\b/i;
+const EXTRA_SUMMON =
+  /\bNormal Summon (?:1|one) "([^"]+)" monster\b[^.]*\bin addition to your Normal Summon/i;
+const EXTRA_SUMMON_REVERSED =
+  /\bin addition to your Normal Summon\/Set,? you can Normal Summon (?:1|one) "([^"]+)" monster/i;
+
+/**
+ * Offene Karte, die einen zusätzlichen Normal Summon für dieses Monster erlaubt (Rainbow Bridge of the
+ * Heart: „you can Normal Summon 1 "Crystal Beast" monster, in addition to your Normal Summon/Set“).
+ */
+export function extraSummonGrant(
+  state: GameState,
+  cards: Map<string, CardData> | undefined,
+  instanceId: string
+): string | undefined {
+  const summoned = state.cards[instanceId];
+  const name = summoned && cards?.get(summoned.cardId)?.name;
+  if (!summoned || !name) return undefined;
+  const player = summoned.zone === 'HAND' ? summoned.owner : summoned.controller;
+  return Object.values(state.cards).find((c) => {
+    if (c.instanceId === instanceId || !onField(c.zone) || c.controller !== player) return false;
+    if (c.position === 'SET' || state.extraSummonsUsed.includes(c.instanceId)) return false;
+    if (state.negatedCards[c.instanceId] === c.epoch) return false;
+    return cards?.get(c.cardId)?.effects.some((e) => {
+      const archetype = (EXTRA_SUMMON.exec(e.text) ?? EXTRA_SUMMON_REVERSED.exec(e.text))?.[1];
+      return !!archetype && name.includes(archetype);
+    });
+  })?.instanceId;
+}
+
+/** Darf das Monster jetzt als Normal Summon aufs Feld (regulär oder durch einen zusätzlichen)? */
+export function canNormalSummon(
+  state: GameState,
+  cards: Map<string, CardData> | undefined,
+  instanceId: string
+): boolean {
+  return !state.normalSummonUsed || !!extraSummonGrant(state, cards, instanceId);
+}
 
 const EMZ_OF: Record<number, number> = { 5: 1, 6: 3 };
 

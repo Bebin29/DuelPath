@@ -1,5 +1,6 @@
 import {
   applyNode,
+  canNormalSummon,
   type CardData,
   type CardMove,
   type ComboNodeData,
@@ -448,11 +449,14 @@ function summonFits(
   if (/\bRitual Summoned\b/.test(condition) && !/\bSpecial Summoned\b/.test(condition))
     return from === 'HAND';
   if (/\bNormal Summoned\b/.test(condition) && !/\bSpecial Summoned\b/.test(condition))
-    return after.normalSummonUsed && !before.normalSummonUsed;
+    return normalSummons(after) > normalSummons(before);
   if (/\bSpecial Summoned\b/.test(condition) && !/\bNormal\b/.test(condition))
-    return !(after.normalSummonUsed && !before.normalSummonUsed);
+    return normalSummons(after) === normalSummons(before);
   return true;
 }
+
+/** Normal Summons im Zug, regulär und zusätzlich */
+const normalSummons = (s: GameState) => (s.normalSummonUsed ? 1 : 0) + s.extraSummonsUsed.length;
 
 export interface DropTarget {
   player: Player;
@@ -491,7 +495,7 @@ export function dropMeaning(
       return { label: 'extraSummon', instanceId, slot };
     if (card.zone === 'HAND' && isMonster(data)) {
       if (shift) return { label: 'setMonster', intent: { kind: 'setMonster', instanceId, slot } };
-      if (!state.normalSummonUsed)
+      if (canNormalSummon(state, cards, instanceId))
         return { label: 'normalSummon', intent: { kind: 'normalSummon', instanceId, slot } };
       return { label: 'specialSummon', intent: { kind: 'specialSummon', instanceId, slot } };
     }

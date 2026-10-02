@@ -7,7 +7,7 @@ import {
   type ComboNodeData,
   type StartState,
 } from '@/lib/combo/state';
-import { buildStep } from '@/lib/combo/play';
+import { buildStep, dropMeaning } from '@/lib/combo/play';
 
 const eff = (text: string, activated = true) => ({ index: 0, text, activated, patterns: [] });
 const card = (
@@ -68,6 +68,58 @@ const run = (start: StartState, build: (step: Step) => void) => {
   const warnings = nodes.flatMap((n) => warningsOf(states.get(n.id), n.id));
   return { warnings, last: states.get(nodes.at(-1)!.id)! };
 };
+
+describe('Zusätzlicher Normal Summon', () => {
+  const start: StartState = {
+    cards: [
+      {
+        instanceId: 'heart',
+        cardId: 'RBH',
+        owner: 'self',
+        zone: 'SPELL_TRAP',
+        slot: 0,
+        position: 'ATK',
+      },
+      { instanceId: 'p1', cardId: 'PEG', owner: 'self', zone: 'HAND' },
+      { instanceId: 'p2', cardId: 'PEG', owner: 'self', zone: 'HAND' },
+      { instanceId: 'o1', cardId: 'OTH', owner: 'self', zone: 'HAND' },
+    ],
+  };
+
+  it('erlaubt einen zweiten Normal Summon für ein passendes Monster ohne Warnung', () => {
+    const { warnings, last } = run(start, (step) => {
+      step({ kind: 'normalSummon', instanceId: 'p1' });
+      step({ kind: 'normalSummon', instanceId: 'p2' });
+    });
+    expect(warnings).toEqual([]);
+    expect(last.extraSummonsUsed).toEqual(['heart']);
+    expect(last.normalSummonUsed).toBe(true);
+  });
+
+  it('nutzt den Zusatz zuerst, damit der reguläre für andere Monster frei bleibt', () => {
+    const { warnings } = run(start, (step) => {
+      step({ kind: 'normalSummon', instanceId: 'p1' });
+      step({ kind: 'normalSummon', instanceId: 'o1' });
+    });
+    expect(warnings).toEqual([]);
+  });
+
+  it('warnt beim dritten Normal Summon und bietet ihn beim Ablegen nicht mehr an', () => {
+    const two = (step: Step) => {
+      step({ kind: 'normalSummon', instanceId: 'p1' });
+      step({ kind: 'normalSummon', instanceId: 'o1' });
+    };
+    const { last } = run(start, two);
+    expect(
+      dropMeaning(last, cards, 'p2', { player: 'self', zone: 'MONSTER', slot: 3 })?.label
+    ).toBe('specialSummon');
+    const { warnings } = run(start, (step) => {
+      two(step);
+      step({ kind: 'normalSummon', instanceId: 'p2' });
+    });
+    expect(warnings).toEqual(['Normal Summon in diesem Zug bereits verbraucht']);
+  });
+});
 
 describe('Ausrüstungen', () => {
   const start: StartState = {

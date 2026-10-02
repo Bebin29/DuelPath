@@ -1,4 +1,4 @@
-import { isOptAvailable, type CardData, type GameState } from '@/lib/combo/state';
+import { canNormalSummon, isOptAvailable, type CardData, type GameState } from '@/lib/combo/state';
 import {
   isExtraDeckMonster,
   isFieldSpell,
@@ -53,7 +53,7 @@ export function cardActions(
   const other: CardAction[] = [];
   const zone = placed.zone;
   if (zone === 'HAND' && isMonster(card)) {
-    if (!state.normalSummonUsed) {
+    if (canNormalSummon(state, cards, instanceId)) {
       other.push({
         id: 'ns',
         label: 'normalSummon',
