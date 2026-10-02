@@ -304,7 +304,8 @@ export function BoardView({
                 />
               </SideLabel>
 
-              <div className="grid grid-cols-7 gap-1.5">
+              {/* Feste Spalten in Zonenbreite: schrumpfende Spalten ließen die Zonen überlappen */}
+              <div className="grid grid-cols-[repeat(7,84px)] gap-1.5">
                 {pileCell('opponent', 'DECK', opp.deck, t('workbench.deck'))}
                 {mirrored(opp.spellTraps).map(({ c, i }) =>
                   cell('opponent', 'SPELL_TRAP', c, `${st} ${i + 1}`, i)

@@ -66,7 +66,7 @@ export function ComboListItem({
         </span>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted sm:block sm:truncate">
           <StatusChip status={combo.status} className="sm:hidden" />
-          <span>{facts.join(' · ')}</span>
+          <span suppressHydrationWarning>{facts.join(' · ')}</span>
         </p>
         {combo.tags.length > 0 && (
           <p className="truncate font-mono text-2xs text-text-subtle">{combo.tags.join(' · ')}</p>

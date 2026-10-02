@@ -15,7 +15,7 @@ import {
 import type { ComboCard } from '@/lib/combo/cards';
 import { childrenOf, lineSteps, lineThrough, nextRank, promoteLine } from '@/lib/combo/lines';
 import { removeSubtree, updateNode } from '@/lib/combo/tree';
-import { buildStep, freeEmz, triggerOffers, type PlayIntent } from '@/lib/combo/play';
+import { buildStep, freeEmz, resolveOf, triggerOffers, type PlayIntent } from '@/lib/combo/play';
 import { cardActions } from '@/lib/combo/card-actions';
 import { commandMatches, matchCards, parseCommand } from '@/lib/combo/command';
 import { answerPrompt, promptCandidates, promptsFor, type PromptSpec } from '@/lib/combo/prompts';
@@ -571,6 +571,9 @@ export async function playStep(ctx: ComboContext, req: StepRequest) {
   const withChain =
     intent.kind === 'activate' ? { ...intent, chain: req.chain ?? intent.chain } : intent;
   const created = buildStep(withChain, { nodes: ctx.combo.nodes, parent, state, cards: ctx.cards });
+  const resolved = intent.kind === 'resolve' && resolveOf(ctx.combo.nodes, parent?.id ?? null);
+  if (!created.length && resolved)
+    return { ctx, created: [], existing: resolved, alternatives: [], prompts: [] };
   if (!created.length)
     throw new ApiError('NOT_POSSIBLE', 'Aus dieser Absicht entsteht kein Schritt');
   const next = await persist(ctx, [...ctx.combo.nodes, ...created], req.revision);

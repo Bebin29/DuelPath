@@ -112,11 +112,15 @@ export function buildStep(intent: PlayIntent, ctx: StepContext): ComboNodeData[]
   };
 
   const chaining = intent.kind === 'activate' && intent.chain;
+  // Eine Auflösung hat keine Wahl: Liegt am Schritt schon ein RESOLVE, geht es dort weiter,
+  // statt daneben einen zweiten als Branch anzulegen. Branches entstehen erst durch Reaktionen.
+  const resolved = resolveOf(ctx.nodes, parent?.id ?? null);
   if (state.chain.length > 0 && intent.kind !== 'resolve' && !chaining) {
-    push(newNode(parent, 'RESOLVE'));
+    if (resolved) parent = resolved;
+    else push(newNode(parent, 'RESOLVE'));
     // Der neue Schritt rechnet mit dem aufgelösten Zustand: Karten können sich dabei bewegt haben
     const byId = new Map([...ctx.nodes, ...nodes].map((n) => [n.id, n]));
-    state = applyNode(state, nodes[0], cards, byId);
+    state = applyNode(state, parent!, cards, byId);
   }
 
   const card = 'instanceId' in intent ? state.cards[intent.instanceId] : undefined;
@@ -252,13 +256,18 @@ export function buildStep(intent: PlayIntent, ctx: StepContext): ComboNodeData[]
       break;
     }
     case 'resolve':
-      if (state.chain.length > 0) push(newNode(parent, 'RESOLVE'));
+      if (state.chain.length > 0 && !resolved) push(newNode(parent, 'RESOLVE'));
       break;
     case 'end':
       push(newNode(parent, 'END'));
       break;
   }
   return nodes;
+}
+
+/** Vorhandene Auflösung der Chain direkt unter dem Schritt */
+export function resolveOf(nodes: ComboNodeData[], parentId: string | null) {
+  return childrenOf(nodes, parentId).find((c) => c.kind === 'RESOLVE');
 }
 
 /**
@@ -274,7 +283,8 @@ export function costMovesFor(
   const text = card?.effects[effectIndex]?.text ?? '';
   const cost = costPart(text);
   if (!cost) return [];
-  if (/\bbanish this card\b/i.test(cost)) return compact([moveOf(state, instanceId, 'BANISHED')]);
+  if (/\bbanish this (?:card|Continuous Spell|Continuous Trap)\b/i.test(cost))
+    return compact([moveOf(state, instanceId, 'BANISHED')]);
   const detach = /\bdetach (\d+|one|two) (?:Xyz )?materials? from this card\b/i.exec(cost);
   if (detach) {
     const n = Number(detach[1]) || (detach[1].toLowerCase() === 'two' ? 2 : 1);
@@ -287,7 +297,7 @@ export function costMovesFor(
         to: 'GY' as const,
       }));
   }
-  if (/\b(?:Tribute|discard|send) this card\b/i.test(cost))
+  if (/\b(?:Tribute|discard|send) this (?:card|Continuous Spell|Continuous Trap)\b/i.test(cost))
     return compact([moveOf(state, instanceId, 'GY')]);
   return [];
 }
@@ -508,9 +518,13 @@ export function resultMoves(
   to: Zone,
   picked: string[],
   state: GameState,
-  player: Player
+  player: Player,
+  /** Schon eingetragene Bewegungen desselben Schritts: deren Zonen sind belegt */
+  pending: CardMove[] = []
 ): CardMove[] {
-  const taken = new Set<number>();
+  const taken = new Set(
+    pending.filter((m) => m.to === to && m.slot !== undefined).map((m) => m.slot!)
+  );
   // Als Dauerzauber offen in die Zauber/Fallen-Zone, je Karte die nächste freie (Crystal Beasts)
   if (to === 'SPELL_TRAP') {
     const row = boardOf(state, player).spellTraps;

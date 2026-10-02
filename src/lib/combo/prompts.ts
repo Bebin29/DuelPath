@@ -59,6 +59,27 @@ export function promptsFor(
 }
 
 /**
+ * Antwort auf „Was hast du gesucht/beschworen?“ an den Schritt hängen. Freie Zonen rechnen mit
+ * den schon eingetragenen Beschwörungen desselben Schritts; „but negate its effects“ negiert
+ * die beschworene Karte beim Auflösen.
+ */
+export function withResult(
+  step: ComboNodeData,
+  spec: ResultSpec,
+  picks: string[],
+  state: GameState,
+  player: Player
+): ComboNodeData {
+  const moves = resultMoves(spec.to, picks, state, player, step.resolveMoves);
+  const next = withMoves(step, 'resolveMoves', moves);
+  // ponytail: negates fasst eine Negierung, bei „negate their effects“ nur das erste Monster
+  const summoned = spec.negate ? moves.find((m) => m.to === 'MONSTER') : undefined;
+  return summoned && !next.negates
+    ? { ...next, negates: { type: 'CARD', instanceId: summoned.instanceId } }
+    : next;
+}
+
+/**
  * Wählbare Karten zur Frage; `state` ist der Zustand am Schritt.
  * Bei der Fusion erst die Fusionsmonster, mit `fusionId` dann die Materialien.
  */
@@ -94,7 +115,9 @@ export function answerPrompt(
     case 'discard':
       return add(prompt.key, resultMoves('GY', picks.slice(0, 1), state, prompt.player));
     case 'result':
-      return add('resolveMoves', resultMoves(prompt.spec.to, picks, state, prompt.player));
+      return nodes.map((n) =>
+        n.id === prompt.stepId ? withResult(n, prompt.spec, picks, state, prompt.player) : n
+      );
     case 'fusion':
       return fusionId
         ? add('resolveMoves', fusionMoves(fusionId, picks, state, prompt.player))

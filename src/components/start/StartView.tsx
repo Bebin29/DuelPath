@@ -95,7 +95,7 @@ export function StartView({
                 <StartHandStrip cardIds={latest.stats.startHand} cards={cards} size="sm" max={3} />
                 <div className="min-w-0">
                   <h2 className="font-display text-3xl leading-none">{latest.title}</h2>
-                  <p className="mt-2 text-text-muted">
+                  <p className="mt-2 text-text-muted" suppressHydrationWarning>
                     {latest.deckName ?? t('start.noDeck')} · {when(latest.updatedAt)}
                   </p>
                   <p className="mt-1 font-mono text-xs text-text-subtle">

@@ -443,7 +443,11 @@ export function ComboLibrary({
                 <div role="cell">
                   <StatusChip status={e.status} />
                 </div>
-                <div role="cell" className="font-mono text-xs text-text-muted">
+                <div
+                  role="cell"
+                  className="font-mono text-xs text-text-muted"
+                  suppressHydrationWarning
+                >
                   {when(e.updatedAt)}
                 </div>
                 <div role="cell" className="relative z-10">

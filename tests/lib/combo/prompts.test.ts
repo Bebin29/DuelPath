@@ -67,6 +67,75 @@ describe('Abfragen', () => {
   });
 });
 
+describe('Mehrteilige Effekte', () => {
+  const RAINBOW: CardData = {
+    id: 'RD',
+    name: 'Crystal Beast Rainbow Dragon',
+    type: 'Effect Monster',
+    effects: [
+      eff(
+        'You can banish this Continuous Spell; Special Summon 1 Level 4 or lower "Crystal Beast" monster from your Deck, but negate its effects (if any), and if you do, add 1 "Ultimate Crystal" monster from your Deck to your hand.'
+      ),
+    ],
+  };
+  const BEAST: CardData = {
+    id: 'CB',
+    name: 'Crystal Beast Sapphire Pegasus',
+    type: 'Effect Monster',
+    effects: [],
+  };
+  const ULTIMATE: CardData = {
+    id: 'UC',
+    name: 'Ultimate Crystal Rainbow Dragon',
+    type: 'Effect Monster',
+    effects: [],
+  };
+  const all = new Map([RAINBOW, BEAST, ULTIMATE].map((c) => [c.id, c]));
+  const board: StartState = {
+    cards: [
+      {
+        instanceId: 'rd',
+        cardId: 'RD',
+        owner: 'self',
+        zone: 'SPELL_TRAP',
+        slot: 0,
+        position: 'ATK',
+      },
+      { instanceId: 'cb', cardId: 'CB', owner: 'self', zone: 'DECK' },
+      { instanceId: 'uc', cardId: 'UC', owner: 'self', zone: 'DECK' },
+    ],
+  };
+
+  it('fragt alle Teile nacheinander ab und löst sie in einem Schritt auf', () => {
+    const s0 = initialState(board);
+    const [act] = buildStep(
+      { kind: 'activate', instanceId: 'rd', effectIndex: 0 },
+      { nodes: [], parent: null, state: s0, cards: all }
+    );
+    expect(act.costMoves).toEqual([
+      { instanceId: 'rd', cardId: 'RD', from: 'SPELL_TRAP', to: 'BANISHED' },
+    ]);
+    const prompts = promptsFor(act, s0, all);
+    expect(prompts.map((p) => p.kind === 'result' && p.spec.verb)).toEqual(['summon', 'search']);
+
+    const s1 = statesForTree([act], board, all).get(act.id)!;
+    let nodes = answerPrompt([act], prompts[0], ['cb'], s1);
+    nodes = answerPrompt(nodes, prompts[1], ['uc'], s1);
+    expect(nodes[0].negates).toEqual({ type: 'CARD', instanceId: 'cb' });
+
+    const [resolve] = buildStep(
+      { kind: 'resolve' },
+      { nodes, parent: nodes[0], state: s1, cards: all }
+    );
+    const end = statesForTree([...nodes, resolve], board, all).get(resolve.id)!;
+    expect(end.cards.rd.zone).toBe('BANISHED');
+    expect(end.cards.cb).toMatchObject({ zone: 'MONSTER', slot: 0 });
+    expect(end.negatedCards.cb).toBe(end.cards.cb.epoch);
+    expect(end.cards.uc.zone).toBe('HAND');
+    expect(end.warnings).toEqual([]);
+  });
+});
+
 describe('Befehle', () => {
   it('findet die gemeinte Karte samt Aktion', () => {
     const s0 = initialState(start);

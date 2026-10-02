@@ -130,7 +130,10 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
                   {t('decks.section.SIDE')} {d.side}
                 </p>
                 {/* Auf schmalen Bildschirmen stehen Combos und Datum unter den Kennzahlen */}
-                <p className="truncate font-mono text-xs text-text-muted sm:hidden">
+                <p
+                  className="truncate font-mono text-xs text-text-muted sm:hidden"
+                  suppressHydrationWarning
+                >
                   {t('decks.combosCount', { count: d.combos })} ·{' '}
                   {relativeTime(new Date(d.updatedAt), new Date(), i18n.language)}
                 </p>
@@ -138,7 +141,10 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
               <span className="hidden shrink-0 font-mono text-xs text-text-muted sm:inline">
                 {t('decks.combosCount', { count: d.combos })}
               </span>
-              <span className="hidden w-28 shrink-0 text-right font-mono text-xs text-text-muted sm:inline">
+              <span
+                className="hidden w-28 shrink-0 text-right font-mono text-xs text-text-muted sm:inline"
+                suppressHydrationWarning
+              >
                 {relativeTime(new Date(d.updatedAt), new Date(), i18n.language)}
               </span>
               <div className="relative z-10 shrink-0">
