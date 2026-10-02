@@ -318,7 +318,7 @@ export const OPENAPI = {
     },
     '/decks/{id}': {
       get: {
-        summary: 'Deck list by section',
+        summary: 'Deck list by section with roles and side plans',
         parameters: [path('id', 'Deck id')],
         responses: { '200': okResponse('Deck'), ...errors },
       },
@@ -353,7 +353,13 @@ export const OPENAPI = {
             name: 'going',
             in: 'query',
             schema: { enum: ['first', 'second'] },
-            description: 'Default first (5 cards); second draws 6',
+            description: 'Default first (5 cards); second draws 6. With matchup: the plan decides',
+          },
+          {
+            name: 'matchup',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Side plan by matchup name: odds for the Main Deck after siding',
           },
         ],
         responses: { '200': okResponse('Odds'), ...errors },

@@ -14,6 +14,7 @@ import {
   type Going,
 } from '@/lib/deck/roles';
 import { loadLibrary } from '@/server/services/library.service';
+import { applySidePlan, parseSidePlans } from '@/lib/deck/side-plan';
 import { STAPLES } from '@/lib/combo/reactions';
 import { findCard, userNicknames } from './combo-api';
 import { ApiError } from './http';
@@ -114,6 +115,7 @@ export async function deckView(userId: string, deckId: string) {
       format: true,
       userId: true,
       roles: true,
+      sidePlans: true,
       deckCards: {
         orderBy: { card: { name: 'asc' } },
         select: {
@@ -158,6 +160,15 @@ export async function deckView(userId: string, deckId: string) {
     extra: section('EXTRA'),
     side: section('SIDE'),
     warnings: deckIssues(entries, cards),
+    sidePlans: parseSidePlans(deck.sidePlans).map(({ in: inCards, out, ...plan }) => {
+      const named = (r: Record<string, number>) =>
+        Object.entries(r).map(([id, quantity]) => ({
+          id,
+          name: cards.get(id)?.name ?? id,
+          quantity,
+        }));
+      return { ...plan, in: named(inCards), out: named(out) };
+    }),
   };
 }
 
@@ -167,6 +178,7 @@ async function ownDeck(userId: string, deckId: string) {
     select: {
       userId: true,
       roles: true,
+      sidePlans: true,
       deckCards: {
         select: {
           quantity: true,
@@ -215,14 +227,39 @@ const pct = (v: number) => Math.round(v * 1000) / 10;
  * Kennzahlen wie im Tab Ratios: Stufen, Wahrscheinlichkeiten, Abdeckung durch die eigenen Combos,
  * Grenznutzen je Karte und die günstigsten Kürzungen. Werte in Prozent mit einer Nachkommastelle.
  */
-export async function deckOdds(userId: string, deckId: string, going: Going) {
+export async function deckOdds(
+  userId: string,
+  deckId: string,
+  query: { going?: Going; matchup?: string }
+) {
   const deck = await ownDeck(userId, deckId);
   const library = await loadLibrary(userId, deckId);
   const roles = parseRoles(deck.roles);
   const main = deck.deckCards.filter((c) => c.deckSection === 'MAIN');
-  const counts = new Map<string, number>();
+  let counts = new Map<string, number>();
   for (const c of main) counts.set(c.card.id, (counts.get(c.card.id) ?? 0) + c.quantity);
-  const byId = new Map(main.map((c) => [c.card.id, c.card]));
+  // Mit Matchup: Main Deck nach dem Side-Plan, Zugfolge aus dem Plan
+  const plan = query.matchup
+    ? parseSidePlans(deck.sidePlans).find(
+        (p) =>
+          p.matchup.toLowerCase() === query.matchup!.toLowerCase() &&
+          (!query.going || p.going === query.going)
+      )
+    : undefined;
+  if (query.matchup && !plan) throw new ApiError('NOT_FOUND', 'Kein Side-Plan für dieses Matchup');
+  const sided = plan
+    ? applySidePlan(
+        deck.deckCards.map((c) => ({
+          cardId: c.card.id,
+          quantity: c.quantity,
+          section: c.deckSection as Section,
+        })),
+        plan
+      )
+    : null;
+  if (sided) counts = sided.main;
+  const going = plan?.going ?? query.going ?? 'first';
+  const byId = new Map(deck.deckCards.map((c) => [c.card.id, c.card]));
   const starthands = library.entries.map((e) => e.stats.required);
   const { roles: odds, coverage } = deckRatios(
     counts,
@@ -235,6 +272,7 @@ export async function deckOdds(userId: string, deckId: string, going: Going) {
   const staples = new Set(STAPLES.map((s) => s.name));
   return {
     going,
+    ...(plan && { matchup: plan.matchup, sideIssues: sided!.issues }),
     tiers: Object.fromEntries(Object.entries(odds.tiers).map(([k, v]) => [k, pct(v)])),
     metrics: Object.fromEntries(odds.metrics.map((m) => [m.key, pct(m.value)])),
     coverage: hasCombos ? pct(coverage.base) : null,
@@ -258,9 +296,9 @@ export async function deckOdds(userId: string, deckId: string, going: Going) {
       .sort((a, b) => b.minus - a.minus)
       .slice(0, 3),
     suggested: suggestRoles(
-      main.map((c) => ({ id: c.card.id, name: c.card.name })),
+      [...counts.keys()].map((id) => ({ id, name: name(id) })),
       starthands,
-      new Set(main.filter((c) => staples.has(c.card.name)).map((c) => c.card.id)),
+      new Set([...counts.keys()].filter((id) => staples.has(name(id)))),
       roles
     ),
   };
