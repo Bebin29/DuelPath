@@ -14,9 +14,10 @@ import { containsHand, drawHand, expandDeck, suggestTitle } from '@/lib/deck/han
 import type { LibraryEntry } from '@/lib/combo/library';
 import type { DeckViewCard, DeckViewEntry } from '@/server/actions/deck-view.actions';
 import { createCombo } from '@/server/actions/combo.actions';
-import { CardTile } from './CardTile';
+import { CardTile, cardGrid } from './CardTile';
 import { CardSearchPanel } from './CardSearchPanel';
 import { Segmented } from '@/components/ui/segmented';
+import { PageHeader } from '@/components/ui/page-header';
 
 const MAX_HAND = 6;
 type OppZone = 'MONSTER' | 'SPELL_TRAP' | 'FIELD';
@@ -121,25 +122,29 @@ export function StartHandPicker({
         : t('newCombo.cards', { count: hand.length });
 
   return (
-    <div className="flex flex-col gap-6 pb-24">
-      <header>
-        <p className="font-mono text-2xs text-text-subtle">{deck.name}</p>
-        <h1 className="font-display text-[40px] leading-none">{t('newCombo.title')}</h1>
-        <p className="mt-2 text-text-muted">{t('newCombo.text')}</p>
-        <Segmented<'first' | 'second'>
-          className="mt-4"
-          label={t('decks.going')}
-          value={going}
-          onChange={setGoing}
-          options={[
-            { value: 'first', label: t('decks.first') },
-            { value: 'second', label: t('decks.second') },
-          ]}
-        />
-      </header>
+    <div className="flex flex-col gap-6 pb-44 sm:pb-24">
+      <PageHeader
+        eyebrow={deck.name}
+        title={t('newCombo.title')}
+        meta={
+          <>
+            <p>{t('newCombo.text')}</p>
+            <Segmented<'first' | 'second'>
+              className="mt-4"
+              label={t('decks.going')}
+              value={going}
+              onChange={setGoing}
+              options={[
+                { value: 'first', label: t('decks.first') },
+                { value: 'second', label: t('decks.second') },
+              ]}
+            />
+          </>
+        }
+      />
 
       {going === 'second' && (
-        <section className="grid grid-cols-[minmax(0,1fr)_300px] gap-6 rounded-lg border border-opponent/40 p-4">
+        <section className="grid gap-6 rounded-lg border border-opponent/40 p-4 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="flex flex-col gap-2">
             <h2 className="font-display text-xl text-opponent">{t('newCombo.opponentBoard')}</h2>
             <p className="text-sm text-text-muted">{t('newCombo.opponentText')}</p>
@@ -158,7 +163,7 @@ export function StartHandPicker({
                       faceDown={oppZoneOf(c.type, c.race) === 'MONSTER' ? undefined : 'self'}
                     />
                   </button>
-                  <span className="font-mono text-[9.5px] text-text-subtle">
+                  <span className="font-mono text-2xs text-text-subtle">
                     {t(`combo.zones.${oppZoneOf(c.type, c.race)}`)}
                   </span>
                 </li>
@@ -178,7 +183,7 @@ export function StartHandPicker({
           <h2 className="border-b border-line pb-1.5 font-display text-xl">
             {t(`newCombo.group.${g.key}`)}
           </h2>
-          <ul className="grid grid-cols-[repeat(auto-fill,120px)] gap-x-4 gap-y-4">
+          <ul className={cardGrid(4)}>
             {g.list.map((e) => (
               <li key={e.cardId}>
                 <CardTile
@@ -187,6 +192,7 @@ export function StartHandPicker({
                   selected={count(e.cardId) > 0}
                   label={t('newCombo.toHand')}
                   onClick={() => toggle(e)}
+                  fluid
                   footer={
                     count(e.cardId) > 0 && (
                       <span className="font-mono text-2xs text-primary">
@@ -202,11 +208,12 @@ export function StartHandPicker({
       ))}
 
       {/* Starthand-Leiste bleibt unten sichtbar, mit Titel und „Los“ */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface-1/95 backdrop-blur-[2px]">
-        <div className="mx-auto flex h-20 max-w-[1280px] items-center gap-4 px-8">
-          <span className="w-24 font-mono text-xs text-text-muted">{counter}</span>
+      {/* Auf dem Handy über der Navigationsleiste und in zwei Zeilen */}
+      <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t border-line bg-surface-1/95 backdrop-blur-[2px] sm:bottom-0">
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:h-20 sm:flex-nowrap sm:px-6 sm:py-0 lg:px-8">
+          <span className="font-mono text-xs text-text-muted sm:w-24">{counter}</span>
           <ul
-            className="flex min-w-0 flex-1 items-center gap-1.5"
+            className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto"
             aria-label={t('workbench.startHand')}
           >
             {hand.map((id, i) => (
@@ -235,17 +242,18 @@ export function StartHandPicker({
             onKeyDown={(e) => e.key === 'Enter' && void start()}
             placeholder={t('library.untitled')}
             aria-label={t('combo.titlePlaceholder')}
-            className="h-8 w-56 rounded-md border border-line bg-transparent px-2.5 text-sm outline-none focus:border-line-strong"
+            className="h-8 min-w-0 flex-1 basis-40 rounded-md border border-line bg-transparent px-2.5 text-sm outline-none focus:border-line-strong pointer-coarse:h-10 pointer-coarse:text-base sm:w-56 sm:flex-none"
           />
           <Button
             variant="line"
+            aria-label={t('newCombo.random')}
             onClick={() => {
               setHand(drawHand(expandDeck(main), going === 'second' ? 6 : 5));
               setTitle(null);
             }}
           >
             <Shuffle />
-            {t('newCombo.random')}
+            <span className="hidden sm:inline">{t('newCombo.random')}</span>
           </Button>
           <Button onClick={start} disabled={!hand.length || busy}>
             {t('newCombo.go')} <Kbd>⏎</Kbd>

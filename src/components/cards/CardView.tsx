@@ -36,6 +36,8 @@ export interface CardViewProps {
   /** Link-Pfeile als kleine Dreiecke am Rand, ab Größe „board“ */
   linkMarkers?: string[] | null;
   className?: string;
+  /** Breite aus dem Raster statt aus der Größe; die Größe bestimmt nur Plaketten und Bild */
+  fluid?: boolean;
 }
 
 const fullImage = (src: string) => src.replace('_small.jpg', '.jpg');
@@ -73,6 +75,7 @@ export function CardView({
   materials,
   linkMarkers,
   className,
+  fluid,
 }: CardViewProps) {
   const width = CARD_SIZES[size];
   const square = size === 'art' || size === 'dot';
@@ -100,7 +103,7 @@ export function CardView({
           'card-flash card-flash-opponent shadow-[0_0_0_1.5px_var(--opponent)]',
         className
       )}
-      style={{ width, height }}
+      style={fluid ? { width: '100%', aspectRatio: square ? '1' : '59 / 86' } : { width, height }}
     >
       {showBack ? (
         <div

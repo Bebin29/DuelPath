@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { Workbench } from '@/components/workbench/Workbench';
+import { ComboView } from '@/components/reader/ComboView';
 import { getCombo, getStaples, listDeckOptions } from '@/server/actions/combo.actions';
 
 export default async function ComboWorkbenchPage({
@@ -17,7 +17,7 @@ export default async function ComboWorkbenchPage({
   ]);
   if (!result.data) notFound();
   return (
-    <Workbench
+    <ComboView
       initial={result.data}
       staples={staples}
       decks={decks}

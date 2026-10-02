@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage, useSettings } from '@/components/providers/SettingsProvider';
@@ -13,6 +14,8 @@ import { displayName, type ComboCard } from '@/lib/combo/cards';
  * Staple-Auswahl (UX-Plan 6.8): welche Handtraps und Fallen Leiste und Stresstest nutzen,
  * in welcher Reihenfolge. Ohne eigene Auswahl gilt die Standardliste.
  */
+const COLLAPSED = 8;
+
 export function StapleSettings({ staples }: { staples: { name: string; card: ComboCard }[] }) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
@@ -24,6 +27,10 @@ export function StapleSettings({ staples }: { staples: { name: string; card: Com
     ...chosen.flatMap((name) => staples.filter((s) => s.name === name)),
     ...staples.filter((s) => !chosen.includes(s.name)),
   ];
+
+  // Ab acht Einträgen eingeklappt, damit die Seite nicht unnötig lang wird (UI-Sweep-Plan 3.8)
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? ordered : ordered.slice(0, COLLAPSED);
 
   const save = (next: string[]) => update({ staples: next });
   const move = (name: string, by: number) => {
@@ -47,7 +54,7 @@ export function StapleSettings({ staples }: { staples: { name: string; card: Com
       </div>
       <p className="mb-3 text-text-muted">{t('settings.staplesText')}</p>
       <ul className="flex flex-col border-t border-line">
-        {ordered.map((s) => {
+        {shown.map((s) => {
           const on = chosen.includes(s.name);
           const index = chosen.indexOf(s.name);
           const name = displayName(s.card, cardLanguage);
@@ -94,6 +101,11 @@ export function StapleSettings({ staples }: { staples: { name: string; card: Com
           );
         })}
       </ul>
+      {ordered.length > COLLAPSED && (
+        <Button variant="text" size="sm" className="mt-2" onClick={() => setExpanded((e) => !e)}>
+          {expanded ? t('settings.showLess') : t('settings.showAll', { count: ordered.length })}
+        </Button>
+      )}
     </section>
   );
 }

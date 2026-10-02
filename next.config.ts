@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Dev-Server auch über Tailscale erreichbar (IP im 100er-Bereich und MagicDNS-Name)
+  allowedDevOrigins: ['100.*.*.*', '**.ts.net'],
   images: {
     // Bild-Optimierung aktivieren
     formats: ['image/avif', 'image/webp'],

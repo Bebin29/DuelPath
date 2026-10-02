@@ -20,6 +20,7 @@ import {
 import { CardView } from '@/components/cards/CardView';
 import { createDeck, deleteDeck, importYdkToDeck } from '@/server/actions/deck.actions';
 import type { DeckSummary } from '@/server/actions/deck-view.actions';
+import { PageHeader } from '@/components/ui/page-header';
 
 /**
  * Decks (UX-Plan 11, UI-Plan 7.5.4): YDK-Import ist der Hauptknopf, weil fast jeder seine Liste
@@ -79,17 +80,19 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
           e.target.value = '';
         }}
       />
-      <header className="flex items-end gap-3">
-        <div className="flex-1">
-          <h1 className="font-display text-[40px] leading-none">{t('decks.title')}</h1>
-          <p className="mt-2 text-text-muted">{t('decks.count', { count: decks.length })}</p>
-        </div>
-        <Button variant="line" onClick={createEmpty} disabled={busy}>
-          <Plus />
-          {t('decks.new')}
-        </Button>
-        {importButton}
-      </header>
+      <PageHeader
+        title={t('decks.title')}
+        meta={t('decks.count', { count: decks.length })}
+        actions={
+          <>
+            <Button variant="line" onClick={createEmpty} disabled={busy}>
+              <Plus />
+              {t('decks.new')}
+            </Button>
+            {importButton}
+          </>
+        }
+      />
 
       {visible.length === 0 ? (
         <div className="flex flex-col items-start gap-3 border-t border-line pt-6">
@@ -101,9 +104,9 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
           {visible.map((d) => (
             <li
               key={d.id}
-              className="relative flex h-20 items-center gap-5 border-b [contain-intrinsic-size:auto_80px] [content-visibility:auto] border-line px-2 transition-colors duration-(--motion-fast) hover:bg-surface-1"
+              className="relative flex min-h-20 items-center gap-3 border-b [contain-intrinsic-size:auto_80px] [content-visibility:auto] border-line py-3 transition-colors duration-(--motion-fast) hover:bg-surface-1 sm:gap-5 sm:px-2"
             >
-              <span className="flex -space-x-5">
+              <span className="flex shrink-0 -space-x-5">
                 {d.cover.map((img, i) => (
                   <CardView
                     key={i}
@@ -118,25 +121,33 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/decks/${d.id}`}
-                  className="block truncate font-display text-2xl leading-tight after:absolute after:inset-0 hover:underline"
+                  className="block truncate font-display text-xl leading-tight after:absolute after:inset-0 hover:underline sm:text-2xl"
                 >
                   {d.name}
                 </Link>
-                <p className="font-mono text-xs text-text-muted">
+                <p className="truncate font-mono text-xs text-text-muted">
                   {t('decks.section.MAIN')} {d.main} · {t('decks.section.EXTRA')} {d.extra} ·{' '}
                   {t('decks.section.SIDE')} {d.side}
                 </p>
+                {/* Auf schmalen Bildschirmen stehen Combos und Datum unter den Kennzahlen */}
+                <p
+                  className="truncate font-mono text-xs text-text-muted sm:hidden"
+                  suppressHydrationWarning
+                >
+                  {t('decks.combosCount', { count: d.combos })} ·{' '}
+                  {relativeTime(new Date(d.updatedAt), new Date(), i18n.language)}
+                </p>
               </div>
-              <span className="font-mono text-xs text-text-muted">
+              <span className="hidden shrink-0 font-mono text-xs text-text-muted sm:inline">
                 {t('decks.combosCount', { count: d.combos })}
               </span>
               <span
-                className="w-28 text-right font-mono text-xs text-text-muted"
+                className="hidden w-28 shrink-0 text-right font-mono text-xs text-text-muted sm:inline"
                 suppressHydrationWarning
               >
                 {relativeTime(new Date(d.updatedAt), new Date(), i18n.language)}
               </span>
-              <div className="relative z-10">
+              <div className="relative z-10 shrink-0">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button

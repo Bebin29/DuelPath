@@ -310,6 +310,7 @@ const QUESTION: Record<string, string> = {
   summon: 'What did you summon?',
   send: 'What did you send?',
   banish: 'What did you banish?',
+  place: 'What did you place in the Spell & Trap Zone?',
   fusion: 'Which Fusion Monster, and which materials?',
   target: 'Which card do you target?',
 };

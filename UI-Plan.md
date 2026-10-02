@@ -237,12 +237,12 @@ Eine Kopfzeile von 44 px statt heute zwei Zeilen mit zusammen rund 110 px.
 
 ### 6.2 Breitenstufen
 
-| Stufe         | Fensterbreite    | Line-Liste                                                                                                  | Staple-Leiste | Inspector | Karte auf dem Board | Chain-Stapel          |
-| ------------- | ---------------- | ----------------------------------------------------------------------------------------------------------- | ------------- | --------- | ------------------- | --------------------- |
-| **weit**      | ab 1920 px       | 280 px                                                                                                      | 56 px         | 360 px    | 72 px               | Spalte rechts, 160 px |
-| **Standard**  | 1440 bis 1919 px | 248 px                                                                                                      | 56 px         | 320 px    | 56 bis 64 px        | Spalte rechts, 104 px |
-| **kompakt**   | 1280 bis 1439 px | als Overlay (L)                                                                                             | 48 px         | 288 px    | 56 px               | Spalte rechts, 104 px |
-| **zu schmal** | unter 1280 px    | Hinweis „Für die Workbench bitte mindestens 1280 px breit“, Lese- und Nachspielansicht folgt später (UX 12) |
+| Stufe         | Fensterbreite    | Line-Liste                                      | Staple-Leiste | Inspector | Karte auf dem Board | Chain-Stapel                            |
+| ------------- | ---------------- | ----------------------------------------------- | ------------- | --------- | ------------------- | --------------------------------------- |
+| **weit**      | ab 1920 px       | 280 px                                          | 56 px         | 360 px    | 72 px               | Spalte rechts, 160 px                   |
+| **Standard**  | 1440 bis 1919 px | 248 px                                          | 56 px         | 320 px    | 56 bis 64 px        | Spalte rechts, 104 px                   |
+| **kompakt**   | 1024 bis 1439 px | als Overlay (L), öffnet sich mit dem Stresstest | 48 px         | 288 px    | 56 px               | rechts, bei wenig Platz unter dem Board |
+| **zu schmal** | unter 1024 px    | Lese- und Nachspielansicht (UI-Sweep-Plan 4.2)  |
 
 - Seitenleisten lassen sich in der Breite ziehen (Griff mit 8 px Trefferfläche), die Breite wird pro Nutzer gespeichert. Minimum und Maximum je Stufe verhindern, dass das Board zu klein wird.
 - Die Kartengröße auf dem Board ergibt sich aus der verfügbaren Fläche (Container-Query), nicht aus der Fensterbreite allein.

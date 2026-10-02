@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { CardData } from '@/lib/combo/state';
 import { initialState } from '@/lib/combo/state';
-import { materialCandidates, resultCandidates, resultSpecs } from '@/lib/combo/effect-results';
+import {
+  materialCandidates,
+  resultCandidates,
+  resultSpec,
+  resultSpecs,
+} from '@/lib/combo/effect-results';
 
 const card = (name: string, type: string, text = ''): CardData => ({
   id: name,
@@ -132,6 +137,58 @@ describe('Kandidaten', () => {
     expect(materialCandidates(spec, state, 'self', cards).map((c) => c.instanceId)).toEqual([
       'alu',
       'q1',
+    ]);
+  });
+});
+
+describe('Crystal Beasts: Ablegen in die Zauber/Fallen-Zone', () => {
+  const BOND = card(
+    'Crystal Bond',
+    'Spell Card',
+    'Add 1 "Crystal Beast" monster from your Deck to your hand, and place 1 "Crystal Beast" monster with a different name from your Deck face-up in your Spell & Trap Zone as a Continuous Spell. You can only activate 1 "Crystal Bond" per turn.'
+  );
+  const PEGASUS = card(
+    'Crystal Beast Sapphire Pegasus',
+    'Effect Monster',
+    'When this card is Summoned: You can place 1 "Crystal Beast" monster from your hand, Deck, or GY, face-up in your Spell & Trap Zone as a Continuous Spell.'
+  );
+  const RUBY = card(
+    'Crystal Beast Ruby Carbuncle',
+    'Effect Monster',
+    'When this card is Special Summoned: You can Special Summon as many "Crystal Beast" Monster Cards as possible from your Spell & Trap Zones.'
+  );
+  const GOLDEN = card(
+    'Golden Rule',
+    'Spell Card',
+    'Place 2 "Crystal Beast" monsters from your Deck face-up in your Spell & Trap Zone as Continuous Spells, then Special Summon 1 "Crystal Beast" monster from your hand or GY with a different name than those cards, and if you do, equip it with this card.'
+  );
+
+  it('liest Suche und Ablegen aus demselben Satz', () => {
+    expect(resultSpecs(BOND, 0).map((s) => [s.verb, s.to, s.from, s.count])).toEqual([
+      ['search', 'HAND', ['DECK'], 1],
+      ['place', 'SPELL_TRAP', ['DECK'], 1],
+    ]);
+  });
+
+  it('kennt Hand, Deck und Friedhof als Herkunft beim Ablegen', () => {
+    expect(resultSpecs(PEGASUS, 0)).toEqual([
+      expect.objectContaining({
+        verb: 'place',
+        to: 'SPELL_TRAP',
+        from: ['HAND', 'DECK', 'GY'],
+        names: ['Crystal Beast'],
+      }),
+    ]);
+  });
+
+  it('beschwört so viele wie möglich aus der Zauber/Fallen-Zone', () => {
+    expect(resultSpec(RUBY, 0)).toMatchObject({ verb: 'summon', from: ['SPELL_TRAP'], count: 5 });
+  });
+
+  it('legt zwei ab und beschwört dann eine', () => {
+    expect(resultSpecs(GOLDEN, 0).map((s) => [s.verb, s.count])).toEqual([
+      ['place', 2],
+      ['summon', 1],
     ]);
   });
 });

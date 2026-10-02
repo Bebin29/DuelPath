@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
-import { LogOut, Search, Settings } from 'lucide-react';
+import { House, Layers, LogOut, Route, Search, Settings } from 'lucide-react';
 import { useLanguage, useTranslation } from '@/lib/i18n/hooks';
 import { parseTheme } from '@/lib/theme';
 import { usePalette } from '@/components/command/CommandPalette';
@@ -23,6 +23,7 @@ import {
 
 /**
  * App-Kopfzeile nach UI-Plan 6.1: eine Zeile, Wortmarke, Hauptbereiche, Nutzermenü.
+ * Auf dem Handy wandern Bereiche und Suche in eine Leiste unten (UI-Sweep-Plan, Phase 1).
  * Die Workbench hat ihre eigene Kopfzeile und nutzt diese hier nicht.
  */
 export function AppHeader() {
@@ -34,9 +35,9 @@ export function AppHeader() {
   const palette = usePalette();
 
   const items = [
-    { href: '/', label: t('navigation.home') },
-    { href: '/combos', label: t('navigation.combos') },
-    { href: '/decks', label: t('navigation.decks') },
+    { href: '/', label: t('navigation.home'), icon: House },
+    { href: '/combos', label: t('navigation.combos'), icon: Route },
+    { href: '/decks', label: t('navigation.decks'), icon: Layers },
   ];
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname?.startsWith(href));
   const initial = (session?.user?.name || session?.user?.email || '?').charAt(0).toUpperCase();
@@ -49,11 +50,17 @@ export function AppHeader() {
       >
         {t('shell.skipToContent')}
       </a>
-      <header className="flex h-14 items-center gap-7 border-b border-line px-8">
-        <Link href="/" className="font-display text-2xl leading-none text-ink">
+      <header className="flex h-14 items-center gap-7 border-b border-line px-4 sm:px-8">
+        <Link
+          href="/"
+          className="flex items-center font-display text-2xl leading-none text-ink pointer-coarse:min-h-10"
+        >
           {t('common.appName')}
         </Link>
-        <nav aria-label={t('shell.mainNavigation')} className="flex h-full items-stretch gap-5">
+        <nav
+          aria-label={t('shell.mainNavigation')}
+          className="hidden h-full items-stretch gap-5 sm:flex"
+        >
           {items.map((item) => {
             const active = isActive(item.href);
             return (
@@ -62,7 +69,7 @@ export function AppHeader() {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex items-center text-sm transition-colors duration-(--motion-fast)',
+                  'flex items-center text-sm transition-colors duration-(--motion-fast) pointer-coarse:px-1.5',
                   active
                     ? 'font-semibold text-ink shadow-[inset_0_-1.5px_0_var(--ink)]'
                     : 'text-text-muted hover:text-ink'
@@ -78,10 +85,10 @@ export function AppHeader() {
           <button
             type="button"
             onClick={() => palette.open()}
-            className="mr-4 flex h-8 w-64 items-center gap-2 rounded-md border border-line bg-surface-1 px-2.5 text-sm text-text-subtle hover:border-line-strong"
+            className="mr-4 hidden h-8 w-full max-w-64 items-center gap-2 rounded-md border border-line bg-surface-1 px-2.5 text-sm text-text-subtle hover:border-line-strong pointer-coarse:h-10 sm:flex"
           >
             <Search className="size-3.5" />
-            <span className="flex-1 text-left">{t('palette.open')}</span>
+            <span className="flex-1 truncate text-left">{t('palette.open')}</span>
             <Kbd>{t('help.key.ctrl')} K</Kbd>
           </button>
         )}
@@ -89,7 +96,7 @@ export function AppHeader() {
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label={t('shell.userMenu')}
-              className="grid size-8 place-items-center rounded-full border border-line font-display text-base text-ink hover:bg-surface-3"
+              className="grid size-8 shrink-0 place-items-center rounded-full border border-line font-display text-base text-ink hover:bg-surface-3 pointer-coarse:size-10"
             >
               {initial}
             </DropdownMenuTrigger>
@@ -126,6 +133,39 @@ export function AppHeader() {
           </DropdownMenu>
         )}
       </header>
+      {/* Handy: Bereiche und Suche in Daumenreichweite, über der Safe-Area */}
+      {session && (
+        <nav
+          aria-label={t('shell.mainNavigation')}
+          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm sm:hidden"
+        >
+          {items.map(({ href, label, icon: Icon }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'flex h-14 flex-col items-center justify-center gap-1 text-xs',
+                  active ? 'font-semibold text-ink' : 'text-text-muted'
+                )}
+              >
+                <Icon className="size-5" />
+                {label}
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => palette.open()}
+            className="flex h-14 flex-col items-center justify-center gap-1 text-xs text-text-muted"
+          >
+            <Search className="size-5" />
+            {t('shell.search')}
+          </button>
+        </nav>
+      )}
     </>
   );
 }

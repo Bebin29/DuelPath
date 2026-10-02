@@ -40,7 +40,10 @@ export function Tabs<T extends string>({
     <div
       role="tablist"
       aria-label={label}
-      className={cn('flex gap-6 border-b border-line', className)}
+      className={cn(
+        'flex gap-6 overflow-x-auto border-b border-line [scrollbar-width:none]',
+        className
+      )}
     >
       {options.map((o, i) => {
         const selected = o.value === value;
@@ -64,7 +67,7 @@ export function Tabs<T extends string>({
               e.preventDefault();
             }}
             className={cn(
-              'relative -mb-px pb-2 pt-1 text-sm transition-colors duration-(--motion-fast)',
+              'relative -mb-px shrink-0 whitespace-nowrap pb-2 pt-1 text-sm transition-colors duration-(--motion-fast) pointer-coarse:min-h-10',
               selected ? 'text-ink' : 'text-text-muted hover:text-ink'
             )}
           >

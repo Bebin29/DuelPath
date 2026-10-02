@@ -25,6 +25,7 @@ export const SHORTCUT_GROUPS: { id: string; items: Shortcut[] }[] = [
       { id: 'branches', keys: ['↑', '↓'] },
       { id: 'play', keys: ['space'] },
       { id: 'stress', keys: ['T'] },
+      { id: 'lines', keys: ['L'] },
     ],
   },
   {

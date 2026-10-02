@@ -1,17 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { signUpAction } from '@/server/actions/auth';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { AuthCard, AuthError, AuthField } from '@/components/auth/AuthCard';
 
-/**
- * Registrierungsformular
- */
+/** Registrieren; danach geht es zur Anmeldung */
 export default function SignUpPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -28,96 +25,71 @@ export default function SignUpPage() {
       setError(result.error);
       setIsLoading(false);
     } else if (result?.success) {
-      // Weiterleitung zur Anmeldeseite nach erfolgreicher Registrierung
       router.push('/auth/signin?registered=true');
     }
   }
 
+  const invalid = error ? 'true' : 'false';
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('auth.signUp')}</CardTitle>
-        <CardDescription>
-          Erstelle ein Konto, um deine Decks und Kombos zu verwalten
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form action={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm border border-destructive/20">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">
-              {t('auth.name')}
-            </label>
-            <Input
-              id="name"
-              name="name"
-              type="text"
-              required
-              placeholder="Dein Name"
-              aria-invalid={error ? 'true' : 'false'}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              {t('auth.email')}
-            </label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              required
-              placeholder="deine@email.de"
-              aria-invalid={error ? 'true' : 'false'}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              {t('auth.password')}
-            </label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              placeholder="Mindestens 8 Zeichen"
-              minLength={8}
-              aria-invalid={error ? 'true' : 'false'}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="text-sm font-medium">
-              Passwort bestätigen
-            </label>
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              required
-              placeholder="Passwort wiederholen"
-              aria-invalid={error ? 'true' : 'false'}
-            />
-          </div>
-
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? t('common.loading') : t('auth.signUp')}
-          </Button>
-        </form>
-
-        <div className="mt-4 text-center text-sm text-muted-foreground">
+    <AuthCard
+      title={t('auth.signUp')}
+      text={t('auth.signUpText')}
+      footer={
+        <>
           {t('auth.hasAccount')}{' '}
-          <Link href="/auth/signin" className="text-primary hover:underline">
+          <Link href="/auth/signin" className="text-ink underline-offset-4 hover:underline">
             {t('auth.signIn')}
           </Link>
-        </div>
-      </CardContent>
-    </Card>
+        </>
+      }
+    >
+      <form action={handleSubmit} className="flex flex-col gap-4">
+        {error && <AuthError>{error}</AuthError>}
+        <AuthField
+          id="name"
+          name="name"
+          type="text"
+          autoComplete="name"
+          required
+          label={t('auth.name')}
+          placeholder={t('auth.namePlaceholder')}
+          aria-invalid={invalid}
+        />
+        <AuthField
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          label={t('auth.email')}
+          placeholder={t('auth.emailPlaceholder')}
+          aria-invalid={invalid}
+        />
+        <AuthField
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+          label={t('auth.password')}
+          placeholder={t('auth.passwordMin')}
+          aria-invalid={invalid}
+        />
+        <AuthField
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          required
+          label={t('auth.confirmPassword')}
+          placeholder={t('auth.passwordRepeat')}
+          aria-invalid={invalid}
+        />
+        <Button type="submit" size="lg" className="mt-2 w-full" disabled={isLoading}>
+          {isLoading ? t('common.loading') : t('auth.signUp')}
+        </Button>
+      </form>
+    </AuthCard>
   );
 }

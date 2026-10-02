@@ -7,7 +7,7 @@ import { isExtraDeckMonster, isMonster, isSpell, isTrap } from '@/lib/combo/play
  * Eine Heuristik über PSCT; wenn nichts passt, bleibt die freie Bewegung am Board.
  */
 
-export type ResultVerb = 'search' | 'summon' | 'send' | 'banish' | 'fusion';
+export type ResultVerb = 'search' | 'summon' | 'send' | 'banish' | 'place' | 'fusion';
 
 export interface ResultSpec {
   verb: ResultVerb;
@@ -26,8 +26,9 @@ export interface ResultSpec {
 }
 
 const COUNT: Record<string, number> = { a: 1, an: 1, one: 1, two: 2, three: 3 };
+// „as many … as possible“ zählt wie eine volle Reihe
 const countOf = (word: string | undefined) =>
-  word ? Number(word) || COUNT[word.toLowerCase()] || 1 : 1;
+  word ? Number(word) || COUNT[word.toLowerCase()] || (word.toLowerCase() === 'as' ? 5 : 1) : 1;
 
 const ZONE_WORDS: [RegExp, Zone][] = [
   [/\bhand\b/i, 'HAND'],
@@ -35,6 +36,7 @@ const ZONE_WORDS: [RegExp, Zone][] = [
   [/\b(?:GY|Graveyard)\b/, 'GY'],
   [/\bfield\b/i, 'MONSTER'],
   [/\bbanished\b/i, 'BANISHED'],
+  [/Spell & Trap Zones?/i, 'SPELL_TRAP'],
 ];
 const zonesIn = (phrase: string) => ZONE_WORDS.filter(([re]) => re.test(phrase)).map(([, z]) => z);
 
@@ -65,9 +67,15 @@ function objectFilter(
   return { names, except: exceptMatch ? [exceptMatch[1]] : [], kind };
 }
 
+/** Erstes Ergebnis eines Effekts, etwa für den Stresstest */
+export function resultSpec(card: CardData | undefined, effectIndex: number): ResultSpec | null {
+  return resultSpecs(card, effectIndex)[0] ?? null;
+}
+
 /**
- * Alle Wirkungsteile eines Effekts in Textreihenfolge, etwa Crystal Beast Rainbow Dragon:
- * „Special Summon 1 … from your Deck, …, and if you do, add 1 … from your Deck to your hand“.
+ * Alle Ergebnisse eines Effekts in Reihenfolge des Texts, etwa Crystal Beast Rainbow Dragon:
+ * „Special Summon 1 … from your Deck, but negate its effects, and if you do, add 1 … to your hand“.
+ * Weitere zählen nur im selben Satz wie das erste (Crystal Bond: „Add 1 …, and place 1 …“).
  * Die Schrittleiste fragt sie nacheinander ab, alles landet im selben Schritt.
  */
 export function resultSpecs(card: CardData | undefined, effectIndex: number): ResultSpec[] {
@@ -125,32 +133,47 @@ export function resultSpecs(card: CardData | undefined, effectIndex: number): Re
       'banish',
       (m) => ({ from: zonesIn(m[3]), to: 'BANISHED' }),
     ],
+    [
+      /place (\w+) (.+?) from your ([^.;]+?) face-up in your Spell & Trap Zone/i,
+      'place',
+      (m) => ({ from: zonesIn(m[3]), to: 'SPELL_TRAP' }),
+    ],
   ];
-  const found: { index: number; m: RegExpExecArray; verb: ResultVerb; from: Zone[]; to: Zone }[] =
-    [];
+  const found: { spec: ResultSpec; at: number; end: number }[] = [];
   for (const [re, verb, zones] of patterns) {
+    // Jeder Treffer zählt: ein Effekt kann zweimal beschwören
     for (const m of part.matchAll(new RegExp(re.source, 'gi'))) {
       if (/\bthis card\b/i.test(m[2])) continue;
       const { from, to } = zones(m);
-      if (from.length) found.push({ index: m.index, m, verb, from, to });
+      if (!from.length) continue;
+      const sentence = part.slice(m.index).split(/(?<=\.)\s/)[0];
+      found.push({
+        spec: { verb, from, to, count: countOf(m[1]), ...objectFilter(m[2], sentence) },
+        at: m.index,
+        end: m.index + m[0].length,
+      });
     }
   }
-  found.sort((a, b) => a.index - b.index);
-  return found.map(({ index, m, verb, from, to }, i) => {
-    const sentence = part.slice(index).split(/(?<=\.)\s/)[0];
+  found.sort((a, b) => a.at - b.at);
+  const first = found[0];
+  if (!first) return [];
+  const sentenceEnd = first.at + part.slice(first.at).split(/(?<=\.)\s/)[0].length;
+  const kept: typeof found = [];
+  for (const hit of found) {
+    // Nur im Satz des ersten Ergebnisses und ohne Überlappung mit dem vorigen Treffer
+    if (hit.at >= sentenceEnd || hit.at < (kept.at(-1)?.end ?? -1)) continue;
+    kept.push(hit);
+  }
+  return kept.map(({ spec, at }, i) => {
     // Bis zum nächsten Teil: „but negate its effects“ gehört zu diesem
-    const clause = part.slice(index, found[i + 1]?.index ?? part.length);
-    return {
-      verb,
-      from,
-      to,
-      count: countOf(m[1]),
-      ...objectFilter(m[2], sentence),
-      ...(verb === 'summon' &&
-        /\bnegate (?:its|their) effects\b/i.test(clause) && { negate: true }),
-    };
+    const clause = part.slice(at, kept[i + 1]?.at ?? sentenceEnd);
+    return spec.verb === 'summon' && NEGATE_SUMMONED.test(clause)
+      ? { ...spec, negate: true }
+      : spec;
   });
 }
+
+const NEGATE_SUMMONED = /\bnegate (?:its|their) effects\b/i;
 
 function matches(spec: ResultSpec, card: CardData): boolean {
   if (spec.except.includes(card.name)) return false;

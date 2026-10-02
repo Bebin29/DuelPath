@@ -36,10 +36,14 @@ import { usedOptNames } from '@/lib/combo/opt-names';
 import type { ComboStatus } from '@/lib/combo/library';
 import { getDeckCounts } from '@/server/actions/deck-view.actions';
 import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/combo.actions';
-import { NodeEditor, StartStateEditor, type MoveTarget } from '@/components/combo/NodeEditor';
+import { NodeEditor, type MoveTarget } from '@/components/combo/NodeEditor';
+import { StartStatePanel } from './StartStatePanel';
 import { SuggestionPanel } from '@/components/combo/SuggestionPanel';
+import { ListTree } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { OneTimeHint } from '@/components/ui/one-time-hint';
+import { Kbd } from '@/components/ui/kbd';
+import { OneTimeHint, useHints } from '@/components/ui/one-time-hint';
 import { useCardSheet } from '@/components/cards/CardSheet';
 import { AnimatePresence, motion } from 'motion/react';
 import { EASE } from '@/lib/motion';
@@ -317,6 +321,9 @@ export function Workbench({
   const [playing, setPlaying] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const { settings, update: updateSettings } = useSettings();
+  const hints = useHints();
+  // Unter 1440 px liegt die Line-Liste als Overlay über dem Board (UI-Plan 6.2, Stufe „kompakt“)
+  const [linesOpen, setLinesOpen] = useState(false);
   const cardSheet = useCardSheet();
   const [pairsOn, setPairsOn] = useState(false);
   const stress = useStress({
@@ -329,6 +336,8 @@ export function Workbench({
     pairs: stressOn && pairsOn,
   });
   const toggleStress = () => {
+    // Die Treffer stehen in der Line-Liste; im kompakten Modus öffnet sie sich mit
+    if (!stressOn) setLinesOpen(true);
     setStressOn((on) => !on);
     setStressRun((n) => n + 1);
   };
@@ -401,9 +410,12 @@ export function Workbench({
     };
     setNodes((prev) => [...prev, node]);
     select(node.id);
+    // Wer einen Treffer anklickt, hat den Hinweis zum Stresstest verstanden
+    if (stressOn) hints.markSeen('stress');
   };
   /** Staple auf einen Schritt gezogen oder per O gewählt; ein Treffer des Stresstests gibt den Anker vor */
   const dropStaple = (staple: string, nodeId: string | null, target?: string) => {
+    hints.markSeen('staple-rail');
     const hit = stress.hits.find((h) => h.staple === staple && h.stepId === (nodeId ?? ''));
     const node = nodeId ? nodes.find((n) => n.id === nodeId) : undefined;
     openStressBranch({
@@ -628,6 +640,14 @@ export function Workbench({
       }
       if (key === 'T') {
         toggleStress();
+        return;
+      }
+      if (key === 'L') {
+        setLinesOpen((open) => !open);
+        return;
+      }
+      if (key === 'Escape' && linesOpen) {
+        setLinesOpen(false);
         return;
       }
       if (key === 'Delete' && selected && !onControl) {
@@ -908,11 +928,10 @@ export function Workbench({
         <p className="font-mono text-2xs text-text-subtle">{t('workbench.step', { n: 0 })}</p>
         <h2 className="font-display text-2xl leading-tight">{t('workbench.startHand')}</h2>
       </header>
-      <StartStateEditor
+      <StartStatePanel
         startState={startState}
         cards={cards}
         onChange={(next) => setDoc((d) => ({ ...d, startState: next }))}
-        onAddChild={addChild}
         onRegisterCard={registerCard}
         deckId={deckId}
       />
@@ -927,8 +946,8 @@ export function Workbench({
 
   return (
     <div className="flex h-dvh flex-col">
-      {/* Unter 1280 px reicht der Platz nicht für Board und Seitenleisten (UI-Plan 6.2) */}
-      <div className="fixed inset-0 z-[60] hidden place-items-center bg-bg p-8 text-center max-[1279px]:grid">
+      {/* Unter 1024 px reicht der Platz nicht für Board und Inspector (UI-Sweep-Plan 4.1) */}
+      <div className="fixed inset-0 z-[60] hidden place-items-center bg-bg p-8 text-center max-[1023px]:grid">
         <p className="max-w-sm font-display text-2xl">{t('workbench.tooNarrow')}</p>
       </div>
       <p className="sr-only" aria-live="polite">
@@ -981,9 +1000,17 @@ export function Workbench({
           <motion.div
             key="board"
             {...MODE_TRANSITION}
-            className="grid min-h-0 flex-1 grid-cols-[220px_48px_1fr_288px] min-[1440px]:grid-cols-[248px_56px_1fr_320px] min-[1920px]:grid-cols-[280px_56px_1fr_360px]"
+            className="relative grid min-h-0 flex-1 grid-cols-[48px_1fr_288px] min-[1440px]:grid-cols-[248px_56px_1fr_320px] min-[1920px]:grid-cols-[280px_56px_1fr_360px]"
           >
-            <div className="min-h-0 border-r border-line bg-surface-1">
+            <div
+              id="line-list"
+              className={cn(
+                'min-h-0 border-r border-line bg-surface-1',
+                // kompakt: als Overlay links, über L oder den Knopf am Board
+                'max-[1439px]:absolute max-[1439px]:inset-y-0 max-[1439px]:left-0 max-[1439px]:z-40 max-[1439px]:w-[280px] max-[1439px]:shadow-[18px_0_40px_rgb(0_0_0/0.45)]',
+                !linesOpen && 'max-[1439px]:hidden'
+              )}
+            >
               <LineList
                 chokes={
                   stressOn
@@ -1042,13 +1069,33 @@ export function Workbench({
               className="relative flex min-h-0 min-w-0 flex-col"
               onMouseLeave={() => inspect(null)}
             >
-              <OneTimeHint id="staple-rail" className="absolute left-3 top-3">
-                {t('hints.stapleRail')}
-              </OneTimeHint>
-              {stressOn && (
-                <OneTimeHint id="stress" className="absolute right-3 top-3">
-                  {t('hints.stress')}
-                </OneTimeHint>
+              <Button
+                variant="line"
+                size="sm"
+                onClick={() => setLinesOpen((open) => !open)}
+                aria-expanded={linesOpen}
+                aria-controls="line-list"
+                className="absolute left-3 top-3 z-20 bg-surface-1 min-[1440px]:hidden"
+              >
+                <ListTree />
+                {t('workbench.lines')}
+                <Kbd>L</Kbd>
+              </Button>
+              {/* Immer nur ein Hinweis, in einer eigenen Zeile über dem Board statt darüber */}
+              {stressOn && !hints.seen('stress') ? (
+                <div className="flex justify-end px-3 pt-3">
+                  <OneTimeHint id="stress" arrow="up" className="max-w-80">
+                    {t('hints.stress')}
+                  </OneTimeHint>
+                </div>
+              ) : (
+                !hints.seen('staple-rail') && (
+                  <div className="flex px-3 pt-3 max-[1439px]:pl-32">
+                    <OneTimeHint id="staple-rail" className="max-w-80">
+                      {t('hints.stapleRail')}
+                    </OneTimeHint>
+                  </div>
+                )
               )}
               <div
                 className="min-h-0 flex-1"
