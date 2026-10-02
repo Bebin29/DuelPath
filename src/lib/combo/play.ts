@@ -156,13 +156,28 @@ export function buildStep(intent: PlayIntent, ctx: StepContext): ComboNodeData[]
       // Materialien zuerst: Fusion, Synchro und Link schicken sie auf den Friedhof,
       // beim Xyz liegen sie danach unter dem Monster
       const xyz = isXyz(data);
-      const materials = (intent.materials ?? [])
-        .map((id) =>
-          xyz
-            ? moveOf(state, id, 'MATERIAL', { attachTo: intent.instanceId })
-            : moveOf(state, id, 'GY')
-        )
-        .filter((m): m is CardMove => m !== null);
+      // Xyz auf ein Xyz-Monster (Graflareio, Rank-Up): dessen Materialien wandern mit
+      const transferred = xyz
+        ? (intent.materials ?? []).flatMap((id) =>
+            materialsOf(state, id).map((m) => ({
+              instanceId: m.instanceId,
+              cardId: m.cardId,
+              from: 'MATERIAL' as const,
+              to: 'MATERIAL' as const,
+              attachTo: intent.instanceId,
+            }))
+          )
+        : [];
+      const materials = [
+        ...transferred,
+        ...(intent.materials ?? [])
+          .map((id) =>
+            xyz
+              ? moveOf(state, id, 'MATERIAL', { attachTo: intent.instanceId })
+              : moveOf(state, id, 'GY')
+          )
+          .filter((m): m is CardMove => m !== null),
+      ];
       push({
         ...base('ACTION'),
         action: 'SPECIAL_SUMMON',
