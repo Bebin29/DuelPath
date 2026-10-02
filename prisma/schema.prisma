@@ -131,6 +131,7 @@ model Deck {
   description String?
   format      String   @default("TCG")
   roles       Json     @default("{}") // Passcode → Rolle im Deck (Deckbau-Plan 3.1, src/lib/deck/roles.ts)
+  sidePlans   Json     @default("[]") // Side-Plan je Matchup und Zugfolge (Deckbau-Plan 3.6, src/lib/deck/side-plan.ts)
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -138,8 +139,23 @@ model Deck {
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   deckCards DeckCard[]
   combos    Combo[]
+  versions  DeckVersion[]
 
   @@index([userId])
+}
+
+/// Gespeicherter Stand eines Decks zum Vergleichen und Zurückholen (Deckbau-Plan 3.5)
+model DeckVersion {
+  id        String   @id @default(cuid())
+  deckId    String
+  name      String
+  entries   Json // DeckViewEntry[]
+  roles     Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@index([deckId])
 }
 
 // Many-to-Many zwischen Deck und Card
