@@ -7,66 +7,19 @@ import { useCardLanguage } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Segmented } from '@/components/ui/segmented';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { CardView } from '@/components/cards/CardView';
 import { displayName } from '@/lib/combo/cards';
 import { HAND_SIZE } from '@/lib/deck/hand-tester';
 import { deckCounts, missingFromDeck } from '@/lib/deck/deck-check';
-import {
-  ROLES,
-  TIERS,
-  deckRatios,
-  isHardOpt,
-  suggestRoles,
-  type Going,
-  type Role,
-  type Roles,
-  type Tier,
-} from '@/lib/deck/roles';
+import { ROLES, suggestRoles, type Going, type Role, type Roles } from '@/lib/deck/roles';
 import type { Section } from '@/lib/deck/deck-rules';
 import type { LibraryEntry } from '@/lib/combo/library';
 import type { DeckViewCard, DeckViewEntry } from '@/server/actions/deck-view.actions';
+import { OddsSummary, RoleChip, mainCounts, ratioStats, useOddsFormat } from './odds-ui';
 
 export interface RatioDoc {
   entries: DeckViewEntry[];
   roles: Roles;
-}
-
-const TIER_TONE: Record<Tier, string> = {
-  brick: 'bg-opponent',
-  playable: 'bg-line-strong',
-  good: 'bg-self/55',
-  great: 'bg-self',
-};
-
-/** Kopien je Karte im Main Deck */
-const mainCounts = (entries: DeckViewEntry[]) => {
-  const map = new Map<string, number>();
-  for (const e of entries)
-    if (e.section === 'MAIN') map.set(e.cardId, (map.get(e.cardId) ?? 0) + e.quantity);
-  return map;
-};
-
-function stats(
-  doc: RatioDoc,
-  cards: Map<string, DeckViewCard>,
-  starthands: string[][],
-  going: Going
-) {
-  const counts = mainCounts(doc.entries);
-  const ratios = deckRatios(
-    counts,
-    (id) => ({ role: doc.roles[id] ?? 'other', hardOpt: isHardOpt(cards.get(id)?.effects ?? []) }),
-    starthands,
-    going
-  );
-  return { counts, ...ratios };
 }
 
 /**
@@ -81,7 +34,7 @@ export function RatiosTab({
   staples,
   onRoles,
   onChange,
-  onBaseline,
+  comparison,
   onOpenCard,
 }: {
   doc: RatioDoc;
@@ -91,17 +44,21 @@ export function RatiosTab({
   staples: Set<string>;
   onRoles: (patch: Roles) => void;
   onChange: (cardId: string, section: Section, delta: number) => void;
-  onBaseline: () => void;
+  /** Vergleichsstand und Versionen, unten in der Kennzahlen-Spalte */
+  comparison: React.ReactNode;
   onOpenCard: (cardId: string) => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
   const [going, setGoing] = useState<Going>('first');
 
   const starthands = useMemo(() => combos.map((c) => c.stats.required), [combos]);
-  const now = useMemo(() => stats(doc, cards, starthands, going), [doc, cards, starthands, going]);
+  const now = useMemo(
+    () => ratioStats(mainCounts(doc.entries), doc.roles, cards, starthands, going),
+    [doc, cards, starthands, going]
+  );
   const before = useMemo(
-    () => stats(baseline, cards, starthands, going),
+    () => ratioStats(mainCounts(baseline.entries), baseline.roles, cards, starthands, going),
     [baseline, cards, starthands, going]
   );
   const suggested = useMemo(
@@ -116,31 +73,7 @@ export function RatiosTab({
   );
   const allCounts = useMemo(() => deckCounts(doc.entries), [doc.entries]);
 
-  const pct = (v: number) =>
-    new Intl.NumberFormat(i18n.language, {
-      style: 'percent',
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    }).format(v);
-  // Änderungen in Prozentpunkten, immer mit Vorzeichen, damit sie ohne Farbe lesbar sind
-  const points = (d: number) =>
-    new Intl.NumberFormat(i18n.language, {
-      signDisplay: 'exceptZero',
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    }).format(d * 100);
-  const delta = (d: number, invert?: boolean) =>
-    Math.abs(d) < 0.0005 ? null : (
-      <span
-        className={cn(
-          'font-mono text-xs tabular-nums',
-          d > 0 !== !!invert ? 'text-self' : 'text-opponent'
-        )}
-      >
-        {points(d)}
-      </span>
-    );
-
+  const { points, delta } = useOddsFormat();
   const hasCombos = now.coverage.card.size > 0;
   const starterOdds = now.roles.metrics.find((m) => m.key === 'starter')?.value ?? 0;
   const mainSize = [...now.counts.values()].reduce((a, b) => a + b, 0);
@@ -333,55 +266,7 @@ export function RatiosTab({
           ]}
         />
 
-        <div className="flex flex-col gap-2">
-          <span className="font-mono text-2xs text-text-subtle">{t('decks.ratios.tiers')}</span>
-          <div className="flex h-2 overflow-hidden rounded-full bg-line" aria-hidden>
-            {TIERS.map((tier) => (
-              <span
-                key={tier}
-                className={TIER_TONE[tier]}
-                style={{ width: `${now.roles.tiers[tier] * 100}%` }}
-              />
-            ))}
-          </div>
-          <dl className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-3 gap-y-1 text-sm">
-            {TIERS.map((tier) => (
-              <div key={tier} className="contents">
-                <dt className="flex items-center gap-2">
-                  <span className={cn('size-2 rounded-full', TIER_TONE[tier])} />
-                  {t(`decks.ratios.tier.${tier}`)}
-                </dt>
-                <dd className="text-right font-mono tabular-nums">{pct(now.roles.tiers[tier])}</dd>
-                <dd className="w-10 text-right">
-                  {delta(now.roles.tiers[tier] - before.roles.tiers[tier], tier === 'brick')}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <p className="text-xs text-text-subtle">{t(`decks.ratios.tierText.${going}`)}</p>
-        </div>
-
-        <dl className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-3 gap-y-1.5 border-t border-line pt-4 text-sm">
-          {now.roles.metrics.map((m, i) => (
-            <div key={m.key} className="contents">
-              <dt>{t(`decks.ratios.metric.${m.key}`)}</dt>
-              <dd className="font-mono tabular-nums">{pct(m.value)}</dd>
-              <dd className="w-10 text-right">
-                {delta(
-                  m.value - (before.roles.metrics[i]?.value ?? m.value),
-                  m.key === 'brick' || m.key === 'garnet'
-                )}
-              </dd>
-            </div>
-          ))}
-          {hasCombos && (
-            <div className="contents">
-              <dt>{t('decks.coverage')}</dt>
-              <dd className="font-mono tabular-nums">{pct(now.coverage.base)}</dd>
-              <dd className="w-10 text-right">{delta(now.coverage.base - before.coverage.base)}</dd>
-            </div>
-          )}
-        </dl>
+        <OddsSummary now={now} before={before} going={going} />
 
         {hasCombos && (
           <div className="flex flex-col gap-2 border-t border-line pt-4 text-sm">
@@ -410,57 +295,8 @@ export function RatiosTab({
         )}
         {!hasCombos && <p className="text-xs text-text-muted">{t('decks.ratios.noCombos')}</p>}
 
-        <div className="flex flex-col items-start gap-1 border-t border-line pt-4">
-          <p className="text-xs text-text-subtle">{t('decks.ratios.baseline')}</p>
-          <Button variant="text" size="sm" onClick={onBaseline}>
-            {t('decks.ratios.setBaseline')}
-          </Button>
-        </div>
+        <div className="border-t border-line pt-4">{comparison}</div>
       </aside>
     </div>
-  );
-}
-
-/** Rolle einer Karte; ein Vorschlag erscheint gestrichelt, bis er übernommen ist */
-function RoleChip({
-  role,
-  suggested,
-  onSelect,
-  className,
-}: {
-  className?: string;
-  role: Role;
-  suggested?: Role;
-  onSelect: (role: Role) => void;
-}) {
-  const { t } = useTranslation();
-  const shown = suggested ?? role;
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={t('decks.ratios.chooseRole', { role: t(`decks.ratios.role.${shown}`) })}
-          className={cn(
-            className,
-            'h-6 rounded-full border px-2.5 font-mono text-2xs',
-            suggested
-              ? 'border-dashed border-line-strong text-text-subtle'
-              : 'border-line text-text-muted hover:text-ink'
-          )}
-        >
-          {t(`decks.ratios.role.${shown}`)}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuRadioGroup value={role} onValueChange={(v) => onSelect(v as Role)}>
-          {ROLES.map((r) => (
-            <DropdownMenuRadioItem key={r} value={r}>
-              {t(`decks.ratios.role.${r}`)}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

@@ -713,7 +713,8 @@
       "list": "Deckliste",
       "combos": "Combos",
       "hand": "Hand-Tester",
-      "ratios": "Ratios"
+      "ratios": "Ratios",
+      "side": "Side-Plan"
     },
     "tabs": "Bereiche des Decks",
     "back": "Zurück zu den Decks",
@@ -813,11 +814,45 @@
       "size": "Main Deck mit {{count}} Karten. Jede Karte weniger, die in keiner Starthand steht: {{points}} Punkte Abdeckung.",
       "fewCombos": "Die Abdeckung liegt deutlich unter „mindestens 1 Starter“. Vermutlich fehlen gespeicherte Combos.",
       "noCombos": "Ohne Combos zu diesem Deck gibt es keine Abdeckung und keinen Grenznutzen je Karte.",
-      "baseline": "Änderungen gegenüber dem Stand beim Öffnen.",
-      "setBaseline": "Jetzigen Stand als Vergleich setzen",
       "extraUse": "Extra Deck nach Nutzung",
       "unused": "in keiner Combo",
       "unusedHint": "Karten ohne Combo können trotzdem ihren Platz haben, etwa für Going second oder als Antwort."
+    },
+    "versions": {
+      "compareWith": "Vergleich mit",
+      "open": "Stand beim Öffnen",
+      "now": "Zwischenstand",
+      "setNow": "Jetzigen Stand als Vergleich setzen",
+      "same": "Keine Änderungen gegenüber dem Vergleich.",
+      "diff": "Änderungen gegenüber dem Vergleich",
+      "name": "Name der Version",
+      "namePlaceholder": "z. B. vor Locals, 0 Gallant",
+      "save": "Sichern",
+      "title": "Versionen",
+      "compare": "Mit {{name}} vergleichen",
+      "restore": "{{name}} zurückholen",
+      "delete": "{{name}} löschen",
+      "deleted": "Version „{{name}}“ gelöscht"
+    },
+    "side": {
+      "plans": "Side-Pläne",
+      "untitled": "Ohne Namen",
+      "add": "Matchup",
+      "noSide": "Das Side Deck ist leer. Leg erst Karten ins Side Deck.",
+      "empty": "Leg ein Matchup an und plane, welche Karten rein und raus gehen.",
+      "matchup": "Matchup",
+      "matchupPlaceholder": "Matchup, z. B. Ryzeal",
+      "delete": "Side-Plan löschen",
+      "in": "Rein",
+      "out": "Raus",
+      "inLess": "Eine Kopie weniger rein",
+      "inMore": "Eine Kopie mehr rein",
+      "outLess": "Eine Kopie weniger raus",
+      "outMore": "Eine Kopie mehr raus",
+      "compare": "Kennzahlen nach dem Siden, {{going}}, verglichen mit dem Main Deck ohne Plan.",
+      "unbalanced": "{{in}} rein, {{out}} raus: Das Main Deck ändert seine Größe.",
+      "notInSide": "{{name}}: weniger im Side Deck als geplant",
+      "notInMain": "{{name}}: weniger im Main Deck als geplant"
     }
   },
   "newCombo": {
