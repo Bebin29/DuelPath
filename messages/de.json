@@ -712,7 +712,8 @@
     "tab": {
       "list": "Deckliste",
       "combos": "Combos",
-      "hand": "Hand-Tester"
+      "hand": "Hand-Tester",
+      "ratios": "Ratios"
     },
     "tabs": "Bereiche des Decks",
     "back": "Zurück zu den Decks",
@@ -767,13 +768,57 @@
     "noMatch": "Für diese Hand gibt es noch keine gespeicherte Line.",
     "newWithHand": "Neue Combo mit dieser Hand",
     "coverage": "Abdeckung",
-    "coverageText": "In {{percent}} der Hände hast du eine gespeicherte Line. Gerechnet über {{runs}} simulierte Hände, {{going}}.",
+    "coverageText": "In {{percent}} der Hände hast du eine gespeicherte Line. Exakt über alle Hände gerechnet, {{going}}.",
     "first": "Going First",
     "second": "Going Second",
     "notInDeck": "{{name}} ist nicht mehr im Deck",
     "addCards": "Karten hinzufügen",
     "addToSide": "{{name}} ins Side Deck",
-    "searchHintTouch": "Tippen: Main bzw. Extra · Side-Knopf: Side"
+    "searchHintTouch": "Tippen: Main bzw. Extra · Side-Knopf: Side",
+    "ratios": {
+      "role": {
+        "starter": "Starter",
+        "extender": "Extender",
+        "handtrap": "Handtrap",
+        "breaker": "Boardbreaker",
+        "garnet": "Garnet",
+        "other": "Sonstige"
+      },
+      "chooseRole": "Rolle: {{role}}, ändern",
+      "suggested_one": "{{count}} Rolle vorgeschlagen, aus deinen Combos und den Staples",
+      "suggested_other": "{{count}} Rollen vorgeschlagen, aus deinen Combos und den Staples",
+      "accept": "Vorschläge übernehmen",
+      "tiers": "Starthände",
+      "tier": {
+        "brick": "Brick",
+        "playable": "Spielbar",
+        "good": "Gut",
+        "great": "Sehr gut"
+      },
+      "tierText": {
+        "first": "Spielbar: ein Starter. Gut: dazu ein Extender oder Handtrap. Sehr gut: beides. Zwei Kopien eines Starters mit hartem OPT zählen einmal.",
+        "second": "Spielbar: ein Starter oder zwei Boardbreaker. Gut: Starter plus Breaker. Sehr gut: Starter plus zwei Breaker."
+      },
+      "metric": {
+        "starter": "Mindestens 1 Starter",
+        "starterHandtrap": "Starter plus Handtrap",
+        "starterBreaker": "Starter plus Breaker",
+        "brick": "Brick",
+        "garnet": "Mindestens 1 Garnet"
+      },
+      "margin": "Abdeckung mit einer Kopie weniger bzw. mehr, in Prozentpunkten",
+      "breaks_one": "Eine Kopie weniger: {{count}} Combo geht nicht mehr",
+      "breaks_other": "Eine Kopie weniger: {{count}} Combos gehen nicht mehr",
+      "cut": "Kürzen kostet am wenigsten",
+      "size": "Main Deck mit {{count}} Karten. Jede Karte weniger, die in keiner Starthand steht: {{points}} Punkte Abdeckung.",
+      "fewCombos": "Die Abdeckung liegt deutlich unter „mindestens 1 Starter“. Vermutlich fehlen gespeicherte Combos.",
+      "noCombos": "Ohne Combos zu diesem Deck gibt es keine Abdeckung und keinen Grenznutzen je Karte.",
+      "baseline": "Änderungen gegenüber dem Stand beim Öffnen.",
+      "setBaseline": "Jetzigen Stand als Vergleich setzen",
+      "extraUse": "Extra Deck nach Nutzung",
+      "unused": "in keiner Combo",
+      "unusedHint": "Karten ohne Combo können trotzdem ihren Platz haben, etwa für Going second oder als Antwort."
+    }
   },
   "newCombo": {
     "title": "Starthand wählen",

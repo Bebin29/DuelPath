@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
 import { toComboCard, type ComboCard } from '@/lib/combo/cards';
 import { deckCounts } from '@/lib/deck/deck-check';
+import { parseRoles, rolesSchema, type Roles } from '@/lib/deck/roles';
 
 type Result<T> = { data: T; error?: undefined } | { data?: undefined; error: string };
 export type DeckSection = 'MAIN' | 'EXTRA' | 'SIDE';
@@ -90,6 +91,7 @@ export async function getDeckView(deckId: string): Promise<
     name: string;
     entries: DeckViewEntry[];
     cards: DeckViewCard[];
+    roles: Roles;
   }>
 > {
   const uid = await userId();
@@ -103,6 +105,7 @@ export async function getDeckView(deckId: string): Promise<
     data: {
       id: deck.id,
       name: deck.name,
+      roles: parseRoles(deck.roles),
       entries: deck.deckCards.map((dc) => ({
         cardId: dc.cardId,
         quantity: dc.quantity,
@@ -150,7 +153,7 @@ const entriesSchema = z
  */
 export async function saveDeck(
   deckId: string,
-  input: { name?: string; entries: DeckViewEntry[] }
+  input: { name?: string; entries: DeckViewEntry[]; roles?: Roles }
 ): Promise<Result<true>> {
   const uid = await userId();
   if (!uid) return { error: 'Unauthorized' };
@@ -158,6 +161,8 @@ export async function saveDeck(
   if (!deck || deck.userId !== uid) return { error: 'Not found' };
   const parsed = entriesSchema.safeParse(input.entries);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültiges Deck' };
+  const roles = rolesSchema.optional().safeParse(input.roles);
+  if (!roles.success) return { error: 'Ungültige Rollen' };
   const name = input.name?.trim().slice(0, 100);
 
   // Doppelte Einträge je Bereich zusammenfassen, höchstens drei Kopien
@@ -179,7 +184,16 @@ export async function saveDeck(
     }),
     prisma.deck.update({
       where: { id: deckId },
-      data: { updatedAt: new Date(), ...(name && { name }) },
+      data: {
+        updatedAt: new Date(),
+        ...(name && { name }),
+        // Nur Rollen von Karten, die im Deck liegen
+        ...(roles.data && {
+          roles: Object.fromEntries(
+            Object.entries(roles.data).filter(([id]) => parsed.data.some((e) => e.cardId === id))
+          ),
+        }),
+      },
     }),
   ]);
   return { data: true };

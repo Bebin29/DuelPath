@@ -18,6 +18,7 @@ describe('deck.utils', () => {
     name: 'Test Deck',
     description: 'Test Description',
     format: 'TCG',
+    roles: {},
     userId: 'user-1',
     createdAt: new Date(),
     updatedAt: new Date(),

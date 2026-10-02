@@ -130,6 +130,7 @@ model Deck {
   name        String
   description String?
   format      String   @default("TCG")
+  roles       Json     @default("{}") // Passcode → Rolle im Deck (Deckbau-Plan 3.1, src/lib/deck/roles.ts)
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

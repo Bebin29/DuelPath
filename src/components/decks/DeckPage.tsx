@@ -46,6 +46,8 @@ import {
 import { DeckListTab } from './DeckListTab';
 import { DeckCombosTab } from './DeckCombosTab';
 import { HandTester } from './HandTester';
+import { RatiosTab, type RatioDoc } from './RatiosTab';
+import type { Roles } from '@/lib/deck/roles';
 
 import type { DeckTab } from '@/lib/deck/deck-tab';
 import { cn } from '@/lib/utils';
@@ -54,6 +56,7 @@ import { PAGE_TITLE, PageHeader } from '@/components/ui/page-header';
 interface Doc {
   name: string;
   entries: DeckViewEntry[];
+  roles: Roles;
 }
 
 /** Anzahl einer Karte in einem Bereich ändern, zwischen 0 und 3 Kopien */
@@ -85,20 +88,31 @@ export function DeckPage({
   combos,
   comboCards,
   handtraps,
+  staples,
   initialTab,
 }: {
-  deck: { id: string; name: string; entries: DeckViewEntry[]; cards: DeckViewCard[] };
+  deck: {
+    id: string;
+    name: string;
+    entries: DeckViewEntry[];
+    cards: DeckViewCard[];
+    roles: Roles;
+  };
   combos: LibraryEntry[];
   comboCards: Record<string, LibraryCard>;
   handtraps: string[];
+  /** alle Staples, für die Rollen-Vorschläge */
+  staples: string[];
   initialTab: DeckTab;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const cardSheet = useCardSheet();
-  const history = useHistory<Doc>({ name: deck.name, entries: deck.entries });
-  const { name, entries } = history.state;
+  const history = useHistory<Doc>({ name: deck.name, entries: deck.entries, roles: deck.roles });
+  const { name, entries, roles } = history.state;
+  // Vergleichsstand der Ratios: beim Öffnen, neu setzbar
+  const [baseline, setBaseline] = useState<RatioDoc>({ entries: deck.entries, roles: deck.roles });
   const setDoc = history.set;
   const [cards, setCards] = useState(() => new Map(deck.cards.map((c) => [c.id, c])));
   const [tab, setTab] = useState(initialTab);
@@ -115,11 +129,11 @@ export function DeckPage({
     }
     const timer = setTimeout(async () => {
       setStatus('saving');
-      const result = await saveDeck(deck.id, { name, entries });
+      const result = await saveDeck(deck.id, { name, entries, roles });
       setStatus(result.error ? 'error' : 'saved');
     }, 700);
     return () => clearTimeout(timer);
-  }, [deck.id, name, entries]);
+  }, [deck.id, name, entries, roles]);
 
   const { undo, redo } = history;
   useEffect(() => {
@@ -185,6 +199,15 @@ export function DeckPage({
   }, [entries]);
   const pool = useMemo(() => expandDeck(entries.filter((e) => e.section === 'MAIN')), [entries]);
   const handtrapSet = useMemo(() => new Set(handtraps), [handtraps]);
+  const stapleSet = useMemo(() => new Set(staples), [staples]);
+  const ratioDoc = useMemo(() => ({ entries, roles }), [entries, roles]);
+  const openCard = (id: string) =>
+    cardSheet.open(id, (cardId, effects) =>
+      setCards((prev) => {
+        const card = prev.get(cardId);
+        return card ? new Map(prev).set(cardId, { ...card, effects }) : prev;
+      })
+    );
 
   return (
     <div className="flex flex-col gap-6">
@@ -302,6 +325,7 @@ export function DeckPage({
         onChange={changeTab}
         options={[
           { value: 'list', label: t('decks.tab.list') },
+          { value: 'ratios', label: t('decks.tab.ratios') },
           { value: 'combos', label: `${t('decks.tab.combos')} · ${combos.length}` },
           { value: 'hand', label: t('decks.tab.hand') },
         ]}
@@ -314,14 +338,20 @@ export function DeckPage({
             onAdd={add}
             onChange={change}
             onMove={move}
-            onOpenCard={(id) =>
-              cardSheet.open(id, (cardId, effects) =>
-                setCards((prev) => {
-                  const card = prev.get(cardId);
-                  return card ? new Map(prev).set(cardId, { ...card, effects }) : prev;
-                })
-              )
-            }
+            onOpenCard={openCard}
+          />
+        )}
+        {tab === 'ratios' && (
+          <RatiosTab
+            doc={ratioDoc}
+            baseline={baseline}
+            cards={cards}
+            combos={combos}
+            staples={stapleSet}
+            onRoles={(patch) => setDoc((d) => ({ ...d, roles: { ...d.roles, ...patch } }))}
+            onChange={change}
+            onBaseline={() => setBaseline(ratioDoc)}
+            onOpenCard={openCard}
           />
         )}
         {tab === 'combos' && (
