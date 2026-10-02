@@ -1,6 +1,6 @@
 # DuelPath: Deckbau-Plan
 
-Stand: 02.10.2026
+Stand: 02.10.2026 · D-1 und D-2 umgesetzt
 
 Dieser Plan beschreibt, wie DuelPath vom Deck-Editor zum Werkzeug für **Ratios** wird. Er baut auf dem UX-Plan auf (Hand-Tester 7.3, Deck-Abgleich 7.4) und ändert nichts an der Workbench.
 
@@ -57,7 +57,7 @@ Jede Karte im Deck bekommt **eine Rolle**:
 - **Eine Rolle pro Karte**, keine Mehrfachrollen. Nur so bilden die Rollen eine Aufteilung des Decks und die Rechnung bleibt exakt. Wer Called by the Grave als Handtrap führt, entscheidet das bewusst.
 - **Vorschläge sind nur Vorschläge.** Die App zeigt sie gestrichelt an, ein Klick übernimmt sie. Nichts wird ohne Bestätigung gesetzt (UX-Prinzip: die App sagt es, sie verbietet nichts).
 - **Pro Deck**, nicht pro Karte global: Ash Blossom ist im einen Deck Handtrap, im anderen vielleicht Extender (Ash als Tuner).
-- In der Deckliste wird nach Rolle gruppiert, wenn die Rollen gesetzt sind, sonst wie heute nach Kartentyp.
+- Im Tab „Ratios“ stehen die Karten nach Rolle gruppiert; die Deckliste bleibt nach Kartentyp sortiert.
 
 ### 3.2 Wahrscheinlichkeiten
 
@@ -68,13 +68,13 @@ Ein Feld neben der Deckliste rechnet mit, während die Liste sich ändert. Umsch
 | mindestens 1 Starter                 | 85,1 %                                        |
 | Starter plus Handtrap                | 61,0 % (6 Karten: 71,7 %)                     |
 | Brick (kein Starter)                 | 14,9 %                                        |
-| 2 oder mehr Garnets                  | je nach Deck                                  |
+| mindestens 1 Garnet                  | je nach Deck                                  |
 | Going second: Starter oder 2 Breaker | je nach Deck                                  |
 | Stufen aus Abschnitt 2               | Balken mit Anteil je Stufe                    |
 
 - **Exakt statt simuliert.** Die Rechnung ist hypergeometrisch über die Rollen. Bei sechs Rollen und 5 oder 6 Handkarten sind das wenige tausend Fälle, sie laufen im Browser in Millisekunden. Keine springenden Zahlen, kein Zufall.
 - **Doppelte Starter mit OPT zählen einmal.** Für Stufen wie „Starter plus Extender“ werden Starter und Extender nicht als Topf, sondern als einzelne Karten gezählt (bis etwa 20 verschiedene Karten, C(20,6) = 38.760 Fälle, weiter schnell). Eine zweite Kopie eines Starters mit hartem OPT gilt dann als Sonstige. Ob eine Karte hartes OPT hat, steht schon in den zerlegten Effekten (`Card.effects`, OPT-Klauseln).
-- **Unterschied zum gespeicherten Stand.** Jede Zahl zeigt die Änderung seit dem letzten Speichern: „85,1 % (+2,3)“. Damit sieht man beim Umbauen sofort, ob eine Änderung hilft.
+- **Unterschied zum Vergleichsstand.** Jede Zahl zeigt die Änderung gegenüber dem Stand beim Öffnen: „85,1 % +2,3“. Ein Knopf setzt den jetzigen Stand als neuen Vergleich. Der gespeicherte Stand taugt dafür nicht, weil die Seite nach jeder Änderung automatisch speichert.
 
 ### 3.3 Abdeckung durch die eigenen Combos
 
@@ -88,7 +88,7 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 
 ### 3.4 Extra Deck nach Nutzung
 
-- An jeder Extra-Deck-Karte: in wie vielen Lines sie vorkommt.
+- An jeder Extra-Deck-Karte: in wie vielen Combos sie vorkommt.
 - Karten ohne Line werden markiert („in keiner Combo“), mit dem Hinweis, dass sie auch für Going second oder als Antwort gedacht sein können.
 - Karten, die eine Line braucht, die aber nicht im Extra Deck stehen, kommen schon aus dem Deck-Abgleich (`deck-check.ts`) und erscheinen hier mit.
 
@@ -121,8 +121,8 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 
 ### 4.3 Oberfläche
 
-- Deckliste: Rollen-Chip an jeder Karte (Klick öffnet die Auswahl, Tastatur 1 bis 6 auf der markierten Karte), Gruppierung nach Rolle.
-- Neben der Liste ab 1024 px eine feste Spalte „Ratios“ mit den Kennzahlen aus 3.2 und 3.3. Darunter eine eigene Registerkarte neben „Liste“, „Combos“ und „Hand“.
+- Eigener Tab „Ratios“ neben Deckliste, Combos und Hand-Tester: Karten nach Rolle gruppiert, an jeder Karte Rollen-Chip (Klick öffnet die Auswahl), Grenznutzen als „−1 / +1“ und die Knöpfe für die Anzahl. So ändert man die Ratios dort, wo man die Wirkung sieht.
+- Kennzahlen aus 3.2 und 3.3 ab 1024 px als mitlaufende Spalte rechts, darunter oberhalb der Liste. Tastaturkürzel für Rollen erst, wenn jemand sie vermisst.
 - Zahlen mit tabellarischen Ziffern, Änderungen in `--self` (besser) und `--opponent` (schlechter), immer zusätzlich mit Vorzeichen, damit sie ohne Farbe lesbar bleiben (UI-Plan 10).
 
 ### 4.4 API
@@ -134,7 +134,7 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 
 | Phase                          | Inhalt                                                                                              | Nutzen                                    |
 | ------------------------------ | --------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| **D-1 Rollen und Kennzahlen**  | Rollen mit Vorschlägen, exakte Wahrscheinlichkeiten, Stufen, Unterschied zum gespeicherten Stand    | „Wie konsistent ist meine Liste?“         |
+| **D-1 Rollen und Kennzahlen**  | Rollen mit Vorschlägen, exakte Wahrscheinlichkeiten, Stufen, Unterschied zum Vergleichsstand        | „Wie konsistent ist meine Liste?“         |
 | **D-2 Combos und Grenznutzen** | exakte Abdeckung, Grenznutzen pro Karte, Streichkandidaten, Deckgröße, Extra Deck nach Nutzung, API | „Welche Karte fliegt raus?“               |
 | **D-3 Versionen**              | Versionen speichern, Vergleich, Varianten                                                           | „War die Liste von letzter Woche besser?“ |
 | **D-4 Side-Plan**              | Side-Plan pro Matchup und Position, Kennzahlen nach dem Siden                                       | Vorbereitung auf ein Turnier              |
@@ -162,10 +162,10 @@ Wie im UX-Plan (Abschnitt 13) mit der Stoppuhr geprüft, mit der Crystal-Beast-L
 
 ## 8. Offen
 
-| Frage                                       | Empfehlung                                                                              |
-| ------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Mehrfachrollen (Ash als Handtrap und Tuner) | nein; eine Rolle hält die Rechnung exakt und zwingt zu einer bewussten Einordnung       |
-| Zählt ein 2-Card-Starter halb?              | nein; 2-Card-Starthände gehen über die Abdeckung (3.3) ein, nicht über die Rollen       |
-| Liste der Boardbreaker                      | fest im Code wie die Staples, mit Banlist-Filter; später pflegbar wie Spitznamen        |
-| Stufen anpassbar?                           | vorerst fest wie in Abschnitt 2; eigene Bedingungen erst, wenn jemand sie vermisst      |
-| Ab wann gilt eine Karte als hartes OPT?     | aus den OPT-Klauseln der Effekte; bei `effectsReview` zählt sie vorsichtshalber als OPT |
+| Frage                                       | Empfehlung                                                                                                 |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Mehrfachrollen (Ash als Handtrap und Tuner) | nein; eine Rolle hält die Rechnung exakt und zwingt zu einer bewussten Einordnung                          |
+| Zählt ein 2-Card-Starter halb?              | nein; 2-Card-Starthände gehen über die Abdeckung (3.3) ein, nicht über die Rollen                          |
+| Liste der Boardbreaker                      | fest im Code wie die Staples, mit Banlist-Filter; später pflegbar wie Spitznamen                           |
+| Stufen anpassbar?                           | vorerst fest wie in Abschnitt 2; eigene Bedingungen erst, wenn jemand sie vermisst                         |
+| Ab wann gilt eine Karte als hartes OPT?     | aus den OPT-Klauseln der Effekte (`opt.kind = HARD`); ist die Zerlegung falsch, hilft die Effekt-Korrektur |
