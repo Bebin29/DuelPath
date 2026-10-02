@@ -1,4 +1,5 @@
 import type { CardEffect, EffectOpt } from '@/lib/cards/effects';
+import { targetEffects, targetMove } from '@/lib/combo/targets';
 
 /**
  * Gamestate einer Combo: wird nicht gespeichert, sondern aus Startzustand und den Knoten auf dem
@@ -43,6 +44,8 @@ export interface PlacedCard {
   epoch: number;
   /** Xyz-Material: das Monster, unter dem die Karte liegt */
   attachedTo?: string;
+  /** Ausrüstung: das Monster, an dem die Karte hängt */
+  equippedTo?: string;
   /** Spielmarke: verschwindet, sobald sie das Feld verlässt */
   token?: boolean;
 }
@@ -57,7 +60,7 @@ export interface CardMove {
   slot?: number;
   position?: Position;
   controller?: Player;
-  /** Bei to = MATERIAL: das Xyz-Monster, unter das die Karte kommt */
+  /** Bei to = MATERIAL: das Xyz-Monster, unter das die Karte kommt; bei to = SPELL_TRAP: das ausgerüstete Monster */
   attachTo?: string;
   /** Legt eine Spielmarke an (UX-Plan 16) */
   token?: boolean;
@@ -98,6 +101,8 @@ export interface ComboNodeData {
   /** Bewegungen bei Auflösung (ACTIVATE) bzw. sofort (ACTION) */
   resolveMoves?: CardMove[];
   negates?: Negation | null;
+  /** Bei der Aktivierung gewählte Ziele (instanceIds), siehe targets.ts */
+  targets?: string[] | null;
   /** Manueller Eingriff: zählt diese Aktivierung für den OPT? Überschreibt die Regel */
   optOverride?: boolean | null;
   /** Stresstest-Treffer, die der Nutzer an diesem Schritt entfernt hat (Staple-Namen, UX-Plan 6.8) */
@@ -123,6 +128,8 @@ export interface ChainLink {
   /** Schlüssel der verbrauchten OPT-Zähler, für die Rücknahme bei negierter Aktivierung */
   optKeys: string[];
   optWording?: EffectOpt['wording'];
+  /** Ziele mit ihrer Epoche bei der Aktivierung: hat sich die Epoche geändert, ist das Ziel weg */
+  targets?: Record<string, number>;
 }
 
 export interface Warning {
@@ -136,6 +143,8 @@ export interface GameState {
   /** OPT-Schlüssel -> Anzahl Nutzungen in diesem Zug */
   optUsage: Record<string, number>;
   normalSummonUsed: boolean;
+  /** Karten, deren zusätzlicher Normal Summon („in addition to your Normal Summon“) verbraucht ist */
+  extraSummonsUsed: string[];
   /** Karten mit negierten Effekten: instanceId -> Epoche, in der die Negierung gilt */
   negatedCards: Record<string, number>;
   negatedNames: string[];
@@ -156,6 +165,7 @@ export function initialState(start: StartState): GameState {
     chain: [],
     optUsage: {},
     normalSummonUsed: false,
+    extraSummonsUsed: [],
     negatedCards: {},
     negatedNames: [],
     warnings: [],
@@ -233,8 +243,15 @@ export function applyNode(
   switch (node.kind) {
     case 'ACTION': {
       if (node.action === 'NORMAL_SUMMON') {
-        if (state.normalSummonUsed) warn('Normal Summon in diesem Zug bereits verbraucht');
-        state.normalSummonUsed = true;
+        // Ein zusätzlicher Normal Summon zuerst: der reguläre bleibt für andere Monster frei
+        const grant =
+          node.instanceId ?? node.resolveMoves?.find((m) => m.to === 'MONSTER')?.instanceId;
+        const extra = grant ? extraSummonGrant(state, cards, grant) : undefined;
+        if (extra) state.extraSummonsUsed.push(extra);
+        else {
+          if (state.normalSummonUsed) warn('Normal Summon in diesem Zug bereits verbraucht');
+          state.normalSummonUsed = true;
+        }
       }
       applyMoves(state, node.resolveMoves ?? [], warn, cards);
       break;
@@ -259,7 +276,10 @@ function applyMoves(
   warn: (m: string) => void,
   cards?: Map<string, CardData>
 ) {
-  for (const move of moves) {
+  // Folgebewegungen (Ausrüstungen, „destroy that monster“) hängen sich hinten an
+  const queue = [...moves];
+  for (let q = 0; q < queue.length; q++) {
+    const move = queue[q];
     let card = state.cards[move.instanceId];
     if (!card) {
       if (!move.cardId) {
@@ -297,6 +317,7 @@ function applyMoves(
 
     const leavesMonster = card.zone === 'MONSTER' && move.to !== 'MONSTER';
     const flipsDown = move.position === 'SET' && card.position !== 'SET';
+    const leavesField = onField(card.zone) && !onField(move.to);
     if (card.zone !== move.to || flipsDown) {
       card.epoch++;
       delete state.negatedCards[card.instanceId];
@@ -308,6 +329,23 @@ function applyMoves(
     card.controller = onField(move.to) ? (move.controller ?? card.controller) : card.owner;
     if (move.to === 'MATERIAL') card.attachedTo = move.attachTo;
     else delete card.attachedTo;
+    if (move.to === 'SPELL_TRAP' && move.attachTo) card.equippedTo = move.attachTo;
+
+    // Verlässt das ausgerüstete Monster das Feld oder wird verdeckt, gehen seine Ausrüstungen auf den Friedhof
+    if (leavesMonster || (flipsDown && move.to === 'MONSTER')) {
+      for (const e of Object.values(state.cards)) {
+        if (e.equippedTo === card.instanceId && onField(e.zone))
+          queue.push({ instanceId: e.instanceId, from: e.zone, to: 'GY' });
+      }
+    }
+    // „When this card leaves the field, destroy that monster“ (Golden Rule, Premature Burial)
+    if (leavesField && card.equippedTo) {
+      const target = state.cards[card.equippedTo];
+      const destroys = data?.effects.some((e) => DESTROY_ON_LEAVE.test(e.text));
+      if (destroys && target?.zone === 'MONSTER')
+        queue.push({ instanceId: target.instanceId, from: 'MONSTER', to: 'GY' });
+      delete card.equippedTo;
+    }
 
     // Verlässt ein Xyz-Monster das Feld, gehen seine Materialien auf den Friedhof
     if (leavesMonster) {
@@ -321,6 +359,46 @@ function applyMoves(
     // Spielmarken hören auf zu existieren, sobald sie das Feld verlassen
     if (card.token && !onField(move.to)) delete state.cards[card.instanceId];
   }
+}
+
+const DESTROY_ON_LEAVE =
+  /\bWhen this card leaves the field, destroy (?:that|the equipped) monster\b/i;
+const EXTRA_SUMMON =
+  /\bNormal Summon (?:1|one) "([^"]+)" monster\b[^.]*\bin addition to your Normal Summon/i;
+const EXTRA_SUMMON_REVERSED =
+  /\bin addition to your Normal Summon\/Set,? you can Normal Summon (?:1|one) "([^"]+)" monster/i;
+
+/**
+ * Offene Karte, die einen zusätzlichen Normal Summon für dieses Monster erlaubt (Rainbow Bridge of the
+ * Heart: „you can Normal Summon 1 "Crystal Beast" monster, in addition to your Normal Summon/Set“).
+ */
+export function extraSummonGrant(
+  state: GameState,
+  cards: Map<string, CardData> | undefined,
+  instanceId: string
+): string | undefined {
+  const summoned = state.cards[instanceId];
+  const name = summoned && cards?.get(summoned.cardId)?.name;
+  if (!summoned || !name) return undefined;
+  const player = summoned.zone === 'HAND' ? summoned.owner : summoned.controller;
+  return Object.values(state.cards).find((c) => {
+    if (c.instanceId === instanceId || !onField(c.zone) || c.controller !== player) return false;
+    if (c.position === 'SET' || state.extraSummonsUsed.includes(c.instanceId)) return false;
+    if (state.negatedCards[c.instanceId] === c.epoch) return false;
+    return cards?.get(c.cardId)?.effects.some((e) => {
+      const archetype = (EXTRA_SUMMON.exec(e.text) ?? EXTRA_SUMMON_REVERSED.exec(e.text))?.[1];
+      return !!archetype && name.includes(archetype);
+    });
+  })?.instanceId;
+}
+
+/** Darf das Monster jetzt als Normal Summon aufs Feld (regulär oder durch einen zusätzlichen)? */
+export function canNormalSummon(
+  state: GameState,
+  cards: Map<string, CardData> | undefined,
+  instanceId: string
+): boolean {
+  return !state.normalSummonUsed || !!extraSummonGrant(state, cards, instanceId);
 }
 
 const EMZ_OF: Record<number, number> = { 5: 1, 6: 3 };
@@ -384,6 +462,9 @@ function activate(
     warn(`Spell Speed ${spellSpeed} kann nicht auf Spell Speed ${top.spellSpeed} gechaint werden`);
   }
 
+  // Lag die Karte schon offen auf dem Feld, ist es ein Effekt der Karte, keine Kartenaktivierung
+  const wasFaceUp = !!instance && onField(instance.zone) && instance.position !== 'SET';
+
   // OPT-Schlüssel vor den Kosten bestimmen: "diese Karte abwerfen" würde sonst die Epoche verschieben
   const optKeys = card && effect?.opt ? optKeysFor(node, card, effect.opt, state) : [];
   applyMoves(state, node.costMoves ?? [], warn, cards);
@@ -402,7 +483,8 @@ function activate(
   const cardActivation =
     !!card &&
     /Spell|Trap/.test(card.type) &&
-    (node.effectIndex ?? 0) === 0 &&
+    (node.effectIndex ?? 0) === activationIndex(card) &&
+    !wasFaceUp &&
     !!placed &&
     onField(placed.zone);
 
@@ -416,8 +498,17 @@ function activate(
     }
   }
 
+  // Ziele werden bei der Aktivierung festgelegt, nach den Kosten
+  const targets: Record<string, number> = {};
+  for (const id of node.targets ?? []) {
+    const target = state.cards[id];
+    if (target) targets[id] = target.epoch;
+    else warn(`Ziel ${id} gibt es an diesem Schritt nicht`);
+  }
+
   state.chain.push({
     nodeId: node.id,
+    ...(node.targets?.length && { targets }),
     player: node.player,
     instanceId: node.instanceId ?? undefined,
     cardId: node.cardId ?? undefined,
@@ -453,19 +544,34 @@ function optKeysFor(
  * Aktivierungsbedingung, kein Trigger.
  */
 export function isTriggerEffect(card: CardData, effectIndex: number, effect: CardEffect): boolean {
-  if (/Spell|Trap/.test(card.type) && effectIndex === 0) return false;
+  if (/Spell|Trap/.test(card.type) && effectIndex === activationIndex(card)) return false;
   return (
     !effect.patterns.includes('QUICK') && effect.patterns.some((p) => p.startsWith('TRIGGER_'))
   );
 }
 
 export function spellSpeedOf(card: CardData, effectIndex: number, effect?: CardEffect): 1 | 2 | 3 {
+  const activation = effectIndex === activationIndex(card);
   if (/Trap/.test(card.type)) {
-    if (card.race === 'Counter' && effectIndex === 0) return 3;
-    return effectIndex === 0 || effect?.patterns.includes('QUICK') ? 2 : 1;
+    if (card.race === 'Counter' && activation) return 3;
+    return activation || effect?.patterns.includes('QUICK') ? 2 : 1;
   }
-  if (/Spell/.test(card.type) && card.race === 'Quick-Play' && effectIndex === 0) return 2;
+  if (/Spell/.test(card.type) && card.race === 'Quick-Play' && activation) return 2;
   return effect?.patterns.includes('QUICK') ? 2 : 1;
+}
+
+/** Effekte, die nur aus Friedhof oder Verbannung wirken oder auslösen, wenn die Karte zerstört wird */
+const NOT_THE_ACTIVATION =
+  /^(?:If|When) this card is (?:destroyed|sent|banished|in your GY)|\b(?:while this card is in your GY|from your GY;|banish this card from your GY)/i;
+
+/**
+ * Effekt, der bei der Kartenaktivierung einer Spell/Trap wirkt: der erste aktivierbare Effekt, der
+ * keine Friedhofs- oder Zerstörungs-Wirkung ist. Meist Effekt 0; bei Radiant Typhoon Vision steht
+ * davor „If this card is destroyed by …: You can Set this card“, bei Golden Rule ein Hinweistext.
+ */
+export function activationIndex(card: CardData): number {
+  const i = card.effects.findIndex((e) => e.activated && !NOT_THE_ACTIVATION.test(e.text));
+  return i < 0 ? 0 : i;
 }
 
 const CLEANUP_RACES = new Set(['Normal', 'Quick-Play', 'Ritual', 'Counter']);
@@ -502,7 +608,9 @@ function resolveChain(
       continue;
     }
 
+    applyTargets(state, node, link, cards, warn);
     applyMoves(state, node.resolveMoves ?? [], warn, cards);
+    equipSummoned(state, node, cards);
     if (node.negates) applyNegation(state, node.negates, i, byId, warn);
   }
 
@@ -517,6 +625,69 @@ function resolveChain(
     }
   }
   state.chain = [];
+}
+
+/**
+ * Wirkung auf die Ziele: nur noch gültige Ziele (gleiche Epoche wie bei der Aktivierung). Ziele, die der
+ * Schritt ausdrücklich bewegt, fasst die Ableitung nicht an.
+ */
+function applyTargets(
+  state: GameState,
+  node: ComboNodeData,
+  link: ChainLink,
+  cards: Map<string, CardData>,
+  warn: (m: string) => void
+) {
+  if (!link.targets) return;
+  const valid: PlacedCard[] = [];
+  for (const [id, epoch] of Object.entries(link.targets)) {
+    const target = state.cards[id];
+    const name = target ? (cards.get(target.cardId)?.name ?? target.cardId) : id;
+    if (target && target.epoch === epoch) valid.push(target);
+    else warn(`Ziel ${name} ist beim Auflösen nicht mehr da`);
+  }
+  if (!valid.length) return;
+  const card = node.cardId ? cards.get(node.cardId) : undefined;
+  const explicit = new Set((node.resolveMoves ?? []).map((m) => m.instanceId));
+  for (const effect of targetEffects(card, node.effectIndex ?? 0)) {
+    switch (effect.kind) {
+      case 'move':
+        applyMoves(
+          state,
+          valid
+            .filter((t) => !explicit.has(t.instanceId))
+            .map((t) => targetMove(t, effect.to, cards.get(t.cardId))),
+          warn,
+          cards
+        );
+        break;
+      case 'equip': {
+        const self = node.instanceId ? state.cards[node.instanceId] : undefined;
+        const monster = valid.find((t) => t.zone === 'MONSTER' && t.position !== 'SET');
+        if (self && monster && onField(self.zone)) self.equippedTo = monster.instanceId;
+        break;
+      }
+      case 'negate':
+        for (const t of valid) if (onField(t.zone)) state.negatedCards[t.instanceId] = t.epoch;
+        break;
+      case 'control':
+        for (const t of valid) if (onField(t.zone)) t.controller = link.player;
+        break;
+    }
+  }
+}
+
+/** „Special Summon …, and if you do, equip it with this card“: die Karte hängt am beschworenen Monster */
+function equipSummoned(state: GameState, node: ComboNodeData, cards: Map<string, CardData>) {
+  const card = node.cardId ? cards.get(node.cardId) : undefined;
+  const text = card && node.effectIndex != null ? card.effects[node.effectIndex]?.text : undefined;
+  const self = node.instanceId ? state.cards[node.instanceId] : undefined;
+  if (!text || !self || self.zone !== 'SPELL_TRAP' || self.equippedTo) return;
+  if (!/\bequip (?:it|that monster) with this card\b/i.test(text)) return;
+  const summoned = node.resolveMoves?.find(
+    (m) => m.to === 'MONSTER' && state.cards[m.instanceId]?.zone === 'MONSTER'
+  );
+  if (summoned) self.equippedTo = summoned.instanceId;
 }
 
 function applyNegation(

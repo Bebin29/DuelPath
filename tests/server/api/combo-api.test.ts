@@ -134,6 +134,52 @@ describe('REST-API: Schritte', () => {
     expect(openPrompts(after, stepId)).toEqual([]);
   });
 
+  it('fragt nach dem Ziel und wendet die Wirkung beim Auflösen darauf an', async () => {
+    const MST = card({
+      id: 'MST',
+      name: 'Mystical Space Typhoon',
+      type: 'Spell Card',
+      race: 'Quick-Play',
+      effects: [eff('Target 1 Spell/Trap on the field; destroy that target.')],
+    });
+    const TRAP = card({ id: 'TRP', name: 'Some Trap', type: 'Trap Card' });
+    const ctx = buildContext('user-1', {
+      ...context().combo,
+      startState: {
+        cards: [
+          { instanceId: 'mst', cardId: 'MST', owner: 'self', zone: 'HAND' },
+          {
+            instanceId: 'trap',
+            cardId: 'TRP',
+            owner: 'opponent',
+            zone: 'SPELL_TRAP',
+            slot: 0,
+            position: 'SET',
+          },
+        ],
+      },
+      cards: [MST, TRAP],
+    });
+    const act = await playStep(ctx, { command: 'act mystical' });
+    const stepId = act.created.at(-1)!.id;
+    expect(stepResult(act.ctx, act.created, act.prompts).prompts).toEqual([
+      expect.objectContaining({
+        kind: 'target',
+        question: 'Which card do you target?',
+        candidates: [expect.objectContaining({ instanceId: 'trap' })],
+      }),
+    ]);
+    const answered = await answerStep(act.ctx, stepId, { kind: 'target', picks: ['trap'] });
+    expect(answered.prompts).toEqual([]);
+    const nodes = storeCombo.mock.lastCall![2].nodes;
+    expect(nodes.at(-1).targets).toEqual(['trap']);
+    const res = await playStep(buildContext('user-1', { ...act.ctx.combo, nodes }), {
+      command: 'res',
+    });
+    const view = stepResult(res.ctx, res.created, res.prompts);
+    expect(view.state.opponent.GY.map((c) => c.instanceId)).toEqual(['trap']);
+  });
+
   it('lehnt veraltete Revisionen ab, bevor Regeln geprüft werden', async () => {
     expect(await codeOf(playStep(context(), { command: 'res', revision: 2 }))).toBe('CONFLICT');
     expect(storeCombo).not.toHaveBeenCalled();

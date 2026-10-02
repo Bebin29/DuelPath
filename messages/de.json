@@ -539,6 +539,8 @@
       "confirm": "Bestätigen",
       "none": "Keine passende Karte. „Alle Karten“ zeigt alles.",
       "discardEffect": "Welche Karte wirfst du ab?",
+      "target_one": "Ziel wählen",
+      "target_other": "{{count}} Ziele wählen",
       "place": "Was hast du in die Zauber/Fallen-Zone gelegt?"
     },
     "offer": {

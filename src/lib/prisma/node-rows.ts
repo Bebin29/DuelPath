@@ -12,6 +12,7 @@ export function nodeRows(comboId: string, nodes: ComboNodeData[]) {
     costMoves: (n.costMoves ?? []) as unknown as Prisma.InputJsonValue,
     resolveMoves: (n.resolveMoves ?? []) as unknown as Prisma.InputJsonValue,
     negates: json(n.negates),
+    targets: json(n.targets),
     ignoredHits: json(n.ignoredHits),
     interruptions: json(n.interruptions),
   }));

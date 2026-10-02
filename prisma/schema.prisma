@@ -194,6 +194,7 @@ model ComboNode {
   costMoves     Json     @default("[]") // CardMove[] bei Aktivierung
   resolveMoves  Json     @default("[]") // CardMove[] bei Auflösung
   negates       Json? // Negation
+  targets       Json? // instanceIds der Ziele, bei der Aktivierung gewählt
   optOverride   Boolean? // manueller Eingriff in die OPT-Regel
   note          String?
   ignoredHits   Json? // Staple-Namen, deren Stresstest-Treffer an diesem Schritt entfernt sind

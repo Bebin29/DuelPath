@@ -1,5 +1,7 @@
 import {
+  activationIndex,
   applyNode,
+  canNormalSummon,
   type CardData,
   type CardMove,
   type ComboNodeData,
@@ -156,13 +158,28 @@ export function buildStep(intent: PlayIntent, ctx: StepContext): ComboNodeData[]
       // Materialien zuerst: Fusion, Synchro und Link schicken sie auf den Friedhof,
       // beim Xyz liegen sie danach unter dem Monster
       const xyz = isXyz(data);
-      const materials = (intent.materials ?? [])
-        .map((id) =>
-          xyz
-            ? moveOf(state, id, 'MATERIAL', { attachTo: intent.instanceId })
-            : moveOf(state, id, 'GY')
-        )
-        .filter((m): m is CardMove => m !== null);
+      // Xyz auf ein Xyz-Monster (Graflareio, Rank-Up): dessen Materialien wandern mit
+      const transferred = xyz
+        ? (intent.materials ?? []).flatMap((id) =>
+            materialsOf(state, id).map((m) => ({
+              instanceId: m.instanceId,
+              cardId: m.cardId,
+              from: 'MATERIAL' as const,
+              to: 'MATERIAL' as const,
+              attachTo: intent.instanceId,
+            }))
+          )
+        : [];
+      const materials = [
+        ...transferred,
+        ...(intent.materials ?? [])
+          .map((id) =>
+            xyz
+              ? moveOf(state, id, 'MATERIAL', { attachTo: intent.instanceId })
+              : moveOf(state, id, 'GY')
+          )
+          .filter((m): m is CardMove => m !== null),
+      ];
       push({
         ...base('ACTION'),
         action: 'SPECIAL_SUMMON',
@@ -433,11 +450,14 @@ function summonFits(
   if (/\bRitual Summoned\b/.test(condition) && !/\bSpecial Summoned\b/.test(condition))
     return from === 'HAND';
   if (/\bNormal Summoned\b/.test(condition) && !/\bSpecial Summoned\b/.test(condition))
-    return after.normalSummonUsed && !before.normalSummonUsed;
+    return normalSummons(after) > normalSummons(before);
   if (/\bSpecial Summoned\b/.test(condition) && !/\bNormal\b/.test(condition))
-    return !(after.normalSummonUsed && !before.normalSummonUsed);
+    return normalSummons(after) === normalSummons(before);
   return true;
 }
+
+/** Normal Summons im Zug, regulär und zusätzlich */
+const normalSummons = (s: GameState) => (s.normalSummonUsed ? 1 : 0) + s.extraSummonsUsed.length;
 
 export interface DropTarget {
   player: Player;
@@ -476,7 +496,7 @@ export function dropMeaning(
       return { label: 'extraSummon', instanceId, slot };
     if (card.zone === 'HAND' && isMonster(data)) {
       if (shift) return { label: 'setMonster', intent: { kind: 'setMonster', instanceId, slot } };
-      if (!state.normalSummonUsed)
+      if (canNormalSummon(state, cards, instanceId))
         return { label: 'normalSummon', intent: { kind: 'normalSummon', instanceId, slot } };
       return { label: 'specialSummon', intent: { kind: 'specialSummon', instanceId, slot } };
     }
@@ -492,7 +512,15 @@ export function dropMeaning(
     if (fits) {
       if (shift || isTrap(data))
         return { label: 'setSpellTrap', intent: { kind: 'setSpellTrap', instanceId, slot } };
-      return { label: 'activate', intent: { kind: 'activate', instanceId, effectIndex: 0, slot } };
+      return {
+        label: 'activate',
+        intent: {
+          kind: 'activate',
+          instanceId,
+          effectIndex: data ? activationIndex(data) : 0,
+          slot,
+        },
+      };
     }
   }
   return {

@@ -13,6 +13,7 @@ import {
   resultSpecs,
   type ResultSpec,
 } from '@/lib/combo/effect-results';
+import { targetCandidates, targetSpec, type TargetSpec } from '@/lib/combo/targets';
 
 /**
  * Offene Fragen nach einer Aktivierung (UX-Plan 6.4): Abwerfen, „Was hast du gesucht?“, Fusion.
@@ -29,7 +30,9 @@ export type PromptSpec =
       key: 'costMoves' | 'resolveMoves';
     }
   | { kind: 'result'; stepId: string; player: Player; spec: ResultSpec }
-  | { kind: 'fusion'; stepId: string; player: Player; spec: ResultSpec };
+  | { kind: 'fusion'; stepId: string; player: Player; spec: ResultSpec }
+  /** Ziel bei der Aktivierung („target 1 …;“) */
+  | { kind: 'target'; stepId: string; player: Player; spec: TargetSpec; self: string };
 
 /** Fragen zum Aktivierungsschritt; `state` ist der Zustand vor der Aktivierung */
 export function promptsFor(
@@ -53,6 +56,10 @@ export function promptsFor(
       key: discard === 'cost' ? 'costMoves' : 'resolveMoves',
     });
   }
+  const target = targetSpec(data, effectIndex);
+  // Eine Spell/Trap kann sich bei ihrer Aktivierung nicht selbst als Ziel nehmen, ein Monster schon
+  const self = data && /Spell|Trap/.test(data.type) ? step.instanceId : '';
+  if (target) out.push({ kind: 'target', stepId: step.id, player, spec: target, self });
   for (const spec of resultSpecs(data, effectIndex))
     out.push({ kind: spec.verb === 'fusion' ? 'fusion' : 'result', stepId: step.id, player, spec });
   return out;
@@ -98,6 +105,8 @@ export function promptCandidates(
       return options.fusionId
         ? materialCandidates(prompt.spec, state, prompt.player, cards)
         : resultCandidates(prompt.spec, state, prompt.player, cards);
+    case 'target':
+      return targetCandidates(prompt.spec, state, prompt.player, cards, prompt.self);
   }
 }
 
@@ -122,5 +131,9 @@ export function answerPrompt(
       return fusionId
         ? add('resolveMoves', fusionMoves(fusionId, picks, state, prompt.player))
         : nodes;
+    case 'target':
+      return nodes.map((n) =>
+        n.id === prompt.stepId ? { ...n, targets: picks.slice(0, prompt.spec.count) } : n
+      );
   }
 }

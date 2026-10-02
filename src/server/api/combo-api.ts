@@ -247,6 +247,12 @@ export function stepView(ctx: ComboContext, n: ComboNodeData, number?: number) {
     ...(n.action && { action: n.action }),
     ...(n.note && { note: n.note }),
     ...(n.negates && { negates: n.negates }),
+    ...(n.targets?.length && {
+      targets: n.targets.map((id) => {
+        const placed = state?.cards[id];
+        return { instanceId: id, card: placed ? ctx.cards.get(placed.cardId)?.name : undefined };
+      }),
+    }),
     warnings: state ? warningsOf(state, n.id) : [],
   };
 }
@@ -292,6 +298,8 @@ export function openPrompts(ctx: ComboContext, stepId: string): PromptSpec[] {
         );
       case 'fusion':
         return !(step.resolveMoves ?? []).some((m) => m.from === 'EXTRA' && m.to === 'MONSTER');
+      case 'target':
+        return !step.targets?.length;
     }
   });
 }
@@ -304,11 +312,13 @@ const QUESTION: Record<string, string> = {
   banish: 'What did you banish?',
   place: 'What did you place in the Spell & Trap Zone?',
   fusion: 'Which Fusion Monster, and which materials?',
+  target: 'Which card do you target?',
 };
 
 export function promptView(ctx: ComboContext, p: PromptSpec, all = false) {
   const state = stateAt(ctx, p.stepId);
-  const question = p.kind === 'discard' ? QUESTION.discard : QUESTION[p.spec.verb];
+  const question =
+    p.kind === 'discard' || p.kind === 'target' ? QUESTION[p.kind] : QUESTION[p.spec.verb];
   const base = {
     kind: p.kind,
     stepId: p.stepId,
@@ -316,6 +326,7 @@ export function promptView(ctx: ComboContext, p: PromptSpec, all = false) {
     candidates: promptCandidates(p, state, ctx.cards, { all }).map((c) => cardView(ctx, c)),
   };
   if (p.kind === 'discard') return { ...base, count: 1 };
+  if (p.kind === 'target') return { ...base, count: p.spec.count, filter: p.spec };
   if (p.kind === 'result')
     return { ...base, count: p.spec.count, filter: { names: p.spec.names, kind: p.spec.kind } };
   return {
@@ -623,7 +634,7 @@ export function stepResult(ctx: ComboContext, created: ComboNodeData[], prompts:
 // ---------------------------------------------------------------- Antworten, Bearbeiten
 
 export const answerSchema = z.object({
-  kind: z.enum(['discard', 'result', 'fusion']).optional(),
+  kind: z.enum(['discard', 'result', 'fusion', 'target']).optional(),
   picks: z.array(z.string()).max(6),
   /** Bei der Fusion: das Fusionsmonster (instanceId im Extra Deck) */
   fusion: z.string().optional(),
@@ -666,7 +677,12 @@ export async function answerStep(
       wrong,
       allowed: [...allowed],
     });
-  const max = prompt.kind === 'result' ? prompt.spec.count : prompt.kind === 'discard' ? 1 : 6;
+  const max =
+    prompt.kind === 'result' || prompt.kind === 'target'
+      ? prompt.spec.count
+      : prompt.kind === 'discard'
+        ? 1
+        : 6;
   if (req.picks.length === 0 || req.picks.length > max)
     throw new ApiError('INVALID', `picks braucht 1 bis ${max} Karten`);
   const nodes = answerPrompt(ctx.combo.nodes, prompt, req.picks, state, req.fusion);
