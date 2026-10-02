@@ -69,6 +69,49 @@ const run = (start: StartState, build: (step: Step) => void) => {
   return { warnings, last: states.get(nodes.at(-1)!.id)! };
 };
 
+describe('Ausrüstungen', () => {
+  const start: StartState = {
+    cards: [
+      { instanceId: 'gr', cardId: 'GR', owner: 'self', zone: 'HAND' },
+      { instanceId: 'p1', cardId: 'PEG', owner: 'self', zone: 'GY' },
+      { instanceId: 'o1', cardId: 'OTH', owner: 'self', zone: 'MONSTER', slot: 4, position: 'ATK' },
+      { instanceId: 'lnk', cardId: 'LNK', owner: 'self', zone: 'EXTRA' },
+    ],
+  };
+  const golden = (step: Step) => {
+    const act = step({ kind: 'activate', instanceId: 'gr', effectIndex: 0 });
+    act.resolveMoves = [
+      { instanceId: 'p1', cardId: 'PEG', from: 'GY', to: 'MONSTER', slot: 0, position: 'ATK' },
+    ];
+    step({ kind: 'resolve' });
+  };
+
+  it('hängt Golden Rule an das beschworene Monster', () => {
+    const { last } = run(start, golden);
+    expect(last.cards.gr).toMatchObject({ zone: 'SPELL_TRAP', equippedTo: 'p1' });
+  });
+
+  it('schickt die Ausrüstung auf den Friedhof, wenn das Monster das Feld verlässt', () => {
+    const { last } = run(start, (step) => {
+      golden(step);
+      step({ kind: 'specialSummon', instanceId: 'lnk', materials: ['p1', 'o1'] });
+    });
+    expect(last.cards.p1.zone).toBe('GY');
+    expect(last.cards.gr.zone).toBe('GY');
+    expect(last.cards.gr.equippedTo).toBeUndefined();
+  });
+
+  it('zerstört das Monster, wenn Golden Rule das Feld verlässt', () => {
+    const { last } = run(start, (step) => {
+      golden(step);
+      step({ kind: 'move', instanceId: 'gr', to: 'GY' });
+    });
+    expect(last.cards.gr.zone).toBe('GY');
+    expect(last.cards.p1.zone).toBe('GY');
+    expect(last.cards.o1.zone).toBe('MONSTER');
+  });
+});
+
 describe('Xyz auf Xyz', () => {
   const start: StartState = {
     cards: [

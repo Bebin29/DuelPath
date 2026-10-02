@@ -43,6 +43,8 @@ export interface PlacedCard {
   epoch: number;
   /** Xyz-Material: das Monster, unter dem die Karte liegt */
   attachedTo?: string;
+  /** Ausrüstung: das Monster, an dem die Karte hängt */
+  equippedTo?: string;
   /** Spielmarke: verschwindet, sobald sie das Feld verlässt */
   token?: boolean;
 }
@@ -57,7 +59,7 @@ export interface CardMove {
   slot?: number;
   position?: Position;
   controller?: Player;
-  /** Bei to = MATERIAL: das Xyz-Monster, unter das die Karte kommt */
+  /** Bei to = MATERIAL: das Xyz-Monster, unter das die Karte kommt; bei to = SPELL_TRAP: das ausgerüstete Monster */
   attachTo?: string;
   /** Legt eine Spielmarke an (UX-Plan 16) */
   token?: boolean;
@@ -259,7 +261,10 @@ function applyMoves(
   warn: (m: string) => void,
   cards?: Map<string, CardData>
 ) {
-  for (const move of moves) {
+  // Folgebewegungen (Ausrüstungen, „destroy that monster“) hängen sich hinten an
+  const queue = [...moves];
+  for (let q = 0; q < queue.length; q++) {
+    const move = queue[q];
     let card = state.cards[move.instanceId];
     if (!card) {
       if (!move.cardId) {
@@ -297,6 +302,7 @@ function applyMoves(
 
     const leavesMonster = card.zone === 'MONSTER' && move.to !== 'MONSTER';
     const flipsDown = move.position === 'SET' && card.position !== 'SET';
+    const leavesField = onField(card.zone) && !onField(move.to);
     if (card.zone !== move.to || flipsDown) {
       card.epoch++;
       delete state.negatedCards[card.instanceId];
@@ -308,6 +314,23 @@ function applyMoves(
     card.controller = onField(move.to) ? (move.controller ?? card.controller) : card.owner;
     if (move.to === 'MATERIAL') card.attachedTo = move.attachTo;
     else delete card.attachedTo;
+    if (move.to === 'SPELL_TRAP' && move.attachTo) card.equippedTo = move.attachTo;
+
+    // Verlässt das ausgerüstete Monster das Feld oder wird verdeckt, gehen seine Ausrüstungen auf den Friedhof
+    if (leavesMonster || (flipsDown && move.to === 'MONSTER')) {
+      for (const e of Object.values(state.cards)) {
+        if (e.equippedTo === card.instanceId && onField(e.zone))
+          queue.push({ instanceId: e.instanceId, from: e.zone, to: 'GY' });
+      }
+    }
+    // „When this card leaves the field, destroy that monster“ (Golden Rule, Premature Burial)
+    if (leavesField && card.equippedTo) {
+      const target = state.cards[card.equippedTo];
+      const destroys = data?.effects.some((e) => DESTROY_ON_LEAVE.test(e.text));
+      if (destroys && target?.zone === 'MONSTER')
+        queue.push({ instanceId: target.instanceId, from: 'MONSTER', to: 'GY' });
+      delete card.equippedTo;
+    }
 
     // Verlässt ein Xyz-Monster das Feld, gehen seine Materialien auf den Friedhof
     if (leavesMonster) {
@@ -322,6 +345,9 @@ function applyMoves(
     if (card.token && !onField(move.to)) delete state.cards[card.instanceId];
   }
 }
+
+const DESTROY_ON_LEAVE =
+  /\bWhen this card leaves the field, destroy (?:that|the equipped) monster\b/i;
 
 const EMZ_OF: Record<number, number> = { 5: 1, 6: 3 };
 
@@ -503,6 +529,7 @@ function resolveChain(
     }
 
     applyMoves(state, node.resolveMoves ?? [], warn, cards);
+    equipSummoned(state, node, cards);
     if (node.negates) applyNegation(state, node.negates, i, byId, warn);
   }
 
@@ -517,6 +544,19 @@ function resolveChain(
     }
   }
   state.chain = [];
+}
+
+/** „Special Summon …, and if you do, equip it with this card“: die Karte hängt am beschworenen Monster */
+function equipSummoned(state: GameState, node: ComboNodeData, cards: Map<string, CardData>) {
+  const card = node.cardId ? cards.get(node.cardId) : undefined;
+  const text = card && node.effectIndex != null ? card.effects[node.effectIndex]?.text : undefined;
+  const self = node.instanceId ? state.cards[node.instanceId] : undefined;
+  if (!text || !self || self.zone !== 'SPELL_TRAP' || self.equippedTo) return;
+  if (!/\bequip (?:it|that monster) with this card\b/i.test(text)) return;
+  const summoned = node.resolveMoves?.find(
+    (m) => m.to === 'MONSTER' && state.cards[m.instanceId]?.zone === 'MONSTER'
+  );
+  if (summoned) self.equippedTo = summoned.instanceId;
 }
 
 function applyNegation(
