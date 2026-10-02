@@ -506,7 +506,9 @@
       "later": "Später",
       "confirm": "Bestätigen",
       "none": "Keine passende Karte. „Alle Karten“ zeigt alles.",
-      "discardEffect": "Welche Karte wirfst du ab?"
+      "discardEffect": "Welche Karte wirfst du ab?",
+      "target_one": "Ziel wählen",
+      "target_other": "{{count}} Ziele wählen"
     },
     "offer": {
       "branch": "Als Branch angelegt",

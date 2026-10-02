@@ -506,6 +506,8 @@
       "later": "Later",
       "confirm": "Confirm",
       "none": "No matching card. “All cards” shows everything.",
+      "target_one": "Choose a target",
+      "target_other": "Choose {{count}} targets",
       "discardEffect": "Which card do you discard?"
     },
     "offer": {

@@ -55,6 +55,7 @@ export const comboNodeSchema = z.object({
   costMoves: z.array(cardMoveSchema).max(40).default([]),
   resolveMoves: z.array(cardMoveSchema).max(40).default([]),
   negates: negationSchema.nullish(),
+  targets: z.array(id).max(6).nullish(),
   optOverride: z.boolean().nullish(),
   note: z.string().max(1000).nullish(),
   ignoredHits: z.array(z.string().max(100)).max(40).nullish(),

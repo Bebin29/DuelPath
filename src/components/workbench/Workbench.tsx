@@ -1110,7 +1110,8 @@ export function Workbench({
                     multi:
                       prompt.kind === 'materials' ||
                       (prompt.kind === 'fusion' && Boolean(prompt.fusionId)) ||
-                      (prompt.kind === 'result' && prompt.spec.count > 1),
+                      ((prompt.kind === 'result' || prompt.kind === 'target') &&
+                        prompt.spec.count > 1),
                     all: prompt.kind === 'result' ? prompt.all : undefined,
                   }
                 }
@@ -1306,6 +1307,8 @@ function questionOf(
             count: prompt.spec.materials?.count ?? 2,
           })
         : t('workbench.prompt.fusion');
+    case 'target':
+      return t('workbench.prompt.target', { count: prompt.spec.count });
     case 'materials':
       return t('workbench.prompt.materials', {
         name: displayName(cards.get(state.cards[prompt.instanceId]?.cardId ?? ''), language),

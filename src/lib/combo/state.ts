@@ -1,4 +1,5 @@
 import type { CardEffect, EffectOpt } from '@/lib/cards/effects';
+import { targetEffects, targetMove } from '@/lib/combo/targets';
 
 /**
  * Gamestate einer Combo: wird nicht gespeichert, sondern aus Startzustand und den Knoten auf dem
@@ -100,6 +101,8 @@ export interface ComboNodeData {
   /** Bewegungen bei Auflösung (ACTIVATE) bzw. sofort (ACTION) */
   resolveMoves?: CardMove[];
   negates?: Negation | null;
+  /** Bei der Aktivierung gewählte Ziele (instanceIds), siehe targets.ts */
+  targets?: string[] | null;
   /** Manueller Eingriff: zählt diese Aktivierung für den OPT? Überschreibt die Regel */
   optOverride?: boolean | null;
   /** Stresstest-Treffer, die der Nutzer an diesem Schritt entfernt hat (Staple-Namen, UX-Plan 6.8) */
@@ -125,6 +128,8 @@ export interface ChainLink {
   /** Schlüssel der verbrauchten OPT-Zähler, für die Rücknahme bei negierter Aktivierung */
   optKeys: string[];
   optWording?: EffectOpt['wording'];
+  /** Ziele mit ihrer Epoche bei der Aktivierung: hat sich die Epoche geändert, ist das Ziel weg */
+  targets?: Record<string, number>;
 }
 
 export interface Warning {
@@ -493,8 +498,17 @@ function activate(
     }
   }
 
+  // Ziele werden bei der Aktivierung festgelegt, nach den Kosten
+  const targets: Record<string, number> = {};
+  for (const id of node.targets ?? []) {
+    const target = state.cards[id];
+    if (target) targets[id] = target.epoch;
+    else warn(`Ziel ${id} gibt es an diesem Schritt nicht`);
+  }
+
   state.chain.push({
     nodeId: node.id,
+    ...(node.targets?.length && { targets }),
     player: node.player,
     instanceId: node.instanceId ?? undefined,
     cardId: node.cardId ?? undefined,
@@ -594,6 +608,7 @@ function resolveChain(
       continue;
     }
 
+    applyTargets(state, node, link, cards, warn);
     applyMoves(state, node.resolveMoves ?? [], warn, cards);
     equipSummoned(state, node, cards);
     if (node.negates) applyNegation(state, node.negates, i, byId, warn);
@@ -610,6 +625,56 @@ function resolveChain(
     }
   }
   state.chain = [];
+}
+
+/**
+ * Wirkung auf die Ziele: nur noch gültige Ziele (gleiche Epoche wie bei der Aktivierung). Ziele, die der
+ * Schritt ausdrücklich bewegt, fasst die Ableitung nicht an.
+ */
+function applyTargets(
+  state: GameState,
+  node: ComboNodeData,
+  link: ChainLink,
+  cards: Map<string, CardData>,
+  warn: (m: string) => void
+) {
+  if (!link.targets) return;
+  const valid: PlacedCard[] = [];
+  for (const [id, epoch] of Object.entries(link.targets)) {
+    const target = state.cards[id];
+    const name = target ? (cards.get(target.cardId)?.name ?? target.cardId) : id;
+    if (target && target.epoch === epoch) valid.push(target);
+    else warn(`Ziel ${name} ist beim Auflösen nicht mehr da`);
+  }
+  if (!valid.length) return;
+  const card = node.cardId ? cards.get(node.cardId) : undefined;
+  const explicit = new Set((node.resolveMoves ?? []).map((m) => m.instanceId));
+  for (const effect of targetEffects(card, node.effectIndex ?? 0)) {
+    switch (effect.kind) {
+      case 'move':
+        applyMoves(
+          state,
+          valid
+            .filter((t) => !explicit.has(t.instanceId))
+            .map((t) => targetMove(t, effect.to, cards.get(t.cardId))),
+          warn,
+          cards
+        );
+        break;
+      case 'equip': {
+        const self = node.instanceId ? state.cards[node.instanceId] : undefined;
+        const monster = valid.find((t) => t.zone === 'MONSTER' && t.position !== 'SET');
+        if (self && monster && onField(self.zone)) self.equippedTo = monster.instanceId;
+        break;
+      }
+      case 'negate':
+        for (const t of valid) if (onField(t.zone)) state.negatedCards[t.instanceId] = t.epoch;
+        break;
+      case 'control':
+        for (const t of valid) if (onField(t.zone)) t.controller = link.player;
+        break;
+    }
+  }
 }
 
 /** „Special Summon …, and if you do, equip it with this card“: die Karte hängt am beschworenen Monster */

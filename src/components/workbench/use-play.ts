@@ -26,6 +26,7 @@ import {
 } from '@/lib/combo/play';
 import { materialCandidates, resultCandidates, type ResultSpec } from '@/lib/combo/effect-results';
 import { promptsFor, withResult } from '@/lib/combo/prompts';
+import { targetCandidates, type TargetSpec } from '@/lib/combo/targets';
 import type { CardAction } from '@/lib/combo/card-actions';
 
 /** Offene Frage der Schrittleiste; `at` ist der Schritt, zu dem sie gehört */
@@ -47,7 +48,15 @@ export type Prompt =
       fusionId: string | null;
       picked: string[];
     }
-  | { kind: 'materials'; at: string; instanceId: string; slot?: number; picked: string[] };
+  | { kind: 'materials'; at: string; instanceId: string; slot?: number; picked: string[] }
+  | {
+      kind: 'target';
+      at: string;
+      player: Player;
+      spec: TargetSpec;
+      self: string;
+      picked: string[];
+    };
 
 /** So lange steht das Angebot „Einfügen / Ersetzen“ nach einem Branch (UX-Plan 6.7) */
 export const OFFER_MS = 5000;
@@ -95,23 +104,32 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
       const next: Prompt[] = promptsFor(last, state, cards).map((p) =>
         p.kind === 'discard'
           ? { kind: 'discard', at: p.stepId, player: p.player, exclude: p.exclude, key: p.key }
-          : p.kind === 'fusion'
+          : p.kind === 'target'
             ? {
-                kind: 'fusion',
+                kind: 'target',
                 at: p.stepId,
                 player: p.player,
                 spec: p.spec,
-                fusionId: null,
+                self: p.self,
                 picked: [],
               }
-            : {
-                kind: 'result',
-                at: p.stepId,
-                player: p.player,
-                spec: p.spec,
-                picked: [],
-                all: false,
-              }
+            : p.kind === 'fusion'
+              ? {
+                  kind: 'fusion',
+                  at: p.stepId,
+                  player: p.player,
+                  spec: p.spec,
+                  fusionId: null,
+                  picked: [],
+                }
+              : {
+                  kind: 'result',
+                  at: p.stepId,
+                  player: p.player,
+                  spec: p.spec,
+                  picked: [],
+                  all: false,
+                }
       );
       setQueue(next);
     },
@@ -145,6 +163,8 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
           : resultCandidates(prompt.spec, state, prompt.player, cards);
       case 'materials':
         return cardsIn(state, 'self', 'MONSTER');
+      case 'target':
+        return targetCandidates(prompt.spec, state, prompt.player, cards, prompt.self);
     }
   }, [prompt, state, cards]);
 
@@ -187,6 +207,12 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
             slot: prompt.slot ?? freeEmz(state),
             materials: picked ?? prompt.picked,
           });
+        case 'target': {
+          const targets = (picked ?? prompt.picked).slice(0, prompt.spec.count);
+          if (!targets.length) return;
+          setNodes((prev) => prev.map((n) => (n.id === prompt.at ? { ...n, targets } : n)));
+          return shift();
+        }
         case 'discard':
           return;
       }
@@ -216,6 +242,9 @@ export function usePlay({ nodes, selected, before, state, cards, setNodes, focus
           return patch((p) =>
             p.kind === 'materials' ? { ...p, picked: toggle(p.picked, id) } : p
           );
+        case 'target':
+          if (prompt.spec.count === 1) return confirm([id]);
+          return patch((p) => (p.kind === 'target' ? { ...p, picked: toggle(p.picked, id) } : p));
       }
     },
     [prompt, state, addMoves, confirm]

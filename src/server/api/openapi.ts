@@ -45,7 +45,7 @@ export const OPENAPI = {
     version: '1',
     description: [
       'Build and analyse Yu-Gi-Oh! combos step by step. The server applies the rules engine of the',
-      'workbench: every step returns the board after it, open questions (discard, search target,',
+      'workbench: every step returns the board after it, open questions (discard, target, search target,',
       'summoned monster, fusion materials), triggered effects and warnings.',
       '',
       'Typical agent loop:',
@@ -257,7 +257,7 @@ export const OPENAPI = {
       Prompt: {
         type: 'object',
         properties: {
-          kind: { enum: ['discard', 'result', 'fusion'] },
+          kind: { enum: ['discard', 'result', 'fusion', 'target'] },
           stepId: { type: 'string' },
           question: { type: 'string' },
           count: { type: 'integer' },
@@ -430,7 +430,7 @@ export const OPENAPI = {
           required: ['picks'],
           properties: {
             kind: {
-              enum: ['discard', 'result', 'fusion'],
+              enum: ['discard', 'result', 'fusion', 'target'],
               description: 'Default: first open prompt',
             },
             picks: {

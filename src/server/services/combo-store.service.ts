@@ -58,6 +58,7 @@ export function nodeFromRow(n: NodeRow): ComboNodeData {
     costMoves: n.costMoves as unknown as CardMove[],
     resolveMoves: n.resolveMoves as unknown as CardMove[],
     negates: n.negates as unknown as ComboNodeData['negates'],
+    targets: n.targets as string[] | null,
     optOverride: n.optOverride,
     ignoredHits: n.ignoredHits as string[] | null,
     interruptions: n.interruptions as Record<string, number> | null,

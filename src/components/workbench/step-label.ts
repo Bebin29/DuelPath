@@ -35,11 +35,19 @@ export function stepLabel(
       if (name && short) return `${short} ${name}`;
       return name ?? fallback(node.kind);
     }
-    case 'ACTIVATE':
+    case 'ACTIVATE': {
       if (!name) return fallback(node.kind);
-      return node.effectIndex !== null && node.effectIndex !== undefined
-        ? `${name} ↯ ${node.effectIndex + 1}`
-        : `${name} ↯`;
+      const label =
+        node.effectIndex !== null && node.effectIndex !== undefined
+          ? `${name} ↯ ${node.effectIndex + 1}`
+          : `${name} ↯`;
+      // Ziele hinter dem Pfeil: „MST ↯ 1 → Infinite Impermanence“
+      const targets = (node.targets ?? [])
+        .map((id) => state?.cards[id]?.cardId)
+        .map((id) => (id ? displayName(cards.get(id), cardLanguage) : null))
+        .filter(Boolean);
+      return targets.length ? `${label} → ${targets.join(', ')}` : label;
+    }
     default:
       return fallback(node.kind);
   }
