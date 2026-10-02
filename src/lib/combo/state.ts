@@ -457,6 +457,9 @@ function activate(
     warn(`Spell Speed ${spellSpeed} kann nicht auf Spell Speed ${top.spellSpeed} gechaint werden`);
   }
 
+  // Lag die Karte schon offen auf dem Feld, ist es ein Effekt der Karte, keine Kartenaktivierung
+  const wasFaceUp = !!instance && onField(instance.zone) && instance.position !== 'SET';
+
   // OPT-Schlüssel vor den Kosten bestimmen: "diese Karte abwerfen" würde sonst die Epoche verschieben
   const optKeys = card && effect?.opt ? optKeysFor(node, card, effect.opt, state) : [];
   applyMoves(state, node.costMoves ?? [], warn, cards);
@@ -475,7 +478,8 @@ function activate(
   const cardActivation =
     !!card &&
     /Spell|Trap/.test(card.type) &&
-    (node.effectIndex ?? 0) === 0 &&
+    (node.effectIndex ?? 0) === activationIndex(card) &&
+    !wasFaceUp &&
     !!placed &&
     onField(placed.zone);
 
@@ -526,19 +530,34 @@ function optKeysFor(
  * Aktivierungsbedingung, kein Trigger.
  */
 export function isTriggerEffect(card: CardData, effectIndex: number, effect: CardEffect): boolean {
-  if (/Spell|Trap/.test(card.type) && effectIndex === 0) return false;
+  if (/Spell|Trap/.test(card.type) && effectIndex === activationIndex(card)) return false;
   return (
     !effect.patterns.includes('QUICK') && effect.patterns.some((p) => p.startsWith('TRIGGER_'))
   );
 }
 
 export function spellSpeedOf(card: CardData, effectIndex: number, effect?: CardEffect): 1 | 2 | 3 {
+  const activation = effectIndex === activationIndex(card);
   if (/Trap/.test(card.type)) {
-    if (card.race === 'Counter' && effectIndex === 0) return 3;
-    return effectIndex === 0 || effect?.patterns.includes('QUICK') ? 2 : 1;
+    if (card.race === 'Counter' && activation) return 3;
+    return activation || effect?.patterns.includes('QUICK') ? 2 : 1;
   }
-  if (/Spell/.test(card.type) && card.race === 'Quick-Play' && effectIndex === 0) return 2;
+  if (/Spell/.test(card.type) && card.race === 'Quick-Play' && activation) return 2;
   return effect?.patterns.includes('QUICK') ? 2 : 1;
+}
+
+/** Effekte, die nur aus Friedhof oder Verbannung wirken oder auslösen, wenn die Karte zerstört wird */
+const NOT_THE_ACTIVATION =
+  /^(?:If|When) this card is (?:destroyed|sent|banished|in your GY)|\b(?:while this card is in your GY|from your GY;|banish this card from your GY)/i;
+
+/**
+ * Effekt, der bei der Kartenaktivierung einer Spell/Trap wirkt: der erste aktivierbare Effekt, der
+ * keine Friedhofs- oder Zerstörungs-Wirkung ist. Meist Effekt 0; bei Radiant Typhoon Vision steht
+ * davor „If this card is destroyed by …: You can Set this card“, bei Golden Rule ein Hinweistext.
+ */
+export function activationIndex(card: CardData): number {
+  const i = card.effects.findIndex((e) => e.activated && !NOT_THE_ACTIVATION.test(e.text));
+  return i < 0 ? 0 : i;
 }
 
 const CLEANUP_RACES = new Set(['Normal', 'Quick-Play', 'Ritual', 'Counter']);

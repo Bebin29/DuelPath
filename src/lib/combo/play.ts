@@ -1,4 +1,5 @@
 import {
+  activationIndex,
   applyNode,
   canNormalSummon,
   type CardData,
@@ -511,7 +512,15 @@ export function dropMeaning(
     if (fits) {
       if (shift || isTrap(data))
         return { label: 'setSpellTrap', intent: { kind: 'setSpellTrap', instanceId, slot } };
-      return { label: 'activate', intent: { kind: 'activate', instanceId, effectIndex: 0, slot } };
+      return {
+        label: 'activate',
+        intent: {
+          kind: 'activate',
+          instanceId,
+          effectIndex: data ? activationIndex(data) : 0,
+          slot,
+        },
+      };
     }
   }
   return {
