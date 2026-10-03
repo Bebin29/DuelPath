@@ -34,6 +34,18 @@ export function formatDuration(ms: number): string {
   return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
 }
 
+export type ClockPhase = 'reset' | 'run' | 'hold';
+
+/**
+ * Was die Uhr im Übungsmodus tun soll: an der Starthand zurücksetzen, beim eigenen Durchgehen
+ * laufen und stehen bleiben, sobald die App abspielt oder die Line zu Ende ist. Gemessen wird
+ * nur, was der Spieler selbst braucht; die Abspielgeschwindigkeit sagt dazu nichts.
+ */
+export function practiceClock(position: number, total: number, playing: boolean): ClockPhase {
+  if (position <= 0) return 'reset';
+  return !playing && position < total ? 'run' : 'hold';
+}
+
 /** Für die reine Schrittzahl zählen nur die Zeilen, nicht ihre Beschriftung */
 const NO_LABEL = () => '';
 

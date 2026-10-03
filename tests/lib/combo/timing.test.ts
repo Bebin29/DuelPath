@@ -6,6 +6,7 @@ import {
   formatDuration,
   lineStepCount,
   paceOf,
+  practiceClock,
 } from '@/lib/combo/timing';
 
 const n = (
@@ -53,6 +54,25 @@ describe('paceOf', () => {
     expect(paceOf(SLOW_PLAY_WARN_MS)).toBe('warn');
     expect(paceOf(SLOW_PLAY_MS - 1)).toBe('warn');
     expect(paceOf(SLOW_PLAY_MS)).toBe('slow');
+  });
+});
+
+describe('practiceClock', () => {
+  it('setzt an der Starthand zurück', () => {
+    expect(practiceClock(0, 5, false)).toBe('reset');
+    expect(practiceClock(0, 5, true)).toBe('reset');
+    expect(practiceClock(0, 0, false)).toBe('reset');
+  });
+
+  it('läuft, solange jemand selbst durchgeht', () => {
+    expect(practiceClock(1, 5, false)).toBe('run');
+    expect(practiceClock(4, 5, false)).toBe('run');
+  });
+
+  it('steht beim Abspielen und am Ende der Line', () => {
+    expect(practiceClock(3, 5, true)).toBe('hold');
+    expect(practiceClock(5, 5, false)).toBe('hold');
+    expect(practiceClock(5, 5, true)).toBe('hold');
   });
 });
 

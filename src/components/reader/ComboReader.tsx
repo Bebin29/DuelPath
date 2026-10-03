@@ -29,7 +29,7 @@ import {
 import { initialState, statesForTree, type ComboNodeData, type GameState } from '@/lib/combo/state';
 import { lineSteps, lineThrough } from '@/lib/combo/lines';
 import { endboardSummary, lineEnds } from '@/lib/combo/endboard';
-import { formatDuration, lineStepCount, paceOf } from '@/lib/combo/timing';
+import { formatDuration, lineStepCount, paceOf, practiceClock } from '@/lib/combo/timing';
 import { useStopwatch } from '@/lib/hooks/use-stopwatch';
 import { updateNode } from '@/lib/combo/tree';
 import { usedOptNames } from '@/lib/combo/opt-names';
@@ -164,11 +164,11 @@ export function ComboReader({
   // App das Tempo vor, am Ende der Line ist die Messung fertig, und die Starthand setzt zurück.
   const clock = useStopwatch();
   const { reset: resetClock, setRunning: setClockRunning } = clock;
-  const atEnd = position >= steps.length;
+  const phase = practiceClock(position, steps.length, playing);
   useEffect(() => {
-    if (position === 0) resetClock();
-    else setClockRunning(!playing && !atEnd);
-  }, [position, playing, atEnd, resetClock, setClockRunning]);
+    if (phase === 'reset') resetClock();
+    else setClockRunning(phase === 'run');
+  }, [phase, resetClock, setClockRunning]);
   const pace = paceOf(clock.ms);
 
   // Wischen wechselt Schritte
