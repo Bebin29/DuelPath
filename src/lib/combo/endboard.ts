@@ -122,17 +122,25 @@ export function lineEnds(nodes: ComboNodeData[]): LineEnd[] {
   return ends;
 }
 
-/** Karten vom Feld der Hauptline, die im Branch fehlen (nach Kartenname gezählt) */
-export function missingCards(main: GameState, other: GameState): string[] {
-  const fieldIds = (s: GameState) =>
-    Object.values(s.cards)
-      .filter((c) => onField(c.zone) && c.controller === 'self')
-      .map((c) => c.cardId);
-  const left = [...fieldIds(other)];
-  return fieldIds(main).filter((id) => {
+/** Eigene Karten auf dem Feld als Passcodes, Kopien mehrfach */
+export function fieldCardIds(state: GameState): string[] {
+  return Object.values(state.cards)
+    .filter((c) => onField(c.zone) && c.controller === 'self')
+    .map((c) => c.cardId);
+}
+
+/** Karten des Vorbilds, die im Vergleich fehlen (nach Kartenname gezählt) */
+export function missingFrom(main: string[], other: string[]): string[] {
+  const left = [...other];
+  return main.filter((id) => {
     const i = left.indexOf(id);
     if (i < 0) return true;
     left.splice(i, 1);
     return false;
   });
+}
+
+/** Karten vom Feld der Hauptline, die im Branch fehlen (nach Kartenname gezählt) */
+export function missingCards(main: GameState, other: GameState): string[] {
+  return missingFrom(fieldCardIds(main), fieldCardIds(other));
 }
