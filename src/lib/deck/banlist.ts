@@ -62,18 +62,12 @@ export function applyBanlist<T extends { banTcg: string | null }>(
   return next;
 }
 
-/** Nur das Datum, ohne Uhrzeit und ohne Zeitzonen-Verschiebung */
-export const toIsoDate = (date: Date): string =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
-    date.getDate()
-  ).padStart(2, '0')}`;
+/** Dates are stored at UTC midnight so server timezone changes cannot shift them. */
+export const toIsoDate = (date: Date): string => date.toISOString().slice(0, 10);
 
-/** ISO-Datum als lokale Mitternacht; ungültige Eingaben geben null */
 export function fromIsoDate(value: string): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
-  if (!match) return null;
-  const [, year, month, day] = match;
-  const date = new Date(Number(year), Number(month) - 1, Number(day));
-  if (date.getMonth() !== Number(month) - 1 || date.getDate() !== Number(day)) return null;
-  return date;
+  const iso = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+  const date = new Date(`${iso}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) || toIsoDate(date) !== iso ? null : date;
 }

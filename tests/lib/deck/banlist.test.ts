@@ -74,15 +74,15 @@ describe('Deck-Check gegen die nächste Liste', () => {
 
 describe('Stichdatum', () => {
   it('schreibt das Datum ohne Zeitzonen-Versatz', () => {
-    expect(toIsoDate(new Date(2026, 9, 1))).toBe('2026-10-01');
-    expect(toIsoDate(new Date(2026, 0, 5))).toBe('2026-01-05');
+    expect(toIsoDate(new Date('2026-10-01T00:00:00.000Z'))).toBe('2026-10-01');
+    expect(toIsoDate(new Date('2026-01-05T00:00:00.000Z'))).toBe('2026-01-05');
   });
 
-  it('liest ein ISO-Datum als lokale Mitternacht', () => {
+  it('liest ein ISO-Datum als UTC-Mitternacht', () => {
     const date = fromIsoDate('2026-10-01')!;
-    expect(date.getFullYear()).toBe(2026);
-    expect(date.getMonth()).toBe(9);
-    expect(date.getDate()).toBe(1);
+    expect(date.getUTCFullYear()).toBe(2026);
+    expect(date.getUTCMonth()).toBe(9);
+    expect(date.getUTCDate()).toBe(1);
   });
 
   it('weist unmögliche Datumsangaben zurück', () => {

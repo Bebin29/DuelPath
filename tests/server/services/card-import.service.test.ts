@@ -6,11 +6,12 @@ const mocks = vi.hoisted(() => ({
   upsert: vi.fn(),
   transaction: vi.fn(),
   listUpsert: vi.fn(),
+  listUpdate: vi.fn(),
 }));
 vi.mock('@/lib/prisma/client', () => ({
   prisma: {
     card: { findMany: mocks.findMany, upsert: mocks.upsert },
-    banlist: { upsert: mocks.listUpsert },
+    banlist: { upsert: mocks.listUpsert, updateMany: mocks.listUpdate },
     $transaction: mocks.transaction,
   },
 }));
@@ -99,6 +100,23 @@ describe('import metadata', () => {
       importedAt: stats.importedAt,
       effectiveOn: null,
     });
+    vi.unstubAllGlobals();
+  });
+  it('invalidates a confirmed date before a failing update batch', async () => {
+    mocks.listUpsert.mockClear();
+    mocks.listUpdate.mockClear();
+    mocks.findMany.mockResolvedValue([{ id: String(ASH.id), banTcg: 'Limited' }]);
+    mocks.transaction.mockRejectedValueOnce(new Error('batch failed'));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [ASH] }) })
+    );
+    await expect(importTcgCards()).rejects.toThrow('batch failed');
+    expect(mocks.listUpdate).toHaveBeenCalledWith({
+      where: { key: 'current' },
+      data: { effectiveOn: null, importedAt: null },
+    });
+    expect(mocks.listUpsert).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
   it('does not publish a fresh snapshot when a card fetch fails', async () => {

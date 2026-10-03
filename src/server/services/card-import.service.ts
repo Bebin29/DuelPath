@@ -101,6 +101,13 @@ export async function importTcgCards(
   const oldStatuses = new Map(previous.map((c) => [c.id, c.banTcg]));
   const changed = cards.some((c) => (oldStatuses.get(c.id!) ?? null) !== (c.banTcg ?? null));
 
+  // Invalidate provenance before any batch changes cards, including partial failed imports.
+  if (changed)
+    await prisma.banlist.updateMany({
+      where: { key: 'current' },
+      data: { effectiveOn: null, importedAt: null },
+    });
+
   for (let i = 0; i < cards.length; i += BATCH_SIZE) {
     const batch = cards.slice(i, i + BATCH_SIZE);
     // effectsJev bleibt beim Update erhalten; ein Neuimport setzt die Jev-Prüfung nicht zurück
