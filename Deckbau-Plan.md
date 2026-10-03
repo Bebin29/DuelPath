@@ -110,7 +110,7 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 
 Ein Side-Plan ist ohne Rückmeldung eine Vermutung, die nie korrigiert wird. Man trägt ein, welche sieben Karten gegen Ryzeal rein und raus gehen, und erfährt nie, ob das gehalten hat. Dafür gibt es am Deck ein Protokoll, mehr nicht.
 
-- Pro Spiel vier Werte: Matchup, Zugfolge, Ergebnis und eine kurze Notiz, dazu der Side-Plan, der anlag. Matchup und Zugfolge sind aus dem offenen Plan vorbelegt; im Normalfall ist ein Eintrag ein Klick.
+- Pro Spiel vier Werte: Matchup, Zugfolge, Ergebnis und eine kurze Notiz, dazu der Side-Plan, der anlag. Matchup und Zugfolge sind aus dem offenen Plan vorbelegt; nach „Spiel eintragen“ genügt im Normalfall ein Klick auf das Ergebnis.
 - Eine Zeile ist **ein Spiel, kein Match.** Best of 3 wird nicht abgebildet, weil die Zugfolge sich pro Spiel ändert und genau sie die interessante Größe ist.
 - Am Side-Plan steht danach die Bilanz: „5 zu 2 Going Second mit diesem Plan“. Gibt es keine Einträge, steht dort nichts.
 - **Rohe Zahlen, nie eine Quote.** Eine Siegquote aus sieben Spielen behauptet mehr, als sie weiß. Was daraus folgt, entscheidet der Spieler; die App schlägt aufgrund des Protokolls keinen Side-Plan vor und ändert keinen.
@@ -126,7 +126,7 @@ Ein Side-Plan ist ohne Rückmeldung eine Vermutung, die nie korrigiert wird. Man
 - D-3: Modell `DeckVersion` mit `deckId`, `name`, `entries Json`, `roles Json`, `createdAt`. Versionen liegen außerhalb des Verlaufs der Seite, weil Sichern und Löschen keine Bearbeitung der Liste sind.
 - D-4: `Deck.sidePlans Json` statt eigenem Modell, Liste von `{ id, matchup, going, in, out }`. So laufen Side-Pläne durch denselben Autosave und dasselbe Strg+Z wie Liste und Rollen; geprüft mit Zod beim Speichern.
 - D-5: Modell `DeckGame` mit `deckId`, `sidePlanId`, `matchup`, `going`, `result`, `note`, `playedAt`. Eigenes Modell statt eines weiteren Json-Felds am Deck, weil die Liste unbegrenzt wächst und ein Eintrag kein Bearbeiten der Liste ist: Er hängt an zwei eigenen Aktionen, nicht am Autosave der Seite, und Strg+Z oder das Zurückholen einer Version fassen ihn nicht an. Dieselbe Begründung wie bei `DeckVersion`.
-- Die Zuordnung Eintrag zu Plan ist eine reine Rechnung in `src/lib/deck/games.ts`: zuerst über `sidePlanId`, und zeigt die auf einen Plan, den es nicht mehr gibt, über Matchup und Zugfolge. So wird beim Löschen eines Plans kein Eintrag geschrieben, und holt Strg+Z den Plan zurück, hängen die Spiele wieder daran.
+- In eine Planbilanz zählen ausschließlich Einträge mit dessen ausdrücklicher `sidePlanId`, solange der Plan existiert. Ohne Planbezug oder mit verschwundenem Plan bleiben Spiele im deckweiten Protokoll sichtbar, zählen aber in keine Bilanz. Es gibt keinen Rückfall auf Matchup und Zugfolge. Der gespeicherte Bezug bleibt erhalten: Holt Strg+Z denselben Plan zurück, gehören die Spiele wieder dazu.
 
 ### 4.2 Rechnung
 
@@ -164,14 +164,14 @@ D-1 und D-2 sind der Kern und gehören zusammen in einen Branch: Ohne Rollen feh
 
 Wie im UX-Plan (Abschnitt 13) mit der Stoppuhr geprüft, mit der Crystal-Beast-Liste als Testdeck:
 
-| Szenario                                             | Ziel                                               |
-| ---------------------------------------------------- | -------------------------------------------------- |
-| Rollen für ein neues Deck mit Combos setzen          | unter 1 Minute, meist per Übernahme der Vorschläge |
-| Ablesen, wie oft die Hand going first ein Brick ist  | ohne Klick                                         |
-| Eine Karte von 2 auf 3 erhöhen und die Wirkung sehen | unter 2 Sekunden, ohne Speichern                   |
-| Von 43 auf 40 Karten kürzen                          | unter 1 Minute mit den Streichkandidaten           |
-| Zwei Versionen vergleichen (D-3)                     | unter 5 Sekunden                                   |
-| Ein Spiel nach der Runde eintragen (D-5)             | ein Klick, Matchup und Zugfolge sind vorbelegt     |
+| Szenario                                             | Ziel                                                      |
+| ---------------------------------------------------- | --------------------------------------------------------- |
+| Rollen für ein neues Deck mit Combos setzen          | unter 1 Minute, meist per Übernahme der Vorschläge        |
+| Ablesen, wie oft die Hand going first ein Brick ist  | ohne Klick                                                |
+| Eine Karte von 2 auf 3 erhöhen und die Wirkung sehen | unter 2 Sekunden, ohne Speichern                          |
+| Von 43 auf 40 Karten kürzen                          | unter 1 Minute mit den Streichkandidaten                  |
+| Zwei Versionen vergleichen (D-3)                     | unter 5 Sekunden                                          |
+| Ein Spiel nach der Runde eintragen (D-5)             | Protokoll öffnen, Ergebnis wählen; übrige Werte vorbelegt |
 
 ## 7. Bewusst nicht enthalten
 

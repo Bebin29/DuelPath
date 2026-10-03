@@ -904,7 +904,12 @@
         "note": "Note on the game",
         "notePlaceholder": "Note, e.g. “bricked after siding”",
         "delete": "Delete entry",
-        "error": "The entry could not be saved."
+        "error": "Could not save the change. Check that your side plan is saved and try again.",
+        "add": "Log a game",
+        "withPlan": "With plan: {{matchup}}",
+        "noPlan": "No linked plan",
+        "matchup": "Game matchup",
+        "going": "Game turn order"
       }
     },
     "banlist": {

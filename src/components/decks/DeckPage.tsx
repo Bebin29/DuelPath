@@ -287,8 +287,9 @@ export function DeckPage({
     return true;
   };
   const removeGame = async (id: string) => {
-    if ((await deleteDeckGame(id)).error) return;
+    if ((await deleteDeckGame(id)).error) return false;
     setGames((prev) => prev.filter((g) => g.id !== id));
+    return true;
   };
   const openCard = (id: string) =>
     cardSheet.open(id, (cardId, effects) =>
@@ -477,7 +478,7 @@ export function DeckPage({
             onPlans={(fn, group) => setDoc((d) => ({ ...d, sidePlans: fn(d.sidePlans) }), group)}
             onRoles={(patch) => setDoc((d) => ({ ...d, roles: { ...d.roles, ...patch } }))}
             onAddGame={addGame}
-            onDeleteGame={(id) => void removeGame(id)}
+            onDeleteGame={removeGame}
             onOpenCard={openCard}
           />
         )}

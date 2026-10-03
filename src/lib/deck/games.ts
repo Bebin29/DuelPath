@@ -10,8 +10,7 @@ import type { SidePlan } from './side-plan';
 
 export const GAME_RESULTS = ['win', 'loss', 'draw'] as const;
 export type GameResult = (typeof GAME_RESULTS)[number];
-export const isGameResult = (v: unknown): v is GameResult =>
-  GAME_RESULTS.includes(v as GameResult);
+export const isGameResult = (v: unknown): v is GameResult => GAME_RESULTS.includes(v as GameResult);
 
 /** Höchstlänge der Notiz; mehr als ein Satz gehört nicht in ein Protokoll */
 export const NOTE_MAX = 280;
@@ -72,17 +71,17 @@ export interface Tally {
   total: number;
 }
 
-const sameMatchup = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
-
-/**
- * Gehört ein Eintrag zu diesem Plan? Zuerst über die Id des Plans. Zeigt sie auf einen Plan,
- * den es nicht mehr gibt, oder fehlt sie, zählt der Eintrag über Matchup und Zugfolge weiter.
- * `planIds` sind die Pläne, die es noch gibt. So bleibt die Zuordnung eine reine Rechnung und
- * ein Eintrag wird beim Löschen eines Plans nicht angefasst.
- */
+/** Only an explicit reference to a currently existing plan belongs to its record. */
 export function belongsTo(game: DeckGame, plan: SidePlan, planIds: Set<string>): boolean {
-  if (game.sidePlanId && planIds.has(game.sidePlanId)) return game.sidePlanId === plan.id;
-  return game.going === plan.going && sameMatchup(game.matchup, plan.matchup);
+  return game.sidePlanId === plan.id && planIds.has(plan.id);
+}
+
+/** Preserve historical entries but remove unavailable plan references from the read view. */
+export function gamesForPlans(games: DeckGame[], plans: SidePlan[]): DeckGame[] {
+  const ids = new Set(plans.map((p) => p.id));
+  return games.map((g) =>
+    g.sidePlanId && !ids.has(g.sidePlanId) ? { ...g, sidePlanId: null } : g
+  );
 }
 
 /** Bilanz eines Plans: rohe Zahlen, nie eine Quote (Deckbau-Plan 7) */

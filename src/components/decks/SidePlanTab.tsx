@@ -51,7 +51,7 @@ export function SidePlanTab({
   onPlans: (fn: (prev: SidePlan[]) => SidePlan[], group?: string) => void;
   onRoles: (patch: Roles) => void;
   onAddGame: (input: GameInput) => Promise<boolean>;
-  onDeleteGame: (id: string) => void;
+  onDeleteGame: (id: string) => Promise<boolean>;
   onOpenCard: (cardId: string) => void;
 }) {
   const { t } = useTranslation();
@@ -59,7 +59,6 @@ export function SidePlanTab({
   const [selected, setSelected] = useState<string | null>(plans[0]?.id ?? null);
   const plan = plans.find((p) => p.id === selected) ?? null;
 
-  const planIds = useMemo(() => new Set(plans.map((p) => p.id)), [plans]);
   const matchups = useMemo(() => knownMatchups(plans, games), [plans, games]);
 
   const starthands = useMemo(() => combos.map((c) => c.stats.required), [combos]);
@@ -261,16 +260,6 @@ export function SidePlanTab({
                 <ul className="flex flex-col">{bySection('MAIN').map((e) => row(e, 'out'))}</ul>
               </section>
             </div>
-
-            <GameLog
-              key={plan.id}
-              plan={plan}
-              games={games}
-              planIds={planIds}
-              matchups={matchups}
-              onAdd={onAddGame}
-              onDelete={onDeleteGame}
-            />
           </div>
 
           <aside className="order-first flex flex-col gap-5 self-start rounded-lg border border-line bg-surface-1 p-5 lg:sticky lg:top-6 lg:order-none">
@@ -295,6 +284,15 @@ export function SidePlanTab({
           </aside>
         </div>
       )}
+      <GameLog
+        key={plan?.id ?? 'no-plan'}
+        plan={plan}
+        plans={plans}
+        games={games}
+        matchups={matchups}
+        onAdd={onAddGame}
+        onDelete={onDeleteGame}
+      />
     </div>
   );
 }

@@ -104,7 +104,7 @@ Jede Antwort auf einen Schritt enthält das Board danach, offene Fragen, ausgel�
 
 Der Abfrageparameter `step` wählt den Schritt. `start` meint die Starthand. Ohne Angabe gilt das Ende der Hauptline.
 
-`GET /decks/{id}` gibt zu jedem Side-Plan ein `record` mit Siegen, Niederlagen und Unentschieden aus dem Spielprotokoll aus. Das sind rohe Zahlen, keine Quote. Eintragen geht nur in der Oberfläche.
+`GET /decks/{id}` gibt zu jedem Side-Plan ein `record` mit Siegen, Niederlagen und Unentschieden aus dem Spielprotokoll aus. Das sind rohe Zahlen, keine Quote. Gezählt werden ausschließlich explizite Bezüge auf bestehende Pläne; Spiele ohne oder mit verwaistem Bezug zählen in keine Planbilanz. Eintragen und Löschen gehen nur in der Oberfläche über eigene Server-Actions.
 
 ## Server Actions
 

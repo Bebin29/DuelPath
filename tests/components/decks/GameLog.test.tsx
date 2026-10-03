@@ -6,7 +6,6 @@ import type { DeckGame, GameResult } from '@/lib/deck/games';
 import type { SidePlan } from '@/lib/deck/side-plan';
 
 const plan: SidePlan = { id: 'p1', matchup: 'Ryzeal', going: 'second', in: {}, out: {} };
-const planIds = new Set(['p1']);
 
 let n = 0;
 const game = (result: GameResult, g: Partial<DeckGame> = {}): DeckGame => ({
@@ -25,10 +24,10 @@ const log = (games: DeckGame[], props: Partial<Parameters<typeof GameLog>[0]> = 
     <GameLog
       plan={plan}
       games={games}
-      planIds={planIds}
+      plans={[plan]}
       matchups={['Ryzeal', 'Snake-Eye']}
       onAdd={vi.fn().mockResolvedValue(true)}
-      onDelete={vi.fn()}
+      onDelete={vi.fn().mockResolvedValue(true)}
       {...props}
     />
   );
@@ -59,6 +58,7 @@ describe('GameLog', () => {
     const onAdd = vi.fn().mockResolvedValue(true);
     log([], { onAdd });
 
+    await user.click(screen.getByRole('button', { name: /Spiel eintragen|Log a game/ }));
     await user.click(screen.getByRole('button', { name: /Sieg eintragen|Log a win/ }));
     expect(onAdd).toHaveBeenCalledWith({
       sidePlanId: 'p1',
@@ -74,6 +74,7 @@ describe('GameLog', () => {
     const onAdd = vi.fn().mockResolvedValue(true);
     log([], { onAdd });
 
+    await user.click(screen.getByRole('button', { name: /Spiel eintragen|Log a game/ }));
     const note = screen.getByRole('textbox', { name: /Notiz zum Spiel|Note on the game/ });
     await user.type(note, 'Brick nach dem Siden');
     await user.click(screen.getByRole('button', { name: /Niederlage eintragen|Log a loss/ }));
@@ -82,13 +83,45 @@ describe('GameLog', () => {
     expect(note).toHaveValue('');
   });
 
-  it('zeigt nur die Einträge des offenen Plans und löscht einzeln', async () => {
+  it('zeigt auch Einträge anderer oder verschwundener Pläne und löscht einzeln', async () => {
     const user = userEvent.setup();
-    const onDelete = vi.fn();
+    const onDelete = vi.fn().mockResolvedValue(true);
     log([game('win'), game('loss', { sidePlanId: 'p2', matchup: 'Snake-Eye' })], { onDelete });
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(1);
-    await user.click(screen.getByRole('button', { name: /Eintrag löschen|Delete entry/ }));
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    await user.click(screen.getAllByRole('button', { name: /Eintrag löschen|Delete entry/ })[0]);
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
+});
+
+it('lässt auch ohne Side-Plan ein Spiel eintragen', async () => {
+  const user = userEvent.setup();
+  const onAdd = vi.fn().mockResolvedValue(true);
+  log([], { plan: null, plans: [], onAdd });
+  expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: /Spiel eintragen|Log a game/ }));
+  await user.type(
+    screen.getByRole('combobox', { name: /Matchup des Spiels|Game matchup/ }),
+    'Ryzeal'
+  );
+  await user.click(screen.getByRole('button', { name: /Sieg eintragen|Log a win/ }));
+  expect(onAdd).toHaveBeenCalledWith(
+    expect.objectContaining({ sidePlanId: null, matchup: 'Ryzeal' })
+  );
+});
+
+it('behält bei Speicherfehlern die Notiz und erlaubt einen erneuten Versuch', async () => {
+  const user = userEvent.setup();
+  const onAdd = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(true);
+  log([], { onAdd });
+  await user.click(screen.getByRole('button', { name: /Spiel eintragen|Log a game/ }));
+  const note = screen.getByRole('textbox', { name: /Notiz zum Spiel|Note on the game/ });
+  await user.type(note, 'Test');
+  const button = screen.getByRole('button', { name: /Sieg eintragen|Log a win/ });
+  await user.click(button);
+  expect(screen.getByRole('alert')).toBeInTheDocument();
+  expect(note).toHaveValue('Test');
+  expect(button).toBeEnabled();
+  await user.click(button);
+  expect(note).toHaveValue('');
 });

@@ -904,7 +904,12 @@
         "note": "Notiz zum Spiel",
         "notePlaceholder": "Notiz, etwa „Brick nach dem Siden“",
         "delete": "Eintrag löschen",
-        "error": "Der Eintrag ließ sich nicht speichern."
+        "error": "Die Änderung ließ sich nicht speichern. Prüfe, ob dein Side-Plan gespeichert ist, und versuche es erneut.",
+        "add": "Spiel eintragen",
+        "withPlan": "Mit Plan: {{matchup}}",
+        "noPlan": "Ohne Planbezug",
+        "matchup": "Matchup des Spiels",
+        "going": "Zugfolge des Spiels"
       }
     },
     "banlist": {

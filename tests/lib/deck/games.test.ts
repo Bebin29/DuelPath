@@ -3,6 +3,7 @@ import {
   gameInputSchema,
   knownMatchups,
   tally,
+  gamesForPlans,
   type DeckGame,
   type GameResult,
 } from '@/lib/deck/games';
@@ -47,7 +48,7 @@ describe('tally', () => {
     });
   });
 
-  it('zählt Einträge ohne Plan über Matchup und Zugfolge', () => {
+  it('zählt Einträge ohne Plan in keine Planbilanz', () => {
     const games = [
       game({ sidePlanId: null, result: 'loss' }),
       // anderes Matchup
@@ -55,22 +56,22 @@ describe('tally', () => {
       // gleiches Matchup, andere Zugfolge
       game({ sidePlanId: null, going: 'first' }),
     ];
-    expect(tally(games, plan({}), ids('p1'))).toEqual({ win: 0, loss: 1, draw: 0, total: 1 });
+    expect(tally(games, plan({}), ids('p1'))).toEqual({ win: 0, loss: 0, draw: 0, total: 0 });
   });
 
-  it('vergleicht das Matchup ohne Groß- und Kleinschreibung und ohne Rand', () => {
+  it('errät den Plan nicht aus einer ähnlichen Matchup-Schreibweise', () => {
     const games = [game({ sidePlanId: null, matchup: ' ryzeal ' })];
-    expect(tally(games, plan({ matchup: 'Ryzeal' }), ids('p1')).total).toBe(1);
+    expect(tally(games, plan({ matchup: 'Ryzeal' }), ids('p1')).total).toBe(0);
   });
 
-  it('zählt verwaiste Einträge nach dem Löschen eines Plans über das Matchup weiter', () => {
+  it('zählt verwaiste Einträge nach dem Löschen eines Plans nicht weiter', () => {
     // Der Eintrag zeigt noch auf den gelöschten Plan p0, der Eintrag selbst bleibt unangetastet
     const games = [game({ sidePlanId: 'p0', result: 'draw' })];
     expect(tally(games, plan({ id: 'p1' }), ids('p1'))).toEqual({
       win: 0,
       loss: 0,
-      draw: 1,
-      total: 1,
+      draw: 0,
+      total: 0,
     });
   });
 
@@ -121,4 +122,10 @@ describe('gameInputSchema', () => {
     };
     expect(gameInputSchema.safeParse(input).success).toBe(false);
   });
+});
+
+it('zeigt verwaiste Einträge ohne Bezug und erhält die gespeicherte Referenz', () => {
+  const original = game({ sidePlanId: 'deleted' });
+  expect(gamesForPlans([original], [plan({})])).toEqual([{ ...original, sidePlanId: null }]);
+  expect(original.sidePlanId).toBe('deleted');
 });

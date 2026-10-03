@@ -38,7 +38,10 @@ describe('addDeckGame', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockResolvedValue({ user: { id: uid } });
-    mockPrisma.deck.findUnique.mockResolvedValue({ userId: uid } as never);
+    mockPrisma.deck.findUnique.mockResolvedValue({
+      userId: uid,
+      sidePlans: [{ id: 'p1', matchup: 'Ryzeal', going: 'second', in: {}, out: {} }],
+    } as never);
     mockPrisma.deckGame.create.mockResolvedValue(row as never);
   });
 
@@ -68,6 +71,21 @@ describe('addDeckGame', () => {
     mockPrisma.deck.findUnique.mockResolvedValue({ userId: 'wer-anders' } as never);
     expect((await addDeckGame('deck-1', input)).error).toBe('Not found');
     expect(mockPrisma.deckGame.create).not.toHaveBeenCalled();
+  });
+
+  it('lehnt unbekannte Pläne und widersprüchliche Zuordnungen ab', async () => {
+    expect(
+      (await addDeckGame('deck-1', { ...input, sidePlanId: 'other-deck-plan' })).error
+    ).toBeDefined();
+    expect((await addDeckGame('deck-1', { ...input, going: 'first' })).error).toBeDefined();
+    expect(mockPrisma.deckGame.create).not.toHaveBeenCalled();
+  });
+
+  it('erlaubt Spiele ohne Planbezug', async () => {
+    await addDeckGame('deck-1', { ...input, sidePlanId: null });
+    expect(mockPrisma.deckGame.create).toHaveBeenCalledWith({
+      data: { deckId: 'deck-1', ...input, sidePlanId: null },
+    });
   });
 
   it('lehnt ein unbekanntes Ergebnis ab', async () => {

@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@/lib/auth/auth';
+import { parseSidePlans } from '@/lib/deck/side-plan';
 import { prisma } from '@/lib/prisma/client';
 import { gameInputSchema, parseGame, type DeckGame } from '@/lib/deck/games';
 
@@ -17,16 +18,25 @@ async function userId() {
   return session?.user?.id ?? null;
 }
 
-export async function addDeckGame(
-  deckId: string,
-  input: unknown
-): Promise<Result<DeckGame>> {
+export async function addDeckGame(deckId: string, input: unknown): Promise<Result<DeckGame>> {
   const uid = await userId();
   if (!uid) return { error: 'Unauthorized' };
-  const deck = await prisma.deck.findUnique({ where: { id: deckId }, select: { userId: true } });
+  const deck = await prisma.deck.findUnique({
+    where: { id: deckId },
+    select: { userId: true, sidePlans: true },
+  });
   if (!deck || deck.userId !== uid) return { error: 'Not found' };
   const parsed = gameInputSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültiger Eintrag' };
+  if (parsed.data.sidePlanId) {
+    const plan = parseSidePlans(deck.sidePlans).find((p) => p.id === parsed.data.sidePlanId);
+    if (
+      !plan ||
+      plan.going !== parsed.data.going ||
+      plan.matchup.trim().toLowerCase() !== parsed.data.matchup.toLowerCase()
+    )
+      return { error: 'Der Side-Plan passt nicht zum Spiel oder ist noch nicht gespeichert' };
+  }
   const row = await prisma.deckGame.create({ data: { deckId, ...parsed.data } });
   const game = parseGame(row);
   return game ? { data: game } : { error: 'Ungültiger Eintrag' };
@@ -37,7 +47,7 @@ export async function deleteDeckGame(gameId: string): Promise<Result<true>> {
   if (!uid) return { error: 'Unauthorized' };
   const game = await prisma.deckGame.findUnique({
     where: { id: gameId },
-    select: { deck: { select: { userId: true } } },
+    select: { deck: { select: { userId: true, sidePlans: true } } },
   });
   if (!game || game.deck.userId !== uid) return { error: 'Not found' };
   await prisma.deckGame.delete({ where: { id: gameId } });
