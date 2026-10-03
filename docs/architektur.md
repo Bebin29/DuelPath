@@ -26,7 +26,7 @@ Die wichtigste Regel: **`src/lib/` kennt weder Prisma noch das Netz.** Dort steh
 | `/combos`      | `(dashboard)` | Bibliothek aller Combos mit Filtern in der Adresse         |
 | `/combos/new`  | `(dashboard)` | Neue Combo anlegen                                         |
 | `/combos/[id]` | `(workbench)` | Werkbank: Combo bauen, lesen und abspielen                 |
-| `/settings`    | `(dashboard)` | Einstellungen: Design, Spitznamen, Staples, API-Tokens     |
+| `/settings`    | `(dashboard)` | Einstellungen: Design, Spitznamen, Staples, Boardbreaker, API-Tokens |
 | `/auth/signin` | `auth`        | Anmelden                                                   |
 | `/auth/signup` | `auth`        | Registrieren                                               |
 | `/dev/ui`      | -             | Musterbibliothek der Komponenten, nur für Entwicklung      |

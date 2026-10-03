@@ -169,6 +169,6 @@ Wie im UX-Plan (Abschnitt 13) mit der Stoppuhr geprüft, mit der Crystal-Beast-L
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Mehrfachrollen (Ash als Handtrap und Tuner) | nein; eine Rolle hält die Rechnung exakt und zwingt zu einer bewussten Einordnung                          |
 | Zählt ein 2-Card-Starter halb?              | nein; 2-Card-Starthände gehen über die Abdeckung (3.3) ein, nicht über die Rollen                          |
-| Liste der Boardbreaker                      | fest im Code wie die Staples, mit Banlist-Filter; später pflegbar wie Spitznamen                           |
+| Liste der Boardbreaker                      | in den Einstellungen pflegbar, Standardliste als Vorgabe; Kaijus bleiben eine Regel im Code               |
 | Stufen anpassbar?                           | vorerst fest wie in Abschnitt 2; eigene Bedingungen erst, wenn jemand sie vermisst                         |
 | Ab wann gilt eine Karte als hartes OPT?     | aus den OPT-Klauseln der Effekte (`opt.kind = HARD`); ist die Zerlegung falsch, hilft die Effekt-Korrektur |
