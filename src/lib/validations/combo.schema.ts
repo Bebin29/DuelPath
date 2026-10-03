@@ -5,9 +5,10 @@ import { z } from 'zod';
  * Die Formen entsprechen den Typen in src/lib/combo/state.ts.
  */
 
-const id = z.string().min(1).max(64);
-const player = z.enum(['self', 'opponent']);
-const zone = z.enum([
+// Bausteine, die auch das portable Combo-Format nutzt (src/lib/combo/portable.ts)
+export const idSchema = z.string().min(1).max(64);
+export const playerSchema = z.enum(['self', 'opponent']);
+export const zoneSchema = z.enum([
   'HAND',
   'DECK',
   'EXTRA',
@@ -18,7 +19,12 @@ const zone = z.enum([
   'BANISHED',
   'MATERIAL',
 ]);
-const position = z.enum(['ATK', 'DEF', 'SET']);
+export const positionSchema = z.enum(['ATK', 'DEF', 'SET']);
+
+const id = idSchema;
+const player = playerSchema;
+const zone = zoneSchema;
+const position = positionSchema;
 
 export const cardMoveSchema = z.object({
   instanceId: id,

@@ -14,6 +14,8 @@ import {
   storeCombo,
   type LoadedCombo,
 } from '@/server/services/combo-store.service';
+import { comboFromPortable, portableCombo } from '@/server/services/combo-portable.service';
+import type { CardRef, PortableCombo, PortableError } from '@/lib/combo/portable';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
 import type { DeckEntry } from '@/lib/combo/deck';
 import type { SaveComboInput } from '@/lib/validations/combo.schema';
@@ -151,6 +153,32 @@ export async function saveCombo(
           ? 'Not found'
           : stored.message,
   };
+}
+
+/** Combo als JSON-Datei; Karten stehen als Passcode, damit die Datei woanders ebenso gilt */
+export async function exportCombo(comboId: string): Promise<Result<PortableCombo>> {
+  const userId = await currentUserId();
+  if (!userId) return { error: 'Unauthorized' };
+  const file = await portableCombo(userId, comboId);
+  return file ? { data: file } : { error: 'Not found' };
+}
+
+/** Grund, warum eine Datei nicht eingelesen wurde; die Oberfläche übersetzt den Code */
+export type ImportError = PortableError | { code: 'denied' };
+
+/**
+ * Liest eine JSON-Datei und legt daraus eine **neue** Combo an, nie in eine bestehende hinein.
+ * Fehlende Karten stehen in `missing`, der Rest wird importiert.
+ */
+export async function importCombo(
+  json: unknown
+): Promise<
+  | { data: { id: string; missing: CardRef[] }; error?: undefined }
+  | { data?: undefined; error: ImportError }
+> {
+  const userId = await currentUserId();
+  if (!userId) return { error: { code: 'denied' } };
+  return comboFromPortable(userId, json);
 }
 
 export interface StapleCard {
