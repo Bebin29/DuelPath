@@ -17,6 +17,9 @@ export interface RailStaple {
   card: ComboCard;
   /** Schrittnummern der Line, die der Staple trifft */
   steps: number[];
+  /** Liegt schon auf dem Gegnerboard, kommt also nicht von der Hand (Lücke L1) */
+  onBoard?: boolean;
+  uncomputed?: boolean;
 }
 
 /**
@@ -59,12 +62,18 @@ export function StapleRail({
                     onMouseLeave={() => onHover(null)}
                     onFocus={() => onHover(s.name)}
                     onBlur={() => onHover(null)}
-                    aria-label={`${name}: ${
-                      s.steps.length
-                        ? t('stress.hitsSteps', { steps: s.steps.join(', ') })
-                        : t('stress.noHits')
+                    aria-label={`${name}${s.onBoard ? ` (${t('stress.onBoard')})` : ''}: ${
+                      s.uncomputed
+                        ? t('stress.notCalculated')
+                        : s.steps.length
+                          ? t('stress.hitsSteps', { steps: s.steps.join(', ') })
+                          : t('stress.noHits')
                     }`}
-                    className="relative block cursor-grab rounded-sm outline-none focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-primary active:cursor-grabbing"
+                    className={cn(
+                      'relative block cursor-grab rounded-sm outline-none focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-primary active:cursor-grabbing',
+                      // Liegt schon beim Gegner: abgesetzt von den Handtraps darüber
+                      s.onBoard && 'ring-1 ring-opponent ring-offset-1 ring-offset-surface-1'
+                    )}
                   >
                     <CardView image={s.card.imageSmall} label="" size="xs" />
                     {s.steps.length > 0 && (
@@ -76,16 +85,24 @@ export function StapleRail({
                 </HoverCardTrigger>
                 <HoverCardContent side="right" align="center" className="w-56 p-2.5">
                   <p className="text-sm font-medium">{name}</p>
+                  {s.onBoard && (
+                    <p className="font-mono text-2xs text-opponent">{t('stress.onBoard')}</p>
+                  )}
                   <p
                     className={cn(
                       'mt-0.5 font-mono text-2xs',
                       s.steps.length ? 'text-opponent' : 'text-text-subtle'
                     )}
                   >
-                    {s.steps.length
-                      ? t('stress.hitsSteps', { steps: s.steps.join(', ') })
-                      : t('stress.noHits')}
+                    {s.uncomputed
+                      ? t('stress.notCalculated')
+                      : s.steps.length
+                        ? t('stress.hitsSteps', { steps: s.steps.join(', ') })
+                        : t('stress.noHits')}
                   </p>
+                  {s.onBoard && (
+                    <p className="mt-1 text-2xs text-text-subtle">{t('stress.boardLimitations')}</p>
+                  )}
                   <p className="mt-1.5 text-2xs text-text-subtle">{t('stress.railHint')}</p>
                 </HoverCardContent>
               </HoverCard>

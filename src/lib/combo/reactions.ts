@@ -1,10 +1,11 @@
-import type {
-  CardData,
-  CardMove,
-  ComboNodeData,
-  GameState,
-  Negation,
-  Player,
+import {
+  onField,
+  type CardData,
+  type CardMove,
+  type ComboNodeData,
+  type GameState,
+  type Negation,
+  type Player,
 } from '@/lib/combo/state';
 import { newId, newInstanceId } from '@/lib/combo/tree';
 
@@ -24,7 +25,9 @@ export type ReactionKind =
   /** Gesetzte Falle auf dem Feld (Solemn, Skill Drain) */
   | 'setTrap'
   /** Quick-Play Spell von der Hand (Called by the Grave, Crossout, Droplet) */
-  | 'quickPlay';
+  | 'quickPlay'
+  /** Offene Karte, die schon auf dem Feld liegt (Gegnerboard: Apollousa, Baronne) */
+  | 'onField';
 
 /** Voreingestelltes Negierungsziel; der Nutzer kann es im Knoten ändern */
 export type DefaultNegation =
@@ -49,6 +52,8 @@ export type HitPattern =
   | 'MONSTER_EFFECT'
   /** Zauber oder Falle wird aktiviert */
   | 'SPELL_TRAP_ACTIVATION'
+  | 'SPELL_ACTIVATION'
+  | 'TRAP_ACTIVATION'
   /** Beschwörung (Normal oder Special) */
   | 'SUMMON'
   | 'SPECIAL_SUMMON'
@@ -72,6 +77,8 @@ export interface Staple {
   /** Wer die Karte typischerweise spielt: Gegner als Unterbrechung, eigene Seite als Antwort darauf */
   side: Player;
   kind: ReactionKind;
+  effectIndex?: number;
+  uncomputed?: boolean;
   negation?: DefaultNegation;
   /** Wann die Karte trifft; ohne Muster nur von Hand anlegbar */
   hits?: HitPattern[];
@@ -242,13 +249,17 @@ export function reactionNode(
   parent: ComboNodeData | null,
   card: CardData,
   /** null: freie Karte ohne voreingestellte Bewegungen und Negierung */
-  reaction: Pick<Staple, 'kind' | 'negation'> | null,
+  reaction: Pick<Staple, 'kind' | 'negation' | 'effectIndex'> | null,
   player: Player,
   before: GameState,
-  ancestors: ComboNodeData[]
+  ancestors: ComboNodeData[],
+  /** Feste Instanz statt Suche; das Gegnerboard kennt die liegende Karte genau */
+  fixedInstanceId?: string
 ): ComboNodeData {
   const instanceId =
-    findInstance(before, card.id, player, reaction?.kind ?? 'discard') ?? newInstanceId(card.id);
+    fixedInstanceId ??
+    findInstance(before, card.id, player, reaction?.kind ?? 'discard') ??
+    newInstanceId(card.id);
   const firstActivated = card.effects.findIndex((e) => e.activated);
   const base = { instanceId, cardId: card.id, owner: player };
 
@@ -269,6 +280,9 @@ export function reactionNode(
       // Aufdecken der gesetzten Falle; legt sie an, falls das Gegnerboard sie noch nicht enthält
       costMoves.push({ ...base, from: 'SPELL_TRAP', to: 'SPELL_TRAP', position: 'ATK' });
       break;
+    case 'onField':
+      // Die Karte liegt schon offen; sie bewegt sich für ihren Effekt nicht
+      break;
   }
 
   return {
@@ -279,7 +293,7 @@ export function reactionNode(
     edgeLabel: card.name,
     instanceId,
     cardId: card.id,
-    effectIndex: firstActivated >= 0 ? firstActivated : 0,
+    effectIndex: reaction?.effectIndex ?? (firstActivated >= 0 ? firstActivated : 0),
     costMoves,
     resolveMoves,
     negates: defaultNegation(reaction?.negation, player, before, ancestors),
@@ -293,6 +307,10 @@ function findInstance(
   player: Player,
   kind: ReactionKind
 ): string | undefined {
+  if (kind === 'onField')
+    return Object.values(state.cards).find(
+      (c) => c.cardId === cardId && onField(c.zone) && c.controller === player
+    )?.instanceId;
   const zone = kind === 'setTrap' ? 'SPELL_TRAP' : 'HAND';
   return Object.values(state.cards).find(
     (c) =>

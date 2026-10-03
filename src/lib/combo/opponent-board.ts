@@ -1,0 +1,175 @@
+import type { CardEffect } from '@/lib/cards/effects';
+import {
+  onField,
+  type CardData,
+  type GameState,
+  type PlacedCard,
+  type StartState,
+} from '@/lib/combo/state';
+import type { DefaultNegation, HitPattern, Staple } from '@/lib/combo/reactions';
+import { newInstanceId } from '@/lib/combo/tree';
+import { BOARD_ZONES, type BoardZone, type OpponentBoardPreset } from '@/lib/settings';
+
+/**
+ * Gegnerboard als Störquelle (Lücke L1): Wer Going Second plant, stellt das Board des Gegners
+ * in den Startzustand. Hier wird aus den liegenden Permanents abgeleitet, welchen Schritt der
+ * eigenen Line sie beantworten können, damit der Stresstest sie wie Staples behandelt.
+ *
+ * Erkannt wird nur, was im Kartentext eindeutig negiert (PSCT-Muster). Alles andere liegt als
+ * Störquelle ohne Muster in der Leiste: der Nutzer hängt die Unterbrechung selbst an (Prinzip 11).
+ */
+
+/** Schlüssel eines Boardkarten-Eintrags; getrennt je Instanz, damit zwei Kopien nicht verschmelzen */
+export const boardThreatKey = (instanceId: string) => `board:${instanceId}`;
+export const isBoardThreat = (staple: string) => staple.startsWith('board:');
+
+export interface BoardThreat<C extends CardData = CardData> {
+  staple: Staple;
+  card: C;
+  /** Instanz auf dem Gegnerboard, die die Unterbrechung stellt */
+  instanceId: string;
+}
+
+const negates = (e: CardEffect) => e.patterns.some((p) => p.startsWith('NEG_'));
+
+/** Was die Negierung abdeckt; die Nomen stehen in Bedingung oder Auflösung desselben Satzes */
+const ANSWERS_MONSTER = /monster(?:'s)? effects?\b|effects? of [^.;]*\bmonsters?\b/i;
+const ANSWERS_SPELL_TRAP = /Spell\/Trap|Spell or Trap/i;
+const ANSWERS_SPELL = /\bSpell Cards?\b/i;
+const ANSWERS_TRAP = /\bTrap Cards?\b/i;
+/** Die Beschwörung selbst wird negiert, nicht der Effekt dahinter */
+const ANSWERS_SUMMON =
+  /negate the (?:Normal |Special |Flip )?Summon|would be (?:Normal |Special |Flip )?Summoned/i;
+/** Negiert eine Karte oder einen Effekt, der beschwört (Solemn Warning) */
+const ANSWERS_SUMMONING_EFFECT = /includes an effect that (?:Special )?Summons/i;
+const DESTROYS = /and if you do, destroy/i;
+
+/** Negierungsart der Karte, für das voreingestellte Ziel im Knoten */
+function negationOf(effect: CardEffect, summon: boolean): DefaultNegation | undefined {
+  const { patterns } = effect;
+  if (summon) return 'ACTIVATION_OR_SUMMON';
+  if (patterns.includes('NEG_ACTIVATION') || patterns.includes('NEG_ACT_DESTROY'))
+    return 'ACTIVATION_TOP';
+  if (patterns.includes('NEG_EFFECT_CHAINED')) return 'EFFECT_TOP';
+  if (patterns.includes('NEG_EFFECTS_LINGER')) return 'CARD_TOP';
+  return undefined;
+}
+
+/**
+ * Muster der Karte: Welchen Schritt der eigenen Line kann sie beantworten?
+ * Gewertet wird nur, was als Chain Link negiert. Ein Quick-Effekt, der bloss zerstört, trifft
+ * jeden Schritt gleich; ein Floodgate wie Skill Drain gilt für den ganzen Zug. Beide bekommen
+ * kein Muster und hängen damit nur von Hand an einem Schritt (Prinzip 11).
+ */
+function answersOf(
+  card: CardData
+): Pick<Staple, 'hits' | 'negation' | 'removes' | 'effectIndex' | 'uncomputed'> {
+  const hits = new Set<HitPattern>();
+  let negation: DefaultNegation | undefined;
+  let removes: Staple['removes'];
+
+  const candidates = card.effects
+    .map((effect, index) => ({ effect, index }))
+    .filter(
+      ({ effect }) =>
+        effect.activated && negates(effect) && !effect.patterns.includes('NEG_CONTINUOUS')
+    );
+  if (candidates.length !== 1) return { uncomputed: true };
+  const [{ effect, index }] = candidates;
+  {
+    const { text } = effect;
+    // Nur was die Negierungsklausel selbst nennt: „would be Special Summoned“ trifft enger als „would be Summoned“
+    const summon = ANSWERS_SUMMON.exec(text);
+    if (summon) hits.add(/Special/i.test(summon[0]) ? 'SPECIAL_SUMMON' : 'SUMMON');
+    if (ANSWERS_SUMMONING_EFFECT.test(text)) hits.add('SUMMONING_EFFECT');
+    if (ANSWERS_MONSTER.test(text)) hits.add('MONSTER_EFFECT');
+    if (ANSWERS_SPELL_TRAP.test(text)) hits.add('SPELL_TRAP_ACTIVATION');
+    else {
+      if (ANSWERS_SPELL.test(text)) hits.add('SPELL_ACTIVATION');
+      if (ANSWERS_TRAP.test(text)) hits.add('TRAP_ACTIVATION');
+    }
+    negation ??= negationOf(effect, summon !== null);
+    if (DESTROYS.test(text)) removes = 'destroy';
+  }
+
+  return {
+    effectIndex: index,
+    uncomputed: hits.size === 0,
+    ...(hits.size > 0 && { hits: [...hits] }),
+    ...(negation && { negation }),
+    ...(removes && { removes }),
+  };
+}
+
+/** Kurzname für Chips und Branch-Namen: „Apollousa, Bow of the Goddess“ wird zu „Apollousa“ */
+export function shortName(name: string): string {
+  const head = name.split(/[,:]/)[0].trim() || name;
+  return head.length > 18 ? `${head.slice(0, 17)}…` : head;
+}
+
+/** Permanents des Gegners im Zustand, in stabiler Reihenfolge */
+function opponentPermanents(state: GameState): PlacedCard[] {
+  return Object.values(state.cards)
+    .filter((c) => onField(c.zone) && c.controller === 'opponent')
+    .sort((a, b) => a.instanceId.localeCompare(b.instanceId));
+}
+
+/**
+ * Jede liegende Instanz bleibt als eigene Quelle erhalten, auch bei identischem Staple-Namen.
+ */
+export function boardThreats<C extends CardData>(
+  state: GameState,
+  cards: Map<string, C>
+): BoardThreat<C>[] {
+  return opponentPermanents(state).flatMap((placed) => {
+    const card = cards.get(placed.cardId);
+    if (!card || card.effects.length === 0) return [];
+    const staple: Staple = {
+      name: boardThreatKey(placed.instanceId),
+      short: shortName(card.name),
+      side: 'opponent',
+      // Eine gesetzte Karte wird aufgedeckt, eine offene liegt schon richtig
+      kind: placed.position === 'SET' && card.type.includes('Trap') ? 'setTrap' : 'onField',
+      ...(placed.position === 'SET' && card.type.includes('Monster')
+        ? { uncomputed: true }
+        : answersOf(card)),
+    };
+    return [{ staple, card, instanceId: placed.instanceId }];
+  });
+}
+
+// ---------------------------------------------------------------- Gespeicherte Boards
+
+const isBoardZone = (zone: string): zone is BoardZone =>
+  (BOARD_ZONES as readonly string[]).includes(zone);
+
+/** Gegnerkarten eines Startzustands als Vorlage, ohne Instanz-IDs */
+export function presetFrom(start: StartState, name: string): OpponentBoardPreset {
+  return {
+    name: name.trim(),
+    cards: start.cards.flatMap((c) =>
+      c.owner === 'opponent' && isBoardZone(c.zone)
+        ? [{ cardId: c.cardId, zone: c.zone, ...(c.position && { position: c.position }) }]
+        : []
+    ),
+  };
+}
+
+/**
+ * Setzt ein gespeichertes Board ein: Die eigene Seite bleibt, die alten Gegnerkarten gehen,
+ * die neuen bekommen frische Instanz-IDs. So stört dasselbe Board in jeder Combo gleich.
+ */
+export function applyPreset(start: StartState, preset: OpponentBoardPreset): StartState {
+  return {
+    cards: [
+      ...start.cards.filter((c) => c.owner !== 'opponent'),
+      ...preset.cards.map((c) => ({
+        instanceId: newInstanceId(c.cardId),
+        cardId: c.cardId,
+        owner: 'opponent' as const,
+        zone: c.zone,
+        ...(c.position && { position: c.position }),
+      })),
+    ],
+  };
+}

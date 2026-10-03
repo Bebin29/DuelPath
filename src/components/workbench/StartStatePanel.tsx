@@ -3,13 +3,14 @@
 import { useMemo, useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
-import { useCardLanguage } from '@/components/providers/SettingsProvider';
+import { useCardLanguage, useSettings } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Segmented } from '@/components/ui/segmented';
 import { CardSearchBox } from '@/components/combo/CardSearchBox';
 import { displayName, type ComboCard } from '@/lib/combo/cards';
 import { drawFromDeck, startStateFromDeck } from '@/lib/combo/deck';
+import { applyPreset, presetFrom } from '@/lib/combo/opponent-board';
 import { newInstanceId } from '@/lib/combo/tree';
 import type { Player, StartState, Zone } from '@/lib/combo/state';
 import { getDeckForCombo } from '@/server/actions/combo.actions';
@@ -209,6 +210,8 @@ export function StartStatePanel({
         </section>
       )}
 
+      <OpponentBoards startState={startState} name={name} onChange={onChange} />
+
       {/* Beliebige Karte dazulegen, etwa fürs Gegnerboard */}
       <section aria-label={t('combo.startEditor.add')} className="flex flex-col gap-2">
         <h3 className="font-display text-base">{t('combo.startEditor.add')}</h3>
@@ -247,5 +250,85 @@ export function StartStatePanel({
         <CardSearchBox onPick={add} />
       </section>
     </div>
+  );
+}
+
+/**
+ * Gegnerboards je Matchup (Lücke L1): Wer Going Second plant, stellt dasselbe Board gegen
+ * dasselbe Deck immer wieder. Gespeichert wird es in den Nutzereinstellungen; „Einsetzen“
+ * ersetzt die Gegnerseite des Startzustands und lässt die eigene Hand stehen.
+ */
+function OpponentBoards({
+  startState,
+  name,
+  onChange,
+}: {
+  startState: StartState;
+  name: (cardId: string) => string;
+  onChange: (next: StartState) => void;
+}) {
+  const { t } = useTranslation();
+  const { settings, update } = useSettings();
+  const [matchup, setMatchup] = useState('');
+  const boards = settings.opponentBoards;
+  const current = startState.cards.filter((c) => c.owner === 'opponent');
+
+  const save = () => {
+    const preset = presetFrom(startState, matchup);
+    if (!preset.name || preset.cards.length === 0) return;
+    update({
+      opponentBoards: [...boards.filter((b) => b.name !== preset.name), preset].slice(-20),
+    });
+    setMatchup('');
+  };
+
+  return (
+    <section aria-label={t('combo.startEditor.boards')} className="flex flex-col gap-2">
+      <h3 className="font-display text-base">{t('combo.startEditor.boards')}</h3>
+      <p className="text-xs text-text-muted">{t('combo.startEditor.boardsHint')}</p>
+      {boards.length > 0 && (
+        <ul className="flex flex-col">
+          {boards.map((b) => (
+            <li key={b.name} className="flex h-9 items-center gap-2 border-b border-line">
+              <button
+                type="button"
+                onClick={() => onChange(applyPreset(startState, b))}
+                title={b.cards.map((c) => name(c.cardId)).join(', ')}
+                className="min-w-0 flex-1 truncate text-left text-sm hover:text-ink"
+              >
+                {b.name}
+                <span className="ml-1.5 font-mono text-2xs text-text-subtle">{b.cards.length}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => update({ opponentBoards: boards.filter((o) => o.name !== b.name) })}
+                aria-label={t('combo.startEditor.boardRemove', { name: b.name })}
+                className="grid size-6 place-items-center text-text-subtle hover:text-ink"
+              >
+                <X className="size-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex gap-1.5">
+        <input
+          value={matchup}
+          onChange={(e) => setMatchup(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && save()}
+          placeholder={t('combo.startEditor.boardName')}
+          aria-label={t('combo.startEditor.boardName')}
+          className="h-8 min-w-0 flex-1 rounded-md border border-line bg-surface-1 px-2.5 text-sm outline-none placeholder:text-text-subtle focus:border-line-strong"
+        />
+        <Button
+          size="sm"
+          variant="line"
+          onClick={save}
+          disabled={!matchup.trim() || current.length === 0}
+        >
+          {t('combo.startEditor.boardSave')}
+        </Button>
+      </div>
+    </section>
   );
 }
