@@ -462,7 +462,7 @@
     "showLess": "Weniger zeigen",
     "sections": "Abschnitte",
     "banlist": "Banlist",
-    "banlistText": "Der Kartenimport kennt kein offizielles Gültigkeitsdatum der Banlist. Trage es hier aus der offiziellen Liste nach. Deine zweite Liste enthält die angekündigten Änderungen; der Deck-Check schaltet zwischen beiden um.",
+    "banlistText": "Der Kartenimport kennt kein offizielles Gültigkeitsdatum. Trage es aus der offiziellen Liste nach; deine Bestätigung gilt nur für dich und diesen Import. Deine private zweite Liste enthält die angekündigten Änderungen.",
     "banlistCurrent": "Aktuelle Liste, Stand",
     "banlistDate": "Stand",
     "banlistName": "Name",

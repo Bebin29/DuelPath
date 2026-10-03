@@ -45,7 +45,7 @@ export async function getBanlists(): Promise<Banlists> {
   const uid = await userId();
   const nextKey = uid ? `next:${uid}` : null;
   const lists = await prisma.banlist.findMany({
-    where: { key: { in: ['current', ...(nextKey ? [nextKey] : [])] } },
+    where: { key: { in: ['current', ...(uid ? [`current:${uid}`, nextKey!] : [])] } },
     select: {
       key: true,
       name: true,
@@ -57,8 +57,15 @@ export async function getBanlists(): Promise<Banlists> {
   const find = (key: BanlistKey) => lists.find((l) => l.key === key);
   const current = find('current');
   const next = lists.find((l) => l.key === nextKey);
+  const confirmation = lists.find((l) => l.key === `current:${uid}`);
+  const confirmedDate =
+    current?.importedAt && confirmation?.importedAt?.getTime() === current.importedAt.getTime()
+      ? confirmation.effectiveOn
+      : null;
   return {
-    current: current ? toView(current) : null,
+    current: current
+      ? toView({ ...current, effectiveOn: confirmedDate ?? current.effectiveOn })
+      : null,
     next: next ? toView(next) : null,
   };
 }
@@ -156,16 +163,26 @@ export async function deleteNextBanlist(): Promise<Result<true>> {
   return { data: true };
 }
 
-/** Stand der aktuellen Liste nachtragen, wenn er nicht zum Importdatum passt */
+/** The caller confirms the date for this imported snapshot without editing global metadata. */
 export async function setCurrentBanlistDate(effectiveOn: string): Promise<Result<true>> {
   const uid = await userId();
   if (!uid) return { error: 'Unauthorized' };
   const date = typeof effectiveOn === 'string' ? fromIsoDate(effectiveOn) : null;
   if (!date) return { error: 'Ungültiges Datum' };
-  await prisma.banlist.upsert({
+  const current = await prisma.banlist.findUnique({
     where: { key: 'current' },
-    create: { key: 'current', name: 'TCG', effectiveOn: date },
-    update: { effectiveOn: date },
+    select: { importedAt: true },
+  });
+  if (!current?.importedAt) return { error: 'Zuerst einen vollständigen Kartenimport ausführen' };
+  await prisma.banlist.upsert({
+    where: { key: `current:${uid}` },
+    create: {
+      key: `current:${uid}`,
+      name: 'TCG',
+      effectiveOn: date,
+      importedAt: current.importedAt,
+    },
+    update: { effectiveOn: date, importedAt: current.importedAt },
   });
   return { data: true };
 }
