@@ -344,7 +344,12 @@
     },
     "startEditor": {
       "add": "Add card to starting state",
-      "hint": "Set the starting hand and the opponent board. Drag cards between zones in the state panel."
+      "hint": "Set the starting hand and the opponent board. Drag cards between zones in the state panel.",
+      "boards": "Opponent boards",
+      "boardsHint": "Set the same board against the same deck once and save it. Applying it replaces the opponent's side; your own hand stays.",
+      "boardName": "Matchup, e.g. Fiendsmith",
+      "boardSave": "Save",
+      "boardRemove": "Delete opponent board {{name}}"
     },
     "reactions": {
       "opponent": "Quick pick: opponent responds with",
@@ -636,6 +641,8 @@
     "missing_other": "missing: {{count}} cards",
     "missingLabel": "missing",
     "hitReason": "{{staple}} hits: {{why}}",
+    "hitReasonBoard": "{{staple}} is on board and answers: {{why}}",
+    "onBoard": "on the opponent's board",
     "pattern": {
       "FROM_DECK": "search from the Deck",
       "FROM_GY": "card leaves the GY",
@@ -651,13 +658,17 @@
       "ADD_FROM_DECK": "card added from the Deck",
       "GY_NEEDED_LATER": "a later step needs this card in the GY",
       "TURN_START_DECK_SUMMONS": "opponent draws {{count}} (summons from Deck and Extra Deck)",
-      "TURN_START_HAND_SUMMONS": "opponent draws {{count}} (summons from the hand)"
+      "TURN_START_HAND_SUMMONS": "opponent draws {{count}} (summons from the hand)",
+      "SPELL_ACTIVATION": "Spell activation",
+      "TRAP_ACTIVATION": "Trap activation"
     },
     "pairs": "Pairs",
     "pairsHint": "In a branch with an interruption the stress test shows what still hits afterwards (“Ash, then Imperm”)",
     "pairsInBranch_one": "{{count}} more interruption in this branch",
     "pairsInBranch_other": "{{count}} more interruptions in this branch",
-    "scanning": "Stress test · step {{n}} of {{total}}"
+    "scanning": "Stress test · step {{n}} of {{total}}",
+    "notCalculated": "Not calculated automatically",
+    "boardLimitations": "Possible responses. Check costs and other activation conditions manually; floodgates are not simulated."
   },
   "endboard": {
     "interruptions_one": "interruption",

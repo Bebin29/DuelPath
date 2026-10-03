@@ -23,6 +23,7 @@ import { existingBranch, stressBranch, stressTest, type Hit } from '@/lib/combo/
 import { endboardSummary, lineEnds } from '@/lib/combo/endboard';
 import { usedOptNames } from '@/lib/combo/opt-names';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
+import { boardThreats } from '@/lib/combo/opponent-board';
 import { toComboCard } from '@/lib/combo/cards';
 import { nicknameMap, parseSettings } from '@/lib/settings';
 import { breakerSet } from '@/lib/deck/roles';
@@ -62,7 +63,8 @@ export interface ComboContext {
   start: GameState;
   states: Map<string, GameState>;
   nicknames: Record<string, string[]>;
-  staples: { staple: Staple; card: ComboCard }[];
+  /** Staples der Einstellungen und, mit `instanceId`, die liegenden Karten des Gegnerboards */
+  staples: { staple: Staple; card: ComboCard; instanceId?: string }[];
 }
 
 export async function comboContext(userId: string, comboId: string): Promise<ComboContext> {
@@ -96,15 +98,19 @@ export function buildContext(
   nicknames: Record<string, string[]> = {},
   staples: ComboContext['staples'] = []
 ): ComboContext {
+  const cards = new Map(combo.cards.map((c) => [c.id, c]));
+  const start = initialState(combo.startState);
+  // Liegende Gegnerkarten stören genauso wie Handtraps (Lücke L1); doppelte Namen fallen weg
+  const board = boardThreats(start, cards);
   return withNodes(
     {
       userId,
       combo,
-      cards: new Map(combo.cards.map((c) => [c.id, c])),
-      start: initialState(combo.startState),
+      cards,
+      start,
       states: new Map(),
       nicknames,
-      staples,
+      staples: [...staples.filter((s) => !board.some((b) => b.card.id === s.card.id)), ...board],
     },
     combo.nodes
   );
@@ -118,6 +124,14 @@ function withNodes(ctx: ComboContext, nodes: ComboNodeData[]): ComboContext {
     states: statesForTree(nodes, ctx.combo.startState, ctx.cards),
   };
 }
+
+/** Störquellen für den Stresstest: Staples von der Hand und liegende Gegnerkarten */
+const stapleEntries = (ctx: ComboContext) =>
+  ctx.staples.map((s) => ({
+    staple: s.staple,
+    cardId: s.card.id,
+    ...(s.instanceId && { instanceId: s.instanceId }),
+  }));
 
 /** Karten nachladen, die neu dazukommen (Staples, Spielmarken) */
 async function ensureCards(ctx: ComboContext, ids: string[]) {
@@ -468,16 +482,10 @@ async function interruption(
   await ensureCards(ctx, [entry.card.id]);
   const nodes = ctx.combo.nodes;
   const line = lineThrough(nodes, at?.id ?? null);
-  const hits = stressTest(
-    line,
-    ctx.states,
-    ctx.start,
-    ctx.cards,
-    ctx.staples.map((s) => ({ staple: s.staple, cardId: s.card.id }))
-  );
+  const hits = stressTest(line, ctx.states, ctx.start, ctx.cards, stapleEntries(ctx));
   const hit = hits.find((h) => h.staple === entry.staple.name && h.stepId === (at?.id ?? ''));
   const anchorId = hit?.anchorId ?? at?.id ?? null;
-  const existing = existingBranch(nodes, anchorId, entry.card.id);
+  const existing = existingBranch(nodes, anchorId, entry.card.id, entry.instanceId);
   if (existing) return { nodes, created: [] as ComboNodeData[], existing };
   const number = lineSteps(nodes, line, () => '').find((s) => s.node.id === at?.id)?.number;
   const label = number ? `${entry.staple.short} auf ${number}` : `${entry.staple.short} am Start`;
@@ -740,23 +748,21 @@ export function stressView(ctx: ComboContext, stepId: string | null, pairs: bool
   const numbers = new Map(
     lineSteps(ctx.combo.nodes, line, () => '').map((s) => [s.node.id, s.number])
   );
-  const hits = stressTest(
-    line,
-    ctx.states,
-    ctx.start,
-    ctx.cards,
-    ctx.staples.map((s) => ({ staple: s.staple, cardId: s.card.id })),
-    { pairs }
-  );
-  const shortOf = (name: string) => ctx.staples.find((s) => s.staple.name === name)?.staple.short;
+  const hits = stressTest(line, ctx.states, ctx.start, ctx.cards, stapleEntries(ctx), { pairs });
+  const entryOf = (name: string) => ctx.staples.find((s) => s.staple.name === name);
+  const shortOf = (name: string) => entryOf(name)?.staple.short;
   return hits.map((h: Hit) => ({
     staple: h.staple,
     short: shortOf(h.staple),
+    name: entryOf(h.staple)?.card.name,
     pattern: h.pattern,
     stepId: h.stepId,
     step: numbers.get(h.stepId),
     ...(h.phrase && { phrase: h.phrase.text }),
     ...(h.count !== undefined && { count: h.count }),
+    /** Liegende Gegnerkarte, die den Schritt beantwortet; sonst kommt der Staple von der Hand */
+    ...(h.source &&
+      ctx.start.cards[h.source] && { source: cardView(ctx, ctx.start.cards[h.source]) }),
     /** So legt man den Branch an */
     branch: {
       after: h.stepId || 'start',
@@ -776,6 +782,15 @@ export function endboardView(ctx: ComboContext, stepId: string | null) {
   });
   return {
     leafId: leaf?.id ?? null,
+    opponentBoard: ctx.staples
+      .filter((s) => s.instanceId)
+      .map((s) => ({
+        instanceId: s.instanceId,
+        cardId: s.card.id,
+        automaticallyCalculated: !s.staple.uncomputed,
+        limitation:
+          'Possible responses only; costs and other activation conditions need manual checking. Floodgates are not simulated.',
+      })),
     interruptions: summary.interruptions,
     field: summary.field.map(entry),
     hand: summary.hand.map(entry),

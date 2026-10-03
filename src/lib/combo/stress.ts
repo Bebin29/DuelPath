@@ -1,5 +1,6 @@
 import {
   onField,
+  isOptAvailable,
   pathTo,
   type CardData,
   type ComboNodeData,
@@ -21,6 +22,11 @@ export interface StapleEntry {
   staple: Staple;
   /** Passcode der Staple-Karte, für gesetzte Karten auf dem Gegnerboard */
   cardId: string;
+  /**
+   * Liegende Karte des Gegnerboards statt Handtrap (opponent-board.ts): Sie stört nur so lange,
+   * wie diese Instanz offen auf dem Feld liegt und ihr Effekt nicht negiert ist.
+   */
+  instanceId?: string;
 }
 
 export interface Hit {
@@ -36,6 +42,8 @@ export interface Hit {
   phrase?: { cardId: string; effectIndex: number; text: string };
   /** Zahl zur Begründung, etwa Karten, die der Gegner durch Mulcharmy zieht */
   count?: number;
+  /** Liegende Gegnerkarte, die den Schritt beantwortet; fehlt bei Handtraps */
+  source?: string;
 }
 
 /** Suchen, Beschwören oder Senden aus dem Main Deck; „Extra Deck“ zählt nicht (Ash) */
@@ -113,7 +121,30 @@ function summonsOf(
 const faceUp = (c: PlacedCard | undefined) => !!c && c.position !== 'SET';
 
 /** Züge des Gegners, bei denen der Staple überhaupt verfügbar ist */
-function available(entry: StapleEntry, state: GameState): boolean {
+function available(entry: StapleEntry, state: GameState, cards: Map<string, CardData>): boolean {
+  if (entry.instanceId) {
+    // Gegnerboard: Die Line kann die Karte vorher vom Feld räumen oder ihren Effekt negieren
+    const placed = state.cards[entry.instanceId];
+    const card = cards.get(entry.cardId);
+    return (
+      !!placed &&
+      onField(placed.zone) &&
+      placed.controller === 'opponent' &&
+      (entry.staple.kind === 'setTrap' || faceUp(placed)) &&
+      !state.negatedNames.includes(entry.cardId) &&
+      !!card &&
+      isOptAvailable(
+        state,
+        {
+          instanceId: placed.instanceId,
+          effectIndex: entry.staple.effectIndex ?? 0,
+          player: 'opponent',
+        },
+        card
+      ) &&
+      state.negatedCards[placed.instanceId] !== placed.epoch
+    );
+  }
   if (!entry.staple.needsSet) return true;
   return Object.values(state.cards).some(
     (c) =>
@@ -165,7 +196,7 @@ export function stressTest(
 
   const hits: Hit[] = [];
   const seen = new Set<string>();
-  const add = (hit: Hit) => {
+  const addHit = (hit: Hit) => {
     const key = `${hit.staple}:${hit.stepId}`;
     const node = line.find((n) => n.id === hit.stepId);
     if (seen.has(key) || node?.ignoredHits?.includes(hit.staple)) return;
@@ -178,6 +209,8 @@ export function stressTest(
 
   for (const entry of staples) {
     const { staple } = entry;
+    // Treffer einer liegenden Gegnerkarte nennen die Instanz, die den Schritt beantwortet
+    const add = (hit: Hit) => addHit(entry.instanceId ? { ...hit, source: entry.instanceId } : hit);
     for (const pattern of staple.hits ?? []) {
       // Muster über die ganze Line
       if (pattern === 'TURN_START_DECK_SUMMONS' || pattern === 'TURN_START_HAND_SUMMONS') {
@@ -248,7 +281,7 @@ export function stressTest(
         const node = line[i];
         if (node.player !== 'self' || !VISIBLE(node)) continue;
         const b = before(i);
-        if (!available(entry, b)) continue;
+        if (!available(entry, b, cards)) continue;
         const act = activationOf(node, b, cards);
         const base = { staple: staple.name, pattern, stepId: node.id, anchorId: node.id };
         const phrase = (text: string | null) =>
@@ -289,6 +322,12 @@ export function stressTest(
           case 'MONSTER_EFFECT':
             if (act && isMonster(act.card)) add({ ...base, target: act.instanceId });
             break;
+          case 'SPELL_ACTIVATION':
+            if (act && isSpell(act.card)) add({ ...base, target: act.instanceId });
+            break;
+          case 'TRAP_ACTIVATION':
+            if (act && isTrap(act.card)) add({ ...base, target: act.instanceId });
+            break;
           case 'SPELL_TRAP_ACTIVATION':
             if (act && (isSpell(act.card) || isTrap(act.card)))
               add({ ...base, target: act.instanceId });
@@ -319,10 +358,15 @@ export function stressTest(
   return hits;
 }
 
-/** Chips pro sichtbarem Schritt */
+/**
+ * Chips pro sichtbarem Schritt. Liegende Gegnerkarten stehen vorn: Sie sind sicher da,
+ * während eine Handtrap erst auf der Hand des Gegners liegen muss.
+ */
 export function hitsByStep(hits: Hit[]): Map<string, Hit[]> {
   const map = new Map<string, Hit[]>();
   for (const hit of hits) map.set(hit.stepId, [...(map.get(hit.stepId) ?? []), hit]);
+  for (const [stepId, list] of map)
+    map.set(stepId, [...list.filter((h) => h.source), ...list.filter((h) => !h.source)]);
   return map;
 }
 
@@ -332,7 +376,7 @@ export function hitsByStep(hits: Hit[]): Map<string, Hit[]> {
  */
 export function stressBranch(
   hit: Pick<Hit, 'anchorId' | 'target'>,
-  entry: { staple: Staple; card: CardData },
+  entry: { staple: Staple; card: CardData; instanceId?: string },
   nodes: ComboNodeData[],
   states: Map<string, GameState>,
   start: GameState,
@@ -341,7 +385,15 @@ export function stressBranch(
   const parent = hit.anchorId ? (nodes.find((n) => n.id === hit.anchorId) ?? null) : null;
   const before = (parent && states.get(parent.id)) || start;
   const ancestors = parent ? pathTo(nodes, parent.id) : [];
-  const node = reactionNode(parent, entry.card, entry.staple, 'opponent', before, ancestors);
+  const node = reactionNode(
+    parent,
+    entry.card,
+    entry.staple,
+    'opponent',
+    before,
+    ancestors,
+    entry.instanceId
+  );
   const target = hit.target ? before.cards[hit.target] : undefined;
   const removal =
     target && entry.staple.removes === 'destroy' && onField(target.zone)
@@ -363,7 +415,9 @@ export function stressBranch(
 export function existingBranch(
   nodes: ComboNodeData[],
   anchorId: string | null,
-  cardId: string
+  cardId: string,
+  /** Zwei Kopien derselben Karte auf dem Gegnerboard bekommen je einen eigenen Branch */
+  instanceId?: string
 ): ComboNodeData | undefined {
   const parents = new Set<string | null>([anchorId]);
   for (const n of nodes) if (n.parentId === anchorId && n.kind === 'OPPONENT') parents.add(n.id);
@@ -372,6 +426,7 @@ export function existingBranch(
       parents.has(n.parentId) &&
       n.kind === 'ACTIVATE' &&
       n.player === 'opponent' &&
-      n.cardId === cardId
+      n.cardId === cardId &&
+      (!instanceId || n.instanceId === instanceId)
   );
 }

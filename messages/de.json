@@ -344,7 +344,12 @@
     },
     "startEditor": {
       "add": "Karte in den Startzustand",
-      "hint": "Starthand und Gegnerboard festlegen. Karten lassen sich im Zustandspanel zwischen Zonen ziehen."
+      "hint": "Starthand und Gegnerboard festlegen. Karten lassen sich im Zustandspanel zwischen Zonen ziehen.",
+      "boards": "Gegnerboards",
+      "boardsHint": "Dasselbe Board gegen dasselbe Deck einmal stellen und speichern. Einsetzen ersetzt die Gegnerseite, die eigene Hand bleibt.",
+      "boardName": "Matchup, etwa Fiendsmith",
+      "boardSave": "Speichern",
+      "boardRemove": "Gegnerboard {{name}} löschen"
     },
     "reactions": {
       "opponent": "Schnellauswahl: Gegner reagiert mit",
@@ -636,6 +641,8 @@
     "missing_other": "fehlt: {{count}} Karten",
     "missingLabel": "fehlt",
     "hitReason": "{{staple}} trifft: {{why}}",
+    "hitReasonBoard": "{{staple}} liegt und beantwortet: {{why}}",
+    "onBoard": "liegt auf dem Gegnerboard",
     "pattern": {
       "FROM_DECK": "Suche aus dem Deck",
       "FROM_GY": "Karte verlässt den Friedhof",
@@ -651,13 +658,17 @@
       "ADD_FROM_DECK": "Karte aus dem Deck auf die Hand",
       "GY_NEEDED_LATER": "Karte im Friedhof wird später gebraucht",
       "TURN_START_DECK_SUMMONS": "Gegner zieht {{count}} (Beschwörungen aus Deck und Extra Deck)",
-      "TURN_START_HAND_SUMMONS": "Gegner zieht {{count}} (Beschwörungen von der Hand)"
+      "TURN_START_HAND_SUMMONS": "Gegner zieht {{count}} (Beschwörungen von der Hand)",
+      "SPELL_ACTIVATION": "Zauberaktivierung",
+      "TRAP_ACTIVATION": "Fallenaktivierung"
     },
     "pairs": "Paare",
     "pairsHint": "In einem Branch mit Unterbrechung zeigt der Stresstest, was danach noch trifft („Ash und dann Imperm“)",
     "pairsInBranch_one": "{{count}} weitere Unterbrechung in diesem Branch",
     "pairsInBranch_other": "{{count}} weitere Unterbrechungen in diesem Branch",
-    "scanning": "Stresstest · Schritt {{n}} von {{total}}"
+    "scanning": "Stresstest · Schritt {{n}} von {{total}}",
+    "notCalculated": "Nicht automatisch berechnet",
+    "boardLimitations": "Mögliche Antworten. Kosten und weitere Aktivierungsbedingungen müssen manuell geprüft werden; Floodgates werden nicht simuliert."
   },
   "endboard": {
     "interruptions_one": "Unterbrechung",

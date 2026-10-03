@@ -19,9 +19,13 @@ const quick = (e: CardEffect) => e.patterns.includes('QUICK');
 const FROM_HAND =
   /discard this card|send this card from your hand|activate this card from your hand|from your hand to the GY/i;
 
-/** Wie viele Unterbrechungen die Karte an ihrem Ort voraussichtlich stellt */
+/**
+ * Wie viele Unterbrechungen die Karte an ihrem Ort voraussichtlich stellt.
+ * Gilt für beide Seiten: das Endboard zählt die eigenen Karten, das Gegnerboard die liegenden
+ * Störquellen (opponent-board.ts). Wessen Karten gezählt werden, entscheidet der Aufrufer.
+ */
 export function interruptionsOf(card: CardData | undefined, placed: PlacedCard): number {
-  if (!card || placed.controller !== 'self') return 0;
+  if (!card) return 0;
   const active = card.effects.filter((e) => e.activated);
   const isTrap = /Trap/.test(card.type);
   switch (placed.zone) {

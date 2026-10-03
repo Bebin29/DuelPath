@@ -396,9 +396,9 @@ export function Workbench({
    * springt die Workbench dorthin, statt ihn doppelt anzulegen.
    */
   const openStressBranch = (hit: Pick<Hit, 'staple' | 'anchorId' | 'target' | 'stepId'>) => {
-    const entry = staples.find((s) => s.staple.name === hit.staple);
+    const entry = stress.entryOf(hit.staple);
     if (!entry) return;
-    const existing = existingBranch(nodes, hit.anchorId, entry.card.id);
+    const existing = existingBranch(nodes, hit.anchorId, entry.card.id, entry.instanceId);
     if (existing) return select(existing.id);
     registerCard(entry.card);
     const n = stress.numberOf(hit.stepId);
@@ -787,7 +787,7 @@ export function Workbench({
       return [item('end', t('combo.kind.END'), () => flow.play({ kind: 'end' }))];
     if (!cmd.query) return [];
     if (cmd.verb === 'staple') {
-      const list = stress.chosen.map((s) => ({
+      const list = stress.all.map((s) => ({
         id: s.staple.name,
         name: s.card.name,
         nameDe: s.card.nameDe,
@@ -1019,8 +1019,7 @@ export function Workbench({
                     ? {
                         byStep: stress.byStep,
                         run: stressRun,
-                        imageOf: (name) =>
-                          staples.find((s) => s.staple.name === name)?.card.imageSmall ?? null,
+                        imageOf: stress.imageOf,
                         describe: (hit) => describeHit(hit, stress.shortOf(hit.staple), t),
                         onPick: openStressBranch,
                         onHover: hoverChoke,
@@ -1375,5 +1374,6 @@ function describeHit(
 ): string {
   const name = short ?? hit.staple;
   const why = hit.phrase?.text ?? t(`stress.pattern.${hit.pattern}`, { count: hit.count ?? 0 });
-  return t('stress.hitReason', { staple: name, why });
+  // Liegende Gegnerkarte: der Schritt wird beantwortet, nicht erst eine Handtrap gezogen
+  return t(hit.source ? 'stress.hitReasonBoard' : 'stress.hitReason', { staple: name, why });
 }

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DEFAULT_THEME, type Theme } from '@/lib/theme';
+import type { Position, Zone } from '@/lib/combo/state';
 
 /**
  * Nutzereinstellungen (UX-Plan 5 und 16), gespeichert als JSON am Nutzer.
@@ -21,6 +22,26 @@ export interface UserSettings {
   nicknames: Nickname[];
   /** Einmalige Hinweise, die der Nutzer schon gesehen hat (UX-Plan 11) */
   seenHints: string[];
+  /** Gespeicherte Gegnerboards je Matchup, damit dasselbe Board nicht jedes Mal neu entsteht */
+  opponentBoards: OpponentBoardPreset[];
+}
+
+/** Zonen, in denen ein gespeichertes Gegnerboard Karten ablegt */
+export const BOARD_ZONES = [
+  'MONSTER',
+  'SPELL_TRAP',
+  'FIELD',
+  'GY',
+  'BANISHED',
+  'HAND',
+] as const satisfies readonly Zone[];
+export type BoardZone = (typeof BOARD_ZONES)[number];
+
+/** Ein Gegnerboard ohne Instanz-IDs; die entstehen erst beim Einsetzen in einen Startzustand */
+export interface OpponentBoardPreset {
+  /** Matchup, etwa „Fiendsmith“ */
+  name: string;
+  cards: { cardId: string; zone: BoardZone; position?: Position }[];
 }
 
 export interface Nickname {
@@ -53,6 +74,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   autoplaySpeed: 1,
   nicknames: [],
   seenHints: [],
+  opponentBoards: [],
 };
 
 export const settingsPatchSchema = z
@@ -69,6 +91,23 @@ export const settingsPatchSchema = z
       .max(200)
       .optional(),
     seenHints: z.array(z.string().max(40)).max(40).optional(),
+    opponentBoards: z
+      .array(
+        z.object({
+          name: z.string().trim().min(1).max(40),
+          cards: z
+            .array(
+              z.object({
+                cardId: z.string().min(1).max(20),
+                zone: z.enum(BOARD_ZONES),
+                position: z.enum(['ATK', 'DEF', 'SET']).optional(),
+              })
+            )
+            .max(40),
+        })
+      )
+      .max(20)
+      .optional(),
   })
   .strict();
 
