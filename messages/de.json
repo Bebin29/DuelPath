@@ -855,6 +855,51 @@
       "notInMain": "{{name}}: weniger im Main Deck als geplant"
     }
   },
+  "practice": {
+    "title": "Übungsmodus",
+    "open": "Üben",
+    "hint": "Zufallshand ziehen und die Line selbst spielen. Die passenden Combos bleiben bis zur Auswertung verborgen.",
+    "intro": "{{count}} Hände hintereinander: Du ziehst, spielst die Line an der Werkbank und siehst danach, wie dein Ende gegen das beste bekannte steht. Die Uhr läuft ab der ersten Karte.",
+    "targetCount_one": "{{count}} gespeicherte Line für dieses Deck",
+    "targetCount_other": "{{count}} gespeicherte Lines für dieses Deck",
+    "noTargets": "Für dieses Deck ist noch keine Line gespeichert. Leg erst eine Combo an, dann gibt es etwas zu vergleichen.",
+    "noHands": "Keine gezogene Hand passt auf eine gespeicherte Line. Sieh dir die Starthände deiner Combos und das Main Deck an.",
+    "start": "Lauf starten",
+    "backToDeck": "Zurück zum Deck",
+    "handOf": "Hand {{n}} von {{total}}",
+    "elapsed": "Gebrauchte Zeit",
+    "startHint": "Die Hand steht. Spiel sie vom Board aus: Karte anklicken oder auf eine Zone ziehen.",
+    "finishHand": "Hand auswerten",
+    "quit": "Übung beenden",
+    "resultTitle": "Auswertung der Hand",
+    "yourBoard": "Dein Ende",
+    "bestKnown": "Bestes bekanntes Ende",
+    "emptyBoard": "Nichts auf dem eigenen Feld",
+    "stepCount_one": "{{count}} Schritt",
+    "stepCount_other": "{{count}} Schritte",
+    "missing_one": "{{count}} Karte des Vorbilds fehlt dir",
+    "missing_other": "{{count}} Karten des Vorbilds fehlen dir",
+    "missingLabel": "Fehlende Karten",
+    "alsoMatching": "Passte außerdem",
+    "nextHand": "Nächste Hand",
+    "toSummary": "Zur Auswertung",
+    "summaryTitle": "Auswertung des Laufs",
+    "summaryLead": "Bei {{short}} von {{played}} Händen bist du unter dem besten bekannten Ende geblieben.",
+    "score": "{{reached}} von {{best}}",
+    "again": "Neuer Lauf",
+    "verdict": {
+      "short": "darunter",
+      "equal": "gleichauf",
+      "ahead": "darüber"
+    },
+    "totals": {
+      "short": "Darunter",
+      "equal": "Gleichauf",
+      "ahead": "Darüber",
+      "time": "Zeit gesamt",
+      "perHand": "Schnitt je Hand"
+    }
+  },
   "newCombo": {
     "title": "Starthand wählen",
     "text": "Klick legt eine Kopie auf die Hand, Klick auf die Karte unten nimmt sie zurück.",

@@ -31,7 +31,7 @@ import { reactionNode, type Staple } from '@/lib/combo/reactions';
 import { candidateEffects, toSuggestionInput, type Candidate } from '@/lib/combo/suggestions';
 import { dropMeaning, type DropTarget } from '@/lib/combo/play';
 import { existingBranch, stressBranch, type Hit } from '@/lib/combo/stress';
-import { endboardSummary, lineEnds, missingCards } from '@/lib/combo/endboard';
+import { endboardSummary, fieldCardIds, lineEnds, missingCards } from '@/lib/combo/endboard';
 import { usedOptNames } from '@/lib/combo/opt-names';
 import type { ComboStatus } from '@/lib/combo/library';
 import { getDeckCounts } from '@/server/actions/deck-view.actions';
@@ -65,6 +65,7 @@ import { LineList } from './LineList';
 import { StepBar } from './StepBar';
 import { TreeCanvas } from './TreeCanvas';
 import { WorkbenchHeader, type SaveStatus, type WorkbenchMode } from './WorkbenchHeader';
+import { PracticeBar, type PracticeRun } from './PracticeBar';
 import { nodeCardId, stepLabel } from './step-label';
 
 interface Doc {
@@ -107,6 +108,9 @@ const isTyping = (target: EventTarget | null) =>
 /**
  * Combo-Workbench (UX-Plan 6, UI-Plan 7.1 bis 7.3): Board-Modus mit Line-Liste, Board, Schrittleiste
  * und Inspector; Baum-Modus mit Schritt-Detail. Wechsel mit V, Undo mit Strg+Z.
+ *
+ * Mit `practice` läuft eine Übungshand (Lücke L2): dieselbe Werkbank, aber nichts wird gespeichert,
+ * und statt der Kopfzeile steht die Übungsleiste mit Uhr und Auswertungsknopf darüber.
  */
 export function Workbench({
   initial,
@@ -114,12 +118,14 @@ export function Workbench({
   decks,
   initialView,
   initialStep,
+  practice,
 }: {
   initial: LoadedCombo;
   staples: StapleCard[];
   decks: { id: string; name: string }[];
   initialView?: string;
   initialStep?: string;
+  practice?: PracticeRun;
 }) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
@@ -238,9 +244,12 @@ export function Workbench({
   const candidates = useMemo(() => candidateEffects(after, actor, cards), [after, actor, cards]);
   const suggestionInput = useMemo(() => toSuggestionInput(after, candidates), [after, candidates]);
 
-  // Automatisch speichern, kurz nach der letzten Änderung (kein Speichern-Knopf, UX-Plan 10)
+  // Automatisch speichern, kurz nach der letzten Änderung (kein Speichern-Knopf, UX-Plan 10).
+  // Eine Übungshand gehört niemandem: sie wird gespielt, ausgewertet und weggeworfen.
+  const isPractice = Boolean(practice);
   const firstRender = useRef(true);
   useEffect(() => {
+    if (isPractice) return;
     if (firstRender.current) {
       firstRender.current = false;
       return;
@@ -264,16 +273,17 @@ export function Workbench({
       setStatus(result.data ? 'saved' : result.error === 'CONFLICT' ? 'conflict' : 'error');
     }, 800);
     return () => clearTimeout(timer);
-  }, [initial.id, title, deckId, tags, comboStatus, startState, nodes, saveAttempt]);
+  }, [initial.id, title, deckId, tags, comboStatus, startState, nodes, saveAttempt, isPractice]);
 
   // Modus und Schritt stehen in der Adresse (UX-Plan 5): Neuladen landet an derselben Stelle
   useEffect(() => {
+    if (isPractice) return;
     const url = new URL(window.location.href);
     url.searchParams.set('view', mode);
     if (selected) url.searchParams.set('step', selected.id);
     else url.searchParams.delete('step');
     window.history.replaceState(null, '', url);
-  }, [mode, selected]);
+  }, [mode, selected, isPractice]);
 
   const focus = useCallback((id: string) => {
     setSelectedId(id);
@@ -479,6 +489,22 @@ export function Workbench({
     },
     [nodes, states, start, cards]
   );
+
+  /**
+   * Übungshand auswerten (Lücke L2): gezählt wird das Ende der Line, auf der der Nutzer steht,
+   * nicht der gerade gewählte Schritt. Ein Blick zurück in die Schritte verkleinert das Ergebnis
+   * also nicht.
+   */
+  const finishPractice = () => {
+    if (!practice) return;
+    const leaf = line.at(-1);
+    const state = (leaf && states.get(leaf.id)) || after;
+    const summary = endboardSummary(state, start, cards, leaf?.interruptions);
+    practice.onFinish(
+      { interruptions: summary.interruptions, field: fieldCardIds(state) },
+      Date.now() - practice.startedAt
+    );
+  };
 
   /** Ablegen am Board spielt den Schritt (UX-Plan 6.3); die Starthand legt der Editor fest */
   const handleDrop = (instanceId: string, target: DropTarget, shift: boolean) => {
@@ -928,13 +954,18 @@ export function Workbench({
         <p className="font-mono text-2xs text-text-subtle">{t('workbench.step', { n: 0 })}</p>
         <h2 className="font-display text-2xl leading-tight">{t('workbench.startHand')}</h2>
       </header>
-      <StartStatePanel
-        startState={startState}
-        cards={cards}
-        onChange={(next) => setDoc((d) => ({ ...d, startState: next }))}
-        onRegisterCard={registerCard}
-        deckId={deckId}
-      />
+      {/* In der Übung ist die Hand gezogen und bleibt, wie sie ist; sonst gäbe es nichts zu üben */}
+      {practice ? (
+        <p className="text-sm text-text-muted">{t('practice.startHint')}</p>
+      ) : (
+        <StartStatePanel
+          startState={startState}
+          cards={cards}
+          onChange={(next) => setDoc((d) => ({ ...d, startState: next }))}
+          onRegisterCard={registerCard}
+          deckId={deckId}
+        />
+      )}
       <SuggestionPanel
         input={suggestionInput}
         candidates={candidates}
@@ -961,38 +992,49 @@ export function Workbench({
             })
           : t('workbench.startHand')}
       </p>
-      <WorkbenchHeader
-        title={title}
-        onTitle={(value) => setDoc((d) => ({ ...d, title: value }), 'title')}
-        deckId={deckId}
-        decks={decks}
-        onDeck={(value) => setDoc((d) => ({ ...d, deckId: value }))}
-        mode={mode}
-        onMode={setMode}
-        canUndo={history.canUndo}
-        canRedo={history.canRedo}
-        onUndo={history.undo}
-        onRedo={history.redo}
-        warnings={lineWarnings}
-        onWarnings={() => {
-          const first = line.find((n) => warningCount(n.id) > 0);
-          if (first) select(first.id);
-        }}
-        status={status}
-        onRetry={() => setSaveAttempt((n) => n + 1)}
-        stress={stressOn}
-        chokePoints={stress.byStep.size}
-        onStress={toggleStress}
-        pairs={pairsOn}
-        onPairs={() => {
-          setPairsOn((on) => !on);
-          setStressRun((n) => n + 1);
-        }}
-        comboStatus={comboStatus}
-        onComboStatus={(value) => setDoc((d) => ({ ...d, status: value }))}
-        tags={tags}
-        onTags={(value) => setDoc((d) => ({ ...d, tags: value }))}
-      />
+      {practice ? (
+        <PracticeBar
+          run={practice}
+          canUndo={history.canUndo}
+          canRedo={history.canRedo}
+          onUndo={history.undo}
+          onRedo={history.redo}
+          onFinish={finishPractice}
+        />
+      ) : (
+        <WorkbenchHeader
+          title={title}
+          onTitle={(value) => setDoc((d) => ({ ...d, title: value }), 'title')}
+          deckId={deckId}
+          decks={decks}
+          onDeck={(value) => setDoc((d) => ({ ...d, deckId: value }))}
+          mode={mode}
+          onMode={setMode}
+          canUndo={history.canUndo}
+          canRedo={history.canRedo}
+          onUndo={history.undo}
+          onRedo={history.redo}
+          warnings={lineWarnings}
+          onWarnings={() => {
+            const first = line.find((n) => warningCount(n.id) > 0);
+            if (first) select(first.id);
+          }}
+          status={status}
+          onRetry={() => setSaveAttempt((n) => n + 1)}
+          stress={stressOn}
+          chokePoints={stress.byStep.size}
+          onStress={toggleStress}
+          pairs={pairsOn}
+          onPairs={() => {
+            setPairsOn((on) => !on);
+            setStressRun((n) => n + 1);
+          }}
+          comboStatus={comboStatus}
+          onComboStatus={(value) => setDoc((d) => ({ ...d, status: value }))}
+          tags={tags}
+          onTags={(value) => setDoc((d) => ({ ...d, tags: value }))}
+        />
+      )}
 
       {/* Moduswechsel (Szene „Moduswechsel“): das Board tritt mit Unschärfe zurück, der Baum wächst */}
       <AnimatePresence mode="popLayout" initial={false}>
