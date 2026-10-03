@@ -31,7 +31,10 @@ export function toComboCard(row: {
   };
 }
 
-export function displayName(card: ComboCard | undefined, language: string): string {
+export function displayName(
+  card: { name: string; nameDe: string | null } | undefined,
+  language: string
+): string {
   if (!card) return '?';
   return language.startsWith('de') && card.nameDe ? card.nameDe : card.name;
 }

@@ -447,7 +447,20 @@
     "apiDocs": "Send requests with Authorization: Bearer <token> to /api/v1. Description at /api/v1/openapi.json.",
     "showAll": "Show all {{count}}",
     "showLess": "Show less",
-    "sections": "Sections"
+    "sections": "Sections",
+    "banlist": "Banlist",
+    "banlistText": "The current list comes with the card import; correct its date here if needed. Next to it there is room for a second list with the announced changes, and the deck check switches between the two.",
+    "banlistCurrent": "Current list, as of",
+    "banlistDate": "As of",
+    "banlistName": "Name",
+    "banlistNextName": "Next list",
+    "banlistAddNext": "Add next list",
+    "banlistRemoveNext": "Remove",
+    "banlistEmpty": "No change yet. Anything missing here stays as on the current list.",
+    "banlistAddCard": "Add card",
+    "banlistAddHint": "Only enter the changes. Everything else stays as on the current list.",
+    "banlistStatus": "{{name}}: status on the next list",
+    "banlistRemoveCard": "Remove {{name}}"
   },
   "workbench": {
     "board": "Board",
