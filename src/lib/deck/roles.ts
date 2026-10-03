@@ -25,8 +25,11 @@ export function parseRoles(value: unknown): Roles {
   ) as Roles;
 }
 
-/** Bekannte Boardbreaker für den Vorschlag; Verbotenes landet ohnehin nicht im Deck */
-const BREAKERS = new Set([
+/**
+ * Standardliste bekannter Boardbreaker (Deckbau-Plan 3.2); Verbotenes landet ohnehin nicht im Deck.
+ * Nur die Vorgabe: Nutzer pflegen ihre eigene Liste in den Einstellungen.
+ */
+export const DEFAULT_BREAKERS = [
   'Evenly Matched',
   'Dark Ruler No More',
   'Lightning Storm',
@@ -38,17 +41,24 @@ const BREAKERS = new Set([
   'Book of Eclipse',
   'Interrupted Kaiju Slumber',
   'Super Polymerization',
-]);
-const isBreaker = (name: string) => BREAKERS.has(name) || / Kaiju$/.test(name);
+];
+
+/** Gepflegte Breaker-Liste des Nutzers, ohne eigene Auswahl die Standardliste */
+export const breakerSet = (breakers: string[] | null) => new Set(breakers ?? DEFAULT_BREAKERS);
+
+/** Kaijus sind eine ganze Kartenfamilie und darum eine Regel statt elf Namen in der Liste */
+const isBreaker = (name: string, breakers: Set<string>) =>
+  breakers.has(name) || / Kaiju$/.test(name);
 
 /**
  * Rollen-Vorschläge: Starter aus 1-Card-Combos, Extender aus größeren Starthänden, Breaker aus der
- * festen Liste, Handtraps aus den Staples. Gesetzte Rollen bleiben unberührt.
+ * gepflegten Liste, Handtraps aus den Staples. Gesetzte Rollen bleiben unberührt.
  */
 export function suggestRoles(
   cards: { id: string; name: string }[],
   starthands: string[][],
   staples: Set<string>,
+  breakers: Set<string>,
   roles: Roles
 ): Roles {
   const starters = new Set(starthands.filter((h) => new Set(h).size === 1).map((h) => h[0]));
@@ -60,7 +70,7 @@ export function suggestRoles(
       ? 'starter'
       : extenders.has(id)
         ? 'extender'
-        : isBreaker(name)
+        : isBreaker(name, breakers)
           ? 'breaker'
           : staples.has(id)
             ? 'handtrap'
