@@ -87,6 +87,20 @@ describe('matchMechanics', () => {
     expect(keysOf(trigger)).toContain('TRIGGER_IF_OR_MANDATORY');
   });
 
+  it('zeigt für Quick Effects keine Regel zum verpassten Trigger-Timing', () => {
+    expect(keysOf(ASH)).not.toContain('TRIGGER_WHEN_OPTIONAL');
+    const mixed = {
+      name: 'X',
+      type: 'Effect Monster',
+      race: 'Warrior',
+      desc: 'When this card is Normal Summoned: You can draw 1 card.\nWhen a card or effect is activated (Quick Effect): You can discard this card; negate that effect.',
+    };
+    expect(keysOf(mixed)).toContain('TRIGGER_WHEN_OPTIONAL');
+    expect(
+      keysOf({ ...mixed, desc: mixed.desc.replace('When this card', 'If this card') })
+    ).toContain('TRIGGER_IF_OR_MANDATORY');
+  });
+
   it('verlangt für CONTINUOUS_ST_MUST_REMAIN eine Continuous Spell mit aktiviertem Effekt', () => {
     expect(keysOf(DARK_MAGICAL_CIRCLE)).toContain('CONTINUOUS_ST_MUST_REMAIN');
     // Normal Spell bleibt nicht liegen, die Regel passt nicht
@@ -124,6 +138,12 @@ describe('matchMechanics', () => {
     const withCost = { ...base, desc: 'You can discard 1 card; draw 1 card.' };
 
     expect(keysOf(noCost)).not.toContain('COST');
+    expect(
+      keysOf({
+        ...base,
+        desc: 'If this card is Summoned: You can send 1 card from your Deck to the GY.',
+      })
+    ).not.toContain('COST');
     expect(keysOf(withCost)).toContain('COST');
   });
 

@@ -83,9 +83,18 @@ const REFINE: Record<
   // CONDITION trifft jeden Doppelpunkt; gemeint ist der Bedingungsteil eines aktivierten Effekts
   ACTIVATION_CONDITION: (_text, card) =>
     card.effects.some((e) => e.activated && e.text.includes(':')),
+  COST: (_text, card) => card.effects.some((e) => hasCostPart(e.text)),
+  TRIGGER_WHEN_OPTIONAL: (_text, card) =>
+    card.effects.some(
+      (e) => e.patterns.includes('TRIGGER_WHEN_OPT') && !e.patterns.includes('QUICK')
+    ),
   // Laut Eintrag selbst: TRIGGER_MANDATORY trifft auch Quick Effects mit "When", zuerst QUICK prüfen
-  TRIGGER_IF_OR_MANDATORY: (_text, _card, found) =>
-    found.has('TRIGGER_IF_OPT') || !found.has('QUICK'),
+  TRIGGER_IF_OR_MANDATORY: (_text, card) =>
+    card.effects.some(
+      (e) =>
+        !e.patterns.includes('QUICK') &&
+        (e.patterns.includes('TRIGGER_IF_OPT') || e.patterns.includes('TRIGGER_MANDATORY'))
+    ),
 };
 
 /**
