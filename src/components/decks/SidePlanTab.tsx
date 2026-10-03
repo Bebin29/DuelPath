@@ -13,13 +13,16 @@ import { newId } from '@/lib/combo/tree';
 import { HAND_SIZE } from '@/lib/deck/hand-tester';
 import { ROLES, suggestRoles, type Going, type Role, type Roles } from '@/lib/deck/roles';
 import { adjustPlan, applySidePlan, type SidePlan } from '@/lib/deck/side-plan';
+import { knownMatchups, type DeckGame, type GameInput } from '@/lib/deck/games';
 import type { LibraryEntry } from '@/lib/combo/library';
 import type { DeckViewCard, DeckViewEntry } from '@/server/actions/deck-view.actions';
 import { OddsSummary, RoleChip, mainCounts, ratioStats } from './odds-ui';
+import { GameLog } from './GameLog';
 
 /**
  * Side-Plan (Deckbau-Plan 3.6): je Matchup und Zugfolge Karten rein und raus, daneben die
- * Kennzahlen nach dem Siden gegenüber dem Main Deck ohne Plan.
+ * Kennzahlen nach dem Siden gegenüber dem Main Deck ohne Plan. Darunter die Spiele, die mit
+ * dem Plan gelaufen sind (3.7); die laufen an Autosave und Strg+Z vorbei.
  */
 export function SidePlanTab({
   entries,
@@ -29,8 +32,11 @@ export function SidePlanTab({
   combos,
   staples,
   breakers,
+  games,
   onPlans,
   onRoles,
+  onAddGame,
+  onDeleteGame,
   onOpenCard,
 }: {
   entries: DeckViewEntry[];
@@ -41,14 +47,20 @@ export function SidePlanTab({
   staples: Set<string>;
   /** Boardbreaker als Kartennamen, aus den Einstellungen */
   breakers: Set<string>;
+  games: DeckGame[];
   onPlans: (fn: (prev: SidePlan[]) => SidePlan[], group?: string) => void;
   onRoles: (patch: Roles) => void;
+  onAddGame: (input: GameInput) => Promise<boolean>;
+  onDeleteGame: (id: string) => void;
   onOpenCard: (cardId: string) => void;
 }) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
   const [selected, setSelected] = useState<string | null>(plans[0]?.id ?? null);
   const plan = plans.find((p) => p.id === selected) ?? null;
+
+  const planIds = useMemo(() => new Set(plans.map((p) => p.id)), [plans]);
+  const matchups = useMemo(() => knownMatchups(plans, games), [plans, games]);
 
   const starthands = useMemo(() => combos.map((c) => c.stats.required), [combos]);
   const going: Going = plan?.going ?? 'second';
@@ -249,6 +261,16 @@ export function SidePlanTab({
                 <ul className="flex flex-col">{bySection('MAIN').map((e) => row(e, 'out'))}</ul>
               </section>
             </div>
+
+            <GameLog
+              key={plan.id}
+              plan={plan}
+              games={games}
+              planIds={planIds}
+              matchups={matchups}
+              onAdd={onAddGame}
+              onDelete={onDeleteGame}
+            />
           </div>
 
           <aside className="order-first flex flex-col gap-5 self-start rounded-lg border border-line bg-surface-1 p-5 lg:sticky lg:top-6 lg:order-none">

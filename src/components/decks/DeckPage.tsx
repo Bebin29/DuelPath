@@ -49,6 +49,7 @@ import {
   type DeckViewEntry,
 } from '@/server/actions/deck-view.actions';
 import { BanlistBar } from './BanlistBar';
+import { addDeckGame, deleteDeckGame } from '@/server/actions/deck-game.actions';
 import { DeckListTab } from './DeckListTab';
 import { DeckCombosTab } from './DeckCombosTab';
 import { HandTester } from './HandTester';
@@ -57,6 +58,7 @@ import { SidePlanTab } from './SidePlanTab';
 import { DeckVersions, type BaselineKey } from './DeckVersions';
 import { breakerSet, type Roles } from '@/lib/deck/roles';
 import { diffEntries, type SidePlan } from '@/lib/deck/side-plan';
+import type { DeckGame, GameInput } from '@/lib/deck/games';
 
 import type { DeckTab } from '@/lib/deck/deck-tab';
 import { cn } from '@/lib/utils';
@@ -110,6 +112,7 @@ export function DeckPage({
     roles: Roles;
     sidePlans: SidePlan[];
     versions: DeckVersionView[];
+    games: DeckGame[];
   };
   combos: LibraryEntry[];
   comboCards: Record<string, LibraryCard>;
@@ -139,6 +142,8 @@ export function DeckPage({
   });
   const [versions, setVersions] = useState(deck.versions);
   const [removed, setRemoved] = useState<{ id: number; version: DeckVersionView } | null>(null);
+  // Spiele stehen bewusst außerhalb von Doc: kein Autosave, kein Strg+Z (Deckbau-Plan 3.7)
+  const [games, setGames] = useState(deck.games);
   const setDoc = history.set;
   const [cards, setCards] = useState(() => new Map(deck.cards.map((c) => [c.id, c])));
   const [tab, setTab] = useState(initialTab);
@@ -272,6 +277,18 @@ export function DeckPage({
       setVersions((prev) =>
         [...prev, result.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       );
+  };
+  // Eintragen und Löschen gehen über eigene Aktionen, nicht über das Autosave der Seite
+  const addGame = async (input: GameInput) => {
+    const result = await addDeckGame(deck.id, input);
+    if (!result.data) return false;
+    const game = result.data;
+    setGames((prev) => [game, ...prev]);
+    return true;
+  };
+  const removeGame = async (id: string) => {
+    if ((await deleteDeckGame(id)).error) return;
+    setGames((prev) => prev.filter((g) => g.id !== id));
   };
   const openCard = (id: string) =>
     cardSheet.open(id, (cardId, effects) =>
@@ -456,8 +473,11 @@ export function DeckPage({
             combos={combos}
             staples={stapleSet}
             breakers={breakers}
+            games={games}
             onPlans={(fn, group) => setDoc((d) => ({ ...d, sidePlans: fn(d.sidePlans) }), group)}
             onRoles={(patch) => setDoc((d) => ({ ...d, roles: { ...d.roles, ...patch } }))}
+            onAddGame={addGame}
+            onDeleteGame={(id) => void removeGame(id)}
             onOpenCard={openCard}
           />
         )}
