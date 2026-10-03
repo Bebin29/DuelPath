@@ -110,7 +110,7 @@ export async function createDeckFromRequest(userId: string, req: z.infer<typeof 
 export async function deckView(userId: string, deckId: string) {
   const banlist = await prisma.banlist.findUnique({
     where: { key: 'current' },
-    select: { name: true, effectiveOn: true },
+    select: { name: true, effectiveOn: true, importedAt: true },
   });
   const deck = await prisma.deck.findUnique({
     where: { id: deckId },
@@ -166,7 +166,11 @@ export async function deckView(userId: string, deckId: string) {
     side: section('SIDE'),
     warnings: deckIssues(entries, cards),
     // Stand der Liste, gegen die geprüft wurde; null, solange kein Import gelaufen ist
-    banlist: banlist && { name: banlist.name, effectiveOn: toIsoDate(banlist.effectiveOn) },
+    banlist: banlist && {
+      name: banlist.name,
+      effectiveOn: banlist.effectiveOn ? toIsoDate(banlist.effectiveOn) : null,
+      importedAt: banlist.importedAt?.toISOString() ?? null,
+    },
     sidePlans: parseSidePlans(deck.sidePlans).map(({ in: inCards, out, ...plan }) => {
       const named = (r: Record<string, number>) =>
         Object.entries(r).map(([id, quantity]) => ({

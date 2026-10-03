@@ -1,9 +1,25 @@
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('@/lib/prisma/client', () => ({ prisma: {} }));
+const mocks = vi.hoisted(() => ({
+  findMany: vi.fn(),
+  upsert: vi.fn(),
+  transaction: vi.fn(),
+  listUpsert: vi.fn(),
+}));
+vi.mock('@/lib/prisma/client', () => ({
+  prisma: {
+    card: { findMany: mocks.findMany, upsert: mocks.upsert },
+    banlist: { upsert: mocks.listUpsert },
+    $transaction: mocks.transaction,
+  },
+}));
 
-import { mapCard, parseDbDate, type YGOPRODeckCard } from '@/server/services/card-import.service';
+import {
+  mapCard,
+  importTcgCards,
+  type YGOPRODeckCard,
+} from '@/server/services/card-import.service';
 
 const ASH: YGOPRODeckCard = {
   id: 14558127,
@@ -54,18 +70,42 @@ describe('mapCard', () => {
   });
 });
 
-describe('parseDbDate', () => {
-  it('liest den Stand der Kartendatenbank als Ortszeit', () => {
-    const date = parseDbDate([{ database_version: '7.0', last_update: '2026-09-30 14:12:03' }]);
-    expect(date?.getFullYear()).toBe(2026);
-    expect(date?.getMonth()).toBe(8);
-    expect(date?.getDate()).toBe(30);
+describe('import metadata', () => {
+  it('never infers an effective date from the retrieval time', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [ASH] }) })
+    );
+    mocks.findMany.mockResolvedValue([{ id: String(ASH.id), banTcg: null }]);
+    mocks.transaction.mockResolvedValue([]);
+    mocks.listUpsert.mockResolvedValue({});
+    const stats = await importTcgCards();
+    expect(stats.importedAt).toBeInstanceOf(Date);
+    expect(mocks.listUpsert).toHaveBeenLastCalledWith({
+      where: { key: 'current' },
+      create: { key: 'current', name: 'TCG', importedAt: stats.importedAt },
+      update: { importedAt: stats.importedAt },
+    });
+    vi.unstubAllGlobals();
   });
-
-  it('gibt null, wenn die Antwort kein Datum enthält', () => {
-    expect(parseDbDate([])).toBeNull();
-    expect(parseDbDate([{ database_version: '7.0' }])).toBeNull();
-    expect(parseDbDate({ last_update: '2026-09-30 14:12:03' })).toBeNull();
-    expect(parseDbDate([{ last_update: 'übermorgen' }])).toBeNull();
+  it('clears an old confirmed date when restrictions change', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [ASH] }) })
+    );
+    mocks.findMany.mockResolvedValue([{ id: String(ASH.id), banTcg: 'Limited' }]);
+    const stats = await importTcgCards();
+    expect(mocks.listUpsert.mock.lastCall?.[0].update).toEqual({
+      importedAt: stats.importedAt,
+      effectiveOn: null,
+    });
+    vi.unstubAllGlobals();
+  });
+  it('does not publish a fresh snapshot when a card fetch fails', async () => {
+    mocks.listUpsert.mockClear();
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    await expect(importTcgCards()).rejects.toThrow('offline');
+    expect(mocks.listUpsert).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 });

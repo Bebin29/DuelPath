@@ -37,7 +37,7 @@ export function BanlistSettings({
   next: NextDoc | null;
 }) {
   const { t } = useTranslation();
-  const [currentDate, setCurrentDate] = useState(current?.effectiveOn ?? toIsoDate(new Date()));
+  const [currentDate, setCurrentDate] = useState(current?.effectiveOn ?? '');
   const [doc, setDoc] = useState<NextDoc | null>(next);
   const [status, setStatus] = useState<SaveStatus>('saved');
 

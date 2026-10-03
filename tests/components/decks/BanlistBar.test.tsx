@@ -57,4 +57,26 @@ describe('BanlistBar', () => {
     );
     expect(screen.getByText(/unbekannt|unknown/i)).toBeInTheDocument();
   });
+
+  it('zeigt den Abrufzeitpunkt nicht als Gültigkeitsdatum', () => {
+    render(
+      <BanlistBar
+        banlists={{
+          current: {
+            key: 'current',
+            name: 'TCG',
+            effectiveOn: null,
+            importedAt: '2026-10-03T12:00:00Z',
+            changes: {},
+          },
+          next: null,
+        }}
+        value="current"
+        onChange={vi.fn()}
+        issues={0}
+      />
+    );
+    expect(screen.getByText(/unbekannt|unknown/i)).toBeInTheDocument();
+    expect(screen.queryByText(/03\.10\.2026|Oct.*3.*2026/)).not.toBeInTheDocument();
+  });
 });

@@ -128,12 +128,13 @@ model Card {
 /// Banlist mit Stichdatum. "current" schreibt der Kartenimport mit, "next" ist
 /// die nächste Liste und wird von Hand gepflegt; der Deck-Check schaltet um.
 model Banlist {
-  id          String   @id @default(cuid())
-  key         String   @unique // "current" | "next"
+  id          String    @id @default(cuid())
+  key         String    @unique // "current" | "next"
   name        String
-  effectiveOn DateTime // Stand der Liste, also ab wann sie gilt
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  effectiveOn DateTime? // Offizielles Gültigkeitsdatum; null, wenn unbekannt
+  importedAt  DateTime? // Abrufzeit des Daten-Snapshots, kein Gültigkeitsdatum
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   cards BanlistCard[]
 }

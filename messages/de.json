@@ -457,7 +457,7 @@
     "showLess": "Weniger zeigen",
     "sections": "Abschnitte",
     "banlist": "Banlist",
-    "banlistText": "Der Stand der aktuellen Liste kommt aus dem Kartenimport und lässt sich hier nachtragen. Daneben passt eine zweite Liste für die angekündigten Änderungen; der Deck-Check schaltet zwischen beiden um.",
+    "banlistText": "Der Kartenimport kennt kein offizielles Gültigkeitsdatum der Banlist. Trage es hier aus der offiziellen Liste nach. Deine zweite Liste enthält die angekündigten Änderungen; der Deck-Check schaltet zwischen beiden um.",
     "banlistCurrent": "Aktuelle Liste, Stand",
     "banlistDate": "Stand",
     "banlistName": "Name",

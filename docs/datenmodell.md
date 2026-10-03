@@ -48,7 +48,7 @@ Gesucht wird nach Name mit ILIKE ohne Trigramm-Index. Bei etwa 14.000 Karten rei
 
 ## Banlist
 
-**`Banlist`** hält den Stand einer Liste: `key` ist `current` oder `next`, `effectiveOn` sagt, von wann sie ist. Die aktuelle Liste selbst steht weiterhin an den Karten in `banTcg`; der Eintrag `current` kommt beim Kartenimport dazu und trägt nur das Datum. YGOPRODeck nennt kein Datum zur Liste, deshalb gilt der letzte Stand der Kartendatenbank. Er lässt sich in den Einstellungen nachtragen.
+**`Banlist`** trennt das bestätigte Gültigkeitsdatum (`effectiveOn`, unbekannt = null) vom erfolgreichen Datenabruf (`importedAt`). Ein Import erfindet kein Gültigkeitsdatum; ändern sich Beschränkungen, wird ein altes bestätigtes Datum zurückgesetzt. `current` ist die gemeinsame TCG-Liste, `next:<userId>` die private Vergleichsliste eines Nutzers. Die Oberfläche zeigt deren Schlüssel als `next`. Alte globale `next`-Einträge werden nicht als persönliche Liste ausgegeben. Die aktuelle Liste selbst steht an den Karten in `banTcg`.
 
 **`BanlistCard`** gehört zu `next` und enthält nur die Abweichungen von der aktuellen Liste: `status` ist Forbidden, Limited, Semi-Limited oder Unlimited, und Unlimited gibt eine Karte wieder frei. Was nicht eingetragen ist, bleibt wie auf der aktuellen Liste. Der Deck-Check auf der Deckseite schaltet zwischen beiden Listen um.
 

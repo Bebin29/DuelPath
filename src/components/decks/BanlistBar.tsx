@@ -22,7 +22,7 @@ export function BanlistBar({
 }) {
   const { t, i18n } = useTranslation();
   const list = value === 'next' ? banlists.next : banlists.current;
-  const date = list && fromIsoDate(list.effectiveOn);
+  const date = list?.effectiveOn ? fromIsoDate(list.effectiveOn) : null;
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-muted">
       <span>

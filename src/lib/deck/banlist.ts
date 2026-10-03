@@ -15,7 +15,9 @@ export interface BanlistView {
   key: BanlistKey;
   name: string;
   /** Stand der Liste als ISO-Datum, „2026-10-01“ */
-  effectiveOn: string;
+  effectiveOn: string | null;
+  /** Zeitpunkt des erfolgreichen Datenimports, kein Banlist-Gültigkeitsdatum */
+  importedAt?: string | null;
   /** cardId → Status; bei „next“ die Abweichungen von der aktuellen Liste */
   changes: Record<string, BanStatus>;
 }

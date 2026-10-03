@@ -24,12 +24,14 @@ async function userId() {
 const toView = (list: {
   key: string;
   name: string;
-  effectiveOn: Date;
+  effectiveOn: Date | null;
+  importedAt?: Date | null;
   cards: { cardId: string; status: string }[];
 }): BanlistView => ({
-  key: list.key as BanlistKey,
+  key: list.key === 'current' ? 'current' : 'next',
   name: list.name,
-  effectiveOn: toIsoDate(list.effectiveOn),
+  effectiveOn: list.effectiveOn ? toIsoDate(list.effectiveOn) : null,
+  importedAt: list.importedAt?.toISOString() ?? null,
   changes: Object.fromEntries(
     list.cards.filter((c) => isBanStatus(c.status)).map((c) => [c.cardId, c.status as BanStatus])
   ),
@@ -40,18 +42,21 @@ const toView = (list: {
  * ist; `next` fehlt, solange niemand eine nächste Liste angelegt hat.
  */
 export async function getBanlists(): Promise<Banlists> {
+  const uid = await userId();
+  const nextKey = uid ? `next:${uid}` : null;
   const lists = await prisma.banlist.findMany({
-    where: { key: { in: ['current', 'next'] } },
+    where: { key: { in: ['current', ...(nextKey ? [nextKey] : [])] } },
     select: {
       key: true,
       name: true,
       effectiveOn: true,
+      importedAt: true,
       cards: { select: { cardId: true, status: true } },
     },
   });
   const find = (key: BanlistKey) => lists.find((l) => l.key === key);
   const current = find('current');
-  const next = find('next');
+  const next = lists.find((l) => l.key === nextKey);
   return {
     current: current ? toView(current) : null,
     next: next ? toView(next) : null,
@@ -73,7 +78,7 @@ export async function getNextBanlistCards(): Promise<Result<BanlistCardView[]>> 
   const uid = await userId();
   if (!uid) return { error: 'Unauthorized' };
   const cards = await prisma.banlistCard.findMany({
-    where: { banlist: { key: 'next' } },
+    where: { banlist: { key: `next:${uid}` } },
     orderBy: { card: { name: 'asc' } },
     select: {
       cardId: true,
@@ -115,6 +120,8 @@ export async function saveNextBanlist(input: z.input<typeof nextSchema>): Promis
   const parsed = nextSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültige Liste' };
   const { name, effectiveOn, changes } = parsed.data;
+  if (new Set(changes.map((c) => c.cardId)).size !== changes.length)
+    return { error: 'Eine Karte darf nur einmal in der Liste stehen' };
 
   // Nur Karten, die es wirklich gibt; ein unbekannter Passcode würde sonst die Transaktion werfen
   const known = await prisma.card.findMany({
@@ -122,13 +129,14 @@ export async function saveNextBanlist(input: z.input<typeof nextSchema>): Promis
     select: { id: true },
   });
   const knownIds = new Set(known.map((c) => c.id));
-  const cards = changes.filter((c) => knownIds.has(c.cardId));
+  if (changes.some((c) => !knownIds.has(c.cardId))) return { error: 'Unbekannte Karte' };
+  const cards = changes;
 
   const date = fromIsoDate(effectiveOn)!;
   await prisma.$transaction(async (tx) => {
     const list = await tx.banlist.upsert({
-      where: { key: 'next' },
-      create: { key: 'next', name, effectiveOn: date },
+      where: { key: `next:${uid}` },
+      create: { key: `next:${uid}`, name, effectiveOn: date },
       update: { name, effectiveOn: date },
       select: { id: true },
     });
@@ -144,7 +152,7 @@ export async function saveNextBanlist(input: z.input<typeof nextSchema>): Promis
 export async function deleteNextBanlist(): Promise<Result<true>> {
   const uid = await userId();
   if (!uid) return { error: 'Unauthorized' };
-  await prisma.banlist.deleteMany({ where: { key: 'next' } });
+  await prisma.banlist.deleteMany({ where: { key: `next:${uid}` } });
   return { data: true };
 }
 
