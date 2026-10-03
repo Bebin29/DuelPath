@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { initialState, type CardData, type StartState } from '@/lib/combo/state';
+import { hitsByStep, type Hit } from '@/lib/combo/stress';
 import {
   applyPreset,
   boardThreats,
@@ -180,5 +181,23 @@ describe('boardThreats', () => {
     expect(shortName('Apollousa, Bow of the Goddess')).toBe('Apollousa');
     expect(shortName('Baronne de Fleur')).toBe('Baronne de Fleur');
     expect(shortName('Mekk-Knight Crusadia Avramax')).toBe('Mekk-Knight Crusa…');
+  });
+});
+
+describe('hitsByStep', () => {
+  it('stellt die liegende Gegnerkarte vor die Handtraps', () => {
+    const hit = (staple: string, source?: string) =>
+      ({
+        staple,
+        pattern: 'MONSTER_EFFECT',
+        stepId: 's1',
+        anchorId: 's1',
+        ...(source && { source }),
+      }) as Hit;
+    expect(
+      hitsByStep([hit('Ash'), hit('board:apo', 'apo'), hit('Veiler')])
+        .get('s1')!
+        .map((h) => h.staple)
+    ).toEqual(['board:apo', 'Ash', 'Veiler']);
   });
 });

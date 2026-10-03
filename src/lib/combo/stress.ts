@@ -338,10 +338,15 @@ export function stressTest(
   return hits;
 }
 
-/** Chips pro sichtbarem Schritt */
+/**
+ * Chips pro sichtbarem Schritt. Liegende Gegnerkarten stehen vorn: Sie sind sicher da,
+ * während eine Handtrap erst auf der Hand des Gegners liegen muss.
+ */
 export function hitsByStep(hits: Hit[]): Map<string, Hit[]> {
   const map = new Map<string, Hit[]>();
   for (const hit of hits) map.set(hit.stepId, [...(map.get(hit.stepId) ?? []), hit]);
+  for (const [stepId, list] of map)
+    map.set(stepId, [...list.filter((h) => h.source), ...list.filter((h) => !h.source)]);
   return map;
 }
 
