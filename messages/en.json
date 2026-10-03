@@ -370,6 +370,20 @@
       "load": "Load deck into starting state",
       "draw": "Draw into starting hand:"
     },
+    "file": {
+      "menu": "File actions",
+      "export": "Export as JSON",
+      "import": "Import JSON",
+      "imported": "Combo imported",
+      "missing_one": "{{count}} card is not in your card pool: {{names}}",
+      "missing_other": "{{count}} cards are not in your card pool: {{names}}",
+      "error": {
+        "format": "This is not a DuelPath combo file.",
+        "version": "The file is written in version {{version}}, this DuelPath build only reads version 1.",
+        "invalid": "The file is damaged: {{detail}}",
+        "denied": "Combo not found, or not yours."
+      }
+    },
     "conflict": "Changed elsewhere · Reload"
   },
   "shell": {

@@ -1,10 +1,5 @@
 import { z } from 'zod';
-import {
-  idSchema,
-  playerSchema,
-  positionSchema,
-  zoneSchema,
-} from '@/lib/validations/combo.schema';
+import { idSchema, playerSchema, positionSchema, zoneSchema } from '@/lib/validations/combo.schema';
 import { COMBO_STATUSES, type ComboStatus } from '@/lib/combo/library';
 import { sortByDepth } from '@/lib/combo/cards';
 import { newId } from '@/lib/combo/tree';
@@ -184,11 +179,9 @@ export function toPortable(
   };
 }
 
-/** Warum eine Datei abgelehnt wurde; die Oberfläche übersetzt den Code (combo.import.error.*) */
+/** Warum eine Datei abgelehnt wurde; die Oberfläche übersetzt den Code (combo.file.error.*) */
 export type PortableError =
-  | { code: 'format' }
-  | { code: 'version'; version: number }
-  | { code: 'invalid'; detail: string };
+  { code: 'format' } | { code: 'version'; version: number } | { code: 'invalid'; detail: string };
 
 export interface PortableImport {
   title: string;
@@ -327,7 +320,11 @@ function treeProblem(nodes: PortableNode[]): string | null {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   for (const node of nodes) {
     const seen = new Set<string>();
-    for (let n: PortableNode | undefined = node; n; n = n.parentId ? byId.get(n.parentId) : undefined) {
+    for (
+      let n: PortableNode | undefined = node;
+      n;
+      n = n.parentId ? byId.get(n.parentId) : undefined
+    ) {
       if (seen.has(n.id)) return 'Zyklus im Combo-Baum';
       seen.add(n.id);
     }

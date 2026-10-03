@@ -11,6 +11,7 @@ import {
   Search,
   SlidersHorizontal,
   TriangleAlert,
+  Upload,
   X,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
@@ -41,6 +42,7 @@ import {
   type SortKey,
 } from '@/lib/combo/library';
 import { deleteCombo, duplicateCombo } from '@/server/actions/combo.actions';
+import { useComboFile } from '@/components/combo/use-combo-file';
 import { NewComboButton } from './NewComboButton';
 import { StartHandStrip } from './StartHandStrip';
 import { StatusChip } from './StatusChip';
@@ -139,6 +141,8 @@ export function ComboLibrary({
   const pathname = usePathname();
   const [filter, setFilter] = useState(initialFilter);
   const [pending, setPending] = useState<LibraryEntry | null>(null);
+  // Import legt eine neue Combo an; die Liste holt sie nach, der Hinweis nennt fehlende Karten
+  const file = useComboFile(() => router.refresh());
 
   const set = (patch: Partial<LibraryFilter>) => {
     const next = { ...filter, ...patch };
@@ -308,6 +312,9 @@ export function ComboLibrary({
           {t('start.open')}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => duplicate(e)}>{t('library.duplicate')}</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void file.exportCombo(e.id, e.title)}>
+          {t('combo.file.export')}
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => remove(e)} className="text-opponent">
           {t('combo.delete')}
@@ -318,10 +325,19 @@ export function ComboLibrary({
 
   return (
     <div className="flex flex-col gap-6">
+      {file.input}
       <PageHeader
         title={t('combo.title')}
         meta={t('library.count', { count: entries.length })}
-        actions={<NewComboButton decks={decks} />}
+        actions={
+          <>
+            <Button variant="line" onClick={file.pick}>
+              <Upload />
+              {t('combo.file.import')}
+            </Button>
+            <NewComboButton decks={decks} />
+          </>
+        }
       />
 
       <section aria-label={t('library.filters')} className="flex flex-col gap-3">
@@ -472,6 +488,7 @@ export function ComboLibrary({
           </Button>
         </TimedNotice>
       )}
+      {file.noticeNode}
     </div>
   );
 }

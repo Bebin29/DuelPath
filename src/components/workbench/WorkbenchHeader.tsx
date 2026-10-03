@@ -1,7 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Crosshair, Redo2, Search, TriangleAlert, Undo2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Crosshair,
+  Download,
+  MoreHorizontal,
+  Redo2,
+  Search,
+  TriangleAlert,
+  Undo2,
+  Upload,
+} from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -11,6 +21,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -54,6 +65,8 @@ export function WorkbenchHeader({
   onComboStatus,
   tags,
   onTags,
+  onExport,
+  onImport,
 }: {
   title: string;
   onTitle: (title: string) => void;
@@ -81,6 +94,10 @@ export function WorkbenchHeader({
   onComboStatus: (status: ComboStatus) => void;
   tags: string[];
   onTags: (tags: string[]) => void;
+  /** Combo als JSON-Datei sichern (UX-Plan 7.2) */
+  onExport: () => void;
+  /** JSON-Datei einlesen; daraus wird immer eine neue Combo */
+  onImport: () => void;
 }) {
   const { t } = useTranslation();
   const palette = usePalette();
@@ -185,6 +202,24 @@ export function WorkbenchHeader({
         </Button>
       )}
       <WarningCount count={warnings} onClick={onWarnings} />
+      {/* Datei-Aktionen sind selten: sie wandern ins Menü, die Kopfzeile bleibt schmal */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon-sm" aria-label={t('combo.file.menu')}>
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={onExport}>
+            <Download />
+            {t('combo.file.export')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onImport}>
+            <Upload />
+            {t('combo.file.import')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <SaveIndicator status={status} onRetry={onRetry} className="min-w-28" />
     </header>
   );

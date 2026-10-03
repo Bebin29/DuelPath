@@ -370,6 +370,20 @@
       "load": "Deck in den Startzustand laden",
       "draw": "Auf die Starthand ziehen:"
     },
+    "file": {
+      "menu": "Datei-Aktionen",
+      "export": "Als JSON exportieren",
+      "import": "JSON importieren",
+      "imported": "Combo importiert",
+      "missing_one": "{{count}} Karte fehlt im Kartenbestand: {{names}}",
+      "missing_other": "{{count}} Karten fehlen im Kartenbestand: {{names}}",
+      "error": {
+        "format": "Das ist keine DuelPath-Combo-Datei.",
+        "version": "Die Datei ist in Version {{version}} geschrieben, diese DuelPath-Fassung liest nur Version 1.",
+        "invalid": "Die Datei ist beschädigt: {{detail}}",
+        "denied": "Combo nicht gefunden oder nicht deine."
+      }
+    },
     "conflict": "Anderswo geändert · Neu laden"
   },
   "shell": {

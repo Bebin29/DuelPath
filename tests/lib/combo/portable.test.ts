@@ -137,7 +137,14 @@ const nodes = (p: string): ComboNodeData[] => [
     costMoves: [],
     resolveMoves: [
       { instanceId: 'i-oak', cardId: `${p}-oak`, from: 'DECK', to: 'MONSTER', slot: 1 },
-      { instanceId: 'i-token', cardId: `${p}-oak`, from: 'DECK', to: 'MONSTER', slot: 2, token: true },
+      {
+        instanceId: 'i-token',
+        cardId: `${p}-oak`,
+        from: 'DECK',
+        to: 'MONSTER',
+        slot: 2,
+        token: true,
+      },
     ],
     ignoredHits: ['Ash Blossom & Joyous Spring', 'Droll & Lock Bird'],
   },
@@ -316,9 +323,7 @@ describe('portable', () => {
     const withoutBlossom = B.filter((c) => c.name !== 'Ash Blossom & Joyous Spring');
     const read = fromPortable(onDisk(exported), resolver(withoutBlossom));
 
-    expect(read.missing).toEqual([
-      { passcode: '14558127', name: 'Ash Blossom & Joyous Spring' },
-    ]);
+    expect(read.missing).toEqual([{ passcode: '14558127', name: 'Ash Blossom & Joyous Spring' }]);
     // Der Baum bleibt vollständig, nur die Kartenverweise fallen weg
     expect(read.data!.nodes).toHaveLength(7);
     const blossom = read.data!.nodes.find((n) => n.player === 'opponent' && n.kind === 'ACTIVATE')!;
