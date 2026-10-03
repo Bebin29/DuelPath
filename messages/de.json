@@ -4,7 +4,8 @@
     "decks": "Decks",
     "combos": "Combos",
     "profile": "Profil",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "cards": "Karten"
   },
   "deck": {
     "title": "Deck",
@@ -910,6 +911,14 @@
       "Top-Right": "oben rechts",
       "Bottom-Left": "unten links",
       "Bottom-Right": "unten rechts"
+    },
+    "perDuel": "pro Duell",
+    "optWording": {
+      "use": "„use this effect of X“: pro Spieler und Name",
+      "activate": "„activate this effect of X“: negierte Aktivierung zählt nicht",
+      "activateCard": "„activate 1 X per turn“: begrenzt die Kartenaktivierung",
+      "apply": "„apply this effect of X“: zählt nur bei Anwendung",
+      "shared": "ein gemeinsamer Zähler für alle Effekte der Karte"
     }
   },
   "palette": {
@@ -931,7 +940,8 @@
       "combos": "Combos",
       "decks": "Decks",
       "cards": "Karten"
-    }
+    },
+    "cards": "Karte nachschlagen"
   },
   "help": {
     "title": "Tastenkürzel",
@@ -1002,5 +1012,58 @@
     "pause": "Anhalten",
     "def": "DEF",
     "emptyField": "Noch keine Karten auf dem Feld"
+  },
+  "cards": {
+    "title": "Karten",
+    "subtitle": "Karte nachschlagen: Effekte, OPT-Art, Banlist und die Ruling-Mechaniken dahinter.",
+    "search": "Kartensuche",
+    "searchPlaceholder": "Name, deutscher Name, Kürzel oder Spitzname",
+    "searchHint": "Mindestens 2 Zeichen. „ash“, „bewd“ und deutsche Namen funktionieren.",
+    "empty": "Wähle links eine Karte, um Effekte, OPT-Art und Mechaniken zu sehen."
+  },
+  "mechanics": {
+    "title": "Mechaniken",
+    "count_one": "{{count}} Treffer",
+    "count_other": "{{count}} Treffer",
+    "intro": "Kuratierte Ruling-Mechaniken, die zum Kartentext passen. Die Kennzeichnung sagt, wie weit DuelPath die Regel selbst rechnet.",
+    "none": "Kein Eintrag passt zu dieser Karte. Die Regeln unten gelten trotzdem.",
+    "general_one": "{{count}} Regel ohne Textmuster",
+    "general_other": "{{count}} Regeln ohne Textmuster",
+    "generalIntro": "Diese Einträge hängen nicht am Kartentext: Spielregeln gelten immer, unbelegte Fälle gehen nur als Kontext an Jev.",
+    "notes": "Unsicher:",
+    "basis": {
+      "label": "Erkannt über:",
+      "cardType": "Kartentyp",
+      "structure": "Satzbau"
+    },
+    "category": {
+      "negation": "Negierung",
+      "opt": "OPT",
+      "cost": "Kosten",
+      "trigger": "Trigger",
+      "chain": "Chain",
+      "summon": "Beschwörung",
+      "text": "Textlogik"
+    },
+    "deterministic": {
+      "yes": {
+        "label": "gerechnet",
+        "hint": "DuelPath prüft diese Regel selbst."
+      },
+      "partial": {
+        "label": "teilweise",
+        "hint": "DuelPath prüft nur einen Teil; den Rest beschreibst du."
+      },
+      "no": {
+        "label": "nur Kontext",
+        "hint": "Nicht belegt. DuelPath prüft hier nichts."
+      }
+    },
+    "field": {
+      "opt": "OPT",
+      "cost": "Kosten",
+      "card": "Karte",
+      "trigger": "Trigger"
+    }
   }
 }

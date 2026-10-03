@@ -3,7 +3,10 @@
  *
  * Grundlage und Quellen: docs/research/rulings.md (Abschnitte 7 und 8).
  * `deterministic: 'yes'` rechnet stateAt direkt, `partial` teilweise, `no` geht nur als Kontext an Jev.
+ * Welche Einträge zu einer Karte passen, entscheidet `matchMechanics` in ./match.
  */
+
+import type { RulingSourceKey } from './sources';
 
 /** PSCT-Erkennungsmuster aus der Recherche. `X` in den Kommentaren steht für einen Kartennamen in Anführungszeichen. */
 export const PATTERNS = {
@@ -78,7 +81,9 @@ export interface RulingMechanic {
   cost?: string;
   card?: string;
   trigger?: string;
-  detect: Detect[];
+  detect: readonly Detect[];
+  /** Quellenkürzel aus RULING_SOURCES, damit jede Regel nachschlagbar bleibt */
+  sources: readonly RulingSourceKey[];
   notes?: string;
 }
 
@@ -94,6 +99,7 @@ export const RULING_MECHANICS = [
     card: 'Spell/Trap: Friedhof (nicht "vom Feld"); Monster: bleibt liegen',
     trigger: 'letztes Ereignis ist die Negierung',
     detect: ['NEG_ACTIVATION'],
+    sources: ['Y2', 'Y7', 'Y1', 'K1'],
   },
   {
     key: 'NEGATE_ACTIVATION_DESTROY',
@@ -105,6 +111,7 @@ export const RULING_MECHANICS = [
     card: 'zerstört, zählt als "destroyed"',
     trigger: '"if destroyed"-Trigger möglich',
     detect: ['NEG_ACT_DESTROY'],
+    sources: ['Y2', 'Y18'],
   },
   {
     key: 'NEGATE_EFFECT_CHAINED',
@@ -116,6 +123,7 @@ export const RULING_MECHANICS = [
     card: 'Normal/Quick-Play/Ritual Spell, Normal/Counter Trap: Friedhof nach der Chain; Continuous/Field und Monster bleiben',
     trigger: 'Einschränkung "the turn you activate" gilt trotzdem',
     detect: ['NEG_EFFECT_CHAINED'],
+    sources: ['Y2', 'Y7', 'Y10', 'Y13'],
   },
   {
     key: 'NEGATE_EFFECTS_LINGER',
@@ -128,6 +136,7 @@ export const RULING_MECHANICS = [
     card: 'Ziel bleibt liegen; Negierung endet beim Verdecken',
     trigger: 'Continuous Effects gelten nicht mehr',
     detect: ['NEG_EFFECTS_LINGER'],
+    sources: ['Y2', 'Y10', 'Y14', 'Y15'],
     notes: 'Ob die Negierung beim Verlassen des Feldes endet, ist nicht belegt.',
   },
   {
@@ -141,6 +150,7 @@ export const RULING_MECHANICS = [
     card: 'verbannte Karte ist weg, andere bleiben',
     trigger: 'Effekte lösen ohne Wirkung auf',
     detect: ['NEG_BY_NAME'],
+    sources: ['Y16', 'Y17'],
   },
   {
     key: 'NEGATE_CONTINUOUS_FIELD',
@@ -153,6 +163,7 @@ export const RULING_MECHANICS = [
     card: 'bleibt liegen',
     trigger: 'greift nicht, wenn die Karte sich per Kosten vom Feld entfernt',
     detect: ['NEG_CONTINUOUS', 'STILL_ACTIVATABLE'],
+    sources: ['Y3', 'Y10', 'Y14'],
   },
   {
     key: 'NEGATE_SUMMON',
@@ -164,6 +175,7 @@ export const RULING_MECHANICS = [
     card: 'Friedhof bzw. zerstört; war nie auf dem Feld; gilt nicht als korrekt beschworen',
     trigger: 'keine "If Summoned"-Trigger',
     detect: ['NEG_SUMMON'],
+    sources: ['Y2', 'Y18', 'Y19', 'K2'],
   },
 
   // OPT-Varianten
@@ -175,6 +187,7 @@ export const RULING_MECHANICS = [
     opt: 'Zähler pro Instanz und Ortsepoche; negierte Aktivierung zählt',
     card: 'Reset bei Ortswechsel oder Verdecken',
     detect: ['OPT_SOFT', 'OPT_SOFT_OPP'],
+    sources: ['Y1', 'Y2', 'Y12'],
   },
   {
     key: 'OPT_HARD_USE',
@@ -184,6 +197,7 @@ export const RULING_MECHANICS = [
     opt: 'pro Spieler, Name und Effekt; negierte Aktivierung zählt',
     card: 'kein Reset',
     detect: ['OPT_USE_THIS', 'OPT_USE_NTH'],
+    sources: ['Y1', 'Y8', 'D1'],
   },
   {
     key: 'OPT_HARD_USE_EACH',
@@ -193,6 +207,7 @@ export const RULING_MECHANICS = [
     opt: 'ein Zähler pro Effekt',
     card: 'kein Reset',
     detect: ['OPT_USE_EACH'],
+    sources: ['Y1', 'Y8'],
   },
   {
     key: 'OPT_HARD_SHARED',
@@ -202,6 +217,7 @@ export const RULING_MECHANICS = [
     opt: 'ein gemeinsamer Zähler für alle Effekte der Karte',
     card: 'kein Reset',
     detect: ['OPT_USE_SHARED'],
+    sources: ['Y1'],
   },
   {
     key: 'OPT_HARD_ACTIVATE_CARD',
@@ -211,6 +227,7 @@ export const RULING_MECHANICS = [
     opt: 'pro Spieler und Name; nur nicht negierte Aktivierungen zählen',
     card: 'kein Reset',
     detect: ['OPT_ACTIVATE_CARD', 'OPT_ACTIVATE_CARD2'],
+    sources: ['Y1'],
   },
   {
     key: 'OPT_HARD_ACTIVATE_EFFECT',
@@ -220,6 +237,7 @@ export const RULING_MECHANICS = [
     opt: 'wie OPT_HARD_USE, aber negierte Aktivierung zählt nicht',
     card: 'kein Reset',
     detect: ['OPT_ACTIVATE_EFFECT'],
+    sources: ['Y1', 'Y8'],
   },
   {
     key: 'OPT_HARD_APPLY',
@@ -229,6 +247,7 @@ export const RULING_MECHANICS = [
     opt: 'zählt nur bei tatsächlicher Anwendung',
     card: 'kein Reset',
     detect: ['OPT_APPLY'],
+    sources: ['Y1'],
   },
   {
     key: 'OPT_USE_CARD',
@@ -238,6 +257,7 @@ export const RULING_MECHANICS = [
     opt: 'wie OPT_HARD_SHARED',
     card: 'kein Reset',
     detect: ['OPT_USE_CARD'],
+    sources: ['Y1'],
   },
   {
     key: 'OPT_PER_DUEL',
@@ -253,6 +273,7 @@ export const RULING_MECHANICS = [
       'OPT_ACTIVATE_CARD2',
       'OPT_APPLY',
     ],
+    sources: ['Y1'],
     notes: 'Erkennung über die Gruppe (turn|Duel) der OPT-Muster.',
   },
   {
@@ -263,6 +284,7 @@ export const RULING_MECHANICS = [
     opt: 'Limit 2 bzw. 3',
     card: 'kein Reset',
     detect: ['OPT_USE_THIS'],
+    sources: ['D1'],
     notes: 'Erkennung über die Gruppe (once|twice|thrice) von OPT_USE_THIS.',
   },
   {
@@ -272,6 +294,7 @@ export const RULING_MECHANICS = [
     deterministic: 'yes',
     opt: 'pro Kopie und Chain',
     detect: ['OPT_CHAIN'],
+    sources: ['Y20'],
   },
   {
     key: 'OPT_NO_SAME_CHAIN',
@@ -280,6 +303,7 @@ export const RULING_MECHANICS = [
     deterministic: 'yes',
     opt: 'Chain-Sperre für den Namen',
     detect: ['OPT_NO_SAME_CHAIN'],
+    sources: ['Y12'],
   },
   {
     key: 'OPT_WHILE_FACEUP',
@@ -289,6 +313,7 @@ export const RULING_MECHANICS = [
     opt: 'pro Instanz und Feldepoche',
     card: 'Reset beim Verlassen des Feldes oder Verdecken',
     detect: ['OPT_FACEUP'],
+    sources: ['Y2', 'Y21'],
   },
   {
     key: 'OPT_GAIN_EFFECT',
@@ -297,6 +322,7 @@ export const RULING_MECHANICS = [
     deterministic: 'yes',
     opt: 'ein Zähler pro Spieler über alle Karten mit diesem Satz',
     detect: ['OPT_GAIN'],
+    sources: ['Y1'],
   },
   {
     key: 'SUMMON_LIMIT_NAME',
@@ -305,6 +331,7 @@ export const RULING_MECHANICS = [
     deterministic: 'yes',
     opt: 'zählt nur erfolgreiche Beschwörungen',
     detect: ['OPT_SUMMON_NAME'],
+    sources: ['K2'],
   },
   {
     key: 'NORMAL_SUMMON_LIMIT',
@@ -313,6 +340,7 @@ export const RULING_MECHANICS = [
     deterministic: 'yes',
     opt: 'negierte Normal Summon zählt',
     detect: ['engine'],
+    sources: ['K1', 'Y2'],
   },
 
   // Kosten und Bedingungen
@@ -325,6 +353,7 @@ export const RULING_MECHANICS = [
     card: 'Bewegung mit Grund "cost"',
     trigger: 'kein "by card effect"; nicht das Letzte für Missing the Timing',
     detect: ['COST_VERB'],
+    sources: ['K1', 'K4', 'Y3', 'Y5'],
   },
   {
     key: 'ACTIVATION_CONDITION',
@@ -332,6 +361,7 @@ export const RULING_MECHANICS = [
     description: 'Der Teil vor dem Doppelpunkt wird nur bei der Aktivierung geprüft.',
     deterministic: 'yes',
     detect: ['CONDITION'],
+    sources: ['K3', 'K4', 'Y4', 'Y8'],
   },
   {
     key: 'RESOLUTION_CONDITION',
@@ -340,6 +370,7 @@ export const RULING_MECHANICS = [
     deterministic: 'partial',
     trigger: 'sonst ohne Wirkung',
     detect: ['RES_CONDITION'],
+    sources: ['K4', 'Y4'],
   },
   {
     key: 'TURN_RESTRICTION',
@@ -348,6 +379,7 @@ export const RULING_MECHANICS = [
       '"the turn you activate this card/effect": gilt ab Aktivierung, auch bei Effekt-Negierung.',
     deterministic: 'partial',
     detect: ['TURN_RESTRICTION'],
+    sources: ['Y13'],
     notes: 'Ob die Einschränkung auch bei negierter Aktivierung gilt, ist nicht belegt.',
   },
 
@@ -360,6 +392,7 @@ export const RULING_MECHANICS = [
     trigger:
       'nur aktivierbar, wenn der Auslöser das Letzte war (Chain Link 1 bzw. Aktion ohne Chain)',
     detect: ['TRIGGER_WHEN_OPT'],
+    sources: ['Y5', 'Y9'],
   },
   {
     key: 'TRIGGER_IF_OR_MANDATORY',
@@ -368,6 +401,7 @@ export const RULING_MECHANICS = [
     deterministic: 'yes',
     trigger: 'aktiviert in der nächsten Chain',
     detect: ['TRIGGER_IF_OPT', 'TRIGGER_MANDATORY'],
+    sources: ['Y5', 'Y8'],
     notes: 'TRIGGER_MANDATORY trifft auch Quick Effects mit "When"; zuerst QUICK prüfen.',
   },
   {
@@ -377,6 +411,7 @@ export const RULING_MECHANICS = [
     deterministic: 'yes',
     trigger: 'Pflicht des Zugspielers, Pflicht des Gegners, optional Zugspieler, optional Gegner',
     detect: ['engine'],
+    sources: ['K1', 'K7', 'Y6'],
   },
   {
     key: 'SEGOC_HAND_SS_LIMIT',
@@ -385,6 +420,7 @@ export const RULING_MECHANICS = [
     deterministic: 'partial',
     trigger: 'weitere entfallen',
     detect: ['context'],
+    sources: ['Y6'],
   },
   {
     key: 'TRIGGER_LOCATION_CHANGE',
@@ -393,6 +429,7 @@ export const RULING_MECHANICS = [
     deterministic: 'yes',
     trigger: 'aktiviert nicht',
     detect: ['engine'],
+    sources: ['K2'],
   },
   {
     key: 'TRIGGER_NEGATED_SUMMON',
@@ -402,6 +439,7 @@ export const RULING_MECHANICS = [
     card: 'nicht "vom Feld"',
     trigger: '"sent to GY"-Trigger sind kartenabhängig',
     detect: ['engine', 'context'],
+    sources: ['Y2', 'Y18', 'Y19'],
   },
 
   // Chain
@@ -412,6 +450,7 @@ export const RULING_MECHANICS = [
       'Spell Speed 1/2/3; ab Chain Link 2 nur mit Spell Speed 2 oder höher und mindestens so hoch wie der vorherige Link.',
     deterministic: 'yes',
     detect: ['QUICK', 'cardType', 'engine'],
+    sources: ['K1', 'K7', 'Y7'],
   },
   {
     key: 'CHAIN_RESOLVE_REVERSE',
@@ -421,6 +460,7 @@ export const RULING_MECHANICS = [
     deterministic: 'yes',
     trigger: 'Trigger warten bis nach der Chain',
     detect: ['engine'],
+    sources: ['K1', 'Y7'],
   },
   {
     key: 'CHAIN_CLEANUP',
@@ -431,6 +471,7 @@ export const RULING_MECHANICS = [
     card: 'Continuous, Field und Equip bleiben',
     trigger: 'gleichzeitig mit Chain Link 1',
     detect: ['cardType'],
+    sources: ['Y7', 'Y10', 'Y13'],
   },
   {
     key: 'CONTINUOUS_ST_MUST_REMAIN',
@@ -439,6 +480,7 @@ export const RULING_MECHANICS = [
       'Aktivierter Feld-Effekt einer Continuous Spell/Trap löst ohne Wirkung auf, wenn die Karte nicht mehr liegt.',
     deterministic: 'yes',
     detect: ['cardType'],
+    sources: ['Y11'],
   },
   {
     key: 'SUMMON_AFTER_RESOLVE',
@@ -446,6 +488,7 @@ export const RULING_MECHANICS = [
     description: '"immediately after this effect resolves": nur als Chain Link 1 negierbar.',
     deterministic: 'yes',
     detect: ['SUMMON_AFTER_RES'],
+    sources: ['Y2', 'Y8'],
   },
 
   // Textlogik
@@ -457,6 +500,7 @@ export const RULING_MECHANICS = [
     deterministic: 'partial',
     trigger: 'bestimmt das "Letzte" für Missing the Timing',
     detect: ['CONJ_THEN', 'CONJ_AND_IFYOUDO', 'CONJ_ALSO_AFTER', 'CONJ_ALSO'],
+    sources: ['K6', 'Y5', 'Y8'],
   },
   {
     key: 'TARGET_WORDING',
@@ -464,6 +508,7 @@ export const RULING_MECHANICS = [
     description: '"that target" wird beim Auflösen erneut geprüft, "it" nicht.',
     deterministic: 'partial',
     detect: ['TARGET_STRICT'],
+    sources: ['K4', 'Y8'],
   },
   {
     key: 'EQUIP_NEGATED',
@@ -472,6 +517,7 @@ export const RULING_MECHANICS = [
     deterministic: 'no',
     card: 'vermutlich Friedhof, unbelegt',
     detect: ['context'],
+    sources: ['Y3'],
     notes: 'Nicht belegt; nur als Kontext verwenden.',
   },
 ] as const satisfies readonly RulingMechanic[];
