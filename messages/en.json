@@ -455,7 +455,20 @@
     "apiDocs": "Send requests with Authorization: Bearer <token> to /api/v1. Description at /api/v1/openapi.json.",
     "showAll": "Show all {{count}}",
     "showLess": "Show less",
-    "sections": "Sections"
+    "sections": "Sections",
+    "banlist": "Banlist",
+    "banlistText": "The card import does not provide an official effective date. Enter it from the official list; your confirmation applies only to you and this import. Your private second list contains announced changes.",
+    "banlistCurrent": "Current list, as of",
+    "banlistDate": "As of",
+    "banlistName": "Name",
+    "banlistNextName": "Next list",
+    "banlistAddNext": "Add next list",
+    "banlistRemoveNext": "Remove",
+    "banlistEmpty": "No change yet. Anything missing here stays as on the current list.",
+    "banlistAddCard": "Add card",
+    "banlistAddHint": "Only enter the changes. Everything else stays as on the current list.",
+    "banlistStatus": "{{name}}: status on the next list",
+    "banlistRemoveCard": "Remove {{name}}"
   },
   "workbench": {
     "board": "Board",
@@ -756,7 +769,8 @@
       "sideSize": "Side Deck has {{count}} cards, at most 15 are allowed.",
       "copies": "{{name}} is in the deck {{count}} times, 3 are allowed.",
       "banlist": "{{name}} is in the deck {{count}} times, the TCG list allows {{limit}}.",
-      "wrongSection": "{{name}} does not belong in the {{section}} Deck."
+      "wrongSection": "{{name}} does not belong in the {{section}} Deck.",
+      "banlistNamed": "{{name}} is in the deck {{count}} times, {{list}} allows {{limit}}."
     },
     "affected_one": "{{count}} combo affected: cards missing from the deck",
     "affected_other": "{{count}} combos affected: cards missing from the deck",
@@ -861,6 +875,13 @@
       "unbalanced": "{{in}} in, {{out}} out: the Main Deck changes size.",
       "notInSide": "{{name}}: fewer in the Side Deck than planned",
       "notInMain": "{{name}}: fewer in the Main Deck than planned"
+    },
+    "banlist": {
+      "label": "Banlist",
+      "asOf": "Banlist as of {{date}}",
+      "unknown": "Banlist date unknown, add it in the settings",
+      "current": "Current",
+      "clean": "no notes"
     }
   },
   "newCombo": {

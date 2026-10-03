@@ -36,6 +36,8 @@ export interface ImportStats {
   imported: number;
   skippedNonTcg: number;
   needsReview: number;
+  /** Zeitpunkt des erfolgreichen Imports, kein Gültigkeitsdatum der Banlist */
+  importedAt: Date;
 }
 
 async function fetchCards(query: string): Promise<YGOPRODeckCard[]> {
@@ -95,6 +97,17 @@ export async function importTcgCards(
     .map((c) => mapCard(c, germanById.get(c.id)))
     .filter((c): c is Prisma.CardCreateInput => c !== null);
 
+  const previous = await prisma.card.findMany({ select: { id: true, banTcg: true } });
+  const oldStatuses = new Map(previous.map((c) => [c.id, c.banTcg]));
+  const changed = cards.some((c) => (oldStatuses.get(c.id!) ?? null) !== (c.banTcg ?? null));
+
+  // Invalidate provenance before any batch changes cards, including partial failed imports.
+  if (changed)
+    await prisma.banlist.updateMany({
+      where: { key: 'current' },
+      data: { effectiveOn: null, importedAt: null },
+    });
+
   for (let i = 0; i < cards.length; i += BATCH_SIZE) {
     const batch = cards.slice(i, i + BATCH_SIZE);
     // effectsJev bleibt beim Update erhalten; ein Neuimport setzt die Jev-Prüfung nicht zurück
@@ -106,10 +119,20 @@ export async function importTcgCards(
     onProgress?.(Math.min(i + BATCH_SIZE, cards.length), cards.length);
   }
 
+  // Der Import kennt kein offizielles Gültigkeitsdatum. Ein bestätigtes Datum bleibt
+  // nur bei unveränderten Beschränkungen erhalten; Abrufzeit und Gültigkeit sind getrennt.
+  const importedAt = new Date();
+  await prisma.banlist.upsert({
+    where: { key: 'current' },
+    create: { key: 'current', name: 'TCG', importedAt },
+    update: { importedAt, ...(changed && { effectiveOn: null }) },
+  });
+
   return {
     fetched: english.length,
     imported: cards.length,
     skippedNonTcg: english.length - cards.length,
     needsReview: cards.filter((c) => c.effectsReview).length,
+    importedAt,
   };
 }

@@ -455,7 +455,20 @@
     "apiDocs": "Anfragen mit Authorization: Bearer <Token> an /api/v1. Beschreibung unter /api/v1/openapi.json.",
     "showAll": "Alle {{count}} zeigen",
     "showLess": "Weniger zeigen",
-    "sections": "Abschnitte"
+    "sections": "Abschnitte",
+    "banlist": "Banlist",
+    "banlistText": "Der Kartenimport kennt kein offizielles Gültigkeitsdatum. Trage es aus der offiziellen Liste nach; deine Bestätigung gilt nur für dich und diesen Import. Deine private zweite Liste enthält die angekündigten Änderungen.",
+    "banlistCurrent": "Aktuelle Liste, Stand",
+    "banlistDate": "Stand",
+    "banlistName": "Name",
+    "banlistNextName": "Nächste Liste",
+    "banlistAddNext": "Nächste Liste anlegen",
+    "banlistRemoveNext": "Entfernen",
+    "banlistEmpty": "Noch keine Änderung eingetragen. Was hier fehlt, bleibt wie auf der aktuellen Liste.",
+    "banlistAddCard": "Karte eintragen",
+    "banlistAddHint": "Nur die Änderungen eintragen. Alles andere bleibt wie auf der aktuellen Liste.",
+    "banlistStatus": "{{name}}: Stand auf der nächsten Liste",
+    "banlistRemoveCard": "{{name}} entfernen"
   },
   "workbench": {
     "board": "Board",
@@ -756,7 +769,8 @@
       "sideSize": "Side Deck hat {{count}} Karten, erlaubt sind höchstens 15.",
       "copies": "{{name}} ist {{count}}-mal im Deck, erlaubt sind 3.",
       "banlist": "{{name}} ist {{count}}-mal im Deck, die TCG-Banlist erlaubt {{limit}}.",
-      "wrongSection": "{{name}} gehört nicht ins {{section}} Deck."
+      "wrongSection": "{{name}} gehört nicht ins {{section}} Deck.",
+      "banlistNamed": "{{name}} ist {{count}}-mal im Deck, {{list}} erlaubt {{limit}}."
     },
     "affected_one": "{{count}} Combo betroffen: Karten fehlen im Deck",
     "affected_other": "{{count}} Combos betroffen: Karten fehlen im Deck",
@@ -861,6 +875,13 @@
       "unbalanced": "{{in}} rein, {{out}} raus: Das Main Deck ändert seine Größe.",
       "notInSide": "{{name}}: weniger im Side Deck als geplant",
       "notInMain": "{{name}}: weniger im Main Deck als geplant"
+    },
+    "banlist": {
+      "label": "Banlist",
+      "asOf": "Banlist Stand {{date}}",
+      "unknown": "Banlist Stand unbekannt, in den Einstellungen nachtragen",
+      "current": "Aktuell",
+      "clean": "keine Hinweise"
     }
   },
   "newCombo": {

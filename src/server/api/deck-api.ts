@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma/client';
 import { parseYDKFile } from '@/lib/utils/deck.utils';
 import { deckIssues, sectionFor, type RuleCard, type Section } from '@/lib/deck/deck-rules';
+import { toIsoDate } from '@/lib/deck/banlist';
 import { idsForPasscodes, writeDeckCards } from '@/server/services/deck-store.service';
 import { effectsOf } from '@/lib/cards/effect-override';
 import {
@@ -107,6 +108,10 @@ export async function createDeckFromRequest(userId: string, req: z.infer<typeof 
 
 /** Deckliste nach Abschnitten, dazu die Regelhinweise wie auf der Deckseite */
 export async function deckView(userId: string, deckId: string) {
+  const banlist = await prisma.banlist.findUnique({
+    where: { key: 'current' },
+    select: { name: true, effectiveOn: true, importedAt: true },
+  });
   const deck = await prisma.deck.findUnique({
     where: { id: deckId },
     select: {
@@ -160,6 +165,12 @@ export async function deckView(userId: string, deckId: string) {
     extra: section('EXTRA'),
     side: section('SIDE'),
     warnings: deckIssues(entries, cards),
+    // Stand der Liste, gegen die geprüft wurde; null, solange kein Import gelaufen ist
+    banlist: banlist && {
+      name: banlist.name,
+      effectiveOn: banlist.effectiveOn ? toIsoDate(banlist.effectiveOn) : null,
+      importedAt: banlist.importedAt?.toISOString() ?? null,
+    },
     sidePlans: parseSidePlans(deck.sidePlans).map(({ in: inCards, out, ...plan }) => {
       const named = (r: Record<string, number>) =>
         Object.entries(r).map(([id, quantity]) => ({

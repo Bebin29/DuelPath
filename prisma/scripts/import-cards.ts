@@ -17,6 +17,9 @@ async function main() {
   console.log(`Importiert (TCG):    ${stats.imported}`);
   console.log(`Übersprungen (OCG):  ${stats.skippedNonTcg}`);
   console.log(`Zerlegung prüfen:    ${stats.needsReview}`);
+  console.log(
+    `Daten abgerufen:     ${stats.importedAt.toISOString()} (kein Banlist-Gültigkeitsdatum)`
+  );
 }
 
 main()

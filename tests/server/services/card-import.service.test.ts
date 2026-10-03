@@ -1,9 +1,26 @@
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('@/lib/prisma/client', () => ({ prisma: {} }));
+const mocks = vi.hoisted(() => ({
+  findMany: vi.fn(),
+  upsert: vi.fn(),
+  transaction: vi.fn(),
+  listUpsert: vi.fn(),
+  listUpdate: vi.fn(),
+}));
+vi.mock('@/lib/prisma/client', () => ({
+  prisma: {
+    card: { findMany: mocks.findMany, upsert: mocks.upsert },
+    banlist: { upsert: mocks.listUpsert, updateMany: mocks.listUpdate },
+    $transaction: mocks.transaction,
+  },
+}));
 
-import { mapCard, type YGOPRODeckCard } from '@/server/services/card-import.service';
+import {
+  mapCard,
+  importTcgCards,
+  type YGOPRODeckCard,
+} from '@/server/services/card-import.service';
 
 const ASH: YGOPRODeckCard = {
   id: 14558127,
@@ -51,5 +68,62 @@ describe('mapCard', () => {
       banlist_info: { ban_tcg: 'Limited' },
     });
     expect(card).toMatchObject({ level: 4, banTcg: 'Limited' });
+  });
+});
+
+describe('import metadata', () => {
+  it('never infers an effective date from the retrieval time', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [ASH] }) })
+    );
+    mocks.findMany.mockResolvedValue([{ id: String(ASH.id), banTcg: null }]);
+    mocks.transaction.mockResolvedValue([]);
+    mocks.listUpsert.mockResolvedValue({});
+    const stats = await importTcgCards();
+    expect(stats.importedAt).toBeInstanceOf(Date);
+    expect(mocks.listUpsert).toHaveBeenLastCalledWith({
+      where: { key: 'current' },
+      create: { key: 'current', name: 'TCG', importedAt: stats.importedAt },
+      update: { importedAt: stats.importedAt },
+    });
+    vi.unstubAllGlobals();
+  });
+  it('clears an old confirmed date when restrictions change', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [ASH] }) })
+    );
+    mocks.findMany.mockResolvedValue([{ id: String(ASH.id), banTcg: 'Limited' }]);
+    const stats = await importTcgCards();
+    expect(mocks.listUpsert.mock.lastCall?.[0].update).toEqual({
+      importedAt: stats.importedAt,
+      effectiveOn: null,
+    });
+    vi.unstubAllGlobals();
+  });
+  it('invalidates a confirmed date before a failing update batch', async () => {
+    mocks.listUpsert.mockClear();
+    mocks.listUpdate.mockClear();
+    mocks.findMany.mockResolvedValue([{ id: String(ASH.id), banTcg: 'Limited' }]);
+    mocks.transaction.mockRejectedValueOnce(new Error('batch failed'));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [ASH] }) })
+    );
+    await expect(importTcgCards()).rejects.toThrow('batch failed');
+    expect(mocks.listUpdate).toHaveBeenCalledWith({
+      where: { key: 'current' },
+      data: { effectiveOn: null, importedAt: null },
+    });
+    expect(mocks.listUpsert).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+  it('does not publish a fresh snapshot when a card fetch fails', async () => {
+    mocks.listUpsert.mockClear();
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    await expect(importTcgCards()).rejects.toThrow('offline');
+    expect(mocks.listUpsert).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 });
