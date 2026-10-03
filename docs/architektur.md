@@ -18,18 +18,18 @@ Die wichtigste Regel: **`src/lib/` kennt weder Prisma noch das Netz.** Dort steh
 
 ## Routen der Oberfläche
 
-| Route          | Gruppe        | Inhalt                                                     |
-| -------------- | ------------- | ---------------------------------------------------------- |
-| `/`            | `(dashboard)` | Startseite für angemeldete Nutzer, zuletzt genutzte Combos |
-| `/decks`       | `(dashboard)` | Liste der Decks                                            |
-| `/decks/[id]`  | `(dashboard)` | Deckseite mit Tabs: Liste, Quoten, Side, Combos, Hand      |
-| `/combos`      | `(dashboard)` | Bibliothek aller Combos mit Filtern in der Adresse         |
-| `/combos/new`  | `(dashboard)` | Neue Combo anlegen                                         |
-| `/combos/[id]` | `(workbench)` | Werkbank: Combo bauen, lesen und abspielen                 |
-| `/settings`    | `(dashboard)` | Einstellungen: Design, Spitznamen, Staples, API-Tokens     |
-| `/auth/signin` | `auth`        | Anmelden                                                   |
-| `/auth/signup` | `auth`        | Registrieren                                               |
-| `/dev/ui`      | -             | Musterbibliothek der Komponenten, nur für Entwicklung      |
+| Route          | Gruppe        | Inhalt                                                               |
+| -------------- | ------------- | -------------------------------------------------------------------- |
+| `/`            | `(dashboard)` | Startseite für angemeldete Nutzer, zuletzt genutzte Combos           |
+| `/decks`       | `(dashboard)` | Liste der Decks                                                      |
+| `/decks/[id]`  | `(dashboard)` | Deckseite mit Tabs: Liste, Quoten, Side, Combos, Hand                |
+| `/combos`      | `(dashboard)` | Bibliothek aller Combos mit Filtern in der Adresse                   |
+| `/combos/new`  | `(dashboard)` | Neue Combo anlegen                                                   |
+| `/combos/[id]` | `(workbench)` | Werkbank: Combo bauen, lesen und abspielen                           |
+| `/settings`    | `(dashboard)` | Einstellungen: Design, Spitznamen, Staples, Boardbreaker, API-Tokens |
+| `/auth/signin` | `auth`        | Anmelden                                                             |
+| `/auth/signup` | `auth`        | Registrieren                                                         |
+| `/dev/ui`      | -             | Musterbibliothek der Komponenten, nur für Entwicklung                |
 
 Die Werkbank hat eine eigene Route-Gruppe, weil sie ein anderes Layout braucht als das Dashboard. Sie nutzt die volle Bildschirmfläche.
 
