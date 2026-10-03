@@ -80,6 +80,8 @@ Die App schlägt Rollen vor: Starter aus 1-Card-Combos, Extender aus grösseren 
 
 **Hand-Tester**: zieht echte Hände aus dem Main Deck, sucht passende Combos und schätzt über viele Hände, wie gut das Deck abgedeckt ist. Hier wird simuliert, weil es um konkrete Hände geht.
 
+**Übungsmodus**: zehn Zufallshände hintereinander, die der Nutzer selbst an der Werkbank spielt. Gezogen wird nur, wozu es eine gespeicherte Line gibt; welche das ist, bleibt bis zur Auswertung verborgen. Danach steht das erreichte Endboard neben dem besten bekannten Ende der Line, dazu die fehlenden Karten und die gebrauchte Zeit. Ein Lauf wird nicht gespeichert: geübt wird gegen die eigene Line, nicht gegen eine Bestenliste.
+
 **Version**: ein gespeicherter Stand eines Decks. Zwei Versionen lassen sich vergleichen, eine ältere lässt sich zurückholen.
 
 **Side-Plan**: je Matchup und Zugfolge, welche Karten aus dem Side Deck hinein und welche aus dem Main Deck heraus gehen. Gespeichert am Deck.
