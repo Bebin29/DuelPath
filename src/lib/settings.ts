@@ -14,6 +14,8 @@ export interface UserSettings {
   cardLanguage: CardLanguage;
   /** Staples für Leiste und Stresstest in dieser Reihenfolge; null = Standardliste (UX-Plan 6.8) */
   staples: string[] | null;
+  /** Boardbreaker für den Rollen-Vorschlag als englische Kartennamen; null = Standardliste */
+  breakers: string[] | null;
   /** Tempo beim Abspielen einer Line (UX-Plan 6.10): Schritte pro Sekunde */
   autoplaySpeed: AutoplaySpeed;
   /** Eigene Spitznamen für Suche und Befehle (UX-Plan 8), ergänzen die gepflegte Liste */
@@ -68,6 +70,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   theme: DEFAULT_THEME,
   cardLanguage: 'en',
   staples: null,
+  breakers: null,
   autoplaySpeed: 1,
   nicknames: [],
   seenHints: [],
@@ -79,6 +82,7 @@ export const settingsPatchSchema = z
     theme: z.enum(['dark', 'light']).optional(),
     cardLanguage: z.enum(['en', 'de']).optional(),
     staples: z.array(z.string().max(100)).max(60).nullable().optional(),
+    breakers: z.array(z.string().trim().min(1).max(200)).max(100).nullable().optional(),
     autoplaySpeed: z.union([z.literal(0.5), z.literal(1), z.literal(2)]).optional(),
     nicknames: z
       .array(

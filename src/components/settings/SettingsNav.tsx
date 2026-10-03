@@ -6,6 +6,7 @@ const SECTIONS = [
   ['display', 'settings.display'],
   ['workbench', 'settings.workbench'],
   ['staples', 'settings.staples'],
+  ['breakers', 'settings.breakers'],
   ['nicknames', 'settings.nicknames'],
   ['api', 'settings.api'],
 ] as const;

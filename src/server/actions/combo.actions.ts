@@ -184,6 +184,19 @@ export async function getStaples(): Promise<StapleCard[]> {
   });
 }
 
+/**
+ * Karten der gepflegten Boardbreaker-Liste, damit die Einstellungen Bild und deutschen Namen
+ * zeigen können wie bei den Staples. Namen ohne Treffer in der Datenbank fallen still heraus.
+ */
+export async function getBreakerCards(names: string[]): Promise<Record<string, ComboCard>> {
+  if (names.length === 0) return {};
+  const rows = await prisma.card.findMany({
+    where: { name: { in: names } },
+    select: { id: true, name: true, nameDe: true, type: true, imageSmall: true },
+  });
+  return Object.fromEntries(rows.map((r) => [r.name, toComboCard(r)]));
+}
+
 /** Decks des Nutzers für die Zuordnung im Editor */
 export async function listDeckOptions(): Promise<{ id: string; name: string }[]> {
   const userId = await currentUserId();

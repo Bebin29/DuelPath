@@ -25,6 +25,7 @@ import { Tabs } from '@/components/ui/tabs';
 import { TimedNotice } from '@/components/ui/timed-notice';
 import { SaveIndicator } from '@/components/ui/save-indicator';
 import { useCardSheet } from '@/components/cards/CardSheet';
+import { useSettings } from '@/components/providers/SettingsProvider';
 import {
   deckIssues,
   sectionCount,
@@ -52,7 +53,7 @@ import { HandTester } from './HandTester';
 import { RatiosTab, type RatioDoc } from './RatiosTab';
 import { SidePlanTab } from './SidePlanTab';
 import { DeckVersions, type BaselineKey } from './DeckVersions';
-import type { Roles } from '@/lib/deck/roles';
+import { breakerSet, type Roles } from '@/lib/deck/roles';
 import { diffEntries, type SidePlan } from '@/lib/deck/side-plan';
 
 import type { DeckTab } from '@/lib/deck/deck-tab';
@@ -118,6 +119,7 @@ export function DeckPage({
   const router = useRouter();
   const pathname = usePathname();
   const cardSheet = useCardSheet();
+  const { settings } = useSettings();
   const history = useHistory<Doc>({
     name: deck.name,
     entries: deck.entries,
@@ -219,6 +221,7 @@ export function DeckPage({
   const pool = useMemo(() => expandDeck(entries.filter((e) => e.section === 'MAIN')), [entries]);
   const handtrapSet = useMemo(() => new Set(handtraps), [handtraps]);
   const stapleSet = useMemo(() => new Set(staples), [staples]);
+  const breakers = useMemo(() => breakerSet(settings.breakers), [settings.breakers]);
   const ratioDoc = useMemo(() => ({ entries, roles }), [entries, roles]);
   const diff = useMemo(() => diffEntries(baseline.doc.entries, entries), [baseline, entries]);
   const compare = (key: BaselineKey) => {
@@ -405,6 +408,7 @@ export function DeckPage({
             cards={cards}
             combos={combos}
             staples={stapleSet}
+            breakers={breakers}
             onRoles={(patch) => setDoc((d) => ({ ...d, roles: { ...d.roles, ...patch } }))}
             onChange={change}
             comparison={
@@ -432,6 +436,7 @@ export function DeckPage({
             cards={cards}
             combos={combos}
             staples={stapleSet}
+            breakers={breakers}
             onPlans={(fn, group) => setDoc((d) => ({ ...d, sidePlans: fn(d.sidePlans) }), group)}
             onRoles={(patch) => setDoc((d) => ({ ...d, roles: { ...d.roles, ...patch } }))}
             onOpenCard={openCard}

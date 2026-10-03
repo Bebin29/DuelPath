@@ -8,6 +8,7 @@ describe('parseSettings', () => {
       theme: 'dark',
       cardLanguage: 'en',
       staples: null,
+      breakers: null,
       autoplaySpeed: 1,
       nicknames: [],
       seenHints: [],
@@ -17,6 +18,7 @@ describe('parseSettings', () => {
       theme: 'dark',
       cardLanguage: 'de',
       staples: null,
+      breakers: null,
       autoplaySpeed: 1,
       nicknames: [],
       seenHints: [],
@@ -49,6 +51,12 @@ describe('settingsPatchSchema', () => {
     expect(
       settingsPatchSchema.safeParse({ opponentBoards: [{ ...board, name: '  ' }] }).success
     ).toBe(false);
+  });
+
+  it('nimmt eine eigene Breaker-Liste und null für die Standardliste', () => {
+    expect(settingsPatchSchema.safeParse({ breakers: ['Evenly Matched'] }).success).toBe(true);
+    expect(settingsPatchSchema.safeParse({ breakers: null }).success).toBe(true);
+    expect(settingsPatchSchema.safeParse({ breakers: [''] }).success).toBe(false);
   });
 });
 
