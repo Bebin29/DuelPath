@@ -106,6 +106,18 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 - Rollen der Side-Deck-Karten (Ash als Handtrap, Evenly Matched als Breaker) setzt man im Side-Plan selbst, mit denselben Vorschlägen wie im Tab Ratios.
 - Kennzahlen und Abdeckung lassen sich für die Liste nach dem Siden anzeigen: „Going second gegen Ryzeal: Starter oder 2 Breaker 78 %“.
 
+### 3.7 Spielprotokoll am Deck (Phase D-5)
+
+Ein Side-Plan ist ohne Rückmeldung eine Vermutung, die nie korrigiert wird. Man trägt ein, welche sieben Karten gegen Ryzeal rein und raus gehen, und erfährt nie, ob das gehalten hat. Dafür gibt es am Deck ein Protokoll, mehr nicht.
+
+- Pro Spiel vier Werte: Matchup, Zugfolge, Ergebnis und eine kurze Notiz, dazu der Side-Plan, der anlag. Matchup und Zugfolge sind aus dem offenen Plan vorbelegt; im Normalfall ist ein Eintrag ein Klick.
+- Eine Zeile ist **ein Spiel, kein Match.** Best of 3 wird nicht abgebildet, weil die Zugfolge sich pro Spiel ändert und genau sie die interessante Größe ist.
+- Am Side-Plan steht danach die Bilanz: „5 zu 2 Going Second mit diesem Plan“. Gibt es keine Einträge, steht dort nichts.
+- **Rohe Zahlen, nie eine Quote.** Eine Siegquote aus sieben Spielen behauptet mehr, als sie weiß. Was daraus folgt, entscheidet der Spieler; die App schlägt aufgrund des Protokolls keinen Side-Plan vor und ändert keinen.
+- Anlegen und löschen, kein Bearbeiten. Ein Fehleintrag wird gelöscht und neu gesetzt.
+- Das Matchup-Feld schlägt die am Deck schon benutzten Matchups vor und vergleicht ohne Groß- und Kleinschreibung, damit „Ryzeal“ und „ryzeal“ nicht auseinanderfallen.
+- Die Grenze gehört dazu und steht in Abschnitt 7: kein Duellmodus, keine Statistik-Seite, keine Diagramme, keine Prozentangaben.
+
 ## 4. Technik
 
 ### 4.1 Datenmodell
@@ -113,6 +125,8 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 - `Deck.roles Json @default("{}")`: Passcode auf Rolle. Ein Feld am Deck statt einer Spalte an `DeckCard`, weil dieselbe Karte in Main und Side Deck dieselbe Rolle hat und `DeckCard` pro Bereich eine Zeile hat. Beim Schreiben über ein Zod-Schema geprüft (Rollen als Enum, nur Karten, die im Deck liegen).
 - D-3: Modell `DeckVersion` mit `deckId`, `name`, `entries Json`, `roles Json`, `createdAt`. Versionen liegen außerhalb des Verlaufs der Seite, weil Sichern und Löschen keine Bearbeitung der Liste sind.
 - D-4: `Deck.sidePlans Json` statt eigenem Modell, Liste von `{ id, matchup, going, in, out }`. So laufen Side-Pläne durch denselben Autosave und dasselbe Strg+Z wie Liste und Rollen; geprüft mit Zod beim Speichern.
+- D-5: Modell `DeckGame` mit `deckId`, `sidePlanId`, `matchup`, `going`, `result`, `note`, `playedAt`. Eigenes Modell statt eines weiteren Json-Felds am Deck, weil die Liste unbegrenzt wächst und ein Eintrag kein Bearbeiten der Liste ist: Er hängt an zwei eigenen Aktionen, nicht am Autosave der Seite, und Strg+Z oder das Zurückholen einer Version fassen ihn nicht an. Dieselbe Begründung wie bei `DeckVersion`.
+- Die Zuordnung Eintrag zu Plan ist eine reine Rechnung in `src/lib/deck/games.ts`: zuerst über `sidePlanId`, und zeigt die auf einen Plan, den es nicht mehr gibt, über Matchup und Zugfolge. So wird beim Löschen eines Plans kein Eintrag geschrieben, und holt Strg+Z den Plan zurück, hängen die Spiele wieder daran.
 
 ### 4.2 Rechnung
 
@@ -132,6 +146,7 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 - `PATCH /api/v1/decks/:id/roles` und Rollen in `GET /api/v1/decks/:id`, damit Agenten Rollen setzen und Kennzahlen lesen können.
 - `GET /api/v1/decks/:id/odds?going=first|second` liefert die Kennzahlen und den Grenznutzen. So kann ein Agent „schlag mir einen Cut auf 40 vor“ mit echten Zahlen beantworten.
 - `&matchup=Ryzeal` rechnet für das Main Deck nach dem Side-Plan, die Zugfolge kommt dann aus dem Plan. Side-Pläne stehen auch in `GET /api/v1/decks/:id`. Versionen gibt es über die API nicht; dafür fehlt bisher ein Anlass.
+- D-5: Jeder Side-Plan in `GET /api/v1/decks/:id` trägt `record` mit Siegen, Niederlagen und Unentschieden, damit ein Agent „welcher meiner Pläne hält nicht?“ beantworten kann. Rohe Zahlen auch hier, keine Quote. Eintragen geht nur in der App.
 
 ## 5. Phasen
 
@@ -141,6 +156,7 @@ Das kann nur DuelPath, weil die Combos am Deck hängen. Heute ist die Abdeckung 
 | **D-2 Combos und Grenznutzen** | exakte Abdeckung, Grenznutzen pro Karte, Streichkandidaten, Deckgröße, Extra Deck nach Nutzung, API | „Welche Karte fliegt raus?“               |
 | **D-3 Versionen**              | Versionen speichern, Vergleich, Zurückholen                                                         | „War die Liste von letzter Woche besser?“ |
 | **D-4 Side-Plan**              | Side-Plan pro Matchup und Position, Kennzahlen nach dem Siden                                       | Vorbereitung auf ein Turnier              |
+| **D-5 Spielprotokoll**         | Spiele am Deck eintragen, Bilanz je Side-Plan, `record` in der API                                  | „Hält mein Plan gegen Ryzeal?“            |
 
 D-1 und D-2 sind der Kern und gehören zusammen in einen Branch: Ohne Rollen fehlt den Kennzahlen die Grundlage, ohne Abdeckung fehlt der Teil, den es woanders nicht gibt.
 
@@ -155,11 +171,13 @@ Wie im UX-Plan (Abschnitt 13) mit der Stoppuhr geprüft, mit der Crystal-Beast-L
 | Eine Karte von 2 auf 3 erhöhen und die Wirkung sehen | unter 2 Sekunden, ohne Speichern                   |
 | Von 43 auf 40 Karten kürzen                          | unter 1 Minute mit den Streichkandidaten           |
 | Zwei Versionen vergleichen (D-3)                     | unter 5 Sekunden                                   |
+| Ein Spiel nach der Runde eintragen (D-5)             | ein Klick, Matchup und Zugfolge sind vorbelegt     |
 
 ## 7. Bewusst nicht enthalten
 
 - **Automatischer Deckbau oder Ratio-Optimierer.** Die App rechnet und schlägt Streichkandidaten vor, sie baut keine Liste. Ein Optimierer würde Combos überbewerten, die gespeichert sind, und alles unterschätzen, was nur im Kopf des Spielers existiert.
-- **Matchup-Statistiken aus gespielten Partien.** DuelPath kennt keine Partien (Projektplan 2: ein Zug pro Combo).
+- **Statistik-Seite, Diagramme und Prozentangaben zu Matchups.** Seit D-5 lassen sich Spiele am Deck eintragen (3.7), und die Bilanz steht als rohe Zahl am Side-Plan. Daraus wird keine Siegquote, keine Auswertung über Decks hinweg, kein Diagramm und keine eigene Seite. Eine Quote aus sieben Spielen behauptet mehr, als sie weiß, und eine Seite voller Zahlen lädt dazu ein, sie zu glauben.
+- **Duellmodus, Replay und Turniermodell.** Ein Eintrag im Protokoll ist ein Ergebnis, kein Verlauf: kein Spielfeld, kein Gegnerboard, keine Gegnernamen, keine Orte, keine Matches. Ein Combo-Baum bleibt ein eigener Zug (Projektplan 2); das Protokoll rührt daran nicht, weil es keinen Zug speichert.
 - **Andere Formate** (Genesys, alte Banlisten). Eigene Frage, eigener Plan.
 - **Preise und Sammlung.** Andere Werkzeuge machen das gut.
 
