@@ -5,13 +5,23 @@ import { useSettings } from '@/components/providers/SettingsProvider';
 import type { ComboCard } from '@/lib/combo/cards';
 import type { LineStep } from '@/lib/combo/lines';
 import type { ComboNodeData, GameState } from '@/lib/combo/state';
-import { hitsByStep, stressTest, type Hit } from '@/lib/combo/stress';
+import { boardThreats } from '@/lib/combo/opponent-board';
+import { hitsByStep, stressTest, type Hit, type StapleEntry } from '@/lib/combo/stress';
 import type { StapleCard } from '@/server/actions/combo.actions';
 import type { RailStaple } from './StapleRail';
 
+/** Ein Eintrag der Leiste: Staple von der Hand oder liegende Karte des Gegnerboards */
+export interface StressEntry {
+  staple: StapleCard['staple'];
+  card: ComboCard;
+  /** Gesetzt bei einer liegenden Gegnerkarte (opponent-board.ts) */
+  instanceId?: string;
+}
+
 /**
  * Stresstest der aktuellen Line (UX-Plan 6.8): Staple-Auswahl aus den Einstellungen,
- * Treffer pro Schritt und die Schrittnummern für Leiste und Branch-Namen.
+ * dazu die gegnerischen Permanents des Startzustands (Lücke L1), Treffer pro Schritt
+ * und die Schrittnummern für Leiste und Branch-Namen.
  */
 export function useStress({
   line,
@@ -40,9 +50,21 @@ export function useStress({
     return settings.staples.flatMap((name) => opponent.filter((s) => s.staple.name === name));
   }, [staples, settings.staples]);
 
-  const entries = useMemo(
-    () => chosen.map((s) => ({ staple: s.staple, cardId: s.card.id })),
-    [chosen]
+  /** Liegende Gegnerkarten; schon gewählte Staples bleiben weg, damit kein Chip doppelt erscheint */
+  const board = useMemo(
+    () => boardThreats(start, cards, new Set(chosen.map((s) => s.card.id))),
+    [start, cards, chosen]
+  );
+
+  const all = useMemo<StressEntry[]>(() => [...chosen, ...board], [chosen, board]);
+  const entries = useMemo<StapleEntry[]>(
+    () =>
+      all.map((s) => ({
+        staple: s.staple,
+        cardId: s.card.id,
+        ...(s.instanceId && { instanceId: s.instanceId }),
+      })),
+    [all]
   );
   const hits = useMemo(
     () => stressTest(line, states, start, cards, entries, { pairs }),
@@ -57,9 +79,10 @@ export function useStress({
 
   const rail = useMemo(
     (): RailStaple[] =>
-      chosen.map((s) => ({
+      all.map((s) => ({
         name: s.staple.name,
         card: s.card,
+        onBoard: s.instanceId !== undefined,
         steps: [
           ...new Set(
             hits
@@ -69,10 +92,12 @@ export function useStress({
           ),
         ].sort((a, b) => a - b),
       })),
-    [chosen, hits, numberOf]
+    [all, hits, numberOf]
   );
 
-  const shortOf = (name: string) => staples.find((s) => s.staple.name === name)?.staple.short;
+  const entryOf = (name: string) => all.find((s) => s.staple.name === name);
+  const shortOf = (name: string) => entryOf(name)?.staple.short;
+  const imageOf = (name: string) => entryOf(name)?.card.imageSmall ?? null;
 
   /** Schwachstellen für das Endboard: pro Schritt die Kurznamen der treffenden Staples */
   const weaknesses = useMemo(
@@ -83,9 +108,9 @@ export function useStress({
           ? [{ step: s.number, staples: list.map((h: Hit) => shortOf(h.staple) ?? h.staple) }]
           : [];
       }),
-    // shortOf liest nur staples
+    // shortOf liest nur all
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [steps, byStep, staples]
+    [steps, byStep, all]
   );
 
   /** Zweite Unterbrechungen in einer anderen Line, für die Zahl an den Branch-Zeilen */
@@ -94,5 +119,17 @@ export function useStress({
       ? stressTest(otherLine, states, start, cards, entries, { pairs: true }).length
       : 0;
 
-  return { chosen, hits, byStep, rail, numberOf, weaknesses, shortOf, pairsIn };
+  return {
+    chosen,
+    all,
+    hits,
+    byStep,
+    rail,
+    numberOf,
+    weaknesses,
+    entryOf,
+    shortOf,
+    imageOf,
+    pairsIn,
+  };
 }

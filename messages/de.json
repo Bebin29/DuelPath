@@ -611,6 +611,8 @@
     "missing_other": "fehlt: {{count}} Karten",
     "missingLabel": "fehlt",
     "hitReason": "{{staple}} trifft: {{why}}",
+    "hitReasonBoard": "{{staple}} liegt und beantwortet: {{why}}",
+    "onBoard": "liegt auf dem Gegnerboard",
     "pattern": {
       "FROM_DECK": "Suche aus dem Deck",
       "FROM_GY": "Karte verlässt den Friedhof",

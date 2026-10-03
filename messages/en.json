@@ -611,6 +611,8 @@
     "missing_other": "missing: {{count}} cards",
     "missingLabel": "missing",
     "hitReason": "{{staple}} hits: {{why}}",
+    "hitReasonBoard": "{{staple}} is on board and answers: {{why}}",
+    "onBoard": "on the opponent's board",
     "pattern": {
       "FROM_DECK": "search from the Deck",
       "FROM_GY": "card leaves the GY",

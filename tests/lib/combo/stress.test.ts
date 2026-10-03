@@ -308,7 +308,10 @@ describe('stressTest gegen ein Gegnerboard', () => {
       action: 'OTHER',
       resolveMoves: [{ instanceId: 'apo', cardId: 'APO', from: 'MONSTER', to: 'GY' }],
     };
-    const tree = [pop, ...played.nodes.map((n) => (n.id === act.id ? { ...n, parentId: pop.id } : n))];
+    const tree = [
+      pop,
+      ...played.nodes.map((n) => (n.id === act.id ? { ...n, parentId: pop.id } : n)),
+    ];
     const states = statesForTree(tree, START_BOARD, withBoard);
     const hits = run([ns, pop, ...played.nodes.slice(1)], states);
     expect(hits.some((h) => h.source === 'apo')).toBe(false);
@@ -319,7 +322,14 @@ describe('stressTest gegen ein Gegnerboard', () => {
   it('legt den Branch mit der liegenden Instanz an, statt eine neue Kopie anzulegen', () => {
     const [hit] = run(played.nodes, played.states);
     const entry = threats.find((t) => t.instanceId === 'apo')!;
-    const branch = stressBranch(hit, entry, played.nodes, played.states, played.start, 'Apollousa auf 2');
+    const branch = stressBranch(
+      hit,
+      entry,
+      played.nodes,
+      played.states,
+      played.start,
+      'Apollousa auf 2'
+    );
     expect(branch).toMatchObject({
       parentId: act.id,
       player: 'opponent',

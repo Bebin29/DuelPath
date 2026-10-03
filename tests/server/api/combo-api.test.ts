@@ -15,6 +15,7 @@ import {
   openPrompts,
   playStep,
   stepResult,
+  stressView,
   type ComboContext,
 } from '@/server/api/combo-api';
 import { ApiError } from '@/server/api/http';
@@ -196,5 +197,67 @@ describe('REST-API: Schritte', () => {
     expect(await codeOf(playStep(context(), { command: 'ns nichts' }))).toBe('NOT_POSSIBLE');
     const extra = await playStep(context(), { command: 'ss albion' }).catch((e) => e);
     expect(extra).toMatchObject({ code: 'NOT_POSSIBLE', details: { needs: 'materials' } });
+  });
+});
+
+/**
+ * Gegnerboard im Stresstest (Lücke L1). Startzustand: Aluber auf der Hand, Apollousa offen
+ * beim Gegner. Von Hand: Schritt 1 ist die Normalbeschwörung, die Apollousa nicht beantwortet;
+ * Schritt 2 ist Alubers Monstereffekt, den Apollousa negiert.
+ */
+describe('REST-API: Stresstest gegen das Gegnerboard', () => {
+  const APOLLOUSA = card({
+    id: 'APO',
+    name: 'Apollousa, Bow of the Goddess',
+    type: 'Link Monster',
+    effects: [
+      eff(
+        "(Quick Effect): You can make this card lose exactly 800 ATK, and if you do, negate the activation of an opponent's monster effect.",
+        ['QUICK', 'NEG_ACTIVATION']
+      ),
+    ],
+  });
+  const withBoard = (): ComboContext =>
+    buildContext('user-1', {
+      ...context().combo,
+      cards: [...CARDS, APOLLOUSA],
+      startState: {
+        cards: [
+          ...context().combo.startState.cards,
+          {
+            instanceId: 'apo',
+            cardId: 'APO',
+            owner: 'opponent',
+            zone: 'MONSTER',
+            position: 'ATK',
+          },
+        ],
+      },
+    });
+
+  beforeEach(() => {
+    storeCombo.mockReset();
+    storeCombo.mockImplementation(async (_u, _c, _i, rev?: number) => ({ revision: 4 }));
+  });
+
+  it('nennt pro Schritt die liegende Karte, die ihn beantwortet', async () => {
+    const { ctx } = await playStep(withBoard(), { command: 'ns aluber' });
+    const act = await playStep(ctx, { command: 'act aluber' });
+    const hits = stressView(act.ctx, null, false).filter((h) => h.source);
+    expect(hits).toEqual([
+      expect.objectContaining({
+        name: 'Apollousa, Bow of the Goddess',
+        short: 'Apollousa',
+        pattern: 'MONSTER_EFFECT',
+        step: 2,
+        source: expect.objectContaining({ instanceId: 'apo', zone: 'MONSTER' }),
+      }),
+    ]);
+  });
+
+  it('ohne Gegnerboard meldet dieselbe Line keine liegende Karte', async () => {
+    const { ctx } = await playStep(context(), { command: 'ns aluber' });
+    const act = await playStep(ctx, { command: 'act aluber' });
+    expect(stressView(act.ctx, null, false).filter((h) => h.source)).toEqual([]);
   });
 });
