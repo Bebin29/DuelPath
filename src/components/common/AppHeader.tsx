@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
-import { House, Layers, LogOut, Route, Search, Settings } from 'lucide-react';
+import { House, Layers, Library, LogOut, Route, Search, Settings } from 'lucide-react';
 import { useLanguage, useTranslation } from '@/lib/i18n/hooks';
 import { parseTheme } from '@/lib/theme';
 import { usePalette } from '@/components/command/CommandPalette';
@@ -38,6 +38,7 @@ export function AppHeader() {
     { href: '/', label: t('navigation.home'), icon: House },
     { href: '/combos', label: t('navigation.combos'), icon: Route },
     { href: '/decks', label: t('navigation.decks'), icon: Layers },
+    { href: '/cards', label: t('navigation.cards'), icon: Library },
   ];
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname?.startsWith(href));
   const initial = (session?.user?.name || session?.user?.email || '?').charAt(0).toUpperCase();
@@ -137,7 +138,7 @@ export function AppHeader() {
       {session && (
         <nav
           aria-label={t('shell.mainNavigation')}
-          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm sm:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm sm:hidden"
         >
           {items.map(({ href, label, icon: Icon }) => {
             const active = isActive(href);

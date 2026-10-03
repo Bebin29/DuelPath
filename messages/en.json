@@ -4,7 +4,8 @@
     "decks": "Decks",
     "combos": "Combos",
     "profile": "Profile",
-    "settings": "Settings"
+    "settings": "Settings",
+    "cards": "Cards"
   },
   "deck": {
     "title": "Deck",
@@ -417,6 +418,13 @@
     "staples": "Staples",
     "staplesText": "Which cards the staple rail and the stress test use, in this order. Cards forbidden in the TCG are missing.",
     "staplesReset": "Default list",
+    "breakers": "Board breakers",
+    "breakersText": "Which cards the role suggestion treats as board breakers. Kaijus are always recognised, even without an entry.",
+    "breakersReset": "Default list",
+    "breakersEmpty": "No board breakers. The suggestion then only picks up Kaijus.",
+    "breakerAdd": "Add card",
+    "breakerAddHint": "Click adds the card to the list.",
+    "removeBreaker": "Remove {{name}}",
     "up": "Move up",
     "down": "Move down",
     "workbench": "Workbench",
@@ -907,6 +915,14 @@
       "Top-Right": "top right",
       "Bottom-Left": "bottom left",
       "Bottom-Right": "bottom right"
+    },
+    "perDuel": "per Duel",
+    "optWording": {
+      "use": "“use this effect of X”: per player and name",
+      "activate": "“activate this effect of X”: a negated activation does not count",
+      "activateCard": "“activate 1 X per turn”: limits the card activation",
+      "apply": "“apply this effect of X”: counts only when applied",
+      "shared": "one shared counter for all effects of the card"
     }
   },
   "palette": {
@@ -928,7 +944,8 @@
       "combos": "Combos",
       "decks": "Decks",
       "cards": "Cards"
-    }
+    },
+    "cards": "Look up a card"
   },
   "help": {
     "title": "Keyboard shortcuts",
@@ -1005,5 +1022,58 @@
     "slowPlay": "over seven minutes, a slow play risk in a round",
     "def": "DEF",
     "emptyField": "No cards on the field yet"
+  },
+  "cards": {
+    "title": "Cards",
+    "subtitle": "Look up a card: effects, OPT kind, banlist and the ruling mechanics behind it.",
+    "search": "Card search",
+    "searchPlaceholder": "Name, German name, abbreviation or nickname",
+    "searchHint": "At least 2 characters. “ash”, “bewd” and German names work.",
+    "empty": "Pick a card on the left to see effects, OPT kind and mechanics."
+  },
+  "mechanics": {
+    "title": "Mechanics",
+    "count_one": "{{count}} match",
+    "count_other": "{{count}} matches",
+    "intro": "Curated ruling mechanics that fit the card text. The badge says how far DuelPath computes the rule itself.",
+    "none": "No entry fits this card. The rules below still apply.",
+    "general_one": "{{count}} rule without a text pattern",
+    "general_other": "{{count}} rules without a text pattern",
+    "generalIntro": "These entries do not depend on the card text: game rules always apply, unsourced cases only go to Jev as context.",
+    "notes": "Uncertain:",
+    "basis": {
+      "label": "Detected by:",
+      "cardType": "card type",
+      "structure": "sentence structure"
+    },
+    "category": {
+      "negation": "Negation",
+      "opt": "OPT",
+      "cost": "Cost",
+      "trigger": "Trigger",
+      "chain": "Chain",
+      "summon": "Summon",
+      "text": "Text logic"
+    },
+    "deterministic": {
+      "yes": {
+        "label": "computed",
+        "hint": "DuelPath checks this rule itself."
+      },
+      "partial": {
+        "label": "partial",
+        "hint": "DuelPath checks only part of it; you describe the rest."
+      },
+      "no": {
+        "label": "context only",
+        "hint": "Not sourced. DuelPath checks nothing here."
+      }
+    },
+    "field": {
+      "opt": "OPT",
+      "cost": "Cost",
+      "card": "Card",
+      "trigger": "Trigger"
+    }
   }
 }
