@@ -499,7 +499,7 @@ export function Workbench({
     if (!practice) return;
     const leaf = line.at(-1);
     const state = (leaf && states.get(leaf.id)) || after;
-    const summary = endboardSummary(state, start, cards, leaf?.interruptions);
+    const summary = endboardSummary(state, start, cards);
     practice.onFinish(
       { interruptions: summary.interruptions, field: fieldCardIds(state) },
       Date.now() - practice.startedAt

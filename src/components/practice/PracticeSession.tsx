@@ -64,7 +64,14 @@ export function PracticeSession({
 
   const quit = () => router.push(`/decks/${setup.deckId}?tab=hand`);
   const begin = () => {
-    const drawn = practiceHands(setup.pool, setup.targets, PRACTICE_HANDS, HAND_SIZE.first);
+    const drawn = practiceHands(
+      setup.pool,
+      setup.targets,
+      PRACTICE_HANDS,
+      HAND_SIZE.first,
+      Math.random,
+      cards
+    );
     setHands(drawn);
     setAttempts([]);
     setEmpty(drawn.length === 0);

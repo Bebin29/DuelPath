@@ -88,6 +88,7 @@ export function PracticeResult({
         </p>
       </header>
 
+      <p className="text-sm text-text-muted">{t('practice.comparisonHint')}</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="flex flex-col gap-3 rounded-lg border border-line bg-surface-1 p-5">
           <h2 className="font-mono text-2xs uppercase tracking-wide text-text-subtle">
@@ -120,7 +121,7 @@ export function PracticeResult({
           </p>
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
             <Link
-              href={`/combos/${target.comboId}`}
+              href={`/combos/${target.comboId}${target.leafId ? `?step=${target.leafId}` : ''}`}
               target="_blank"
               className="inline-flex items-center gap-1 font-display text-lg hover:underline"
             >
@@ -149,14 +150,14 @@ export function PracticeResult({
           <h2 className="font-display text-xl">{t('practice.alsoMatching')}</h2>
           <ul className="flex flex-col border-t border-line">
             {attempt.hand.targets
-              .filter((x) => x.comboId !== target.comboId)
+              .filter((x) => x.comboId !== target.comboId || x.leafId !== target.leafId)
               .map((x) => (
                 <li
-                  key={x.comboId}
+                  key={`${x.comboId}:${x.leafId ?? ''}`}
                   className="flex min-h-10 flex-wrap items-center gap-x-3 border-b border-line py-1.5"
                 >
                   <Link
-                    href={`/combos/${x.comboId}`}
+                    href={`/combos/${x.comboId}${x.leafId ? `?step=${x.leafId}` : ''}`}
                     target="_blank"
                     className="min-w-0 flex-1 truncate font-display text-base hover:underline"
                   >

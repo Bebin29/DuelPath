@@ -1,7 +1,13 @@
-import { endboardSummary, fieldCardIds, lineEnds, missingFrom } from '@/lib/combo/endboard';
-import { initialState, statesForTree } from '@/lib/combo/state';
+import {
+  endboardSummary,
+  fieldCardIds,
+  lineEnds,
+  missingFrom,
+  interruptionsOf,
+} from '@/lib/combo/endboard';
+import { initialState, statesForTree, pathTo } from '@/lib/combo/state';
 import type { CardData, ComboNodeData, StartState } from '@/lib/combo/state';
-import { visibleSteps } from '@/lib/combo/summary';
+import { visibleSteps, comboStats } from '@/lib/combo/summary';
 import type { ComboCard } from '@/lib/combo/cards';
 import type { DeckEntry } from '@/lib/combo/deck';
 import { containsHand, drawHand } from './hand-tester';
@@ -15,6 +21,9 @@ import { containsHand, drawHand } from './hand-tester';
 /** Eine gespeicherte Line als Vorbild: was sie aus der Hand braucht und wo sie endet */
 export interface PracticeTarget {
   comboId: string;
+  leafId?: string;
+  /** True: interruptions excludes unused saved hand cards and is calibrated when drawing. */
+  calibrateHand?: boolean;
   title: string;
   /** Passcodes, die die Line aus der Starthand einsetzt; Kopien mehrfach */
   startHand: string[];
@@ -58,6 +67,113 @@ export function bestKnownEnd(
     best = { interruptions, field: fieldCardIds(state), steps: visibleSteps(nodes, leaf.id) };
   }
   return best;
+}
+
+/** Each reference comes from one compatible path, never a mixture of branches. */
+export function practiceTargets(
+  combo: { id: string; title: string; startState: StartState; nodes: ComboNodeData[] },
+  cards: Map<string, CardData>,
+  entries: DeckEntry[]
+): PracticeTarget[] {
+  const { startState, nodes } = combo;
+  // A fresh practice hand cannot recreate field/GY setups or an opponent's board.
+  if (
+    startState.cards.some((c) => c.owner !== 'self' || !['HAND', 'DECK', 'EXTRA'].includes(c.zone))
+  )
+    return [];
+  const deck = new Map(entries.map((e) => [e.cardId, e.quantity]));
+  const original = new Map(startState.cards.map((c) => [c.instanceId, c.cardId]));
+  const states = statesForTree(nodes, startState, cards);
+  const start = initialState(startState);
+  return lineEnds(nodes).flatMap(({ leaf }) => {
+    const line = pathTo(nodes, leaf.id);
+    if (line.some((n) => n.player === 'opponent' || n.kind === 'OPPONENT')) return [];
+    const touched = new Set<string>();
+    const used = new Map<string, string>();
+    for (const n of line) {
+      if (n.instanceId) {
+        touched.add(n.instanceId);
+        const id = n.cardId ?? original.get(n.instanceId);
+        if (id) used.set(n.instanceId, id);
+      }
+      for (const move of [...(n.costMoves ?? []), ...(n.resolveMoves ?? [])]) {
+        if (move.owner === 'opponent') return [];
+        touched.add(move.instanceId);
+        const id = move.cardId ?? original.get(move.instanceId);
+        if (id) used.set(move.instanceId, id);
+      }
+    }
+    const quantities = new Map<string, number>();
+    for (const id of used.values()) {
+      if (cards.get(id)?.type.includes('Token')) continue;
+      quantities.set(id, (quantities.get(id) ?? 0) + 1);
+    }
+    if ([...quantities].some(([id, quantity]) => quantity > (deck.get(id) ?? 0))) return [];
+    const state = states.get(leaf.id);
+    if (!state || state.warnings.length > 0) return [];
+    const required = comboStats(startState, line, cards).required;
+    if (
+      !required.length ||
+      !containsHand(
+        entries
+          .filter((e) => e.section === 'MAIN')
+          .flatMap((e) => Array<string>(e.quantity).fill(e.cardId)),
+        required
+      )
+    )
+      return [];
+    // Untouched saved hand cards are replaced by the random hand's unused cards below.
+    const summary = endboardSummary(state, start, cards);
+    const unused = new Set(
+      startState.cards
+        .filter((c) => c.zone === 'HAND' && !touched.has(c.instanceId))
+        .map((c) => c.instanceId)
+    );
+    return [
+      {
+        comboId: combo.id,
+        leafId: leaf.id,
+        title: combo.title,
+        startHand: required,
+        interruptions:
+          summary.interruptions -
+          summary.hand
+            .filter((c) => unused.has(c.placed.instanceId))
+            .reduce((sum, c) => sum + c.count, 0),
+        calibrateHand: true,
+        field: fieldCardIds(state),
+        steps: visibleSteps(line, leaf.id),
+      },
+    ];
+  });
+}
+
+/** Put the saved path and the attempt on the same untouched hand resources. */
+export function targetForHand(
+  target: PracticeTarget,
+  hand: string[],
+  cards: Map<string, CardData>
+): PracticeTarget {
+  if (!target.calibrateHand) return target;
+  const extras = [...hand];
+  for (const id of target.startHand) {
+    const index = extras.indexOf(id);
+    if (index >= 0) extras.splice(index, 1);
+  }
+  const held = extras.reduce(
+    (sum, id, index) =>
+      sum +
+      interruptionsOf(cards.get(id), {
+        instanceId: `extra:${index}`,
+        cardId: id,
+        owner: 'self',
+        controller: 'self',
+        zone: 'HAND',
+        epoch: 0,
+      }),
+    0
+  );
+  return { ...target, calibrateHand: false, interruptions: target.interruptions + held };
 }
 
 /** Alles, was ein Übungslauf über das Deck braucht; der Server stellt es einmal zusammen */
@@ -154,7 +270,8 @@ export function practiceHands(
   targets: PracticeTarget[],
   count = PRACTICE_HANDS,
   size = 5,
-  random: () => number = Math.random
+  random: () => number = Math.random,
+  cards: Map<string, CardData> = new Map()
 ): PracticeHand[] {
   const usable = targets.filter((t) => t.startHand.length > 0 && t.startHand.length <= size);
   if (pool.length === 0 || usable.length === 0) return [];
@@ -162,7 +279,8 @@ export function practiceHands(
   for (let i = 0; i < DRAW_TRIES && hands.length < count; i++) {
     const hand = drawHand(pool, size, random);
     const matched = matchingTargets(hand, usable);
-    if (matched.length > 0) hands.push({ hand, targets: matched });
+    if (matched.length > 0)
+      hands.push({ hand, targets: matched.map((t) => targetForHand(t, hand, cards)) });
   }
   return hands;
 }

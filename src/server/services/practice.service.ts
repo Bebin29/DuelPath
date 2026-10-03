@@ -1,8 +1,7 @@
 import { prisma } from '@/lib/prisma/client';
 import type { CardData, StartState } from '@/lib/combo/state';
-import { comboStats } from '@/lib/combo/summary';
 import { expandDeck } from '@/lib/deck/hand-tester';
-import { bestKnownEnd, type PracticeSetup, type PracticeTarget } from '@/lib/deck/practice';
+import { practiceTargets, type PracticeSetup } from '@/lib/deck/practice';
 import { cardIdsOf, loadCards, loadDeckEntries, nodeFromRow } from './combo-store.service';
 
 /**
@@ -42,21 +41,7 @@ export async function loadPracticeSetup(
   const cards = [...loaded.cards, ...(extra.size ? await loadCards(extra) : [])];
   const byId = new Map<string, CardData>(cards.map((c) => [c.id, c]));
 
-  const targets: PracticeTarget[] = [];
-  for (const combo of combos) {
-    const end = bestKnownEnd(combo.startState, combo.nodes, byId);
-    if (!end) continue;
-    const stats = comboStats(combo.startState, combo.nodes, byId);
-    if (stats.required.length === 0) continue;
-    targets.push({
-      comboId: combo.id,
-      title: combo.title,
-      startHand: stats.required,
-      interruptions: end.interruptions,
-      field: end.field,
-      steps: end.steps,
-    });
-  }
+  const targets = combos.flatMap((combo) => practiceTargets(combo, byId, loaded.entries));
 
   return {
     deckId,

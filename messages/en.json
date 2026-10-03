@@ -906,7 +906,8 @@
       "ahead": "Above",
       "time": "Total time",
       "perHand": "Average per hand"
-    }
+    },
+    "comparisonHint": "Compares automatically detected interruptions from the same required starting hand. Additional unused hand cards count on both sides. This score does not verify full play legality."
   },
   "newCombo": {
     "title": "Choose a starting hand",

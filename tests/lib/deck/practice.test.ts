@@ -3,6 +3,8 @@ import type { CardData, ComboNodeData, StartState } from '@/lib/combo/state';
 import { expandDeck, seededRandom } from '@/lib/deck/hand-tester';
 import {
   bestKnownEnd,
+  practiceTargets,
+  targetForHand,
   bestTarget,
   formatDuration,
   matchingTargets,
@@ -167,5 +169,120 @@ describe('Übungsmodus', () => {
     expect(formatDuration(600_000)).toBe('10:00');
     expect(formatDuration(3_723_000)).toBe('1:02:03');
     expect(formatDuration(-5_000)).toBe('0:00');
+  });
+});
+
+describe('vergleichbare Übungsvorbilder', () => {
+  const starter: CardData = { id: 'START', name: 'Starter', type: 'Effect Monster', effects: [] };
+  const ash: CardData = {
+    id: 'ASH',
+    name: 'Ash',
+    type: 'Effect Monster',
+    effects: [
+      {
+        index: 0,
+        text: 'You can discard this card; negate that effect.',
+        activated: true,
+        patterns: ['QUICK', 'NEG_EFFECT_CHAINED'] as never[],
+      },
+    ],
+  };
+  const neg: CardData = {
+    id: 'NEG',
+    name: 'Negator',
+    type: 'Fusion Monster',
+    effects: [
+      {
+        index: 0,
+        text: '(Quick Effect): negate the activation.',
+        activated: true,
+        patterns: ['QUICK', 'NEG_ACTIVATION'] as never[],
+      },
+    ],
+  };
+  const cards = new Map([starter, ash, neg].map((c) => [c.id, c]));
+  const entries = [
+    { cardId: 'START', quantity: 2, section: 'MAIN' as const },
+    { cardId: 'ASH', quantity: 3, section: 'MAIN' as const },
+    { cardId: 'NEG', quantity: 1, section: 'EXTRA' as const },
+  ];
+  const combo = {
+    id: 'c',
+    title: 'Example',
+    startState: {
+      cards: [
+        { instanceId: 's', cardId: 'START', owner: 'self' as const, zone: 'HAND' as const },
+        { instanceId: 'a', cardId: 'ASH', owner: 'self' as const, zone: 'HAND' as const },
+        { instanceId: 'n', cardId: 'NEG', owner: 'self' as const, zone: 'EXTRA' as const },
+      ],
+    },
+    nodes: [
+      {
+        id: 'end',
+        parentId: null,
+        kind: 'ACTION' as const,
+        player: 'self' as const,
+        action: 'OTHER' as const,
+        resolveMoves: [
+          { instanceId: 's', from: 'HAND' as const, to: 'GY' as const },
+          {
+            instanceId: 'n',
+            from: 'EXTRA' as const,
+            to: 'MONSTER' as const,
+            position: 'ATK' as const,
+          },
+        ],
+      },
+    ],
+  };
+
+  it('gibt zufälligen ungespielten Handtraps keinen Fortschritt', () => {
+    const [reference] = practiceTargets(combo, cards, entries);
+    expect(reference.interruptions).toBe(1);
+    const calibrated = targetForHand(reference, ['START', 'ASH', 'ASH', 'ASH'], cards);
+    expect(calibrated.interruptions).toBe(4);
+    expect(scoreHand({ interruptions: 3, field: [] }, calibrated).verdict).toBe('short');
+    expect(scoreHand({ interruptions: 4, field: ['NEG'] }, calibrated).verdict).toBe('equal');
+    expect(targetForHand(reference, ['START'], cards).interruptions).toBe(1);
+  });
+
+  it('schließt Startboards und entfernte Extra-Deck-Karten aus', () => {
+    const fieldStart = {
+      ...combo,
+      startState: {
+        cards: combo.startState.cards.map((c) =>
+          c.instanceId === 's' ? { ...c, zone: 'MONSTER' as const } : c
+        ),
+      },
+    };
+    expect(practiceTargets(fieldStart, cards, entries)).toEqual([]);
+    expect(
+      practiceTargets(
+        combo,
+        cards,
+        entries.filter((e) => e.cardId !== 'NEG')
+      )
+    ).toEqual([]);
+  });
+
+  it('berechnet Starthand und Ergebnis für jeden Branch separat', () => {
+    const branching = {
+      ...combo,
+      nodes: [
+        ...combo.nodes,
+        {
+          id: 'branch',
+          parentId: null,
+          rank: 1,
+          kind: 'ACTION' as const,
+          player: 'self' as const,
+          action: 'OTHER' as const,
+          resolveMoves: [{ instanceId: 'a', from: 'HAND' as const, to: 'GY' as const }],
+        },
+      ],
+    };
+    const targets = practiceTargets(branching, cards, entries);
+    expect(targets.map((t) => t.startHand)).toEqual([['START'], ['ASH']]);
+    expect(targets.map((t) => t.field)).toEqual([['NEG'], []]);
   });
 });

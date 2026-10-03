@@ -906,7 +906,8 @@
       "ahead": "Darüber",
       "time": "Zeit gesamt",
       "perHand": "Schnitt je Hand"
-    }
+    },
+    "comparisonHint": "Verglichen werden automatisch erkannte Unterbrechungen aus derselben benötigten Starthand. Zusätzliche unbenutzte Handkarten zählen auf beiden Seiten. Die Wertung bestätigt keine vollständige Spiellegalität."
   },
   "newCombo": {
     "title": "Starthand wählen",
