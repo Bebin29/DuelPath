@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Shuffle } from 'lucide-react';
+import { Dumbbell, Shuffle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
@@ -111,6 +111,13 @@ export function HandTester({
               { value: 'second', label: t('decks.goingSecond', { n: HAND_SIZE.second }) },
             ]}
           />
+          {/* Üben (Lücke L2): dieselben Hände, aber die passenden Lines bleiben verborgen */}
+          <Button asChild variant="line" title={t('practice.hint')}>
+            <Link href={`/decks/${deckId}/practice`}>
+              <Dumbbell />
+              {t('practice.open')}
+            </Link>
+          </Button>
         </div>
 
         {hand.length === 0 ? (

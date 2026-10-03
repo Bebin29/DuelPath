@@ -899,6 +899,52 @@
       "clean": "no notes"
     }
   },
+  "practice": {
+    "title": "Practice",
+    "open": "Practice",
+    "hint": "Draw a random hand and play the line yourself. Matching combos stay hidden until the review.",
+    "intro": "{{count}} hands in a row: draw, play the line at the workbench, then see how your end board compares to the best one you have saved. The clock starts with the first card.",
+    "targetCount_one": "{{count}} saved line for this deck",
+    "targetCount_other": "{{count}} saved lines for this deck",
+    "noTargets": "No line is saved for this deck yet. Build a combo first, then there is something to compare against.",
+    "noHands": "None of the drawn hands matches a saved line. Check the starting hands of your combos and the main deck.",
+    "start": "Start run",
+    "backToDeck": "Back to the deck",
+    "handOf": "Hand {{n}} of {{total}}",
+    "elapsed": "Time taken",
+    "startHint": "The hand is set. Play it from the board: click a card or drag it onto a zone.",
+    "finishHand": "Score this hand",
+    "quit": "End practice",
+    "resultTitle": "Hand review",
+    "yourBoard": "Your end board",
+    "bestKnown": "Best known end board",
+    "emptyBoard": "Nothing on your field",
+    "stepCount_one": "{{count}} step",
+    "stepCount_other": "{{count}} steps",
+    "missing_one": "{{count}} card of the saved line is missing",
+    "missing_other": "{{count}} cards of the saved line are missing",
+    "missingLabel": "Missing cards",
+    "alsoMatching": "Also matched",
+    "nextHand": "Next hand",
+    "toSummary": "To the review",
+    "summaryTitle": "Run review",
+    "summaryLead": "You stayed below the best known end board on {{short}} of {{played}} hands.",
+    "score": "{{reached}} of {{best}}",
+    "again": "New run",
+    "verdict": {
+      "short": "below",
+      "equal": "level",
+      "ahead": "above"
+    },
+    "totals": {
+      "short": "Below",
+      "equal": "Level",
+      "ahead": "Above",
+      "time": "Total time",
+      "perHand": "Average per hand"
+    },
+    "comparisonHint": "Compares automatically detected interruptions from the same required starting hand. Additional unused hand cards count on both sides. This score does not verify full play legality."
+  },
   "newCombo": {
     "title": "Choose a starting hand",
     "text": "Click puts a copy in hand, click the card below to take it back.",
