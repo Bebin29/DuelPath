@@ -40,10 +40,17 @@ Felder, die über die reinen Kartendaten hinausgehen:
 | `passcode`        | Die ID von YGOPRODeck. Sie ist der Schlüssel nach aussen (YDK, Bilder) |
 | `imageUrl`        | Pfad auf den lokalen Bild-Cache, nicht die Adresse bei YGOPRODeck      |
 | `banTcg`          | Banlist-Stand: Forbidden, Limited, Semi-Limited oder leer              |
+| `tcgDate`         | Erscheinungsdatum im TCG. Karten ohne das Feld werden nicht importiert |
 
 Der `passcode` ist wichtig: Decks, YDK-Dateien, Rollen und Side-Pläne verweisen über den Passcode auf eine Karte, nicht über die interne `id`. Die interne `id` ändert sich bei einem Neuimport, der Passcode nicht.
 
 Gesucht wird nach Name mit ILIKE ohne Trigramm-Index. Bei etwa 14.000 Karten reicht das. Wenn die Suche spürbar langsamer wird, ist ein GIN-Index über `pg_trgm` der nächste Schritt.
+
+## Banlist
+
+**`Banlist`** hält den Stand einer Liste: `key` ist `current` oder `next`, `effectiveOn` sagt, von wann sie ist. Die aktuelle Liste selbst steht weiterhin an den Karten in `banTcg`; der Eintrag `current` kommt beim Kartenimport dazu und trägt nur das Datum. YGOPRODeck nennt kein Datum zur Liste, deshalb gilt der letzte Stand der Kartendatenbank. Er lässt sich in den Einstellungen nachtragen.
+
+**`BanlistCard`** gehört zu `next` und enthält nur die Abweichungen von der aktuellen Liste: `status` ist Forbidden, Limited, Semi-Limited oder Unlimited, und Unlimited gibt eine Karte wieder frei. Was nicht eingetragen ist, bleibt wie auf der aktuellen Liste. Der Deck-Check auf der Deckseite schaltet zwischen beiden Listen um.
 
 ## Decks
 

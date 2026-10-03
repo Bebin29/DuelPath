@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('@/lib/prisma/client', () => ({ prisma: {} }));
 
-import { mapCard, type YGOPRODeckCard } from '@/server/services/card-import.service';
+import { mapCard, parseDbDate, type YGOPRODeckCard } from '@/server/services/card-import.service';
 
 const ASH: YGOPRODeckCard = {
   id: 14558127,
@@ -51,5 +51,21 @@ describe('mapCard', () => {
       banlist_info: { ban_tcg: 'Limited' },
     });
     expect(card).toMatchObject({ level: 4, banTcg: 'Limited' });
+  });
+});
+
+describe('parseDbDate', () => {
+  it('liest den Stand der Kartendatenbank als Ortszeit', () => {
+    const date = parseDbDate([{ database_version: '7.0', last_update: '2026-09-30 14:12:03' }]);
+    expect(date?.getFullYear()).toBe(2026);
+    expect(date?.getMonth()).toBe(8);
+    expect(date?.getDate()).toBe(30);
+  });
+
+  it('gibt null, wenn die Antwort kein Datum enthält', () => {
+    expect(parseDbDate([])).toBeNull();
+    expect(parseDbDate([{ database_version: '7.0' }])).toBeNull();
+    expect(parseDbDate({ last_update: '2026-09-30 14:12:03' })).toBeNull();
+    expect(parseDbDate([{ last_update: 'übermorgen' }])).toBeNull();
   });
 });

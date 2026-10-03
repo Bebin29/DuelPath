@@ -47,7 +47,7 @@ Die Unterscheidung steht in `src/lib/cards/effects.ts` und wird beim Berechnen d
 
 **Staple**: eine Karte, die in sehr vielen Decks steckt. In DuelPath ist die Staple-Liste die Grundlage des Stresstests. Sie lässt sich in den Einstellungen ändern.
 
-**Banlist**: die Liste beschränkter Karten. Forbidden ist 0 Kopien, Limited 1, Semi-Limited 2. Der Stand steht an der Karte in `banTcg`.
+**Banlist**: die Liste beschränkter Karten. Forbidden ist 0 Kopien, Limited 1, Semi-Limited 2. Die aktuelle Liste steht an der Karte in `banTcg`; von wann sie ist, sagt der Eintrag `current` in `Banlist`. Daneben darf eine zweite Liste stehen, `next`, in die nur die angekündigten Änderungen eingetragen werden. Der Deck-Check nennt den Stand und schaltet zwischen beiden Listen um.
 
 Die kuratierten Regel-Mechaniken mit Quellenangabe stehen in `src/lib/rulings/mechanics.ts`. Die Recherche dahinter liegt in [research/rulings.md](research/rulings.md). Jede Mechanik ist dort markiert, wie weit sie sich berechnen lässt: `yes` rechnet die Zustandslogik direkt, `partial` nur teilweise, `no` geht nur als Kontext an Jev.
 

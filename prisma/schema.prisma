@@ -115,13 +115,42 @@ model Card {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  deckCards DeckCard[]
+  deckCards    DeckCard[]
+  banlistCards BanlistCard[]
 
   // ponytail: Namenssuche per ILIKE ohne Trigramm-Index; bei ~14k Karten schnell genug, pg_trgm-GIN-Index wenn die Suche spürbar langsam wird
   @@index([name])
   @@index([initials])
   @@index([type])
   @@index([archetype])
+}
+
+/// Banlist mit Stichdatum. "current" schreibt der Kartenimport mit, "next" ist
+/// die nächste Liste und wird von Hand gepflegt; der Deck-Check schaltet um.
+model Banlist {
+  id          String   @id @default(cuid())
+  key         String   @unique // "current" | "next"
+  name        String
+  effectiveOn DateTime // Stand der Liste, also ab wann sie gilt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cards BanlistCard[]
+}
+
+/// Eine Karte auf einer Banlist. Für "next" sind das die Abweichungen von der
+/// aktuellen Liste, "Unlimited" gibt eine Karte also wieder frei.
+model BanlistCard {
+  id        String @id @default(cuid())
+  banlistId String
+  cardId    String
+  status    String // Forbidden | Limited | Semi-Limited | Unlimited
+
+  banlist Banlist @relation(fields: [banlistId], references: [id], onDelete: Cascade)
+  card    Card    @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([banlistId, cardId])
+  @@index([cardId])
 }
 
 // Deck Model
@@ -136,7 +165,7 @@ model Deck {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   deckCards DeckCard[]
   combos    Combo[]
   versions  DeckVersion[]

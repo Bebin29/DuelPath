@@ -11,6 +11,7 @@ import type { Prisma } from '@/generated/prisma/client';
  */
 
 const API_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
+const DB_VERSION_URL = 'https://db.ygoprodeck.com/api/v7/checkDBVer.php';
 const BATCH_SIZE = 500;
 
 export interface YGOPRODeckCard {
@@ -36,6 +37,8 @@ export interface ImportStats {
   imported: number;
   skippedNonTcg: number;
   needsReview: number;
+  /** Stand der aktuellen Banlist nach dem Import */
+  banlistDate: Date;
 }
 
 async function fetchCards(query: string): Promise<YGOPRODeckCard[]> {
@@ -44,6 +47,31 @@ async function fetchCards(query: string): Promise<YGOPRODeckCard[]> {
   const json = (await res.json()) as { data?: YGOPRODeckCard[] };
   if (!Array.isArray(json.data)) throw new Error('Invalid YGOPRODeck response');
   return json.data;
+}
+
+/** Datum aus checkDBVer.php; null, wenn die Antwort keins enthält */
+export function parseDbDate(json: unknown): Date | null {
+  const entry = Array.isArray(json) ? (json[0] as { last_update?: unknown }) : null;
+  const raw = entry?.last_update;
+  if (typeof raw !== 'string') return null;
+  // "2026-09-30 14:12:03" ist keine ISO-Angabe; als Ortszeit lesen, damit das Datum stimmt
+  const date = new Date(raw.trim().replace(' ', 'T'));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Stand der Banlist. YGOPRODeck nennt kein eigenes Datum zur Liste, deshalb gilt
+ * der letzte Stand der Kartendatenbank. Er lässt sich in den Einstellungen
+ * nachtragen, wenn die Liste älter ist als die Datenbank.
+ */
+async function fetchBanlistDate(): Promise<Date> {
+  try {
+    const res = await fetch(DB_VERSION_URL);
+    if (!res.ok) return new Date();
+    return parseDbDate(await res.json()) ?? new Date();
+  } catch {
+    return new Date();
+  }
 }
 
 /** Wandelt eine YGOPRODeck-Karte in Card-Daten um; null für Karten ohne TCG-Release und Skill Cards */
@@ -88,7 +116,11 @@ export function mapCard(
 export async function importTcgCards(
   onProgress?: (done: number, total: number) => void
 ): Promise<ImportStats> {
-  const [english, german] = await Promise.all([fetchCards('misc=yes'), fetchCards('language=de')]);
+  const [english, german, banlistDate] = await Promise.all([
+    fetchCards('misc=yes'),
+    fetchCards('language=de'),
+    fetchBanlistDate(),
+  ]);
   const germanById = new Map(german.map((c) => [c.id, c]));
 
   const cards = english
@@ -106,10 +138,18 @@ export async function importTcgCards(
     onProgress?.(Math.min(i + BATCH_SIZE, cards.length), cards.length);
   }
 
+  // Die aktuelle Liste steht an den Karten selbst; hier kommt nur ihr Stand dazu
+  await prisma.banlist.upsert({
+    where: { key: 'current' },
+    create: { key: 'current', name: 'TCG', effectiveOn: banlistDate },
+    update: { effectiveOn: banlistDate },
+  });
+
   return {
     fetched: english.length,
     imported: cards.length,
     skippedNonTcg: english.length - cards.length,
     needsReview: cards.filter((c) => c.effectsReview).length,
+    banlistDate,
   };
 }
