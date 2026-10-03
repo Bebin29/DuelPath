@@ -4,11 +4,13 @@ import {
   statesForTree,
   type CardData,
   type ComboNodeData,
+  type GameState,
   type StartState,
 } from '@/lib/combo/state';
 import { buildStep, withMoves } from '@/lib/combo/play';
 import { STAPLES } from '@/lib/combo/reactions';
 import { existingBranch, stressBranch, stressTest, type StapleEntry } from '@/lib/combo/stress';
+import { boardThreatKey, boardThreats } from '@/lib/combo/opponent-board';
 
 const eff = (text: string, patterns: string[] = []) => ({
   index: 0,
@@ -48,13 +50,13 @@ const entries: StapleEntry[] = [
 ];
 
 /** NS Aluber, Aluber sucht Branded Fusion, Chain wird aufgelöst */
-function play(start: StartState) {
+function play(start: StartState, deck: Map<string, CardData> = cards) {
   let nodes: ComboNodeData[] = [];
   const step = (intent: Parameters<typeof buildStep>[0]) => {
-    const states = statesForTree(nodes, start, cards);
+    const states = statesForTree(nodes, start, deck);
     const parent = nodes.at(-1) ?? null;
     const state = parent ? states.get(parent.id)! : initialState(start);
-    nodes = [...nodes, ...buildStep(intent, { nodes, parent, state, cards })];
+    nodes = [...nodes, ...buildStep(intent, { nodes, parent, state, cards: deck })];
   };
   step({ kind: 'normalSummon', instanceId: 'alu' });
   step({ kind: 'activate', instanceId: 'alu', effectIndex: 0 });
@@ -65,7 +67,7 @@ function play(start: StartState) {
       : n
   );
   step({ kind: 'resolve' });
-  return { nodes, states: statesForTree(nodes, start, cards), start: initialState(start) };
+  return { nodes, states: statesForTree(nodes, start, deck), start: initialState(start) };
 }
 
 const START: StartState = {
@@ -219,5 +221,113 @@ describe('stressTest', () => {
     };
     const under = { ...branch, id: 'under', parentId: 'opp' };
     expect(existingBranch([...nodes, legacy, under], act.id, 'ASH')?.id).toBe('under');
+  });
+});
+
+/**
+ * Gegnerboard im Stresstest (Lücke L1): Dieselbe Line (1 NS Aluber, 2 Alubers Effekt, 3 Auflösen)
+ * läuft gegen ein Board aus Apollousa und gesetzter Solemn Warning.
+ * Von Hand: Warning beantwortet die Beschwörung auf 1, Apollousa den Monstereffekt auf 2.
+ */
+describe('stressTest gegen ein Gegnerboard', () => {
+  const APOLLOUSA: CardData = {
+    id: 'APO',
+    name: 'Apollousa, Bow of the Goddess',
+    type: 'Link Monster',
+    effects: [
+      eff(
+        "(Quick Effect): You can make this card lose exactly 800 ATK, and if you do, negate the activation of an opponent's monster effect.",
+        ['QUICK', 'NEG_ACTIVATION']
+      ),
+    ],
+  };
+  const WARNING: CardData = {
+    id: 'WARN',
+    name: 'Solemn Warning',
+    type: 'Trap Card',
+    effects: [
+      eff(
+        'When a monster(s) would be Summoned, OR when a card or effect is activated that includes an effect that Special Summons a monster(s): Pay 2000 LP; negate the Summon or effect, and if you do, destroy that card.',
+        ['NEG_SUMMON', 'NEG_ACT_DESTROY']
+      ),
+    ],
+  };
+  const withBoard = new Map([...cards, ['APO', APOLLOUSA], ['WARN', WARNING]] as const);
+  const START_BOARD: StartState = {
+    cards: [
+      ...START.cards,
+      { instanceId: 'apo', cardId: 'APO', owner: 'opponent', zone: 'MONSTER', position: 'ATK' },
+      {
+        instanceId: 'warn',
+        cardId: 'WARN',
+        owner: 'opponent',
+        zone: 'SPELL_TRAP',
+        slot: 0,
+        position: 'SET',
+      },
+    ],
+  };
+
+  const played = play(START_BOARD, withBoard);
+  const [ns, act] = played.nodes;
+  const threats = boardThreats(played.start, withBoard);
+  const run = (line: ComboNodeData[], states: Map<string, GameState>) =>
+    stressTest(
+      line,
+      states,
+      played.start,
+      withBoard,
+      threats.map((t) => ({ staple: t.staple, cardId: t.card.id, instanceId: t.instanceId }))
+    );
+
+  it('meldet pro Schritt, welche liegende Karte ihn beantwortet', () => {
+    expect(run(played.nodes, played.states)).toEqual([
+      expect.objectContaining({
+        staple: boardThreatKey('apo'),
+        pattern: 'MONSTER_EFFECT',
+        stepId: act.id,
+        source: 'apo',
+        target: 'alu',
+      }),
+      expect.objectContaining({
+        staple: boardThreatKey('warn'),
+        pattern: 'SUMMON',
+        stepId: ns.id,
+        source: 'warn',
+      }),
+    ]);
+  });
+
+  it('lässt eine Karte weg, die die Line vorher vom Feld räumt', () => {
+    // Zwischen Beschwörung und Effekt verlässt Apollousa das Feld
+    const pop: ComboNodeData = {
+      id: 'pop',
+      parentId: ns.id,
+      kind: 'ACTION',
+      player: 'self',
+      action: 'OTHER',
+      resolveMoves: [{ instanceId: 'apo', cardId: 'APO', from: 'MONSTER', to: 'GY' }],
+    };
+    const tree = [pop, ...played.nodes.map((n) => (n.id === act.id ? { ...n, parentId: pop.id } : n))];
+    const states = statesForTree(tree, START_BOARD, withBoard);
+    const hits = run([ns, pop, ...played.nodes.slice(1)], states);
+    expect(hits.some((h) => h.source === 'apo')).toBe(false);
+    // Die gesetzte Warning auf Schritt 1 steht weiter
+    expect(hits.map((h) => h.source)).toEqual(['warn']);
+  });
+
+  it('legt den Branch mit der liegenden Instanz an, statt eine neue Kopie anzulegen', () => {
+    const [hit] = run(played.nodes, played.states);
+    const entry = threats.find((t) => t.instanceId === 'apo')!;
+    const branch = stressBranch(hit, entry, played.nodes, played.states, played.start, 'Apollousa auf 2');
+    expect(branch).toMatchObject({
+      parentId: act.id,
+      player: 'opponent',
+      instanceId: 'apo',
+      cardId: 'APO',
+      negates: { type: 'ACTIVATION', nodeId: act.id },
+    });
+    // Eine offene Karte auf dem Feld bewegt sich für ihren Effekt nicht
+    expect(branch.costMoves).toEqual([]);
   });
 });
