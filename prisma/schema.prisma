@@ -170,8 +170,27 @@ model Deck {
   deckCards DeckCard[]
   combos    Combo[]
   versions  DeckVersion[]
+  games     DeckGame[]
 
   @@index([userId])
+}
+
+/// Ein von Hand eingetragenes Spiel (Deckbau-Plan 3.7). Kein Duellverlauf, nur wie es ausging.
+/// Eigenes Modell statt eines Json-Felds am Deck: die Liste wächst unbegrenzt und ein Eintrag
+/// darf weder vom Autosave der Deckseite noch von Strg+Z angefasst werden.
+model DeckGame {
+  id         String   @id @default(cuid())
+  deckId     String
+  sidePlanId String? // Id des Plans in Deck.sidePlans; null = ohne Plan gespielt
+  matchup    String // freier Name wie im Side-Plan
+  going      String // "first" | "second"
+  result     String // "win" | "loss" | "draw"
+  note       String?
+  playedAt   DateTime @default(now())
+
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@index([deckId])
 }
 
 /// Gespeicherter Stand eines Decks zum Vergleichen und Zurückholen (Deckbau-Plan 3.5)
