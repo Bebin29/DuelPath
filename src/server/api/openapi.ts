@@ -320,6 +320,8 @@ export const OPENAPI = {
       get: {
         summary:
           'Deck list by section with roles, side plans and the banlist it was checked against',
+        description:
+          'Each side plan carries `record` with the logged games: raw counts of win, loss and draw, never a rate. Games are logged in the app only.',
         parameters: [path('id', 'Deck id')],
         responses: { '200': okResponse('Deck'), ...errors },
       },
