@@ -39,16 +39,16 @@ Jonas bestimmt, wie schnell die Eingabe sein muss. Mia bestimmt, wie auffindbar 
 
 ## 2. Jobs to be done (nach Häufigkeit)
 
-| #   | Job                                                       | Wie oft            | Heute in DuelPath                                                                 |
-| --- | --------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------- |
-| 1   | Eine neue Line aus einer Starthand eingeben (Goldfish)    | täglich, mehrfach  | möglich, aber jeder Schritt braucht Auswahlfelder und manuelle Bewegungen         |
-| 2   | Eine Line gegen Handtraps stresstesten und Zweige anlegen | täglich            | möglich über Gegner-Knoten, aber umständlich und nur an vorher angelegten Stellen |
-| 3   | Eine gespeicherte Line nachspielen, um sie zu lernen      | mehrmals pro Woche | nur durch Klicken im Baum, kein echtes Nachspielen                                |
-| 4   | Endboard und Ressourcen einer Line vergleichen            | mehrmals pro Woche | nicht vorhanden                                                                   |
-| 5   | Prüfen, welche Starthände eines Decks eine Line haben     | pro Deck-Änderung  | nicht vorhanden                                                                   |
-| 6   | Nach einer Deck-Änderung prüfen, welche Lines noch gehen  | pro Deck-Änderung  | nicht vorhanden; entfernte Karten fallen erst beim Öffnen der Combo auf           |
-| 7   | Deck bauen oder per YDK übernehmen                        | pro Deck           | vorhanden, altes Design                                                           |
-| 8   | Eine Line mit Teamkollegen teilen                         | gelegentlich       | nicht vorhanden, bewusst nicht geplant (Abschnitt 18)                             |
+| #   | Job                                                       | Wie oft            | Heute in DuelPath                                                                                                                               |
+| --- | --------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Eine neue Line aus einer Starthand eingeben (Goldfish)    | täglich, mehrfach  | möglich, aber jeder Schritt braucht Auswahlfelder und manuelle Bewegungen                                                                       |
+| 2   | Eine Line gegen Handtraps stresstesten und Zweige anlegen | täglich            | möglich über Gegner-Knoten, aber umständlich und nur an vorher angelegten Stellen                                                               |
+| 3   | Eine gespeicherte Line nachspielen, um sie zu lernen      | mehrmals pro Woche | nur durch Klicken im Baum, kein echtes Nachspielen                                                                                              |
+| 4   | Endboard und Ressourcen einer Line vergleichen            | mehrmals pro Woche | nicht vorhanden                                                                                                                                 |
+| 5   | Prüfen, welche Starthände eines Decks eine Line haben     | pro Deck-Änderung  | nicht vorhanden                                                                                                                                 |
+| 6   | Nach einer Deck-Änderung prüfen, welche Lines noch gehen  | pro Deck-Änderung  | nicht vorhanden; entfernte Karten fallen erst beim Öffnen der Combo auf                                                                         |
+| 7   | Deck bauen oder per YDK übernehmen                        | pro Deck           | vorhanden, altes Design                                                                                                                         |
+| 8   | Eine Line mit Teamkollegen teilen                         | gelegentlich       | nicht vorhanden; geplant als JSON-Datei rein und raus, die man selbst weitergibt. Kein Freigabelink, solange über Hosting nicht entschieden ist |
 
 Die UX wird für Job 1 und 2 optimiert. Alles andere darf sie nicht bremsen.
 
