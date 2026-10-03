@@ -318,7 +318,8 @@ export const OPENAPI = {
     },
     '/decks/{id}': {
       get: {
-        summary: 'Deck list by section with roles and side plans',
+        summary:
+          'Deck list by section with roles, side plans and the banlist it was checked against',
         parameters: [path('id', 'Deck id')],
         responses: { '200': okResponse('Deck'), ...errors },
       },

@@ -32,6 +32,7 @@ import {
   type DeckIssue,
   type Section,
 } from '@/lib/deck/deck-rules';
+import { applyBanlist, type BanlistKey, type Banlists, type BanlistView } from '@/lib/deck/banlist';
 import { expandDeck } from '@/lib/deck/hand-tester';
 import { toYdk } from '@/lib/deck/ydk';
 import { parseYDKFile } from '@/lib/utils/deck.utils';
@@ -46,6 +47,7 @@ import {
   type DeckViewCard,
   type DeckViewEntry,
 } from '@/server/actions/deck-view.actions';
+import { BanlistBar } from './BanlistBar';
 import { DeckListTab } from './DeckListTab';
 import { DeckCombosTab } from './DeckCombosTab';
 import { HandTester } from './HandTester';
@@ -96,6 +98,7 @@ export function DeckPage({
   comboCards,
   handtraps,
   staples,
+  banlists,
   initialTab,
 }: {
   deck: {
@@ -112,6 +115,8 @@ export function DeckPage({
   handtraps: string[];
   /** alle Staples, für die Rollen-Vorschläge */
   staples: string[];
+  /** aktuelle und, falls gepflegt, nächste Banlist für den Deck-Check */
+  banlists: Banlists;
   initialTab: DeckTab;
 }) {
   const { t } = useTranslation();
@@ -137,6 +142,8 @@ export function DeckPage({
   const [tab, setTab] = useState(initialTab);
   const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [notice, setNotice] = useState<{ id: number; missing: number } | null>(null);
+  // Gegen welche Liste geprüft wird; die nächste Liste nur, wenn es sie gibt
+  const [banlistKey, setBanlistKey] = useState<BanlistKey>('current');
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Autosave wie in der Workbench, kurz nach der letzten Änderung
@@ -209,7 +216,13 @@ export function DeckPage({
     URL.revokeObjectURL(url);
   };
 
-  const issues = useMemo(() => deckIssues(entries, cards), [entries, cards]);
+  // Beim Prüfen gilt die gewählte Liste; die Anzeige der Karten bleibt am aktuellen Stand
+  const banlist = banlistKey === 'next' ? banlists.next : banlists.current;
+  const checked = useMemo(
+    () => (banlistKey === 'next' ? applyBanlist(cards, banlists.next) : cards),
+    [cards, banlistKey, banlists.next]
+  );
+  const issues = useMemo(() => deckIssues(entries, checked), [entries, checked]);
   const counts = useMemo(() => {
     const map = new Map<string, number>();
     for (const e of entries)
@@ -372,7 +385,13 @@ export function DeckPage({
         }
       />
 
-      {issues.length > 0 && <IssueList issues={issues} />}
+      <BanlistBar
+        banlists={banlists}
+        value={banlistKey}
+        onChange={setBanlistKey}
+        issues={issues.length}
+      />
+      {issues.length > 0 && <IssueList issues={issues} banlist={banlist} />}
 
       <Tabs<DeckTab>
         id="deck"
@@ -500,17 +519,20 @@ export function DeckPage({
 }
 
 /** Regelhinweise knapp über den Tabs; die App verbietet nichts, sie sagt es */
-function IssueList({ issues }: { issues: DeckIssue[] }) {
+function IssueList({ issues, banlist }: { issues: DeckIssue[]; banlist: BanlistView | null }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const shown = open ? issues : issues.slice(0, 2);
+  // Beim Prüfen gegen die nächste Liste steht deren Name im Hinweis
+  const banlistKey = banlist?.key === 'next' ? 'decks.issue.banlistNamed' : 'decks.issue.banlist';
   return (
     <ul className="flex flex-col gap-1 rounded-md border border-warning/40 bg-warning-tint px-3 py-2 text-sm text-warning">
       {shown.map((issue, i) => (
         <li key={i} className="flex items-center gap-2">
           <TriangleAlert className="size-3.5 shrink-0" />
-          {t(`decks.issue.${issue.kind}`, {
+          {t(issue.kind === 'banlist' ? banlistKey : `decks.issue.${issue.kind}`, {
             ...issue,
+            ...(banlist && { list: banlist.name }),
             ...('section' in issue && { section: t(`decks.section.${issue.section}`) }),
           })}
         </li>
