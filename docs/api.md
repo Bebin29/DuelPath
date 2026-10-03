@@ -93,7 +93,9 @@ Jede Antwort auf einen Schritt enth채lt das Board danach, offene Fragen, ausgel�
 | `GET PUT /decks/{id}/roles`                | Rollen der Karten im Deck         |
 | `GET /decks/{id}/odds`                     | Quoten f체r die Starthand          |
 | `GET POST /combos`                         | Combos auflisten, Combo anlegen   |
+| `POST /combos/import`                      | Combo aus einer Datei anlegen     |
 | `GET PATCH DELETE /combos/{id}`            | Eine Combo lesen, 채ndern, l철schen |
+| `GET /combos/{id}/export`                  | Die ganze Combo als Datei         |
 | `GET /combos/{id}/state`                   | Zustand an einem Schritt          |
 | `GET /combos/{id}/line`                    | Eine Line als Folge von Schritten |
 | `GET /combos/{id}/stress`                  | Stresstest einer Line             |
@@ -104,6 +106,29 @@ Jede Antwort auf einen Schritt enth채lt das Board danach, offene Fragen, ausgel�
 
 Der Abfrageparameter `step` w채hlt den Schritt. `start` meint die Starthand. Ohne Angabe gilt das Ende der Hauptline.
 
+### Combos als Datei
+
+`GET /combos/{id}` ist eine **Leseansicht**: Starthand, Hauptline, Line-Enden. Zum Sichern taugt sie nicht, sie l채sst die Kartenbewegungen weg und kennt Karten nur als Namen.
+
+`GET /combos/{id}/export` liefert dagegen alles, was gespeichert ist: den ganzen Baum mit `costMoves`, `resolveMoves`, `negates`, `targets`, `optOverride`, `ignoredHits` und `interruptions`, dazu den rohen Startzustand samt Gegnerboard.
+
+```bash
+curl -H "Authorization: Bearer dp_..." \
+  http://localhost:3000/api/v1/combos/abc/export > combo.json
+
+curl -X POST -H "Authorization: Bearer dp_..." -H "Content-Type: application/json" \
+  --data-binary @combo.json http://localhost:3000/api/v1/combos/import
+```
+
+Karten stehen als **Passcode** mit dem Namen als R체ckfallebene, weil `Card.id` ein lokaler `cuid()` ist und auf einer anderen Installation nichts bedeutet. Genau wie bei YDK.
+
+Beim Import gilt:
+
+- Es entsteht **immer eine neue Combo**. In eine bestehende wird nie geschrieben.
+- Ein Deck wird nicht zugeordnet. Der Deckname in der Datei ist nur Information.
+- Karten, die der lokale Bestand nicht kennt, stehen in `missing`. Der Rest wird importiert, so wie beim YDK-Import eines Decks.
+- Eine unbekannte `version` wird mit 400 `INVALID` abgelehnt und nicht geraten.
+
 ## Server Actions
 
 Der 체bliche Weg aus der Oberfl채che. Sie liegen in `src/server/actions/` und geben wie die API `{ data }` oder `{ error }` zur체ck, nie eine geworfene Ausnahme.
@@ -113,7 +138,7 @@ Der 체bliche Weg aus der Oberfl채che. Sie liegen in `src/server/actions/` und ge
 | `auth.ts`               | Registrierung                       |
 | `deck.actions.ts`       | Decks, Versionen, Side-Pl채ne, YDK   |
 | `deck-view.actions.ts`  | Deckinhalt f체r die Anzeige          |
-| `combo.actions.ts`      | Combos, Knoten, Bibliothek          |
+| `combo.actions.ts`      | Combos, Knoten, Bibliothek, JSON    |
 | `card.actions.ts`       | Karten holen und suchen             |
 | `suggestion.actions.ts` | Effektvorschl채ge 체ber Jev           |
 | `settings.actions.ts`   | Nutzereinstellungen                 |

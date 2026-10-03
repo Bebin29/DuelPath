@@ -115,6 +115,98 @@ export const OPENAPI = {
           attachedTo: { type: 'string', description: 'Xyz monster this material belongs to' },
         },
       },
+      CardRef: {
+        type: 'object',
+        description: 'A card in a portable file: passcode first, name as the fallback',
+        properties: {
+          passcode: { type: ['string', 'null'], description: 'YGOPRODeck passcode' },
+          name: { type: 'string' },
+        },
+      },
+      ComboFile: {
+        type: 'object',
+        description: [
+          'Portable combo file. Everything that is stored travels: the whole tree, the raw start',
+          'state and every card movement. Node ids are running numbers inside the file; the import',
+          'hands out fresh ids. Card ids are local, so cards travel as CardRef.',
+        ].join(' '),
+        required: ['format', 'version', 'title', 'startState', 'nodes'],
+        properties: {
+          format: { const: 'duelpath.combo' },
+          version: { const: 1 },
+          title: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          status: { enum: ['DRAFT', 'TESTED', 'TOURNAMENT'] },
+          deck: {
+            type: ['object', 'null'],
+            description: 'Deck name, information only; the import does not attach a deck',
+            properties: { name: { type: 'string' } },
+          },
+          startState: {
+            type: 'object',
+            description: 'Cards on the board before step 1, including an opponent board',
+            properties: {
+              cards: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    instanceId: { type: 'string' },
+                    card: ref('CardRef'),
+                    owner: { enum: ['self', 'opponent'] },
+                    controller: { enum: ['self', 'opponent'] },
+                    zone: { type: 'string' },
+                    slot: { type: 'integer' },
+                    position: { enum: ['ATK', 'DEF', 'SET'] },
+                  },
+                },
+              },
+            },
+          },
+          nodes: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                parentId: { type: ['string', 'null'] },
+                rank: { type: 'integer', description: '0 continues the main line' },
+                kind: { enum: ['ACTION', 'ACTIVATE', 'OPPONENT', 'RESOLVE', 'END'] },
+                player: { enum: ['self', 'opponent'] },
+                card: { oneOf: [ref('CardRef'), { type: 'null' }] },
+                instanceId: { type: ['string', 'null'] },
+                effectIndex: { type: ['integer', 'null'] },
+                action: { type: ['string', 'null'] },
+                costMoves: { type: 'array', items: ref('FileMove') },
+                resolveMoves: { type: 'array', items: ref('FileMove') },
+                negates: { type: ['object', 'null'] },
+                targets: { type: ['array', 'null'], items: { type: 'string' } },
+                edgeLabel: { type: ['string', 'null'] },
+                note: { type: ['string', 'null'] },
+                optOverride: { type: ['boolean', 'null'] },
+                ignoredHits: { type: ['array', 'null'], items: { type: 'string' } },
+                interruptions: { type: ['object', 'null'] },
+              },
+            },
+          },
+        },
+      },
+      FileMove: {
+        type: 'object',
+        description: 'A card movement inside a combo file',
+        properties: {
+          instanceId: { type: 'string' },
+          card: ref('CardRef'),
+          from: { type: 'string' },
+          to: { type: 'string' },
+          slot: { type: 'integer' },
+          position: { enum: ['ATK', 'DEF', 'SET'] },
+          owner: { enum: ['self', 'opponent'] },
+          controller: { enum: ['self', 'opponent'] },
+          attachTo: { type: 'string' },
+          token: { type: 'boolean' },
+        },
+      },
       State: {
         type: 'object',
         properties: {
@@ -419,6 +511,40 @@ export const OPENAPI = {
       delete: {
         summary: 'Delete the combo',
         responses: { '200': okResponse('Deleted'), ...errors },
+      },
+    },
+    '/combos/import': {
+      post: {
+        summary: 'Create a new combo from an exported file',
+        description: [
+          'Body is a file from GET /combos/{id}/export. Always creates a NEW combo, never writes',
+          'into an existing one, and never attaches a deck (deck ids are local).',
+          'Cards your card pool does not know are reported in "missing" and left out, the rest of',
+          'the combo is imported. An unknown "version" is rejected instead of being guessed.',
+        ].join(' '),
+        requestBody: json(ref('ComboFile')),
+        responses: {
+          '201': okResponse('New combo id and the cards that could not be resolved', {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              missing: { type: 'array', items: ref('CardRef') },
+            },
+          }),
+          ...errors,
+        },
+      },
+    },
+    '/combos/{id}/export': {
+      parameters: [comboId],
+      get: {
+        summary: 'The whole combo as a portable file',
+        description: [
+          'Unlike GET /combos/{id} this is not a reading view: it carries the full tree with',
+          'costMoves, resolveMoves, negates, targets, optOverride, ignoredHits and interruptions,',
+          'plus the raw start state including an opponent board. Feed it to POST /combos/import.',
+        ].join(' '),
+        responses: { '200': okResponse('Combo file', ref('ComboFile')), ...errors },
       },
     },
     '/combos/{id}/state': {
