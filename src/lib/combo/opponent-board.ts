@@ -1,7 +1,15 @@
 import type { CardEffect } from '@/lib/cards/effects';
-import { onField, type CardData, type GameState, type PlacedCard } from '@/lib/combo/state';
+import {
+  onField,
+  type CardData,
+  type GameState,
+  type PlacedCard,
+  type StartState,
+} from '@/lib/combo/state';
 import { interruptionsOf } from '@/lib/combo/endboard';
 import type { DefaultNegation, HitPattern, Staple } from '@/lib/combo/reactions';
+import { newInstanceId } from '@/lib/combo/tree';
+import { BOARD_ZONES, type BoardZone, type OpponentBoardPreset } from '@/lib/settings';
 
 /**
  * Gegnerboard als Störquelle (Lücke L1): Wer Going Second plant, stellt das Board des Gegners
@@ -114,4 +122,40 @@ export function boardThreats<C extends CardData>(
     };
     return [{ staple, card, instanceId: placed.instanceId }];
   });
+}
+
+// ---------------------------------------------------------------- Gespeicherte Boards
+
+const isBoardZone = (zone: string): zone is BoardZone =>
+  (BOARD_ZONES as readonly string[]).includes(zone);
+
+/** Gegnerkarten eines Startzustands als Vorlage, ohne Instanz-IDs */
+export function presetFrom(start: StartState, name: string): OpponentBoardPreset {
+  return {
+    name: name.trim(),
+    cards: start.cards.flatMap((c) =>
+      c.owner === 'opponent' && isBoardZone(c.zone)
+        ? [{ cardId: c.cardId, zone: c.zone, ...(c.position && { position: c.position }) }]
+        : []
+    ),
+  };
+}
+
+/**
+ * Setzt ein gespeichertes Board ein: Die eigene Seite bleibt, die alten Gegnerkarten gehen,
+ * die neuen bekommen frische Instanz-IDs. So stört dasselbe Board in jeder Combo gleich.
+ */
+export function applyPreset(start: StartState, preset: OpponentBoardPreset): StartState {
+  return {
+    cards: [
+      ...start.cards.filter((c) => c.owner !== 'opponent'),
+      ...preset.cards.map((c) => ({
+        instanceId: newInstanceId(c.cardId),
+        cardId: c.cardId,
+        owner: 'opponent' as const,
+        zone: c.zone,
+        ...(c.position && { position: c.position }),
+      })),
+    ],
+  };
 }

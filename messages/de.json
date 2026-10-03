@@ -343,7 +343,12 @@
     },
     "startEditor": {
       "add": "Karte in den Startzustand",
-      "hint": "Starthand und Gegnerboard festlegen. Karten lassen sich im Zustandspanel zwischen Zonen ziehen."
+      "hint": "Starthand und Gegnerboard festlegen. Karten lassen sich im Zustandspanel zwischen Zonen ziehen.",
+      "boards": "Gegnerboards",
+      "boardsHint": "Dasselbe Board gegen dasselbe Deck einmal stellen und speichern. Einsetzen ersetzt die Gegnerseite, die eigene Hand bleibt.",
+      "boardName": "Matchup, etwa Fiendsmith",
+      "boardSave": "Speichern",
+      "boardRemove": "Gegnerboard {{name}} löschen"
     },
     "reactions": {
       "opponent": "Schnellauswahl: Gegner reagiert mit",

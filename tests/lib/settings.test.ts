@@ -11,6 +11,7 @@ describe('parseSettings', () => {
       autoplaySpeed: 1,
       nicknames: [],
       seenHints: [],
+      opponentBoards: [],
     });
     expect(parseSettings({ cardLanguage: 'de' })).toEqual({
       theme: 'dark',
@@ -19,6 +20,7 @@ describe('parseSettings', () => {
       autoplaySpeed: 1,
       nicknames: [],
       seenHints: [],
+      opponentBoards: [],
     });
   });
 
@@ -31,6 +33,22 @@ describe('settingsPatchSchema', () => {
   it('lehnt unbekannte Schlüssel bei Änderungen ab', () => {
     expect(settingsPatchSchema.safeParse({ theme: 'light' }).success).toBe(true);
     expect(settingsPatchSchema.safeParse({ admin: true }).success).toBe(false);
+  });
+
+  it('nimmt gespeicherte Gegnerboards an und lehnt fremde Zonen ab', () => {
+    const board = {
+      name: 'Fiendsmith',
+      cards: [{ cardId: '4280259', zone: 'MONSTER', position: 'ATK' }],
+    };
+    expect(settingsPatchSchema.safeParse({ opponentBoards: [board] }).success).toBe(true);
+    expect(
+      settingsPatchSchema.safeParse({
+        opponentBoards: [{ ...board, cards: [{ cardId: '1', zone: 'DECK' }] }],
+      }).success
+    ).toBe(false);
+    expect(
+      settingsPatchSchema.safeParse({ opponentBoards: [{ ...board, name: '  ' }] }).success
+    ).toBe(false);
   });
 });
 

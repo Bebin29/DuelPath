@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { initialState, type CardData, type StartState } from '@/lib/combo/state';
-import { boardThreats, boardThreatKey, shortName } from '@/lib/combo/opponent-board';
+import {
+  applyPreset,
+  boardThreats,
+  boardThreatKey,
+  presetFrom,
+  shortName,
+} from '@/lib/combo/opponent-board';
 
 const eff = (text: string, patterns: string[] = []) => ({
   index: 0,
@@ -120,6 +126,54 @@ describe('boardThreats', () => {
       ],
     });
     expect(boardThreats(state, cards).map((t) => t.instanceId)).toEqual(['apo1', 'apo2']);
+  });
+
+  it('speichert ein Gegnerboard und setzt es ohne die eigene Hand wieder ein', () => {
+    const start: StartState = {
+      cards: [
+        { instanceId: 'alu', cardId: 'ALU', owner: 'self', zone: 'HAND' },
+        { instanceId: 'apo', cardId: 'APO', owner: 'opponent', zone: 'MONSTER', position: 'ATK' },
+        {
+          instanceId: 'warn',
+          cardId: 'WARN',
+          owner: 'opponent',
+          zone: 'SPELL_TRAP',
+          position: 'SET',
+        },
+        // Das gegnerische Deck gehört nicht zum Board
+        { instanceId: 'deck', cardId: 'VAN', owner: 'opponent', zone: 'DECK' },
+      ],
+    };
+    const preset = presetFrom(start, '  Fiendsmith ');
+    expect(preset).toEqual({
+      name: 'Fiendsmith',
+      cards: [
+        { cardId: 'APO', zone: 'MONSTER', position: 'ATK' },
+        { cardId: 'WARN', zone: 'SPELL_TRAP', position: 'SET' },
+      ],
+    });
+
+    const other: StartState = {
+      cards: [
+        { instanceId: 'mine', cardId: 'VAN', owner: 'self', zone: 'HAND' },
+        { instanceId: 'alt', cardId: 'BAR', owner: 'opponent', zone: 'MONSTER', position: 'ATK' },
+      ],
+    };
+    const applied = applyPreset(other, preset);
+    // Die eigene Hand bleibt, das alte Gegnerboard geht, die neuen Karten sind eigene Instanzen
+    expect(applied.cards.filter((c) => c.owner === 'self')).toEqual(other.cards.slice(0, 1));
+    expect(applied.cards.filter((c) => c.owner === 'opponent').map((c) => c.cardId)).toEqual([
+      'APO',
+      'WARN',
+    ]);
+    expect(applied.cards.some((c) => c.instanceId === 'alt')).toBe(false);
+    expect(new Set(applied.cards.map((c) => c.instanceId)).size).toBe(3);
+    // Eingesetzt stört das Board wieder genauso
+    expect(
+      boardThreats(initialState(applied), cards)
+        .map((t) => t.staple.short)
+        .sort()
+    ).toEqual(['Apollousa', 'Solemn Warning']);
   });
 
   it('kürzt lange Kartennamen für Chips', () => {

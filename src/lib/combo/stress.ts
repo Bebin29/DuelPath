@@ -196,8 +196,7 @@ export function stressTest(
   for (const entry of staples) {
     const { staple } = entry;
     // Treffer einer liegenden Gegnerkarte nennen die Instanz, die den Schritt beantwortet
-    const add = (hit: Hit) =>
-      addHit(entry.instanceId ? { ...hit, source: entry.instanceId } : hit);
+    const add = (hit: Hit) => addHit(entry.instanceId ? { ...hit, source: entry.instanceId } : hit);
     for (const pattern of staple.hits ?? []) {
       // Muster über die ganze Line
       if (pattern === 'TURN_START_DECK_SUMMONS' || pattern === 'TURN_START_HAND_SUMMONS') {

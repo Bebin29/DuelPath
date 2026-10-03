@@ -343,7 +343,12 @@
     },
     "startEditor": {
       "add": "Add card to starting state",
-      "hint": "Set the starting hand and the opponent board. Drag cards between zones in the state panel."
+      "hint": "Set the starting hand and the opponent board. Drag cards between zones in the state panel.",
+      "boards": "Opponent boards",
+      "boardsHint": "Set the same board against the same deck once and save it. Applying it replaces the opponent's side; your own hand stays.",
+      "boardName": "Matchup, e.g. Fiendsmith",
+      "boardSave": "Save",
+      "boardRemove": "Delete opponent board {{name}}"
     },
     "reactions": {
       "opponent": "Quick pick: opponent responds with",

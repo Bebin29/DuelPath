@@ -237,7 +237,7 @@ describe('REST-API: Stresstest gegen das Gegnerboard', () => {
 
   beforeEach(() => {
     storeCombo.mockReset();
-    storeCombo.mockImplementation(async (_u, _c, _i, rev?: number) => ({ revision: 4 }));
+    storeCombo.mockResolvedValue({ revision: 4 });
   });
 
   it('nennt pro Schritt die liegende Karte, die ihn beantwortet', async () => {
