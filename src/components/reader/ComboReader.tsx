@@ -3,7 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Pause,
+  Play,
+  Timer,
+} from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage, useSettings } from '@/components/providers/SettingsProvider';
 import { useCardSheet } from '@/components/cards/CardSheet';
@@ -21,6 +29,8 @@ import {
 import { initialState, statesForTree, type ComboNodeData, type GameState } from '@/lib/combo/state';
 import { lineSteps, lineThrough } from '@/lib/combo/lines';
 import { endboardSummary, lineEnds } from '@/lib/combo/endboard';
+import { formatDuration, lineStepCount, practiceClock } from '@/lib/combo/timing';
+import { useStopwatch } from '@/lib/hooks/use-stopwatch';
 import { updateNode } from '@/lib/combo/tree';
 import { usedOptNames } from '@/lib/combo/opt-names';
 import { displayName } from '@/lib/combo/cards';
@@ -150,6 +160,16 @@ export function ComboReader({
     setPlaying(true);
   };
 
+  // Übungsmodus: die Uhr läuft, solange jemand die Line selbst durchgeht. Beim Abspielen gibt die
+  // App das Tempo vor, am Ende der Line ist die Messung fertig, und die Starthand setzt zurück.
+  const clock = useStopwatch();
+  const { reset: resetClock, setRunning: setClockRunning } = clock;
+  const phase = practiceClock(position, steps.length, playing);
+  useEffect(() => {
+    if (phase === 'reset') resetClock();
+    else setClockRunning(phase === 'run');
+  }, [phase, leafId, resetClock, setClockRunning]);
+
   // Wischen wechselt Schritte
   const swipe = useRef<{ x: number; y: number } | null>(null);
   const onPointerDown = (e: React.PointerEvent) => (swipe.current = { x: e.clientX, y: e.clientY });
@@ -199,6 +219,23 @@ export function ComboReader({
           </Link>
         </Button>
         <h1 className="min-w-0 flex-1 truncate font-display text-xl leading-none">{doc.title}</h1>
+        {/* Gebrauchte Zeit: Klick hält die Uhr an und lässt sie weiterlaufen */}
+        <button
+          type="button"
+          disabled={phase !== 'run'}
+          onClick={() => setClockRunning(!clock.running)}
+          aria-label={t(clock.running ? 'reader.timerPause' : 'reader.timerResume')}
+          title={t('reader.timerHint')}
+          className={cn(
+            'flex shrink-0 items-center gap-1 rounded-sm px-1.5 py-1 font-mono text-sm tabular-nums',
+            'disabled:pointer-events-none disabled:opacity-40',
+            'text-text-muted hover:text-ink',
+            !clock.running && position > 0 && 'opacity-60'
+          )}
+        >
+          <Timer aria-hidden className="size-3.5" />
+          {formatDuration(clock.ms)}
+        </button>
         <MetaMenu
           status={doc.status}
           onStatus={(value: ComboStatus) => setDoc((d) => ({ ...d, status: value }))}
@@ -233,6 +270,7 @@ export function ComboReader({
                   onValueChange={(id) => {
                     setLeafId(id);
                     setPlaying(false);
+                    resetClock();
                     // Am gemeinsamen Anfang bleiben, sonst zur Starthand
                     const next = lineSteps(nodes, lineThrough(nodes, id), () => '');
                     setPosition((p) => (next[p - 1]?.node.id === node?.id ? p : 0));
@@ -240,7 +278,13 @@ export function ComboReader({
                 >
                   {ends.map((e) => (
                     <DropdownMenuRadioItem key={e.leaf.id} value={e.leaf.id}>
-                      {lineName(e.branches)}
+                      <span className="min-w-0 flex-1 truncate">{lineName(e.branches)}</span>
+                      <span
+                        className="ml-2 shrink-0 font-mono text-2xs text-text-subtle"
+                        title={t('workbench.stepsHint')}
+                      >
+                        {t('workbench.stepsInLine', { count: lineStepCount(nodes, e.leaf.id) })}
+                      </span>
                     </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>
@@ -356,6 +400,16 @@ export function ComboReader({
             />
           )}
 
+          {/* Am Ende der Line: was das Durchspielen gekostet hat */}
+          {summary && clock.ms > 0 && (
+            <p className="font-mono text-2xs text-text-subtle">
+              {t('reader.timeTaken', {
+                time: formatDuration(clock.ms),
+                count: steps.length,
+              })}
+            </p>
+          )}
+
           <p className="pb-2 text-xs text-text-subtle">{t('reader.editHint')}</p>
         </div>
       </div>
@@ -368,7 +422,7 @@ export function ComboReader({
         <Button
           variant="ghost"
           className="h-14 justify-start"
-          disabled={position === 0}
+          disabled={phase !== 'run'}
           onClick={() => {
             setPlaying(false);
             goTo(position - 1);
