@@ -32,6 +32,7 @@ import { candidateEffects, toSuggestionInput, type Candidate } from '@/lib/combo
 import { dropMeaning, type DropTarget } from '@/lib/combo/play';
 import { existingBranch, stressBranch, type Hit } from '@/lib/combo/stress';
 import { endboardSummary, lineEnds, missingCards } from '@/lib/combo/endboard';
+import { lineStepCount } from '@/lib/combo/timing';
 import { usedOptNames } from '@/lib/combo/opt-names';
 import type { ComboStatus } from '@/lib/combo/library';
 import { getDeckCounts } from '@/server/actions/deck-view.actions';
@@ -467,10 +468,11 @@ export function Workbench({
           ? branches.map((b) => b.edgeLabel || labelOf(b)).join(' · ')
           : t('workbench.mainLine'),
         summary: endboardSummary(state, start, cards, leaf.interruptions),
+        steps: lineStepCount(nodes, leaf.id),
         missing: branches.length ? missingCards(mainState, state) : [],
       };
     });
-  }, [comparing, ends, states, start, cards, labelOf, t]);
+  }, [comparing, ends, nodes, states, start, cards, labelOf, t]);
   const endCountOf = useCallback(
     (nodeId: string) => {
       const leaf = lineThrough(nodes, nodeId).at(-1);
@@ -1040,6 +1042,7 @@ export function Workbench({
                     ? (nodeId) => stress.pairsIn(lineThrough(nodes, nodeId))
                     : undefined
                 }
+                stepCountOf={(nodeId) => lineStepCount(nodes, nodeId)}
                 onCompare={ends.length > 1 ? () => setComparing(true) : undefined}
                 onOpen={(id) => {
                   select(id);

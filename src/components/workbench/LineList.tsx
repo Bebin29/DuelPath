@@ -3,7 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { EASE, SPRING, prefersReducedMotion } from '@/lib/motion';
-import { ArrowUpToLine, Columns3, GitBranch, StickyNote, TriangleAlert } from 'lucide-react';
+import {
+  ArrowUpToLine,
+  Columns3,
+  GitBranch,
+  ListOrdered,
+  StickyNote,
+  TriangleAlert,
+} from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { cn } from '@/lib/utils';
 import { CardView } from '@/components/cards/CardView';
@@ -48,6 +55,8 @@ interface LineListProps {
   endCountOf?: (nodeId: string) => number | null;
   /** Paar-Modus: zweite Unterbrechungen im Branch */
   pairCountOf?: (nodeId: string) => number;
+  /** Schritte der Line durch den Branch; die Dauer einer Line zählt in der Runde mit */
+  stepCountOf?: (nodeId: string) => number;
   onCompare?: () => void;
   /** Doppelklick: Schritt im Inspector bearbeiten (UX-Plan 6.6) */
   onOpen?: (id: string) => void;
@@ -78,6 +87,7 @@ export function LineList({
   onDropStaple,
   endCountOf,
   pairCountOf,
+  stepCountOf,
   onCompare,
   onOpen,
   onPromote,
@@ -175,9 +185,13 @@ export function LineList({
       <div className="flex items-end gap-2 px-4 pb-2 pt-3">
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-display text-lg leading-tight">{title}</h2>
-          {chokes && scanning && (
+          {chokes && scanning ? (
             <p className="font-mono text-2xs text-opponent" aria-live="polite">
               {t('stress.scanning', { n: (scan.at ?? 0) + 1, total: steps.length })}
+            </p>
+          ) : (
+            <p className="font-mono text-2xs text-text-subtle" title={t('workbench.stepsHint')}>
+              {t('workbench.stepsInLine', { count: steps.length })}
             </p>
           )}
         </div>
@@ -403,6 +417,15 @@ export function LineList({
                           title={t('stress.pairsInBranch', { count: pairCountOf(b.nodeId) })}
                         >
                           ! {pairCountOf(b.nodeId)}
+                        </span>
+                      )}
+                      {stepCountOf && (
+                        <span
+                          className="flex shrink-0 items-center gap-0.5 font-mono text-2xs text-text-subtle"
+                          title={t('workbench.stepsInLine', { count: stepCountOf(b.nodeId) })}
+                        >
+                          <ListOrdered aria-hidden className="size-3" />
+                          {stepCountOf(b.nodeId)}
                         </span>
                       )}
                       {endCountOf?.(b.nodeId) != null && (

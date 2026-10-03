@@ -17,6 +17,8 @@ export interface CompareColumn {
   leafId: string;
   title: string;
   summary: EndboardSummary;
+  /** Sichtbare Schritte bis hierher; „31 statt 23“ wiegt oft schwerer als eine Unterbrechung mehr */
+  steps: number;
   /** Karten der Hauptline, die hier fehlen (Kartennamen als Passcode) */
   missing: string[];
 }
@@ -40,6 +42,9 @@ export function CompareView({
   const cardLanguage = useCardLanguage();
   const best = Math.max(...columns.map((c) => c.summary.interruptions));
   const main = columns[0]?.summary;
+  const mainSteps = columns[0]?.steps;
+  // Die kürzeste Line steht hervor: sie kostet in der Runde am wenigsten Zeit
+  const fewestSteps = Math.min(...columns.map((c) => c.steps));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -95,6 +100,21 @@ export function CompareView({
                     delay={0.2 + i * 0.12}
                     duration={0.4}
                     className="tabular-nums"
+                  />
+                </dd>
+                <dt className="text-text-muted">{t('workbench.steps')}</dt>
+                <dd
+                  className={cn(
+                    'font-mono text-xs',
+                    col.steps === fewestSteps && columns.length > 1 && 'text-ink'
+                  )}
+                  title={t('workbench.stepsHint')}
+                >
+                  <CountTo
+                    from={mainSteps ?? col.steps}
+                    to={col.steps}
+                    delay={0.2 + i * 0.12}
+                    duration={0.3}
                   />
                 </dd>
                 <dt className="text-text-muted">{t('endboard.hand')}</dt>

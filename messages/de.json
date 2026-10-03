@@ -463,6 +463,10 @@
     "alternativeFrom": "Alternative ab Start",
     "branch": "Branch",
     "stepCounter": "{{n}} / {{total}}",
+    "steps": "Schritte",
+    "stepsInLine_one": "{{count}} Schritt",
+    "stepsInLine_other": "{{count}} Schritte",
+    "stepsHint": "Sichtbare Schritte dieser Line. Eine Runde hat 40 Minuten: je länger die Line, desto teurer ist sie in der Zeit.",
     "prev": "Vorheriger Schritt",
     "next": "Nächster Schritt",
     "addStep": "Schritt hinzufügen",
@@ -993,6 +997,12 @@
     "next": "Weiter",
     "play": "Abspielen",
     "pause": "Anhalten",
+    "timerHint": "Gebrauchte Zeit im Übungsmodus. Läuft, während du selbst durchgehst; beim Abspielen steht sie still. Klick hält sie an.",
+    "timerPause": "Uhr anhalten",
+    "timerResume": "Uhr weiterlaufen lassen",
+    "timeTaken_one": "Gebraucht: {{time}} für {{count}} Schritt",
+    "timeTaken_other": "Gebraucht: {{time}} für {{count}} Schritte",
+    "slowPlay": "über sieben Minuten, in einer Runde ein Slow-Play-Risiko",
     "def": "DEF",
     "emptyField": "Noch keine Karten auf dem Feld"
   }
