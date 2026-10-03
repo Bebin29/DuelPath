@@ -26,6 +26,19 @@ export interface ComboStats {
 
 const VISIBLE = (n: ComboNodeData) => n.kind !== 'RESOLVE' && n.kind !== 'OPPONENT';
 
+/** Sichtbare Schritte vom Start bis zu diesem Knoten; Kettenauflösung und Gegnerzüge zählen nicht */
+export function visibleSteps(nodes: ComboNodeData[], leafId: string): number {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  let steps = 0;
+  for (
+    let n: ComboNodeData | undefined = byId.get(leafId);
+    n;
+    n = n.parentId ? byId.get(n.parentId) : undefined
+  )
+    if (VISIBLE(n)) steps++;
+  return steps;
+}
+
 export function comboStats(
   startState: StartState,
   nodes: ComboNodeData[],
@@ -47,13 +60,7 @@ export function comboStats(
   let endboard: number | null = null;
   let steps = 0;
   if (main) {
-    const byId = new Map(nodes.map((n) => [n.id, n]));
-    for (
-      let n: ComboNodeData | undefined = main.leaf;
-      n;
-      n = n.parentId ? byId.get(n.parentId) : undefined
-    )
-      if (VISIBLE(n)) steps++;
+    steps = visibleSteps(nodes, main.leaf.id);
     const states = statesForTree(nodes, startState, cards);
     const state = states.get(main.leaf.id);
     if (state)
