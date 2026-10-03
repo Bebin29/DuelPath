@@ -19,6 +19,7 @@ export interface RailStaple {
   steps: number[];
   /** Liegt schon auf dem Gegnerboard, kommt also nicht von der Hand (Lücke L1) */
   onBoard?: boolean;
+  uncomputed?: boolean;
 }
 
 /**
@@ -62,9 +63,11 @@ export function StapleRail({
                     onFocus={() => onHover(s.name)}
                     onBlur={() => onHover(null)}
                     aria-label={`${name}${s.onBoard ? ` (${t('stress.onBoard')})` : ''}: ${
-                      s.steps.length
-                        ? t('stress.hitsSteps', { steps: s.steps.join(', ') })
-                        : t('stress.noHits')
+                      s.uncomputed
+                        ? t('stress.notCalculated')
+                        : s.steps.length
+                          ? t('stress.hitsSteps', { steps: s.steps.join(', ') })
+                          : t('stress.noHits')
                     }`}
                     className={cn(
                       'relative block cursor-grab rounded-sm outline-none focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-primary active:cursor-grabbing',
@@ -91,10 +94,15 @@ export function StapleRail({
                       s.steps.length ? 'text-opponent' : 'text-text-subtle'
                     )}
                   >
-                    {s.steps.length
-                      ? t('stress.hitsSteps', { steps: s.steps.join(', ') })
-                      : t('stress.noHits')}
+                    {s.uncomputed
+                      ? t('stress.notCalculated')
+                      : s.steps.length
+                        ? t('stress.hitsSteps', { steps: s.steps.join(', ') })
+                        : t('stress.noHits')}
                   </p>
+                  {s.onBoard && (
+                    <p className="mt-1 text-2xs text-text-subtle">{t('stress.boardLimitations')}</p>
+                  )}
                   <p className="mt-1.5 text-2xs text-text-subtle">{t('stress.railHint')}</p>
                 </HoverCardContent>
               </HoverCard>

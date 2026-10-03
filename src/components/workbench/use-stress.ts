@@ -51,12 +51,12 @@ export function useStress({
   }, [staples, settings.staples]);
 
   /** Liegende Gegnerkarten; schon gewählte Staples bleiben weg, damit kein Chip doppelt erscheint */
-  const board = useMemo(
-    () => boardThreats(start, cards, new Set(chosen.map((s) => s.card.id))),
-    [start, cards, chosen]
-  );
+  const board = useMemo(() => boardThreats(start, cards), [start, cards]);
 
-  const all = useMemo<StressEntry[]>(() => [...chosen, ...board], [chosen, board]);
+  const all = useMemo<StressEntry[]>(
+    () => [...chosen.filter((s) => !board.some((b) => b.card.id === s.card.id)), ...board],
+    [chosen, board]
+  );
   const entries = useMemo<StapleEntry[]>(
     () =>
       all.map((s) => ({
@@ -83,6 +83,7 @@ export function useStress({
         name: s.staple.name,
         card: s.card,
         onBoard: s.instanceId !== undefined,
+        uncomputed: s.staple.uncomputed,
         steps: [
           ...new Set(
             hits

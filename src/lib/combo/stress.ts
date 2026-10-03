@@ -1,5 +1,6 @@
 import {
   onField,
+  isOptAvailable,
   pathTo,
   type CardData,
   type ComboNodeData,
@@ -120,14 +121,27 @@ function summonsOf(
 const faceUp = (c: PlacedCard | undefined) => !!c && c.position !== 'SET';
 
 /** Züge des Gegners, bei denen der Staple überhaupt verfügbar ist */
-function available(entry: StapleEntry, state: GameState): boolean {
+function available(entry: StapleEntry, state: GameState, cards: Map<string, CardData>): boolean {
   if (entry.instanceId) {
     // Gegnerboard: Die Line kann die Karte vorher vom Feld räumen oder ihren Effekt negieren
     const placed = state.cards[entry.instanceId];
+    const card = cards.get(entry.cardId);
     return (
       !!placed &&
       onField(placed.zone) &&
       placed.controller === 'opponent' &&
+      (entry.staple.kind === 'setTrap' || faceUp(placed)) &&
+      !state.negatedNames.includes(entry.cardId) &&
+      !!card &&
+      isOptAvailable(
+        state,
+        {
+          instanceId: placed.instanceId,
+          effectIndex: entry.staple.effectIndex ?? 0,
+          player: 'opponent',
+        },
+        card
+      ) &&
       state.negatedCards[placed.instanceId] !== placed.epoch
     );
   }
@@ -267,7 +281,7 @@ export function stressTest(
         const node = line[i];
         if (node.player !== 'self' || !VISIBLE(node)) continue;
         const b = before(i);
-        if (!available(entry, b)) continue;
+        if (!available(entry, b, cards)) continue;
         const act = activationOf(node, b, cards);
         const base = { staple: staple.name, pattern, stepId: node.id, anchorId: node.id };
         const phrase = (text: string | null) =>
@@ -307,6 +321,12 @@ export function stressTest(
             break;
           case 'MONSTER_EFFECT':
             if (act && isMonster(act.card)) add({ ...base, target: act.instanceId });
+            break;
+          case 'SPELL_ACTIVATION':
+            if (act && isSpell(act.card)) add({ ...base, target: act.instanceId });
+            break;
+          case 'TRAP_ACTIVATION':
+            if (act && isTrap(act.card)) add({ ...base, target: act.instanceId });
             break;
           case 'SPELL_TRAP_ACTIVATION':
             if (act && (isSpell(act.card) || isTrap(act.card)))

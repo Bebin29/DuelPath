@@ -319,6 +319,29 @@ describe('stressTest gegen ein Gegnerboard', () => {
     expect(hits.map((h) => h.source)).toEqual(['warn']);
   });
 
+  it('meldet keine Monsterantwort nach dem Verdecken der Boardkarte', () => {
+    const facedown: ComboNodeData = {
+      id: 'set',
+      parentId: ns.id,
+      kind: 'ACTION',
+      player: 'self',
+      action: 'OTHER',
+      resolveMoves: [
+        { instanceId: 'apo', cardId: 'APO', from: 'MONSTER', to: 'MONSTER', position: 'SET' },
+      ],
+    };
+    const tree = [
+      facedown,
+      ...played.nodes.map((n) => (n.id === act.id ? { ...n, parentId: facedown.id } : n)),
+    ];
+    expect(
+      run(
+        [ns, facedown, ...played.nodes.slice(1)],
+        statesForTree(tree, START_BOARD, withBoard)
+      ).some((h) => h.source === 'apo')
+    ).toBe(false);
+  });
+
   it('legt den Branch mit der liegenden Instanz an, statt eine neue Kopie anzulegen', () => {
     const [hit] = run(played.nodes, played.states);
     const entry = threats.find((t) => t.instanceId === 'apo')!;

@@ -111,11 +111,32 @@ describe('boardThreats', () => {
     expect(threat.staple.hits).toBeUndefined();
   });
 
-  it('lässt Karten ohne Unterbrechung und bereits gewählte Staples weg', () => {
+  it('lässt Karten ohne Effekte weg und behält die Boardquelle', () => {
     expect(boardThreats(board(['van', 'VAN', 'ATK', 'MONSTER']), cards)).toEqual([]);
+    expect(boardThreats(board(['warn', 'WARN', 'SET', 'SPELL_TRAP']), cards)).toHaveLength(1);
+  });
+
+  it('trennt Zaubernegierung und kennzeichnet nicht berechnete Effekte', () => {
+    const spellOnly: CardData = {
+      ...BARONNE,
+      effects: [eff('When a Spell Card is activated: negate the activation.', ['NEG_ACTIVATION'])],
+    };
     expect(
-      boardThreats(board(['warn', 'WARN', 'SET', 'SPELL_TRAP']), cards, new Set(['WARN']))
-    ).toEqual([]);
+      boardThreats(board(['bar', 'BAR', 'ATK', 'MONSTER']), new Map([['BAR', spellOnly]]))[0].staple
+        .hits
+    ).toEqual(['SPELL_ACTIVATION']);
+    const multiple = { ...BARONNE, effects: [...BARONNE.effects, ...APOLLOUSA.effects] };
+    expect(
+      boardThreats(board(['bar', 'BAR', 'ATK', 'MONSTER']), new Map([['BAR', multiple]]))[0].staple
+    ).toMatchObject({ uncomputed: true });
+    const floodgate = {
+      ...BARONNE,
+      effects: [{ ...eff('Negate all monster effects.', ['NEG_CONTINUOUS']), activated: false }],
+    };
+    expect(
+      boardThreats(board(['bar', 'BAR', 'ATK', 'MONSTER']), new Map([['BAR', floodgate]]))[0].staple
+        .uncomputed
+    ).toBe(true);
   });
 
   it('zählt eigene Karten nicht und gibt jeder Kopie einen eigenen Eintrag', () => {

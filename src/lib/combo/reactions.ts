@@ -52,6 +52,8 @@ export type HitPattern =
   | 'MONSTER_EFFECT'
   /** Zauber oder Falle wird aktiviert */
   | 'SPELL_TRAP_ACTIVATION'
+  | 'SPELL_ACTIVATION'
+  | 'TRAP_ACTIVATION'
   /** Beschwörung (Normal oder Special) */
   | 'SUMMON'
   | 'SPECIAL_SUMMON'
@@ -75,6 +77,8 @@ export interface Staple {
   /** Wer die Karte typischerweise spielt: Gegner als Unterbrechung, eigene Seite als Antwort darauf */
   side: Player;
   kind: ReactionKind;
+  effectIndex?: number;
+  uncomputed?: boolean;
   negation?: DefaultNegation;
   /** Wann die Karte trifft; ohne Muster nur von Hand anlegbar */
   hits?: HitPattern[];
@@ -245,7 +249,7 @@ export function reactionNode(
   parent: ComboNodeData | null,
   card: CardData,
   /** null: freie Karte ohne voreingestellte Bewegungen und Negierung */
-  reaction: Pick<Staple, 'kind' | 'negation'> | null,
+  reaction: Pick<Staple, 'kind' | 'negation' | 'effectIndex'> | null,
   player: Player,
   before: GameState,
   ancestors: ComboNodeData[],
@@ -289,7 +293,7 @@ export function reactionNode(
     edgeLabel: card.name,
     instanceId,
     cardId: card.id,
-    effectIndex: firstActivated >= 0 ? firstActivated : 0,
+    effectIndex: reaction?.effectIndex ?? (firstActivated >= 0 ? firstActivated : 0),
     costMoves,
     resolveMoves,
     negates: defaultNegation(reaction?.negation, player, before, ancestors),

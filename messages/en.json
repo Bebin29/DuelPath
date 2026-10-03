@@ -641,13 +641,17 @@
       "ADD_FROM_DECK": "card added from the Deck",
       "GY_NEEDED_LATER": "a later step needs this card in the GY",
       "TURN_START_DECK_SUMMONS": "opponent draws {{count}} (summons from Deck and Extra Deck)",
-      "TURN_START_HAND_SUMMONS": "opponent draws {{count}} (summons from the hand)"
+      "TURN_START_HAND_SUMMONS": "opponent draws {{count}} (summons from the hand)",
+      "SPELL_ACTIVATION": "Spell activation",
+      "TRAP_ACTIVATION": "Trap activation"
     },
     "pairs": "Pairs",
     "pairsHint": "In a branch with an interruption the stress test shows what still hits afterwards (“Ash, then Imperm”)",
     "pairsInBranch_one": "{{count}} more interruption in this branch",
     "pairsInBranch_other": "{{count}} more interruptions in this branch",
-    "scanning": "Stress test · step {{n}} of {{total}}"
+    "scanning": "Stress test · step {{n}} of {{total}}",
+    "notCalculated": "Not calculated automatically",
+    "boardLimitations": "Possible responses. Check costs and other activation conditions manually; floodgates are not simulated."
   },
   "endboard": {
     "interruptions_one": "interruption",

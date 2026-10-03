@@ -101,7 +101,7 @@ export function buildContext(
   const cards = new Map(combo.cards.map((c) => [c.id, c]));
   const start = initialState(combo.startState);
   // Liegende Gegnerkarten stören genauso wie Handtraps (Lücke L1); doppelte Namen fallen weg
-  const board = boardThreats(start, cards, new Set(staples.map((s) => s.card.id)));
+  const board = boardThreats(start, cards);
   return withNodes(
     {
       userId,
@@ -110,7 +110,7 @@ export function buildContext(
       start,
       states: new Map(),
       nicknames,
-      staples: [...staples, ...board],
+      staples: [...staples.filter((s) => !board.some((b) => b.card.id === s.card.id)), ...board],
     },
     combo.nodes
   );
@@ -782,6 +782,15 @@ export function endboardView(ctx: ComboContext, stepId: string | null) {
   });
   return {
     leafId: leaf?.id ?? null,
+    opponentBoard: ctx.staples
+      .filter((s) => s.instanceId)
+      .map((s) => ({
+        instanceId: s.instanceId,
+        cardId: s.card.id,
+        automaticallyCalculated: !s.staple.uncomputed,
+        limitation:
+          'Possible responses only; costs and other activation conditions need manual checking. Floodgates are not simulated.',
+      })),
     interruptions: summary.interruptions,
     field: summary.field.map(entry),
     hand: summary.hand.map(entry),

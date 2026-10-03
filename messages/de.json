@@ -641,13 +641,17 @@
       "ADD_FROM_DECK": "Karte aus dem Deck auf die Hand",
       "GY_NEEDED_LATER": "Karte im Friedhof wird später gebraucht",
       "TURN_START_DECK_SUMMONS": "Gegner zieht {{count}} (Beschwörungen aus Deck und Extra Deck)",
-      "TURN_START_HAND_SUMMONS": "Gegner zieht {{count}} (Beschwörungen von der Hand)"
+      "TURN_START_HAND_SUMMONS": "Gegner zieht {{count}} (Beschwörungen von der Hand)",
+      "SPELL_ACTIVATION": "Zauberaktivierung",
+      "TRAP_ACTIVATION": "Fallenaktivierung"
     },
     "pairs": "Paare",
     "pairsHint": "In einem Branch mit Unterbrechung zeigt der Stresstest, was danach noch trifft („Ash und dann Imperm“)",
     "pairsInBranch_one": "{{count}} weitere Unterbrechung in diesem Branch",
     "pairsInBranch_other": "{{count}} weitere Unterbrechungen in diesem Branch",
-    "scanning": "Stresstest · Schritt {{n}} von {{total}}"
+    "scanning": "Stresstest · Schritt {{n}} von {{total}}",
+    "notCalculated": "Nicht automatisch berechnet",
+    "boardLimitations": "Mögliche Antworten. Kosten und weitere Aktivierungsbedingungen müssen manuell geprüft werden; Floodgates werden nicht simuliert."
   },
   "endboard": {
     "interruptions_one": "Unterbrechung",
