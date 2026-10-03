@@ -32,6 +32,7 @@ export function RatiosTab({
   cards,
   combos,
   staples,
+  breakers,
   onRoles,
   onChange,
   comparison,
@@ -42,6 +43,8 @@ export function RatiosTab({
   cards: Map<string, DeckViewCard>;
   combos: LibraryEntry[];
   staples: Set<string>;
+  /** Boardbreaker als Kartennamen, aus den Einstellungen */
+  breakers: Set<string>;
   onRoles: (patch: Roles) => void;
   onChange: (cardId: string, section: Section, delta: number) => void;
   /** Vergleichsstand und Versionen, unten in der Kennzahlen-Spalte */
@@ -67,9 +70,10 @@ export function RatiosTab({
         [...now.counts.keys()].map((id) => ({ id, name: cards.get(id)?.name ?? '' })),
         starthands,
         staples,
+        breakers,
         doc.roles
       ),
-    [now.counts, cards, starthands, staples, doc.roles]
+    [now.counts, cards, starthands, staples, breakers, doc.roles]
   );
   const allCounts = useMemo(() => deckCounts(doc.entries), [doc.entries]);
 
