@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ComboNodeData, NodeKind } from '@/lib/combo/state';
-import {
-  SLOW_PLAY_MS,
-  SLOW_PLAY_WARN_MS,
-  formatDuration,
-  lineStepCount,
-  paceOf,
-  practiceClock,
-} from '@/lib/combo/timing';
+import { formatDuration, lineStepCount, practiceClock } from '@/lib/combo/timing';
 
 const n = (
   id: string,
@@ -44,16 +37,6 @@ describe('formatDuration', () => {
   it('nimmt Stunden dazu und bleibt bei Unsinn bei null', () => {
     expect(formatDuration(3_723_000)).toBe('1:02:03');
     expect(formatDuration(-5_000)).toBe('0:00');
-  });
-});
-
-describe('paceOf', () => {
-  it('warnt vor der Grenze und meldet Slow Play ab sieben Minuten', () => {
-    expect(paceOf(0)).toBe('ok');
-    expect(paceOf(SLOW_PLAY_WARN_MS - 1)).toBe('ok');
-    expect(paceOf(SLOW_PLAY_WARN_MS)).toBe('warn');
-    expect(paceOf(SLOW_PLAY_MS - 1)).toBe('warn');
-    expect(paceOf(SLOW_PLAY_MS)).toBe('slow');
   });
 });
 

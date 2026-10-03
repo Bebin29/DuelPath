@@ -83,8 +83,8 @@ describe('ComboReader · Übungsmodus', () => {
       }
       // Der letzte Abschnitt zählt nicht mehr mit: nach dem dritten Schritt steht die Uhr
       expect(screen.getByText('0:04')).toBeTruthy();
-      expect(screen.getByRole('button', { name: 'Uhr weiterlaufen lassen' })).toBeTruthy();
-      expect(screen.getByText('Gebraucht: 0:04 für 3 Schritte')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Uhr weiterlaufen lassen' })).toBeDisabled();
+      expect(screen.getByText('Klickzeit: 0:04 für 3 Schritte')).toBeTruthy();
     } finally {
       vi.useRealTimers();
     }

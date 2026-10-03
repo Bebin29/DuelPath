@@ -29,7 +29,7 @@ import {
 import { initialState, statesForTree, type ComboNodeData, type GameState } from '@/lib/combo/state';
 import { lineSteps, lineThrough } from '@/lib/combo/lines';
 import { endboardSummary, lineEnds } from '@/lib/combo/endboard';
-import { formatDuration, lineStepCount, paceOf, practiceClock } from '@/lib/combo/timing';
+import { formatDuration, lineStepCount, practiceClock } from '@/lib/combo/timing';
 import { useStopwatch } from '@/lib/hooks/use-stopwatch';
 import { updateNode } from '@/lib/combo/tree';
 import { usedOptNames } from '@/lib/combo/opt-names';
@@ -168,8 +168,7 @@ export function ComboReader({
   useEffect(() => {
     if (phase === 'reset') resetClock();
     else setClockRunning(phase === 'run');
-  }, [phase, resetClock, setClockRunning]);
-  const pace = paceOf(clock.ms);
+  }, [phase, leafId, resetClock, setClockRunning]);
 
   // Wischen wechselt Schritte
   const swipe = useRef<{ x: number; y: number } | null>(null);
@@ -223,18 +222,14 @@ export function ComboReader({
         {/* Gebrauchte Zeit: Klick hält die Uhr an und lässt sie weiterlaufen */}
         <button
           type="button"
-          disabled={position === 0}
+          disabled={phase !== 'run'}
           onClick={() => setClockRunning(!clock.running)}
           aria-label={t(clock.running ? 'reader.timerPause' : 'reader.timerResume')}
           title={t('reader.timerHint')}
           className={cn(
             'flex shrink-0 items-center gap-1 rounded-sm px-1.5 py-1 font-mono text-sm tabular-nums',
             'disabled:pointer-events-none disabled:opacity-40',
-            pace === 'slow'
-              ? 'text-opponent'
-              : pace === 'warn'
-                ? 'text-warning'
-                : 'text-text-muted hover:text-ink',
+            'text-text-muted hover:text-ink',
             !clock.running && position > 0 && 'opacity-60'
           )}
         >
@@ -407,17 +402,11 @@ export function ComboReader({
 
           {/* Am Ende der Line: was das Durchspielen gekostet hat */}
           {summary && clock.ms > 0 && (
-            <p
-              className={cn(
-                'font-mono text-2xs',
-                pace === 'slow' ? 'text-opponent' : 'text-text-subtle'
-              )}
-            >
+            <p className="font-mono text-2xs text-text-subtle">
               {t('reader.timeTaken', {
                 time: formatDuration(clock.ms),
                 count: steps.length,
               })}
-              {pace === 'slow' && ` · ${t('reader.slowPlay')}`}
             </p>
           )}
 
@@ -433,7 +422,7 @@ export function ComboReader({
         <Button
           variant="ghost"
           className="h-14 justify-start"
-          disabled={position === 0}
+          disabled={phase !== 'run'}
           onClick={() => {
             setPlaying(false);
             goTo(position - 1);

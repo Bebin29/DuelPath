@@ -1,28 +1,11 @@
 /**
- * Dauer einer Line: Schrittzahl und echte Zeit.
- *
- * Eine Runde hat 40 Minuten plus End of Match. Eine Line, die über sieben Minuten läuft, ist
- * deshalb eine eigene Verlustbedingung und ein Slow-Play-Risiko. Die App misst die Zeit nicht
- * im Baum, sondern nur dort, wo jemand die Line wirklich durchspielt; überall sonst steht die
- * Schrittzahl, weil „31 Schritte statt 23“ beim Vergleich zweier Lines schon genug sagt.
+ * Sichtbare Schritte und Klickzeit einer Line. Die Turnierpolicy setzt 50 Minuten pro Runde,
+ * aber keine Minutengrenze für Slow Play. Die Reader-Uhr misst nur das Durchklicken,
+ * nicht Suchen, Mischen, Abheben oder die Antworten des Gegners am Tisch.
  */
 
 import { lineSteps, lineThrough } from '@/lib/combo/lines';
 import type { ComboNodeData } from '@/lib/combo/state';
-
-/** Ab hier gilt die Line als zu langsam für eine 40-Minuten-Runde */
-export const SLOW_PLAY_MS = 7 * 60 * 1000;
-/** Erste Warnstufe, damit die Uhr vor der Grenze auffällt */
-export const SLOW_PLAY_WARN_MS = 5 * 60 * 1000;
-
-export type Pace = 'ok' | 'warn' | 'slow';
-
-/** Wie die gemessene Zeit einzuordnen ist */
-export function paceOf(ms: number): Pace {
-  if (ms >= SLOW_PLAY_MS) return 'slow';
-  if (ms >= SLOW_PLAY_WARN_MS) return 'warn';
-  return 'ok';
-}
 
 /** „0:07“, „12:03“, ab einer Stunde „1:02:03“ */
 export function formatDuration(ms: number): string {

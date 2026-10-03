@@ -39,8 +39,8 @@ describe('CompareView', () => {
       />
     );
     expect(screen.getAllByText('Schritte').length).toBe(2);
-    // Jede Spalte erklärt die Zahl im Titel: eine Runde hat 40 Minuten
-    expect(screen.getAllByTitle(/40 Minuten/).length).toBe(2);
+    // Jede Spalte erklärt die Zahl im Titel: eine Runde hat 50 Minuten
+    expect(screen.getAllByTitle(/50 Minuten/).length).toBe(2);
   });
 
   it('kommt mit einer einzelnen Spalte aus', () => {
