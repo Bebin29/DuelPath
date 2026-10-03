@@ -15,6 +15,7 @@ import {
   BookOpen,
   Keyboard,
   Layers,
+  Library,
   Moon,
   Plus,
   Search,
@@ -273,6 +274,19 @@ function Palette({
         icon: BookOpen,
         keywords: ['sprache', 'language', 'deutsch', 'english'],
         run: () => update({ cardLanguage: settings.cardLanguage === 'de' ? 'en' : 'de' }),
+      },
+      {
+        id: 'cards',
+        group: 'actions',
+        label: t('palette.cards'),
+        icon: Library,
+        keywords: ['karte', 'karten', 'card', 'cards', 'ruling', 'nachschlagen'],
+        run: go({
+          id: 'cards',
+          group: 'actions',
+          label: t('palette.cards'),
+          href: '/cards',
+        }),
       },
       {
         id: 'settings',

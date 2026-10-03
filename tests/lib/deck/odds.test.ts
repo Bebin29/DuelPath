@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { atLeast, binom, coverageOdds } from '@/lib/deck/odds';
 import { coverage, expandDeck, seededRandom } from '@/lib/deck/hand-tester';
-import { roleOdds, suggestRoles, type RoleCard } from '@/lib/deck/roles';
+import {
+  DEFAULT_BREAKERS,
+  breakerSet,
+  roleOdds,
+  suggestRoles,
+  type RoleCard,
+} from '@/lib/deck/roles';
 
 describe('atLeast', () => {
   it('rechnet die hypergeometrische Verteilung wie von Hand', () => {
@@ -86,9 +92,13 @@ describe('suggestRoles', () => {
       { id: 'kai', name: 'Gameciel, the Sea Turtle Kaiju' },
       { id: 'set', name: 'Rainbow Dragon' },
     ];
-    const roles = suggestRoles(cards, [['peg'], ['peg', 'ext']], new Set(['ash']), {
-      set: 'garnet',
-    });
+    const roles = suggestRoles(
+      cards,
+      [['peg'], ['peg', 'ext']],
+      new Set(['ash']),
+      breakerSet(null),
+      { set: 'garnet' }
+    );
     expect(roles).toEqual({
       peg: 'starter',
       ext: 'extender',
@@ -96,5 +106,23 @@ describe('suggestRoles', () => {
       ash: 'handtrap',
       kai: 'breaker',
     });
+  });
+
+  it('nimmt die gepflegte Breaker-Liste statt der Standardliste', () => {
+    const cards = [
+      { id: 'em', name: 'Evenly Matched' },
+      { id: 'own', name: 'Nibiru, the Primal Being' },
+      { id: 'kai', name: 'Gameciel, the Sea Turtle Kaiju' },
+    ];
+    const roles = suggestRoles(cards, [], new Set(), breakerSet(['Nibiru, the Primal Being']), {});
+    // Evenly Matched steht nicht mehr in der Liste, Kaijus erkennt die Regel weiterhin
+    expect(roles).toEqual({ own: 'breaker', kai: 'breaker' });
+  });
+});
+
+describe('breakerSet', () => {
+  it('nimmt ohne eigene Liste die Standardliste', () => {
+    expect(breakerSet(null)).toEqual(new Set(DEFAULT_BREAKERS));
+    expect(breakerSet([])).toEqual(new Set());
   });
 });

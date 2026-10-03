@@ -9,6 +9,7 @@ Stand: 2026-09-30. Grundlage für die Tabelle `RulingMechanic`. Quellenkürzel w
 - **OPT-Verbrauch hängt am Wortlaut:** "use" und "Once per turn:" zählen auch negierte Aktivierungen, "activate" zählt nur nicht negierte Aktivierungen. Effekt-Negierung (Ash, Imperm, Veiler) verbraucht in allen Varianten den OPT, weil die Aktivierung erfolgreich war. [Y1][Y2][Y8]
 - **Hard OPT** (mit Kartenname) gilt pro Spieler und Kartenname und überlebt das Verlassen des Feldes. **Soft OPT** ("Once per turn:" ohne Namen) gilt pro Kopie und setzt sich zurück, wenn die Karte ihren Ort verlässt oder verdeckt wird. [Y1][Y12]
 - **Fast alles davon ist deterministisch** berechenbar, wenn beim Import pro Effekt Wortlaut, Effekttyp, Kostenteil und OPT-Klausel erkannt werden. Nur Kontext taugen: Konjunktionen in Einzelfällen, Ortswechsel-Sonderfälle, kartenspezifische Rulings und Namensänderungen.
+- **Turnierzeit** (Abschnitt 9, keine Ruling-Mechanik, aber Grundlage für alle Zeitaussagen der App): Eine Runde hat **50 Minuten**, und ein Match, das darin nicht fertig wird, ist ein **Double Loss**. Zusatzzüge und eine LP-Entscheidung am Ende der Runde gibt es nicht mehr. Slow Play nennt keine Minutenzahl und lässt Komplexität ausdrücklich nicht als Entschuldigung gelten. [K8][K9]
 - Die meisten detaillierten Rulings auf Yugipedia stammen aus der **OCG-Datenbank**. Das TCG folgt diesen in der Regel, eine explizite Konami-TCG-Bestätigung dafür habe ich nicht gefunden (Unsicherheit, siehe Abschnitt 6).
 
 ## 1. Negierung: Aktivierung vs. Effekt vs. Beschwörung
@@ -341,6 +342,25 @@ Grenzen:
 | `TARGET_WORDING`            | "that target" wird beim Auflösen erneut geprüft, "it" nicht                                                                                                  | partial | n/a                                                             | n/a                                                    | n/a                                                                                                             | n/a                                                                                     | TARGET_STRICT                         |
 | `EQUIP_NEGATED`             | Equip Spell mit negiertem Effekt                                                                                                                             | no      | n/a                                                             | n/a                                                    | vermutlich Friedhof, unbelegt                                                                                   | n/a                                                                                     | Kontext                               |
 
+## 9. Turnierzeit: Rundenlänge, End of Match, Slow Play
+
+Stand 2026-10-03. Grundlage für alles, was die App über die **Dauer** einer Line behauptet (Schrittzahl, Uhr, Tempo-Schwellen). Quelle sind die aktuellen Policies [K8] und [K9].
+
+### 9.1 Was die Policy festlegt
+
+- **Eine Runde hat 50 Minuten, nicht 40.** "Yu-Gi-Oh! TCG Rounds are 50 minutes in length at Tier 1, Tier 2, and Tier 3 events." (III.C Time Limits) [K8]. Die Zeit schließt Side Decking, Mischen, Fragen und Ruling-Klärungen ein. Bei YCS und Nationals kann KDE die Rundenlänge anpassen, das wird vor dem Event angekündigt.
+- **Es gibt kein End-of-Match-Verfahren mit Zusatzzügen mehr. Zeit aus heißt Double Loss.** "If the Match does not finish within 50 minutes, the result will be a double loss." und "When time ends in the Round, the Match is over. Neither Duelist may begin or continue any action that may take place in the Game." (V.B End of Match Procedures) [K8]. Das früher übliche Verfahren (laufenden Zug zu Ende spielen, danach drei weitere Züge, höchste LP gewinnt) gilt **nicht mehr**.
+- **Match-Ende:** Best of three. Wer zwei Duels gewinnt, gewinnt das Match; wer zwei verliert, verliert es. Nur Unentschieden führen zu einem vierten Duel, und auch das nur bei Restzeit. (III.D Number of Duels, V.B) [K8]
+- **Top-8-Single-Elimination hat kein Zeitlimit**, Slow Play wird dort aber weiter geahndet. [K8]
+- **Slow Play nennt keine Minutenzahl.** "This category covers infractions associated with the pace of your game. You are expected to play at a reasonable speed, regardless of the complexity of the game situation, and should not waste time during a Duel or in between games of a Match." (VI.F Slow Play) [K8]. Komplexität ist ausdrücklich **keine** Entschuldigung. Erstes Vergehen ist eine Warning mit drei Minuten Zeitverlängerung, Wiederholung wird hochgestuft; Slow Play gilt als unabsichtlich. (G:1) [K9]
+
+### 9.2 Folgen für DuelPath
+
+- **Eine lange Line hat keinen Trostpreis.** Weil die Zeitüberschreitung beide Spieler verlieren lässt, kann man nicht mehr vorn liegen und die Uhr ablaufen lassen. Die Dauer einer Line ist damit eine härtere Verlustbedingung als unter dem alten Verfahren, nicht eine weichere.
+- **Jede Minutenschwelle in der App ist eine Budget-Heuristik, kein Regelzitat.** Die Policy gibt keine Grenze "ab X Minuten ist ein Zug Slow Play" her. Die Oberfläche darf eine solche Grenze deshalb nicht als Regel formulieren.
+- **Budget-Rechnung** als Grundlage für Schwellen: 50 Minuten minus Side Decking zwischen den Duels, Mischen, Würfeln und Ergebnismeldung ergibt grob 44 Minuten Spielzeit. Ein Match, das über drei Duels geht, hat damit rund 15 Minuten pro Duel. Ein Combo-Zug wiederholt sich in jedem Duel, in dem man ihn ausführt, kostet also bis zum Dreifachen seiner Einzeldauer: 7 Minuten pro Zug sind 21 von 50 Minuten, 5 Minuten sind 15, 3 Minuten sind 9.
+- **Klickzeit ist nicht Tischzeit.** Eine am Bildschirm durchgeklickte Line misst nur das Weiterblättern. Am Tisch kostet jeder Schritt mit Deck-Suche zusätzlich Mischen, Vorlegen und das Abheben des Gegners, jede Aktivierung die Bestätigung des Gegners. Eine gemessene Klickzeit liegt deshalb systematisch um ein Vielfaches unter der echten Zugdauer und taugt nicht unkorrigiert als Eingabe für eine Slow-Play-Aussage.
+
 ## Quellen
 
 **Konami (primär)**
@@ -351,6 +371,8 @@ Grenzen:
 - [K4] Kevin Tewart, _PSCT Part 4: The Clues on Your Cards_: https://www.yugioh-card.com/en/play/psct/psct-4/
 - [K6] Kevin Tewart, _PSCT Part 7: 2012 Update, Conjunction Functions_: https://www.yugioh-card.com/en/play/psct/psct-7/
 - [K7] Konami, _Fast Effects & Timing_: https://www.yugioh-card.com/en/play/fast-effect-timing/
+- [K8] KDE-US, _Official Yu-Gi-Oh! TRADING CARD GAME Tournament Policy Ver. 2.5_, Abschnitte III.C (Time Limits), III.D (Number of Duels), V.B (End of Match Procedures), VI.F (Slow Play): https://img.yugioh-card.com/en/downloads/penalty_guide/YGOTCG_Tournament_Policy_v_2_5.pdf
+- [K9] KDE-US, _Official Tournament Infractions and Penalties Policy Ver. 2.3_, Abschnitt G:1 (Slow Play): https://img.yugioh-card.com/en/downloads/penalty_guide/Penalty_Guidelines_v_2_3.pdf
 
 **Yugipedia (sekundär, mit Verweisen auf Konami-FAQ und Judge-Forum)**
 

@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
 import type { CardEffect, ParsedEffects } from '@/lib/cards/effects';
 import { buildEffects, effectsOf } from '@/lib/cards/effect-override';
+import { matchMechanics, type MechanicResult } from '@/lib/rulings/match';
 
 type Result<T> = { data: T; error?: undefined } | { data?: undefined; error: string };
 
@@ -31,6 +32,8 @@ export interface CardDetail {
   imported: CardEffect[];
   reviewReasons: string[];
   overridden: boolean;
+  /** Passende Einträge aus RULING_MECHANICS und die Regeln, die nicht am Text hängen */
+  mechanics: MechanicResult;
 }
 
 /** Kartenansicht (UI-Plan 7.4.4): alles zur Karte, auch Gründe für eine unsichere Zerlegung */
@@ -40,6 +43,7 @@ export async function getCardDetail(cardId: string): Promise<Result<CardDetail>>
   const card = await prisma.card.findUnique({ where: { id: cardId } });
   if (!card) return { error: 'Not found' };
   const parsed = card.effects as unknown as ParsedEffects | null;
+  const effects = effectsOf(card);
   return {
     data: {
       id: card.id,
@@ -57,10 +61,11 @@ export async function getCardDetail(cardId: string): Promise<Result<CardDetail>>
       descDe: card.descDe,
       banTcg: card.banTcg,
       imageSmall: card.imageSmall,
-      effects: effectsOf(card),
+      effects,
       imported: parsed?.effects ?? [],
       reviewReasons: card.effectsOverride ? [] : (parsed?.reviewReasons ?? []),
       overridden: Array.isArray(card.effectsOverride),
+      mechanics: matchMechanics({ type: card.type, race: card.race, desc: card.desc, effects }),
     },
   };
 }
@@ -88,18 +93,28 @@ const draftSchema = z.object({
 export async function saveEffectOverride(
   cardId: string,
   drafts: z.input<typeof draftSchema>[] | null
-): Promise<Result<CardEffect[]>> {
+): Promise<Result<{ effects: CardEffect[]; mechanics: MechanicResult }>> {
   const session = await auth();
   if (!session?.user?.id) return { error: 'Unauthorized' };
-  const card = await prisma.card.findUnique({ where: { id: cardId }, select: { effects: true } });
+  const card = await prisma.card.findUnique({
+    where: { id: cardId },
+    select: { effects: true, type: true, race: true, desc: true },
+  });
   if (!card) return { error: 'Not found' };
+  // Die Mechaniken hängen an den Mustern der Effekte und ändern sich mit der Korrektur
+  const withMechanics = (effects: CardEffect[]) => ({
+    effects,
+    mechanics: matchMechanics({ type: card.type, race: card.race, desc: card.desc, effects }),
+  });
 
   if (drafts === null) {
     await prisma.card.update({
       where: { id: cardId },
       data: { effectsOverride: null as unknown as Prisma.InputJsonValue },
     });
-    return { data: (card.effects as unknown as ParsedEffects | null)?.effects ?? [] };
+    return {
+      data: withMechanics((card.effects as unknown as ParsedEffects | null)?.effects ?? []),
+    };
   }
   const parsed = z.array(draftSchema).max(16).safeParse(drafts);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültige Effekte' };
@@ -108,5 +123,5 @@ export async function saveEffectOverride(
     where: { id: cardId },
     data: { effectsOverride: effects as unknown as Prisma.InputJsonValue },
   });
-  return { data: effects };
+  return { data: withMechanics(effects) };
 }

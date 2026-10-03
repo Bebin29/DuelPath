@@ -28,6 +28,7 @@ export function SidePlanTab({
   cards,
   combos,
   staples,
+  breakers,
   onPlans,
   onRoles,
   onOpenCard,
@@ -38,6 +39,8 @@ export function SidePlanTab({
   cards: Map<string, DeckViewCard>;
   combos: LibraryEntry[];
   staples: Set<string>;
+  /** Boardbreaker als Kartennamen, aus den Einstellungen */
+  breakers: Set<string>;
   onPlans: (fn: (prev: SidePlan[]) => SidePlan[], group?: string) => void;
   onRoles: (patch: Roles) => void;
   onOpenCard: (cardId: string) => void;
@@ -87,6 +90,7 @@ export function SidePlanTab({
     sideCards.map((e) => ({ id: e.cardId, name: cards.get(e.cardId)?.name ?? '' })),
     [],
     staples,
+    breakers,
     roles
   );
 
