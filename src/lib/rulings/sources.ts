@@ -43,6 +43,16 @@ export const RULING_SOURCES = {
     title: 'Fast Effects & Timing',
     url: 'https://www.yugioh-card.com/en/play/fast-effect-timing/',
   },
+  K8: {
+    publisher: 'Konami',
+    title: 'KDE-US Tournament Policy Version 2.5',
+    url: 'https://img.yugioh-card.com/en/downloads/penalty_guide/YGOTCG_Tournament_Policy_v_2_5.pdf',
+  },
+  K9: {
+    publisher: 'Konami',
+    title: 'KDE-US Tournament Infractions and Penalties Policy Version 2.3',
+    url: 'https://img.yugioh-card.com/en/downloads/penalty_guide/Penalty_Guidelines_v_2_3.pdf',
+  },
   Y1: {
     publisher: 'Yugipedia',
     title: 'Once per turn',
