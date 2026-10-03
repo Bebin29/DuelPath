@@ -457,7 +457,7 @@
     "showLess": "Show less",
     "sections": "Sections",
     "banlist": "Banlist",
-    "banlistText": "The card import does not provide the official effective date of the banlist. Enter it here from the official list. Your second list holds announced changes; the deck check switches between the two.",
+    "banlistText": "The card import does not provide an official effective date. Enter it from the official list; your confirmation applies only to you and this import. Your private second list contains announced changes.",
     "banlistCurrent": "Current list, as of",
     "banlistDate": "As of",
     "banlistName": "Name",

@@ -48,7 +48,7 @@ Gesucht wird nach Name mit ILIKE ohne Trigramm-Index. Bei etwa 14.000 Karten rei
 
 ## Banlist
 
-**`Banlist`** trennt das bestätigte Gültigkeitsdatum (`effectiveOn`, unbekannt = null) vom erfolgreichen Datenabruf (`importedAt`). Ein Import erfindet kein Gültigkeitsdatum; ändern sich Beschränkungen, wird ein altes bestätigtes Datum zurückgesetzt. `current` ist die gemeinsame TCG-Liste, `next:<userId>` die private Vergleichsliste eines Nutzers. Die Oberfläche zeigt deren Schlüssel als `next`. Alte globale `next`-Einträge werden nicht als persönliche Liste ausgegeben. Die aktuelle Liste selbst steht an den Karten in `banTcg`.
+**`Banlist`** trennt das bestätigte Gültigkeitsdatum (`effectiveOn`, unbekannt = null) vom erfolgreichen Datenabruf (`importedAt`). Ein Import erfindet kein Gültigkeitsdatum; ändern sich Beschränkungen, wird ein altes bestätigtes Datum zurückgesetzt. `current` ist die gemeinsame TCG-Liste. Manuelle Datumsbestätigungen stehen privat unter `current:<userId>` und gelten nur für den exakt zugehörigen `importedAt`-Snapshot; sie verändern keine globale Metadaten. Die API meldet ausschließlich das global bestätigte Datum. `next:<userId>` die private Vergleichsliste eines Nutzers. Die Oberfläche zeigt deren Schlüssel als `next`. Alte globale `next`-Einträge werden nicht als persönliche Liste ausgegeben. Die aktuelle Liste selbst steht an den Karten in `banTcg`.
 
 **`BanlistCard`** gehört zu `next` und enthält nur die Abweichungen von der aktuellen Liste: `status` ist Forbidden, Limited, Semi-Limited oder Unlimited, und Unlimited gibt eine Karte wieder frei. Was nicht eingetragen ist, bleibt wie auf der aktuellen Liste. Der Deck-Check auf der Deckseite schaltet zwischen beiden Listen um.
 
