@@ -3,14 +3,17 @@
 import { createContext, useCallback, useContext, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { Lock, TriangleAlert, X } from 'lucide-react';
+import { TriangleAlert, X } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useCardLanguage } from '@/components/providers/SettingsProvider';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Segmented } from '@/components/ui/segmented';
 import { CardView } from '@/components/cards/CardView';
+import { CardFacts, BanBadge } from '@/components/cards/CardFacts';
+import { CardEffectList } from '@/components/cards/CardEffectList';
+import { CardMechanics } from '@/components/cards/CardMechanics';
 import type { CardEffect } from '@/lib/cards/effects';
+import type { MechanicResult } from '@/lib/rulings/match';
 import {
   draftsOf,
   mergeDraft,
@@ -58,12 +61,12 @@ export function CardSheetProvider({ children }: { children: React.ReactNode }) {
             <CardSheetBody
               key={card.id}
               card={card}
-              onSaved={(effects) => {
-                setCard({ ...card, effects, overridden: true, reviewReasons: [] });
+              onSaved={(effects, mechanics) => {
+                setCard({ ...card, effects, mechanics, overridden: true, reviewReasons: [] });
                 onSaved.current?.(card.id, effects);
               }}
-              onReset={(effects) => {
-                setCard({ ...card, effects, overridden: false });
+              onReset={(effects, mechanics) => {
+                setCard({ ...card, effects, mechanics, overridden: false });
                 onSaved.current?.(card.id, effects);
               }}
             />
@@ -82,8 +85,8 @@ function CardSheetBody({
   onReset,
 }: {
   card: CardDetail;
-  onSaved: (effects: CardEffect[]) => void;
-  onReset: (effects: CardEffect[]) => void;
+  onSaved: (effects: CardEffect[], mechanics: MechanicResult) => void;
+  onReset: (effects: CardEffect[], mechanics: MechanicResult) => void;
 }) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
@@ -91,31 +94,19 @@ function CardSheetBody({
   const [drafts, setDrafts] = useState<EffectDraft[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const name = cardLanguage === 'de' && card.nameDe ? card.nameDe : card.name;
-  const stats = [
-    card.attribute,
-    card.race,
-    card.level
-      ? `${/Link/.test(card.type) ? 'Link' : /XYZ/.test(card.type) ? 'Rank' : 'Lv.'} ${card.level}`
-      : null,
-    card.scale != null ? `Scale ${card.scale}` : null,
-    card.linkMarkers.length
-      ? `${t('cardSheet.arrows')} ${card.linkMarkers.map((m) => t(`cardSheet.arrow.${m}`)).join(', ')}`
-      : null,
-    card.atk != null ? `${card.atk} / ${/Link/.test(card.type) ? '-' : (card.def ?? '-')}` : null,
-  ].filter(Boolean);
 
   const save = async () => {
     if (!drafts) return;
     const result = await saveEffectOverride(card.id, drafts);
     if (!result.data) return setError(result.error ?? '');
     setDrafts(null);
-    onSaved(result.data);
+    onSaved(result.data.effects, result.data.mechanics);
   };
   const reset = async () => {
     const result = await saveEffectOverride(card.id, null);
     if (result.data) {
       setDrafts(null);
-      onReset(result.data);
+      onReset(result.data.effects, result.data.mechanics);
     }
   };
 
@@ -127,9 +118,7 @@ function CardSheetBody({
           {cardLanguage === 'de' && card.nameDe && (
             <p className="text-xs text-text-subtle">{card.name}</p>
           )}
-          <p className="mt-1 font-mono text-2xs text-text-muted">
-            {[card.type, ...stats].join(' · ')}
-          </p>
+          <CardFacts card={card} className="mt-1" />
         </div>
         <Dialog.Close asChild>
           <Button variant="ghost" size="icon-sm" aria-label={t('workbench.close')}>
@@ -142,18 +131,7 @@ function CardSheetBody({
         <div className="flex gap-4">
           <CardView image={card.imageSmall} label={name} size="xl" className="shrink-0" />
         </div>
-        <span
-          className={cn(
-            'self-start rounded-sm px-1.5 py-0.5 font-mono text-2xs',
-            card.banTcg === 'Forbidden'
-              ? 'bg-opponent-tint text-opponent'
-              : card.banTcg
-                ? 'bg-warning-tint text-warning'
-                : 'bg-surface-3 text-text-muted'
-          )}
-        >
-          {t(`preview.ban.${card.banTcg ?? 'Unlimited'}`)}
-        </span>
+        <BanBadge status={card.banTcg} className="self-start" />
 
         {card.desc && (
           <section className="flex flex-col gap-2">
@@ -203,29 +181,12 @@ function CardSheetBody({
           {drafts ? (
             <EffectEditor drafts={drafts} onChange={setDrafts} />
           ) : (
-            <ol className="flex flex-col gap-2">
-              {card.effects.map((effect, i) => (
-                <li key={i} className="flex gap-2.5 rounded-md border border-line p-2.5">
-                  <span className="font-mono text-xs text-text-subtle">{i + 1}</span>
-                  <div className="flex flex-1 flex-col gap-1">
-                    <p lang="en" className="text-[12.5px] leading-[1.45]">
-                      {effect.text}
-                    </p>
-                    <span className="flex items-center gap-2 font-mono text-2xs text-text-subtle">
-                      {effect.activated && t('cardSheet.chainLink')}
-                      {effect.opt && (
-                        <span className="flex items-center gap-1">
-                          <Lock className="size-3" />
-                          {effect.opt.kind === 'HARD' ? 'HOPT' : 'SOPT'}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ol>
+            <CardEffectList effects={card.effects} />
           )}
         </section>
+
+        {/* Ruling-Mechaniken zur Karte; beim Bearbeiten passen sie noch nicht zur Zerlegung */}
+        {!drafts && <CardMechanics mechanics={card.mechanics} />}
       </div>
 
       {drafts && (
