@@ -74,7 +74,7 @@ Die kuratierten Regel-Mechaniken mit Quellenangabe stehen in `src/lib/rulings/me
 | `garnet`   | Soll im Deck bleiben und nicht in der Starthand liegen             |
 | `other`    | Alles andere                                                       |
 
-Die App schlägt Rollen vor: Starter aus 1-Card-Combos, Extender aus grösseren Starthänden, Breaker aus einer gepflegten Liste. Die Zuordnung bleibt Sache des Nutzers.
+Die App schlägt Rollen vor: Starter aus 1-Card-Combos, Extender aus grösseren Starthänden, Breaker aus einer gepflegten Liste. Die Breaker-Liste steht in den Einstellungen und lässt sich wie die Staples ändern; ohne eigene Liste gilt die Standardliste aus `src/lib/deck/roles.ts`. Die Zuordnung bleibt Sache des Nutzers.
 
 **Quoten**: Wahrscheinlichkeiten für die Starthand, hypergeometrisch berechnet über Klassen von Karten (`src/lib/deck/odds.ts`). Exakt gerechnet, nicht simuliert. Darum springen die Zahlen nicht und eine Änderung am Deck zeigt sofort ihre Wirkung.
 

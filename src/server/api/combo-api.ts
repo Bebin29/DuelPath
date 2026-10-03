@@ -25,6 +25,7 @@ import { usedOptNames } from '@/lib/combo/opt-names';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
 import { toComboCard } from '@/lib/combo/cards';
 import { nicknameMap, parseSettings } from '@/lib/settings';
+import { breakerSet } from '@/lib/deck/roles';
 import { stepLabel } from '@/components/workbench/step-label';
 import { COMBO_STATUSES } from '@/lib/combo/library';
 import { suggestTitle } from '@/lib/deck/hand-tester';
@@ -824,6 +825,12 @@ export function stepDetail(ctx: ComboContext, stepId: string) {
 export async function userNicknames(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { settings: true } });
   return nicknameMap(parseSettings(user?.settings).nicknames);
+}
+
+/** Gepflegte Boardbreaker des Nutzers für die Rollen-Vorschläge */
+export async function userBreakers(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { settings: true } });
+  return breakerSet(parseSettings(user?.settings).breakers);
 }
 
 /** Karte per Passcode, ID, exaktem Namen oder Spitzname; sonst der erste Teiltreffer */

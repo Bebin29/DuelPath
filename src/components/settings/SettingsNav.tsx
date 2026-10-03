@@ -7,6 +7,7 @@ const SECTIONS = [
   ['workbench', 'settings.workbench'],
   ['staples', 'settings.staples'],
   ['banlist', 'settings.banlist'],
+  ['breakers', 'settings.breakers'],
   ['nicknames', 'settings.nicknames'],
   ['api', 'settings.api'],
 ] as const;

@@ -18,7 +18,7 @@ JevCache                         (ohne Bezug zum Nutzer)
 
 ## Nutzer und Anmeldung
 
-**`User`** ist der Nutzer. `settings` ist ein JSON-Feld mit den Nutzereinstellungen: Design, Kartensprache, Staples, Abspieltempo, eigene Spitznamen, gesehene Hinweise. Die Form ist in `src/lib/settings.ts` als zod-Schema festgelegt. Als JSON, weil die Einstellungen oft wachsen und eine Spalte je Einstellung jedes Mal eine Migration bedeuten würde.
+**`User`** ist der Nutzer. `settings` ist ein JSON-Feld mit den Nutzereinstellungen: Design, Kartensprache, Staples, Boardbreaker, Abspieltempo, eigene Spitznamen, gesehene Hinweise. Die Form ist in `src/lib/settings.ts` als zod-Schema festgelegt. Als JSON, weil die Einstellungen oft wachsen und eine Spalte je Einstellung jedes Mal eine Migration bedeuten würde.
 
 **`Account`**, **`Session`** und **`VerificationToken`** gehören zu NextAuth. Sie werden nicht von Hand angefasst.
 

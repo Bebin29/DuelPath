@@ -17,7 +17,7 @@ import {
 import { loadLibrary } from '@/server/services/library.service';
 import { applySidePlan, parseSidePlans } from '@/lib/deck/side-plan';
 import { STAPLES } from '@/lib/combo/reactions';
-import { findCard, userNicknames } from './combo-api';
+import { findCard, userBreakers, userNicknames } from './combo-api';
 import { ApiError } from './http';
 
 /**
@@ -241,6 +241,7 @@ export async function deckOdds(
 ) {
   const deck = await ownDeck(userId, deckId);
   const library = await loadLibrary(userId, deckId);
+  const breakers = await userBreakers(userId);
   const roles = parseRoles(deck.roles);
   const main = deck.deckCards.filter((c) => c.deckSection === 'MAIN');
   let counts = new Map<string, number>();
@@ -306,6 +307,7 @@ export async function deckOdds(
       [...counts.keys()].map((id) => ({ id, name: name(id) })),
       starthands,
       new Set([...counts.keys()].filter((id) => staples.has(name(id)))),
+      breakers,
       roles
     ),
   };
