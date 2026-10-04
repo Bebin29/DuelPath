@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 
-/** Anmeldeseiten ohne App-Navigation: Wortmarke, Zurück, zentriertes Formular (Stil D) */
+/**
+ * Anmeldeseiten ohne App-Navigation: Wortmarke, zentriertes Formular (Stil D). Kein „Zurück zur
+ * Startseite“: Die Startseite verlangt eine Anmeldung und führte hierher zurück.
+ */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   return (
@@ -16,14 +18,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             className="flex items-center font-display text-3xl leading-none text-ink pointer-coarse:min-h-10"
           >
             {t('common.appName')}
-          </Link>
-          <span className="flex-1" />
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-text-muted transition-colors hover:text-ink pointer-coarse:min-h-10"
-          >
-            <ArrowLeft className="size-4" />
-            {t('auth.back')}
           </Link>
         </div>
         {children}
