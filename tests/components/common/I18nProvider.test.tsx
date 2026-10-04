@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToString } from 'react-dom/server';
+import { render, screen } from '@testing-library/react';
 import i18n from '@/lib/i18n/config';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { I18nProvider } from '@/components/common/I18nProvider';
@@ -34,5 +35,19 @@ describe('I18nProvider', () => {
     expect(html).toContain('Zuletzt bearbeitet');
     expect(html).toContain('Recently edited');
     expect(i18n.language).toBe('de');
+  });
+
+  it('folgt einer neuen Sprache vom Server, etwa nach router.refresh()', async () => {
+    const { rerender } = render(
+      <I18nProvider language="de">
+        <Probe />
+      </I18nProvider>
+    );
+    rerender(
+      <I18nProvider language="en">
+        <Probe />
+      </I18nProvider>
+    );
+    expect(await screen.findByText('Recently edited')).toBeInTheDocument();
   });
 });
