@@ -188,7 +188,12 @@
     "errorTitle": "Anmeldung fehlgeschlagen",
     "errorCode": "Fehlercode: {{code}}",
     "toSignIn": "Zur Anmeldung",
-    "toHome": "Zur Startseite"
+    "toHome": "Zur Startseite",
+    "stage": {
+      "headline": "Plane die Line. Finde, wo sie {{word}}.",
+      "word": "bricht",
+      "text": "Combos Schritt für Schritt aufschreiben, gegen Handtraps stresstesten und aus frischen Händen üben."
+    }
   },
   "error": {
     "title": "Ein Fehler ist aufgetreten",

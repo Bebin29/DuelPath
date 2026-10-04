@@ -188,7 +188,12 @@
     "errorTitle": "Sign-in failed",
     "errorCode": "Error code: {{code}}",
     "toSignIn": "To sign in",
-    "toHome": "To the start page"
+    "toHome": "To the start page",
+    "stage": {
+      "headline": "Plan the line. Find where it {{word}}.",
+      "word": "breaks",
+      "text": "Write combos step by step, stress-test them against handtraps and practice from fresh hands."
+    }
   },
   "error": {
     "title": "An error occurred",
