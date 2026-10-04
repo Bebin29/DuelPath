@@ -7,6 +7,7 @@ import { toComboCard, type ComboCard } from '@/lib/combo/cards';
 import { deckCounts } from '@/lib/deck/deck-check';
 import { parseRoles, rolesSchema, type Roles } from '@/lib/deck/roles';
 import { parseSidePlans, sidePlansSchema, type SidePlan } from '@/lib/deck/side-plan';
+import { parseGame, type DeckGame } from '@/lib/deck/games';
 import type { Prisma } from '@/generated/prisma/client';
 
 type Result<T> = { data: T; error?: undefined } | { data?: undefined; error: string };
@@ -139,6 +140,8 @@ export async function getDeckView(deckId: string): Promise<
     roles: Roles;
     sidePlans: SidePlan[];
     versions: DeckVersionView[];
+    /** eingetragene Spiele, neueste zuerst (Deckbau-Plan 3.7) */
+    games: DeckGame[];
   }>
 > {
   const uid = await userId();
@@ -148,6 +151,7 @@ export async function getDeckView(deckId: string): Promise<
     include: {
       deckCards: { include: { card: { select: CARD_SELECT } } },
       versions: { orderBy: { createdAt: 'desc' } },
+      games: { orderBy: { playedAt: 'desc' } },
     },
   });
   if (!deck || deck.userId !== uid) return { error: 'Not found' };
@@ -169,6 +173,10 @@ export async function getDeckView(deckId: string): Promise<
       roles: parseRoles(deck.roles),
       sidePlans: parseSidePlans(deck.sidePlans),
       versions,
+      games: deck.games.flatMap((g) => {
+        const game = parseGame(g);
+        return game ? [game] : [];
+      }),
       entries: deck.deckCards.map((dc) => ({
         cardId: dc.cardId,
         quantity: dc.quantity,

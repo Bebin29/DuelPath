@@ -889,7 +889,28 @@
       "compare": "Numbers after siding, {{going}}, compared with the Main Deck without a plan.",
       "unbalanced": "{{in}} in, {{out}} out: the Main Deck changes size.",
       "notInSide": "{{name}}: fewer in the Side Deck than planned",
-      "notInMain": "{{name}}: fewer in the Main Deck than planned"
+      "notInMain": "{{name}}: fewer in the Main Deck than planned",
+      "games": {
+        "title": "Games",
+        "record": "{{win}} to {{loss}} {{going}} with this plan",
+        "draws": "plus {{count}} drawn",
+        "win": "Win",
+        "loss": "Loss",
+        "draw": "Draw",
+        "enterWin": "Log a win",
+        "enterLoss": "Log a loss",
+        "enterDraw": "Log a draw",
+        "matchups": "Matchups already used",
+        "note": "Note on the game",
+        "notePlaceholder": "Note, e.g. “bricked after siding”",
+        "delete": "Delete entry",
+        "error": "Could not save the change. Check that your side plan is saved and try again.",
+        "add": "Log a game",
+        "withPlan": "With plan: {{matchup}}",
+        "noPlan": "No linked plan",
+        "matchup": "Game matchup",
+        "going": "Game turn order"
+      }
     },
     "banlist": {
       "label": "Banlist",
