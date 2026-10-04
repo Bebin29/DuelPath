@@ -7,6 +7,7 @@ Quelle ist `prisma/schema.prisma`. Dieses Dokument erklärt, wofür die Modelle 
 ```
 User ─┬─ Deck ─┬─ DeckCard ── Card
       │        ├─ DeckVersion
+      │        ├─ DeckGame
       │        └─ Combo
       ├─ Combo ── ComboNode (Baum, Eltern/Kinder)
       ├─ ApiToken
@@ -48,7 +49,7 @@ Gesucht wird nach Name mit ILIKE ohne Trigramm-Index. Bei etwa 14.000 Karten rei
 
 ## Banlist
 
-**`Banlist`** trennt das bestätigte Gültigkeitsdatum (`effectiveOn`, unbekannt = null) vom erfolgreichen Datenabruf (`importedAt`). Ein Import erfindet kein Gültigkeitsdatum; ändern sich Beschränkungen, wird ein altes bestätigtes Datum zurückgesetzt. `current` ist die gemeinsame TCG-Liste. Manuelle Datumsbestätigungen stehen privat unter `current:<userId>` und gelten nur für den exakt zugehörigen `importedAt`-Snapshot; sie verändern keine globale Metadaten. Die API meldet ausschließlich das global bestätigte Datum. `next:<userId>` die private Vergleichsliste eines Nutzers. Die Oberfläche zeigt deren Schlüssel als `next`. Alte globale `next`-Einträge werden nicht als persönliche Liste ausgegeben. Die aktuelle Liste selbst steht an den Karten in `banTcg`.
+**`Banlist`** trennt das bestätigte Gültigkeitsdatum (`effectiveOn`, unbekannt = null) vom erfolgreichen Datenabruf (`importedAt`). Ein Import erfindet kein Gültigkeitsdatum; ändern sich Beschränkungen, wird ein altes bestätigtes Datum zurückgesetzt. `current` ist die gemeinsame TCG-Liste. Manuelle Datumsbestätigungen stehen privat unter `current:<userId>` und gelten nur für den exakt zugehörigen `importedAt`-Snapshot; sie verändern keine globale Metadaten. Die API meldet ausschließlich das global bestätigte Datum. `next:<userId>` ist die private Vergleichsliste eines Nutzers. Die Oberfläche zeigt deren Schlüssel als `next`. Alte globale `next`-Einträge werden nicht als persönliche Liste ausgegeben. Die aktuelle Liste selbst steht an den Karten in `banTcg`.
 
 **`BanlistCard`** gehört zu `next` und enthält nur die Abweichungen von der aktuellen Liste: `status` ist Forbidden, Limited, Semi-Limited oder Unlimited, und Unlimited gibt eine Karte wieder frei. Was nicht eingetragen ist, bleibt wie auf der aktuellen Liste. Der Deck-Check auf der Deckseite schaltet zwischen beiden Listen um.
 
@@ -62,6 +63,8 @@ Gesucht wird nach Name mit ILIKE ohne Trigramm-Index. Bei etwa 14.000 Karten rei
 **`DeckCard`** verbindet Deck und Karte mit `quantity` und `deckSection` (MAIN, EXTRA, SIDE). Der eindeutige Schlüssel ist `(deckId, cardId, deckSection)`. Dieselbe Karte kann also gleichzeitig im Main und im Side Deck stehen, und das ist auch gewollt.
 
 **`DeckVersion`** ist ein gespeicherter Stand eines Decks zum Vergleichen und Zurückholen. Sie hält die Kartenliste als JSON (`entries`), nicht als Beziehungen. Grund: eine Version ist eine Momentaufnahme und soll sich nicht ändern, wenn das Deck sich ändert.
+
+**`DeckGame`** ist ein von Hand eingetragenes Spiel: `matchup`, `going`, `result`, eine kurze `note` und `sidePlanId`, der Plan, der anlag. Eine Zeile ist ein Spiel, kein Match. Eigenes Modell und kein weiteres JSON-Feld am Deck, aus demselben Grund wie bei `DeckVersion`: ein Eintrag ist kein Bearbeiten der Deckliste, er hängt an eigenen Server-Actions statt am Autosave der Deckseite und wird von Strg+Z nicht angefasst. Wird ein Side-Plan gelöscht, bleibt der Eintrag stehen; nur ein ausdrücklicher `sidePlanId`-Bezug zu einem noch vorhandenen Plan zählt in dessen Bilanz. Fehlende oder verwaiste Bezüge werden in der Oberfläche als „ohne Planbezug“ angezeigt. Die gespeicherte Kennung bleibt erhalten, sodass das Wiederherstellen desselben Plans den Bezug wieder gültig macht. Einträge werden weder nach Matchup geraten noch beim Lesen verändert. Deckversionen sichern Karten und Rollen, keine Side-Pläne und keine Spiele.
 
 Die Aufzählungen (MAIN, EXTRA, SIDE) sind Strings und keine Postgres-Enums. Sie werden mit zod validiert. Das spart Migrationen, wenn ein Wert dazukommt.
 

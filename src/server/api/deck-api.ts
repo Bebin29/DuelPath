@@ -16,6 +16,7 @@ import {
 } from '@/lib/deck/roles';
 import { loadLibrary } from '@/server/services/library.service';
 import { applySidePlan, parseSidePlans } from '@/lib/deck/side-plan';
+import { parseGame, tally } from '@/lib/deck/games';
 import { STAPLES } from '@/lib/combo/reactions';
 import { findCard, userBreakers, userNicknames } from './combo-api';
 import { ApiError } from './http';
@@ -106,6 +107,37 @@ export async function createDeckFromRequest(userId: string, req: z.infer<typeof 
   return { id: deck.id, matched };
 }
 
+/**
+ * Side-Pläne für die API: Karten mit Namen und je Plan die Bilanz der eingetragenen Spiele
+ * (Deckbau-Plan 3.7). Rohe Zahlen, nie eine Quote, damit sieben Spiele nicht nach Statistik
+ * aussehen. Eine Frage wie „welcher meiner Pläne hält nicht?“ lässt sich damit beantworten.
+ */
+function sidePlanViews(
+  stored: unknown,
+  rows: Parameters<typeof parseGame>[0][],
+  cards: Map<string, RuleCard>
+) {
+  const plans = parseSidePlans(stored);
+  const planIds = new Set(plans.map((p) => p.id));
+  const games = rows.flatMap((row) => {
+    const game = parseGame(row);
+    return game ? [game] : [];
+  });
+  const named = (r: Record<string, number>) =>
+    Object.entries(r).map(([id, quantity]) => ({ id, name: cards.get(id)?.name ?? id, quantity }));
+  return plans.map((plan) => {
+    const { win, loss, draw } = tally(games, plan, planIds);
+    return {
+      id: plan.id,
+      matchup: plan.matchup,
+      going: plan.going,
+      in: named(plan.in),
+      out: named(plan.out),
+      record: { win, loss, draw },
+    };
+  });
+}
+
 /** Deckliste nach Abschnitten, dazu die Regelhinweise wie auf der Deckseite */
 export async function deckView(userId: string, deckId: string) {
   const banlist = await prisma.banlist.findUnique({
@@ -121,6 +153,7 @@ export async function deckView(userId: string, deckId: string) {
       userId: true,
       roles: true,
       sidePlans: true,
+      games: { orderBy: { playedAt: 'desc' } },
       deckCards: {
         orderBy: { card: { name: 'asc' } },
         select: {
@@ -171,15 +204,7 @@ export async function deckView(userId: string, deckId: string) {
       effectiveOn: banlist.effectiveOn ? toIsoDate(banlist.effectiveOn) : null,
       importedAt: banlist.importedAt?.toISOString() ?? null,
     },
-    sidePlans: parseSidePlans(deck.sidePlans).map(({ in: inCards, out, ...plan }) => {
-      const named = (r: Record<string, number>) =>
-        Object.entries(r).map(([id, quantity]) => ({
-          id,
-          name: cards.get(id)?.name ?? id,
-          quantity,
-        }));
-      return { ...plan, in: named(inCards), out: named(out) };
-    }),
+    sidePlans: sidePlanViews(deck.sidePlans, deck.games, cards),
   };
 }
 

@@ -86,6 +86,8 @@ Die App schlägt Rollen vor: Starter aus 1-Card-Combos, Extender aus grösseren 
 
 **Side-Plan**: je Matchup und Zugfolge, welche Karten aus dem Side Deck hinein und welche aus dem Main Deck heraus gehen. Gespeichert am Deck.
 
+**Spielprotokoll**: pro Spiel von Hand eingetragen, wie es ausging, mit dem Side-Plan, der anlag. Am Plan steht dann die Bilanz als rohe Zahl („5 zu 2 Going Second mit diesem Plan“). Das ist kein Duellmodus: DuelPath speichert kein Spiel, nur sein Ergebnis.
+
 **Going first / going second**: ob man den ersten oder zweiten Zug hat. Das ändert, welche Karten gut sind: going first zählen Starter, going second zählen Breaker.
 
 **YDK**: das Deck-Dateiformat von EDOPro und YGOPRODeck. Eine Liste von Passcodes. Karten ohne Passcode fehlen beim Export.

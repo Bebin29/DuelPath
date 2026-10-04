@@ -908,7 +908,28 @@
       "compare": "Kennzahlen nach dem Siden, {{going}}, verglichen mit dem Main Deck ohne Plan.",
       "unbalanced": "{{in}} rein, {{out}} raus: Das Main Deck ändert seine Größe.",
       "notInSide": "{{name}}: weniger im Side Deck als geplant",
-      "notInMain": "{{name}}: weniger im Main Deck als geplant"
+      "notInMain": "{{name}}: weniger im Main Deck als geplant",
+      "games": {
+        "title": "Spiele",
+        "record": "{{win}} zu {{loss}} {{going}} mit diesem Plan",
+        "draws": "dazu {{count}} unentschieden",
+        "win": "Sieg",
+        "loss": "Niederlage",
+        "draw": "Unentschieden",
+        "enterWin": "Sieg eintragen",
+        "enterLoss": "Niederlage eintragen",
+        "enterDraw": "Unentschieden eintragen",
+        "matchups": "Schon benutzte Matchups",
+        "note": "Notiz zum Spiel",
+        "notePlaceholder": "Notiz, etwa „Brick nach dem Siden“",
+        "delete": "Eintrag löschen",
+        "error": "Die Änderung ließ sich nicht speichern. Prüfe, ob dein Side-Plan gespeichert ist, und versuche es erneut.",
+        "add": "Spiel eintragen",
+        "withPlan": "Mit Plan: {{matchup}}",
+        "noPlan": "Ohne Planbezug",
+        "matchup": "Matchup des Spiels",
+        "going": "Zugfolge des Spiels"
+      }
     },
     "banlist": {
       "label": "Banlist",
