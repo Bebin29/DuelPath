@@ -177,7 +177,6 @@
       "Verification": "Der Verifizierungslink ist abgelaufen oder wurde bereits verwendet.",
       "CredentialsSignin": "Ungültige Anmeldedaten. Bitte überprüfe deine E-Mail und dein Passwort."
     },
-    "back": "Zurück zur Startseite",
     "signInText": "Melde dich an, um auf deine Decks und Combos zuzugreifen.",
     "signUpText": "Erstelle ein Konto, um deine Decks und Combos zu verwalten.",
     "confirmPassword": "Passwort bestätigen",
@@ -189,7 +188,12 @@
     "errorTitle": "Anmeldung fehlgeschlagen",
     "errorCode": "Fehlercode: {{code}}",
     "toSignIn": "Zur Anmeldung",
-    "toHome": "Zur Startseite"
+    "toHome": "Zur Startseite",
+    "stage": {
+      "headline": "Plane die Line. Finde, wo sie {{word}}.",
+      "word": "bricht",
+      "text": "Combos Schritt für Schritt aufschreiben, gegen Handtraps stresstesten und aus frischen Händen üben."
+    }
   },
   "error": {
     "title": "Ein Fehler ist aufgetreten",
