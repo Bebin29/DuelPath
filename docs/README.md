@@ -25,9 +25,8 @@ Diese Dokumente sagen, was gebaut werden soll. Sie sind Planung, nicht Beschreib
 | [Projektplan-Umbau.md](../Projektplan-Umbau.md) | Aktueller Plan. Hier zuerst nachsehen.           |
 | [Deckbau-Plan.md](../Deckbau-Plan.md)           | Rollen, Quoten, Versionen, Side-Pläne            |
 | [UX-Plan.md](../UX-Plan.md)                     | Abläufe und Verhalten der Oberfläche             |
-| [UI-Plan.md](../UI-Plan.md)                     | Aufbau der Bildschirme und Komponenten           |
+| [UI-Plan.md](../UI-Plan.md)                     | Bildschirme, Komponenten; Farben in Abschnitt 4  |
 | [UI-Sweep-Plan.md](../UI-Sweep-Plan.md)         | Durchgang zum Angleichen der Oberfläche          |
-| [FARBSCHEMA.md](../FARBSCHEMA.md)               | Farben und Design-Tokens                         |
 | [Projektplanung.md](../Projektplanung.md)       | Erste, sehr lange Planung. Grossteils überholt.  |
 | [../design/README.md](../design/README.md)      | Design-Dokument für pen.dev und die Kartenbilder |
 
