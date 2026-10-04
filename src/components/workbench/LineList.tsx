@@ -20,6 +20,7 @@ import type { ComboCard } from '@/lib/combo/cards';
 import type { Hit } from '@/lib/combo/stress';
 import { Button } from '@/components/ui/button';
 import { STAPLE_MIME } from './StapleRail';
+import { START_ID } from '@/lib/combo/tree';
 
 /** Choke Points der Line und was sie in der Liste auslösen (UX-Plan 6.8) */
 export interface LineChokes {
@@ -229,7 +230,7 @@ export function LineList({
         onKeyDown={treeKeys}
         className="min-h-0 flex-1 overflow-y-auto pb-4"
       >
-        <li role="none">
+        <li role="none" data-step={START_ID}>
           <button
             role="treeitem"
             aria-level={1}
@@ -262,6 +263,7 @@ export function LineList({
               <motion.li
                 key={step.node.id}
                 role="none"
+                data-step={step.node.id}
                 layout="position"
                 variants={ROW}
                 initial="enter"

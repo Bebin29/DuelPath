@@ -153,6 +153,19 @@ export function Workbench({
     initialStep && initial.nodes.some((n) => n.id === initialStep) ? initialStep : START_ID
   );
   const [mode, setMode] = useState<WorkbenchMode>(initialView === 'tree' ? 'tree' : 'board');
+  // Szene „Moduswechsel“: wo die Schritte in der Line-Liste standen, von dort wachsen die Knoten
+  const [rowRects, setRowRects] = useState(() => new Map<string, DOMRect>());
+  const changeMode = (next: WorkbenchMode | ((m: WorkbenchMode) => WorkbenchMode)) => {
+    setRowRects(
+      new Map(
+        [...document.querySelectorAll<HTMLElement>('#line-list [data-step]')]
+          .map((el) => [el.dataset.step ?? '', el.getBoundingClientRect()] as const)
+          // Eingeklappte Line-Liste (schmale Fenster): nichts, wovon ein Knoten kommen könnte
+          .filter(([, r]) => r.width > 0)
+      )
+    );
+    setMode(next);
+  };
   const [inspectedId, setInspectedId] = useState<string | null>(null);
   // Kürzel lesen die Karte unter dem Zeiger sofort, auch wenn der Hover noch nicht gerendert ist
   const hovered = useRef<string | null>(null);
@@ -735,7 +748,7 @@ export function Workbench({
         return;
       }
       if (e.key === 'v' || e.key === 'V') {
-        setMode((m) => (m === 'board' ? 'tree' : 'board'));
+        changeMode((m) => (m === 'board' ? 'tree' : 'board'));
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         goTo(position + 1);
@@ -1015,7 +1028,7 @@ export function Workbench({
           decks={decks}
           onDeck={(value) => setDoc((d) => ({ ...d, deckId: value }))}
           mode={mode}
-          onMode={setMode}
+          onMode={changeMode}
           canUndo={history.canUndo}
           canRedo={history.canRedo}
           onUndo={history.undo}
@@ -1387,6 +1400,7 @@ export function Workbench({
             <div className="min-h-0">
               <TreeCanvas
                 nodes={nodes}
+                flightFrom={rowRects}
                 selectedId={selected ? selected.id : START_ID}
                 path={path}
                 labelOf={labelOf}
