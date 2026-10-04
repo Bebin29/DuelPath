@@ -21,6 +21,7 @@ import type { Hit } from '@/lib/combo/stress';
 import { Button } from '@/components/ui/button';
 import { STAPLE_MIME } from './StapleRail';
 import { START_ID } from '@/lib/combo/tree';
+import { Handschrift } from '@/components/motion/Handschrift';
 
 /** Choke Points der Line und was sie in der Liste auslösen (UX-Plan 6.8) */
 export interface LineChokes {
@@ -413,9 +414,9 @@ export function LineList({
                   )}
                 </div>
                 {selected && step.node.note && (
-                  <p className="pb-1.5 pl-[58px] pr-4 font-hand text-[14px] leading-snug text-opponent">
+                  <Handschrift className="pb-1.5 pl-[58px] pr-4 text-[14px] leading-snug">
                     {step.node.note}
-                  </p>
+                  </Handschrift>
                 )}
                 {step.branches.map((b) => (
                   <motion.div

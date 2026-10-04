@@ -2,10 +2,11 @@
 
 import { useCallback } from 'react';
 import { X } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { useSettings } from '@/components/providers/SettingsProvider';
 import { cn } from '@/lib/utils';
+import { Handschrift } from '@/components/motion/Handschrift';
 
 /** Gesehene Hinweise lesen und merken, etwa wenn die passende Handlung den Hinweis erledigt */
 export function useHints() {
@@ -46,25 +47,32 @@ export function OneTimeHint({
   const { seen, markSeen } = useHints();
   if (seen(id)) return null;
   return (
-    <motion.div
-      role="note"
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn(
-        'relative z-30 flex max-w-72 items-start gap-2 rounded-md border border-line-strong bg-surface-2 p-3 text-sm shadow-[0_12px_30px_rgb(0_0_0/0.45)]',
-        arrow && ARROW[arrow],
-        className
-      )}
-    >
-      <p className="flex-1 font-hand text-[15px] leading-snug text-opponent">{children}</p>
-      <button
-        type="button"
-        onClick={() => markSeen(id)}
-        aria-label={t('hints.dismiss')}
-        className="text-text-subtle hover:text-ink"
+    // Eigenes AnimatePresence: Die Workbench liegt in einem mit initial={false}, das sonst auch
+    // das Erscheinen und Aufschreiben dieses Hinweises beim Laden verschluckt
+    <AnimatePresence>
+      <motion.div
+        role="note"
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn(
+          'relative z-30 flex max-w-72 items-start gap-2 rounded-md border border-line-strong bg-surface-2 p-3 text-sm shadow-[0_12px_30px_rgb(0_0_0/0.45)]',
+          arrow && ARROW[arrow],
+          className
+        )}
       >
-        <X className="size-3.5" />
-      </button>
-    </motion.div>
+        {/* Der Rotstift schreibt, sobald der Rahmen steht */}
+        <Handschrift delay={0.15} className="flex-1 text-[15px] leading-snug">
+          {children}
+        </Handschrift>
+        <button
+          type="button"
+          onClick={() => markSeen(id)}
+          aria-label={t('hints.dismiss')}
+          className="text-text-subtle hover:text-ink"
+        >
+          <X className="size-3.5" />
+        </button>
+      </motion.div>
+    </AnimatePresence>
   );
 }
