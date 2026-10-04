@@ -15,6 +15,7 @@ import { StartHandStrip } from '@/components/library/StartHandStrip';
 import { ComboListItem } from '@/components/library/ComboListItem';
 
 const FEW_COMBOS = 6;
+const WORD_SLOT = '\u0001';
 
 /**
  * Start (UI-Plan 7.5.1): links Illustration und Headline als seltene Fläche,
@@ -31,6 +32,8 @@ export function StartView({
 }) {
   const { t, i18n } = useTranslation();
   const [latest, ...recent] = combos;
+  // Das Wechselwort steht im Englischen mitten im Satz: Vorlage am Platzhalter teilen
+  const [before, after] = t('start.headline', { word: WORD_SLOT }).split(WORD_SLOT);
   const px = useSpring(0, { stiffness: 60, damping: 18 });
   const py = useSpring(0, { stiffness: 60, damping: 18 });
   const when = (iso: string) =>
@@ -75,9 +78,10 @@ export function StartView({
           <AmSpieltisch title={t('start.illustration')} animated className="h-auto w-full" />
         </motion.div>
         <p className="mt-4 text-text-muted">{t('start.pre')}</p>
-        <h1 className="mt-1 flex flex-wrap items-end justify-center gap-x-3 font-display text-[52px] leading-[1.05]">
-          <span>{t('start.headline')}</span>
+        <h1 className="mt-1 text-balance text-center font-display text-[52px] leading-[1.05]">
+          {before}
           <WechselWort words={t('start.words').split('|')} />
+          {after}
         </h1>
       </section>
 

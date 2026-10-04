@@ -404,8 +404,7 @@
   "start": {
     "illustration": "Two players at a table, one raises a card like an interruption",
     "pre": "Your line is set. The only question is:",
-    "headline": "Where does",
-    "headlineWord": "Ash stop you?",
+    "headline": "Where does {{word}} stop you?",
     "resume": "Continue editing",
     "open": "Open",
     "recent": "Recently edited",
@@ -420,7 +419,7 @@
     "progress": "{{steps}} steps · endboard {{endboard}}",
     "lines_one": "{{count}} line",
     "lines_other": "{{count}} lines",
-    "words": "Ash?|Imperm?|Nibiru?|Droll?",
+    "words": "Ash|Imperm|Nibiru|Droll",
     "next": {
       "title": "Up next",
       "test": "Test “{{title}}” and set its status",
