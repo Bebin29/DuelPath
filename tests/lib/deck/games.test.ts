@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   gameInputSchema,
   knownMatchups,
+  record,
   tally,
   gamesForPlans,
   type DeckGame,
@@ -128,4 +129,15 @@ it('zeigt verwaiste Einträge ohne Bezug und erhält die gespeicherte Referenz',
   const original = game({ sidePlanId: 'deleted' });
   expect(gamesForPlans([original], [plan({})])).toEqual([{ ...original, sidePlanId: null }]);
   expect(original.sidePlanId).toBe('deleted');
+});
+
+describe('record', () => {
+  it('zählt die Spiele eines Decks und übergeht unbekannte Ergebnisse', () => {
+    expect(record(['win', 'loss', 'win', 'draw', 'aborted'])).toEqual({
+      win: 2,
+      loss: 1,
+      draw: 1,
+      total: 4,
+    });
+  });
 });
