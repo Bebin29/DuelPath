@@ -1,0 +1,53 @@
+import { describe, expect, it } from 'vitest';
+import { renderToString } from 'react-dom/server';
+import { render, screen } from '@testing-library/react';
+import i18n from '@/lib/i18n/config';
+import { useTranslation } from '@/lib/i18n/hooks';
+import { I18nProvider } from '@/components/common/I18nProvider';
+
+function Probe() {
+  const { t } = useTranslation();
+  return <span>{t('start.recent')}</span>;
+}
+
+describe('I18nProvider', () => {
+  it('rendert schon auf dem Server in der Sprache aus dem Cookie', () => {
+    const html = renderToString(
+      <I18nProvider language="en">
+        <Probe />
+      </I18nProvider>
+    );
+    expect(html).toContain('Recently edited');
+  });
+
+  it('hält die Sprache je Anfrage getrennt und lässt die globale Instanz in Ruhe', () => {
+    // Englisch zuletzt: wer die globale Instanz umstellt, hinterlässt sie auf „en“
+    const html = renderToString(
+      <>
+        <I18nProvider language="de">
+          <Probe />
+        </I18nProvider>
+        <I18nProvider language="en">
+          <Probe />
+        </I18nProvider>
+      </>
+    );
+    expect(html).toContain('Zuletzt bearbeitet');
+    expect(html).toContain('Recently edited');
+    expect(i18n.language).toBe('de');
+  });
+
+  it('folgt einer neuen Sprache vom Server, etwa nach router.refresh()', async () => {
+    const { rerender } = render(
+      <I18nProvider language="de">
+        <Probe />
+      </I18nProvider>
+    );
+    rerender(
+      <I18nProvider language="en">
+        <Probe />
+      </I18nProvider>
+    );
+    expect(await screen.findByText('Recently edited')).toBeInTheDocument();
+  });
+});

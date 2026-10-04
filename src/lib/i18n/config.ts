@@ -17,7 +17,7 @@ i18n.use(initReactI18next).init({
       translation: enTranslations,
     },
   },
-  lng: 'de', // Standardsprache (wird clientseitig überschrieben)
+  lng: 'de', // Standardsprache; je Anfrage klont der I18nProvider mit der Sprache aus dem Cookie
   fallbackLng: 'en',
   interpolation: {
     escapeValue: false, // React escaped bereits
