@@ -20,18 +20,19 @@ describe('I18nProvider', () => {
   });
 
   it('hält die Sprache je Anfrage getrennt und lässt die globale Instanz in Ruhe', () => {
+    // Englisch zuletzt: wer die globale Instanz umstellt, hinterlässt sie auf „en“
     const html = renderToString(
       <>
-        <I18nProvider language="en">
+        <I18nProvider language="de">
           <Probe />
         </I18nProvider>
-        <I18nProvider language="de">
+        <I18nProvider language="en">
           <Probe />
         </I18nProvider>
       </>
     );
-    expect(html).toContain('Recently edited');
     expect(html).toContain('Zuletzt bearbeitet');
+    expect(html).toContain('Recently edited');
     expect(i18n.language).toBe('de');
   });
 });
