@@ -8,6 +8,7 @@ import { I18nProvider } from '@/components/common/I18nProvider';
 import { ToastProvider } from '@/components/ui/toast';
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary';
 import { THEME_COOKIE, parseTheme } from '@/lib/theme';
+import { LANGUAGE_COOKIE, parseLanguage } from '@/lib/language';
 
 const instrumentSans = Instrument_Sans({ variable: '--font-instrument-sans', subsets: ['latin'] });
 const instrumentSerif = Instrument_Serif({
@@ -28,16 +29,18 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  const jar = await cookies();
+  const theme = parseTheme(jar.get(THEME_COOKIE)?.value);
+  const language = parseLanguage(jar.get(LANGUAGE_COOKIE)?.value);
   const fonts = [instrumentSans, instrumentSerif, jetbrainsMono, kalam]
     .map((f) => f.variable)
     .join(' ');
 
   return (
-    <html lang="de" className={`${theme} ${fonts}`} suppressHydrationWarning>
+    <html lang={language} className={`${theme} ${fonts}`} suppressHydrationWarning>
       <body>
         <SessionProvider>
-          <I18nProvider>
+          <I18nProvider language={language}>
             <GlobalErrorBoundary>
               <SWRProvider>
                 <ToastProvider>{children}</ToastProvider>

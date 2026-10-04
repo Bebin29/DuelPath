@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
 // Initialisiert i18next einmal beim ersten Import
 import './config';
+import { applyLanguage, parseLanguage, type Language } from '@/lib/language';
 
 /**
  * Wrapper Hook für useTranslation mit Typisierung
@@ -13,35 +13,18 @@ export function useTranslation() {
 }
 
 /**
- * Hook zum Wechseln der Sprache
+ * Hook zum Wechseln der Sprache. Das Cookie trägt die Wahl zum Server (siehe `@/lib/language`).
  */
 export function useLanguage() {
   const { i18n } = useTranslation();
 
-  const changeLanguage = (lang: 'de' | 'en') => {
-    i18n.changeLanguage(lang);
-    // Sprache im localStorage speichern für Persistenz
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('language', lang);
-      // Initialisiere i18n mit gespeicherter Sprache beim ersten Laden
-      if (i18n.language !== lang) {
-        i18n.changeLanguage(lang);
-      }
-    }
+  const changeLanguage = (lang: Language) => {
+    void i18n.changeLanguage(lang);
+    applyLanguage(lang);
   };
 
-  // Beim ersten Laden: Sprache aus localStorage laden
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedLanguage = localStorage.getItem('language') as 'de' | 'en' | null;
-      if (savedLanguage && savedLanguage !== i18n.language) {
-        i18n.changeLanguage(savedLanguage);
-      }
-    }
-  }, [i18n]);
-
   return {
-    currentLanguage: i18n.language as 'de' | 'en',
+    currentLanguage: parseLanguage(i18n.language),
     changeLanguage,
   };
 }
