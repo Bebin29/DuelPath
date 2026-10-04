@@ -201,15 +201,16 @@ export function DeckPage({
   const [banlistKey, setBanlistKey] = useState<BanlistKey>('current');
 
   // Autosave wie in der Workbench, kurz nach der letzten Änderung
-  const firstRender = useRef(true);
+  // Verglichen wird mit dem zuletzt gespeicherten Stand: Im Strict Mode laufen Effekte beim
+  // Einhängen zweimal, „erster Durchlauf überspringen“ speicherte dann schon beim Öffnen
+  const saved = useRef([name, entries, roles, sidePlans]);
   useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
+    const current = [name, entries, roles, sidePlans];
+    if (current.every((value, i) => Object.is(value, saved.current[i]))) return;
     const timer = setTimeout(async () => {
       setStatus('saving');
       const result = await saveDeck(deck.id, { name, entries, roles, sidePlans });
+      if (!result.error) saved.current = current;
       setStatus(result.error ? 'error' : 'saved');
     }, 700);
     return () => clearTimeout(timer);
@@ -502,6 +503,7 @@ export function DeckPage({
             onChange={change}
             onMove={move}
             onOpenCard={openCard}
+            handtraps={handtraps}
           />
         )}
         {tab === 'ratios' && (

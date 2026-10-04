@@ -34,6 +34,7 @@ export function CardSearchPanel({
   hint,
   label,
   side = false,
+  suggestions,
 }: {
   onAdd: (card: DeckViewCard, side: boolean) => void;
   /** Eigener Knopf „Side“ je Treffer, für Touch-Geräte ohne Umschalttaste */
@@ -41,6 +42,8 @@ export function CardSearchPanel({
   /** Hinweis unter dem Feld; null blendet ihn aus */
   hint?: string | null;
   label?: string;
+  /** Ohne Eingabe angeboten, etwa die Handtraps auf der Deckseite; Karten-IDs in Reihenfolge */
+  suggestions?: { title: string; ids: string[] };
 }) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
@@ -60,7 +63,24 @@ export function CardSearchPanel({
     return () => controller.abort();
   }, [debounced]);
 
-  const visible = debounced.length >= 2 ? results : [];
+  const [suggested, setSuggested] = useState<DeckViewCard[]>([]);
+  const suggestedIds = suggestions?.ids.join(',') ?? '';
+  useEffect(() => {
+    if (!suggestedIds) return;
+    const controller = new AbortController();
+    fetch(`/api/cards?ids=${encodeURIComponent(suggestedIds)}`, { signal: controller.signal })
+      .then((res) => res.json())
+      .then((data: { cards?: ApiCard[] }) => {
+        const byId = new Map((data.cards ?? []).map((c) => [c.id, toDeckCard(c)]));
+        setSuggested(suggestedIds.split(',').flatMap((id) => byId.get(id) ?? []));
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [suggestedIds]);
+
+  // Ohne Eingabe stehen die Vorschläge da statt einer leeren Liste
+  const suggesting = query.trim() === '' && suggested.length > 0;
+  const visible = debounced.length >= 2 ? results : suggesting ? suggested : [];
 
   return (
     <section aria-label={label ?? t('decks.search')} className="flex min-h-0 flex-col gap-3">
@@ -79,6 +99,9 @@ export function CardSearchPanel({
           <span className="pointer-coarse:hidden">{hint ?? t('decks.searchHint')}</span>
           <span className="hidden pointer-coarse:inline">{hint ?? t('decks.searchHintTouch')}</span>
         </p>
+      )}
+      {suggesting && suggestions && (
+        <h3 className="font-mono text-2xs text-text-subtle">{suggestions.title}</h3>
       )}
       <ul className="flex min-h-0 flex-col overflow-y-auto">
         {visible.map((card) => {

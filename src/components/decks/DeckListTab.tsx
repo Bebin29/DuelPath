@@ -31,6 +31,7 @@ export function DeckListTab({
   onChange,
   onMove,
   onOpenCard,
+  handtraps = [],
 }: {
   entries: DeckViewEntry[];
   cards: Map<string, DeckViewCard>;
@@ -38,6 +39,8 @@ export function DeckListTab({
   onChange: (cardId: string, section: Section, delta: number) => void;
   onMove: (cardId: string, from: Section, to: Section) => void;
   onOpenCard: (cardId: string) => void;
+  /** Ohne Suchbegriff in der Suche angeboten: Handtraps kommen in fast jedes Deck */
+  handtraps?: string[];
 }) {
   const { t } = useTranslation();
   const cardLanguage = useCardLanguage();
@@ -166,7 +169,11 @@ export function DeckListTab({
               className="h-[85dvh] gap-3 p-5 pt-3 sm:h-auto"
             >
               <SheetTitle>{t('decks.addCards')}</SheetTitle>
-              <CardSearchPanel onAdd={onAdd} side />
+              <CardSearchPanel
+                onAdd={onAdd}
+                side
+                suggestions={{ title: t('decks.suggestHandtraps'), ids: handtraps }}
+              />
             </SheetContent>
           </Sheet>
           <span className="flex-1" />
@@ -183,7 +190,11 @@ export function DeckListTab({
         {(['MAIN', 'EXTRA', 'SIDE'] as const).map(section)}
       </div>
       <aside className="sticky top-6 hidden max-h-[calc(100dvh-3rem)] flex-col self-start lg:flex">
-        <CardSearchPanel onAdd={onAdd} side />
+        <CardSearchPanel
+          onAdd={onAdd}
+          side
+          suggestions={{ title: t('decks.suggestHandtraps'), ids: handtraps }}
+        />
       </aside>
     </div>
   );
