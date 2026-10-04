@@ -15,6 +15,8 @@ export type DeckSection = 'MAIN' | 'EXTRA' | 'SIDE';
 
 export interface DeckViewCard extends ComboCard {
   banTcg: string | null;
+  /** TCG-Release als ISO-Datum, null = nur OCG */
+  tcgDate: string | null;
   passcode: string | null;
   archetype: string | null;
 }
@@ -47,6 +49,7 @@ const CARD_SELECT = {
   effectsOverride: true,
   linkMarkers: true,
   banTcg: true,
+  tcgDate: true,
   passcode: true,
   archetype: true,
 } as const;
@@ -109,6 +112,7 @@ export interface DeckVersionView {
 const toViewCard = (card: Prisma.CardGetPayload<{ select: typeof CARD_SELECT }>) => ({
   ...toComboCard(card),
   banTcg: card.banTcg,
+  tcgDate: card.tcgDate?.toISOString() ?? null,
   passcode: card.passcode,
   archetype: card.archetype,
 });

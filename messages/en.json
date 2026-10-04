@@ -804,7 +804,9 @@
       "copies": "{{name}} is in the deck {{count}} times, 3 are allowed.",
       "banlist": "{{name}} is in the deck {{count}} times, the TCG list allows {{limit}}.",
       "wrongSection": "{{name}} does not belong in the {{section}} Deck.",
-      "banlistNamed": "{{name}} is in the deck {{count}} times, {{list}} allows {{limit}}."
+      "banlistNamed": "{{name}} is in the deck {{count}} times, {{list}} allows {{limit}}.",
+      "ocgOnly": "{{name}} is OCG only and not legal in the TCG",
+      "preRelease": "{{name}} is legal in the TCG from {{date}}"
     },
     "affected_one": "{{count}} combo affected: cards missing from the deck",
     "affected_other": "{{count}} combos affected: cards missing from the deck",
@@ -937,7 +939,8 @@
       "unknown": "Banlist date unknown, add it in the settings",
       "current": "Current",
       "clean": "no notes"
-    }
+    },
+    "ocg": "OCG only"
   },
   "practice": {
     "title": "Practice",

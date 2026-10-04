@@ -12,6 +12,7 @@ import type { DeckViewCard } from '@/server/actions/deck-view.actions';
 
 type ApiCard = Parameters<typeof toComboCard>[0] & {
   banTcg?: string | null;
+  tcgDate?: string | null;
   passcode?: string | null;
   archetype?: string | null;
 };
@@ -19,6 +20,7 @@ type ApiCard = Parameters<typeof toComboCard>[0] & {
 const toDeckCard = (row: ApiCard): DeckViewCard => ({
   ...toComboCard(row),
   banTcg: row.banTcg ?? null,
+  tcgDate: row.tcgDate ?? null,
   passcode: row.passcode ?? null,
   archetype: row.archetype ?? null,
 });
@@ -95,6 +97,7 @@ export function CardSearchPanel({
                     <span className="block truncate font-mono text-2xs text-text-subtle">
                       {card.type}
                       {card.banTcg && ` · ${t(`preview.ban.${card.banTcg}`)}`}
+                      {!card.tcgDate && ` · ${t('decks.ocg')}`}
                     </span>
                   </span>
                   <Plus className="size-3.5 text-text-subtle" />

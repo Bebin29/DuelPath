@@ -52,7 +52,7 @@ npm run dev
 
 ## Kartenimport
 
-Nach dem ersten Setup die TCG-Karten von YGOPRODeck importieren (englische und deutsche Texte, OCG-only-Karten werden übersprungen):
+Nach dem ersten Setup die Karten von YGOPRODeck importieren (englische und deutsche Texte). OCG-Karten ohne TCG-Release kommen mit hinein, damit Listen aus Master Duel oder EDOPro vollständig importierbar sind; die Deckprüfung weist auf sie hin:
 
 ```bash
 npm run cards:import
@@ -76,5 +76,5 @@ Kartenbilder werden beim ersten Abruf von YGOPRODeck geladen und in `CARD_IMAGE_
 - `npm run db:migrate`: Erstellt und führt Migrationen aus
 - `npm run db:seed`: Legt den Test-User an
 - `npm run db:generate`: Erzeugt den Prisma Client neu
-- `npm run cards:import`: Importiert bzw. aktualisiert alle TCG-Karten
+- `npm run cards:import`: Importiert bzw. aktualisiert alle TCG- und OCG-Karten
 - `npm run cards:check-effects`: Lässt Jev die Effektzerlegung bewerten

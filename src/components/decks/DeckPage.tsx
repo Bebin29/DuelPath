@@ -546,7 +546,7 @@ export function DeckPage({
 
 /** Regelhinweise knapp über den Tabs; die App verbietet nichts, sie sagt es */
 function IssueList({ issues, banlist }: { issues: DeckIssue[]; banlist: BanlistView | null }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const shown = open ? issues : issues.slice(0, 2);
   // Beim Prüfen gegen die nächste Liste steht deren Name im Hinweis
@@ -560,6 +560,11 @@ function IssueList({ issues, banlist }: { issues: DeckIssue[]; banlist: BanlistV
             ...issue,
             ...(banlist && { list: banlist.name }),
             ...('section' in issue && { section: t(`decks.section.${issue.section}`) }),
+            ...('date' in issue && {
+              date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(
+                new Date(issue.date)
+              ),
+            }),
           })}
         </li>
       ))}

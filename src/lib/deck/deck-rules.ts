@@ -1,6 +1,6 @@
 /**
  * Deckregeln als Hinweise (UX-Plan 4.6: die App verbietet nichts, sie sagt es):
- * Größen der Bereiche, höchstens drei Kopien und die TCG-Banlist.
+ * Größen der Bereiche, höchstens drei Kopien, die TCG-Banlist und Karten ohne TCG-Release.
  */
 
 export type Section = 'MAIN' | 'EXTRA' | 'SIDE';
@@ -15,6 +15,8 @@ export interface RuleCard {
   name: string;
   type: string;
   banTcg: string | null;
+  /** TCG-Release als ISO-Datum; null = nur OCG, fehlt = unbekannt (kein Hinweis) */
+  tcgDate?: string | null;
 }
 
 export type DeckIssue =
@@ -23,7 +25,9 @@ export type DeckIssue =
   | { kind: 'sideSize'; count: number }
   | { kind: 'copies'; name: string; count: number }
   | { kind: 'banlist'; name: string; count: number; limit: number }
-  | { kind: 'wrongSection'; name: string; section: Section };
+  | { kind: 'wrongSection'; name: string; section: Section }
+  | { kind: 'ocgOnly'; name: string }
+  | { kind: 'preRelease'; name: string; date: string };
 
 const EXTRA_TYPE = /Fusion|Synchro|XYZ|Link/;
 const LIMIT: Record<string, number> = { Forbidden: 0, Limited: 1, 'Semi-Limited': 2 };
@@ -34,7 +38,11 @@ export const sectionCount = (entries: RuleEntry[], section: Section) =>
 /** Wohin eine Karte beim Hinzufügen gehört */
 export const sectionFor = (type: string): Section => (EXTRA_TYPE.test(type) ? 'EXTRA' : 'MAIN');
 
-export function deckIssues(entries: RuleEntry[], cards: Map<string, RuleCard>): DeckIssue[] {
+export function deckIssues(
+  entries: RuleEntry[],
+  cards: Map<string, RuleCard>,
+  today = new Date()
+): DeckIssue[] {
   const issues: DeckIssue[] = [];
   const main = sectionCount(entries, 'MAIN');
   const extra = sectionCount(entries, 'EXTRA');
@@ -57,6 +65,14 @@ export function deckIssues(entries: RuleEntry[], cards: Map<string, RuleCard>): 
     if (!card || e.section === 'SIDE') continue;
     if (sectionFor(card.type) !== e.section)
       issues.push({ kind: 'wrongSection', name: card.name, section: e.section });
+  }
+  // Je Karte einmal, auch wenn sie in Main und Side liegt
+  for (const cardId of total.keys()) {
+    const card = cards.get(cardId);
+    if (!card || card.tcgDate === undefined) continue;
+    if (card.tcgDate === null) issues.push({ kind: 'ocgOnly', name: card.name });
+    else if (new Date(card.tcgDate) > today)
+      issues.push({ kind: 'preRelease', name: card.name, date: card.tcgDate.slice(0, 10) });
   }
   return issues;
 }

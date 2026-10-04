@@ -164,6 +164,7 @@ export async function deckView(userId: string, deckId: string) {
               id: true,
               passcode: true,
               name: true,
+              tcgDate: true,
               nameDe: true,
               type: true,
               banTcg: true,
@@ -178,7 +179,8 @@ export async function deckView(userId: string, deckId: string) {
   const section = (s: string) =>
     deck.deckCards
       .filter((c) => c.deckSection === s)
-      .map(({ card: { banTcg, ...card }, quantity }) => ({
+      .map(({ card: { banTcg, tcgDate, ...card }, quantity }) => ({
+        ...(!tcgDate && { ocgOnly: true }),
         ...card,
         quantity,
         ...(banTcg && { banTcg }),
@@ -189,7 +191,12 @@ export async function deckView(userId: string, deckId: string) {
     quantity: c.quantity,
     section: c.deckSection as Section,
   }));
-  const cards = new Map<string, RuleCard>(deck.deckCards.map((c) => [c.card.id, c.card]));
+  const cards = new Map<string, RuleCard>(
+    deck.deckCards.map((c) => [
+      c.card.id,
+      { ...c.card, tcgDate: c.card.tcgDate?.toISOString() ?? null },
+    ])
+  );
   return {
     id: deck.id,
     name: deck.name,

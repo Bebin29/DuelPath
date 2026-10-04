@@ -804,7 +804,9 @@
       "copies": "{{name}} ist {{count}}-mal im Deck, erlaubt sind 3.",
       "banlist": "{{name}} ist {{count}}-mal im Deck, die TCG-Banlist erlaubt {{limit}}.",
       "wrongSection": "{{name}} gehört nicht ins {{section}} Deck.",
-      "banlistNamed": "{{name}} ist {{count}}-mal im Deck, {{list}} erlaubt {{limit}}."
+      "banlistNamed": "{{name}} ist {{count}}-mal im Deck, {{list}} erlaubt {{limit}}.",
+      "ocgOnly": "{{name}} gibt es nur im OCG, im TCG nicht spielbar",
+      "preRelease": "{{name}} ist im TCG erst ab {{date}} spielbar"
     },
     "affected_one": "{{count}} Combo betroffen: Karten fehlen im Deck",
     "affected_other": "{{count}} Combos betroffen: Karten fehlen im Deck",
@@ -937,7 +939,8 @@
       "unknown": "Banlist Stand unbekannt, in den Einstellungen nachtragen",
       "current": "Aktuell",
       "clean": "keine Hinweise"
-    }
+    },
+    "ocg": "nur OCG"
   },
   "practice": {
     "title": "Übungsmodus",
