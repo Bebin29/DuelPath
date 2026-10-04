@@ -91,7 +91,9 @@ export function practiceTargets(
   const start = initialState(startState);
   return lineEnds(nodes).flatMap(({ leaf }) => {
     const line = pathTo(nodes, leaf.id);
-    if (line.some((n) => n.player === 'opponent' || n.kind === 'OPPONENT')) return [];
+    // Nur eine echte Gegneraktion schließt aus. „Gegner reagiert“ (OPPONENT) ist bloß das Fenster;
+    // löst es ohne Reaktion auf, ist das eine Goldfish-Line und genau das, was man übt
+    if (line.some((n) => n.player === 'opponent')) return [];
     const touched = new Set<string>();
     const used = new Map<string, string>();
     for (const n of line) {
