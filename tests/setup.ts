@@ -13,8 +13,9 @@ afterEach(() => {
 });
 
 /**
- * jsdom kennt weder `matchMedia` noch `scrollIntoView`. Beides brauchen Komponenten mit Motion
- * und mit mitlaufender Auswahl, deshalb stehen hier zwei ruhige Attrappen.
+ * jsdom kennt weder `matchMedia` noch `scrollIntoView` noch `IntersectionObserver` oder
+ * `ResizeObserver`. Das brauchen Komponenten mit Motion (auch `whileInView`), mitlaufender
+ * Auswahl und gemessenen Breiten, deshalb stehen hier ruhige Attrappen.
  */
 if (typeof window !== 'undefined') {
   window.matchMedia ??= ((query: string) => ({
@@ -28,4 +29,20 @@ if (typeof window !== 'undefined') {
     dispatchEvent: () => false,
   })) as typeof window.matchMedia;
   Element.prototype.scrollIntoView ??= () => {};
+  window.IntersectionObserver ??= class {
+    readonly root = null;
+    readonly rootMargin = '';
+    readonly thresholds = [];
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+  } as unknown as typeof IntersectionObserver;
+  window.ResizeObserver ??= class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
 }

@@ -95,6 +95,17 @@ export function tally(games: DeckGame[], plan: SidePlan, planIds: Set<string>): 
   return t;
 }
 
+/** Bilanz eines ganzen Decks aus gezählten Ergebnissen; unbekannte Ergebnisse zählen nicht */
+export function record(counts: { result: string; count: number }[]): Tally {
+  const t: Tally = { win: 0, loss: 0, draw: 0, total: 0 };
+  for (const { result, count } of counts) {
+    if (!isGameResult(result)) continue;
+    t[result] += count;
+    t.total += count;
+  }
+  return t;
+}
+
 /** Matchups, die am Deck schon vorkommen, als Vorschläge beim Eintragen */
 export function knownMatchups(plans: SidePlan[], games: DeckGame[]): string[] {
   const seen = new Map<string, string>();
