@@ -265,6 +265,46 @@ describe('vergleichbare Übungsvorbilder', () => {
     ).toEqual([]);
   });
 
+  it('übt Lines mit Handtraps in der Gegnerhand, aber nicht gegen ein Gegnerboard', () => {
+    const withOpponent = (zone: 'HAND' | 'SPELL_TRAP') => ({
+      ...combo,
+      startState: {
+        cards: [
+          ...combo.startState.cards,
+          { instanceId: 'o', cardId: 'ASH', owner: 'opponent' as const, zone },
+        ],
+      },
+    });
+    // Eine Handtrap des Gegners zählt erst, wenn er sie aktiviert: das wäre ein Gegnerschritt
+    expect(practiceTargets(withOpponent('HAND'), cards, entries)).toHaveLength(1);
+    // Was beim Gegner liegt, verändert die Line (Floodgates, Dauerfallen)
+    expect(practiceTargets(withOpponent('SPELL_TRAP'), cards, entries)).toEqual([]);
+  });
+
+  it('übt eine Line, in der der Gegner auf sein Reaktionsfenster verzichtet', () => {
+    const [step] = combo.nodes;
+    const withWindow = {
+      ...combo,
+      nodes: [
+        { ...step, id: 'act', kind: 'ACTIVATE' as const, resolveMoves: [] },
+        // „Gegner reagiert“ ist nur das Fenster; erst ein Kind mit player opponent wäre eine Aktion
+        { id: 'react', parentId: 'act', kind: 'OPPONENT' as const, player: 'self' as const },
+        { ...step, id: 'none', parentId: 'react', kind: 'RESOLVE' as const },
+        {
+          id: 'ash',
+          parentId: 'react',
+          kind: 'ACTIVATE' as const,
+          player: 'opponent' as const,
+          instanceId: 'o',
+          cardId: 'ASH',
+        },
+      ],
+    };
+    const targets = practiceTargets(withWindow, cards, entries);
+    // Nur die Line „keine Reaktion“; der Branch mit Ash bleibt draußen
+    expect(targets.map((t) => t.leafId)).toEqual(['none']);
+  });
+
   it('berechnet Starthand und Ergebnis für jeden Branch separat', () => {
     const branching = {
       ...combo,

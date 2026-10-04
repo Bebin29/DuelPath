@@ -76,9 +76,13 @@ export function practiceTargets(
   entries: DeckEntry[]
 ): PracticeTarget[] {
   const { startState, nodes } = combo;
-  // A fresh practice hand cannot recreate field/GY setups or an opponent's board.
+  // A fresh practice hand cannot recreate field/GY setups or an opponent's board. Cards in the
+  // opponent's hand are fine: they only matter once activated, and lines with opponent steps
+  // are skipped below anyway.
   if (
-    startState.cards.some((c) => c.owner !== 'self' || !['HAND', 'DECK', 'EXTRA'].includes(c.zone))
+    startState.cards.some((c) =>
+      c.owner === 'self' ? !['HAND', 'DECK', 'EXTRA'].includes(c.zone) : c.zone !== 'HAND'
+    )
   )
     return [];
   const deck = new Map(entries.map((e) => [e.cardId, e.quantity]));
@@ -87,7 +91,9 @@ export function practiceTargets(
   const start = initialState(startState);
   return lineEnds(nodes).flatMap(({ leaf }) => {
     const line = pathTo(nodes, leaf.id);
-    if (line.some((n) => n.player === 'opponent' || n.kind === 'OPPONENT')) return [];
+    // Nur eine echte Gegneraktion schließt aus. „Gegner reagiert“ (OPPONENT) ist bloß das Fenster;
+    // löst es ohne Reaktion auf, ist das eine Goldfish-Line und genau das, was man übt
+    if (line.some((n) => n.player === 'opponent')) return [];
     const touched = new Set<string>();
     const used = new Map<string, string>();
     for (const n of line) {
