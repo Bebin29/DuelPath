@@ -264,7 +264,15 @@ function useCycle(length: number, ms: number) {
 function WechselWort({ word, struck }: { word: string; struck: boolean }) {
   const measure = useRef<HTMLSpanElement>(null);
   const [width, setWidth] = useState<number>();
-  useLayoutEffect(() => setWidth(measure.current?.offsetWidth), [word]);
+  // Der Mess-Span ändert seine Größe mit dem Wort und mit der Schrift am Breakpoint (40 → 52 px)
+  useLayoutEffect(() => {
+    const el = measure.current;
+    if (!el) return;
+    setWidth(el.offsetWidth);
+    const observer = new ResizeObserver(() => setWidth(el.offsetWidth));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   return (
     <motion.span
       className={cn(
