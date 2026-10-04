@@ -1150,7 +1150,8 @@
     "search": "Card search",
     "searchPlaceholder": "Name, German name, abbreviation or nickname",
     "searchHint": "At least 2 characters. “ash”, “bewd” and German names work.",
-    "empty": "Pick a card on the left to see effects, OPT kind and mechanics."
+    "empty": "Pick a card on the left or one of the staples below to see effects, OPT type and mechanics.",
+    "staples": "Often looked up: the staples"
   },
   "mechanics": {
     "title": "Mechanics",

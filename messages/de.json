@@ -1150,7 +1150,8 @@
     "search": "Kartensuche",
     "searchPlaceholder": "Name, deutscher Name, Kürzel oder Spitzname",
     "searchHint": "Mindestens 2 Zeichen. „ash“, „bewd“ und deutsche Namen funktionieren.",
-    "empty": "Wähle links eine Karte, um Effekte, OPT-Art und Mechaniken zu sehen."
+    "empty": "Wähle links eine Karte oder eine der Staples unten, um Effekte, OPT-Art und Mechaniken zu sehen.",
+    "staples": "Häufig nachgeschlagen: die Staples"
   },
   "mechanics": {
     "title": "Mechaniken",

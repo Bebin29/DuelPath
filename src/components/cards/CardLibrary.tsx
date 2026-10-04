@@ -12,6 +12,7 @@ import { CardEffectList } from '@/components/cards/CardEffectList';
 import { CardMechanics } from '@/components/cards/CardMechanics';
 import { Segmented } from '@/components/ui/segmented';
 import { cn } from '@/lib/utils';
+import type { ComboCard } from '@/lib/combo/cards';
 import { getCardDetail, type CardDetail } from '@/server/actions/card.actions';
 
 interface Hit {
@@ -32,9 +33,12 @@ interface Hit {
 export function CardLibrary({
   initialQuery,
   initialCard,
+  staples = [],
 }: {
   initialQuery: string;
   initialCard: CardDetail | null;
+  /** Einstieg ohne Auswahl: die Karten, deren Rulings man am häufigsten nachschlägt */
+  staples?: Pick<ComboCard, 'id' | 'name' | 'nameDe' | 'imageSmall'>[];
 }) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -139,8 +143,40 @@ export function CardLibrary({
         {card ? (
           <CardDetailPanel key={card.id} card={card} busy={pending} />
         ) : (
-          <section className="grid min-h-48 place-items-center rounded-md border border-dashed border-line p-6">
-            <p className="max-w-80 text-center text-sm text-text-subtle">{t('cards.empty')}</p>
+          <section
+            aria-labelledby="cards-staples"
+            className="flex flex-col gap-4 rounded-md border border-dashed border-line p-6"
+          >
+            <p className="text-sm text-text-subtle">{t('cards.empty')}</p>
+            {staples.length > 0 && (
+              <>
+                <h2 id="cards-staples" className="font-display text-xl">
+                  {t('cards.staples')}
+                </h2>
+                <ul className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-3">
+                  {staples.map((s) => {
+                    const name = (cardLanguage === 'de' && s.nameDe) || s.name;
+                    return (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          onClick={() => select(s.id)}
+                          className="group flex w-full flex-col items-center gap-1.5 rounded-sm p-1 text-center hover:bg-surface-3/60"
+                        >
+                          <CardView
+                            image={s.imageSmall}
+                            label=""
+                            size="board"
+                            className="transition-transform duration-(--motion-base) group-hover:-translate-y-0.5"
+                          />
+                          <span className="line-clamp-2 text-xs leading-tight">{name}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
           </section>
         )}
       </div>
