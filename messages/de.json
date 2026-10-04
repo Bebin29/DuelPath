@@ -433,6 +433,21 @@
     "answer": {
       "step": "In Schritt {{step}}.",
       "none": "Gar nicht."
+    },
+    "table": {
+      "title": "Dein Tisch",
+      "combos_one": "{{count}} Combo",
+      "combos_other": "{{count}} Combos",
+      "noCombos": "noch keine Combo",
+      "tournament_one": "{{count}} turnierfest",
+      "tournament_other": "{{count}} turnierfest",
+      "wins_one": "{{count}} Sieg",
+      "wins_other": "{{count}} Siege",
+      "losses_one": "{{count}} Niederlage",
+      "losses_other": "{{count}} Niederlagen",
+      "draws_one": "{{count}} Unentschieden",
+      "draws_other": "{{count}} Unentschieden",
+      "noGames": "noch keine Spiele eingetragen"
     }
   },
   "settings": {

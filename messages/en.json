@@ -433,6 +433,21 @@
     "answer": {
       "step": "At step {{step}}.",
       "none": "It doesn’t."
+    },
+    "table": {
+      "title": "Your table",
+      "combos_one": "{{count}} combo",
+      "combos_other": "{{count}} combos",
+      "noCombos": "no combos yet",
+      "tournament_one": "{{count}} tournament-ready",
+      "tournament_other": "{{count}} tournament-ready",
+      "wins_one": "{{count}} win",
+      "wins_other": "{{count}} wins",
+      "losses_one": "{{count}} loss",
+      "losses_other": "{{count}} losses",
+      "draws_one": "{{count}} draw",
+      "draws_other": "{{count}} draws",
+      "noGames": "no games logged yet"
     }
   },
   "settings": {

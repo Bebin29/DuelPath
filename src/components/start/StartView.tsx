@@ -12,6 +12,8 @@ import { AmSpieltisch } from '@/components/illustrations/AmSpieltisch';
 import { relativeTime } from '@/lib/utils/relative-time';
 import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
 import type { StressWord } from '@/lib/combo/start-words';
+import type { TableRow } from '@/server/actions/start.actions';
+import { DeinTisch } from '@/components/start/DeinTisch';
 import { NewComboButton } from '@/components/library/NewComboButton';
 import { StartHandStrip } from '@/components/library/StartHandStrip';
 import { ComboListItem } from '@/components/library/ComboListItem';
@@ -27,11 +29,13 @@ const WORD_SLOT = '\u0001';
 export function StartView({
   combos,
   stress = [],
+  table = [],
   cards,
   decks,
 }: {
   combos: LibraryEntry[];
   stress?: StressWord[];
+  table?: TableRow[];
   cards: Record<string, LibraryCard>;
   decks: { id: string; name: string }[];
 }) {
@@ -233,6 +237,8 @@ export function StartView({
           </div>
         )}
       </motion.section>
+
+      {table.length > 0 && <DeinTisch rows={table} />}
     </div>
   );
 }
