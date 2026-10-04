@@ -133,7 +133,14 @@ it('zeigt verwaiste Einträge ohne Bezug und erhält die gespeicherte Referenz',
 
 describe('record', () => {
   it('zählt die Spiele eines Decks und übergeht unbekannte Ergebnisse', () => {
-    expect(record(['win', 'loss', 'win', 'draw', 'aborted'])).toEqual({
+    expect(
+      record([
+        { result: 'win', count: 2 },
+        { result: 'loss', count: 1 },
+        { result: 'draw', count: 1 },
+        { result: 'aborted', count: 5 },
+      ])
+    ).toEqual({
       win: 2,
       loss: 1,
       draw: 1,

@@ -33,7 +33,7 @@ export function DeinTisch({ rows }: { rows: TableRow[] }) {
               className="flex min-h-11 flex-col gap-2 py-4 transition-colors duration-(--motion-fast) hover:bg-surface-1"
             >
               <span className="truncate font-display text-xl leading-none">{row.name}</span>
-              <Pfad statuses={row.combos.map((c) => c.status)} delay={0.1 + i * 0.12} />
+              <Pfad statuses={row.statuses} delay={0.1 + i * 0.12} />
               <span className="font-mono text-xs text-text-subtle">
                 {summary(row, t).join(' · ')}
               </span>
@@ -46,11 +46,11 @@ export function DeinTisch({ rows }: { rows: TableRow[] }) {
 }
 
 function summary(row: TableRow, t: ReturnType<typeof useTranslation>['t']): string[] {
-  const tournament = row.combos.filter((c) => c.status === 'TOURNAMENT').length;
+  const tournament = row.statuses.filter((s) => s === 'TOURNAMENT').length;
   const { win, loss, draw, total } = row.record;
   return [
-    row.combos.length
-      ? t('start.table.combos', { count: row.combos.length })
+    row.statuses.length
+      ? t('start.table.combos', { count: row.statuses.length })
       : t('start.table.noCombos'),
     ...(tournament ? [t('start.table.tournament', { count: tournament })] : []),
     ...(total

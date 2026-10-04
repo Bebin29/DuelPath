@@ -38,7 +38,8 @@ export async function startStress(comboId: string): Promise<StressWord[]> {
 export interface TableRow {
   id: string;
   name: string;
-  combos: { id: string; title: string; status: ComboStatus }[];
+  /** Status der Combos; mehr zeigt der Tisch nicht */
+  statuses: ComboStatus[];
   record: Tally;
 }
 
@@ -46,7 +47,8 @@ const TABLE_DECKS = 4;
 
 /**
  * Die zuletzt bearbeiteten Decks für „Dein Tisch“. Ohne Parameter: eine Server-Action ist ein
- * öffentlicher Endpunkt, eine Anzahl käme dort ungeprüft vom Client.
+ * öffentlicher Endpunkt, eine Anzahl käme dort ungeprüft vom Client. Die Spiele zählt die
+ * Datenbank, das Protokoll wächst unbegrenzt.
  */
 export async function startTable(): Promise<TableRow[]> {
   const userId = await currentUserId();
@@ -55,17 +57,21 @@ export async function startTable(): Promise<TableRow[]> {
     where: { userId },
     orderBy: { updatedAt: 'desc' },
     take: TABLE_DECKS,
-    select: {
-      id: true,
-      name: true,
-      combos: { select: { id: true, title: true, status: true }, orderBy: { createdAt: 'asc' } },
-      games: { select: { result: true } },
-    },
+    select: { id: true, name: true, combos: { select: { status: true } } },
+  });
+  const games = await prisma.deckGame.groupBy({
+    by: ['deckId', 'result'],
+    where: { deckId: { in: decks.map((d) => d.id) } },
+    _count: { _all: true },
   });
   return decks.map((d) => ({
     id: d.id,
     name: d.name,
-    combos: d.combos.map((c) => ({ ...c, status: parseStatus(c.status) })),
-    record: record(d.games.map((g) => g.result)),
+    statuses: d.combos.map((c) => parseStatus(c.status)),
+    record: record(
+      games
+        .filter((g) => g.deckId === d.id)
+        .map((g) => ({ result: g.result, count: g._count._all }))
+    ),
   }));
 }

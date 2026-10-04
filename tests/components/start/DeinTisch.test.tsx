@@ -5,7 +5,7 @@ import { DeinTisch } from '@/components/start/DeinTisch';
 const row = (over: Partial<Parameters<typeof DeinTisch>[0]['rows'][number]>) => ({
   id: 'd1',
   name: 'Branded',
-  combos: [],
+  statuses: [],
   record: { win: 0, loss: 0, draw: 0, total: 0 },
   ...over,
 });
@@ -16,10 +16,7 @@ describe('DeinTisch', () => {
       <DeinTisch
         rows={[
           row({
-            combos: [
-              { id: 'c1', title: 'A', status: 'TOURNAMENT' },
-              { id: 'c2', title: 'B', status: 'DRAFT' },
-            ],
+            statuses: ['TOURNAMENT', 'DRAFT'],
             record: { win: 7, loss: 3, draw: 0, total: 10 },
           }),
         ]}
