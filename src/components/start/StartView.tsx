@@ -37,8 +37,13 @@ export function StartView({
   const words = t('start.words').split('|');
   const px = useSpring(0, { stiffness: 60, damping: 18 });
   const py = useSpring(0, { stiffness: 60, damping: 18 });
-  const when = (iso: string) =>
-    t('start.edited', { time: relativeTime(new Date(iso), new Date(), i18n.language) });
+  // Unter einer Minute sagt Intl nur „jetzt“, und „jetzt bearbeitet“ liest sich schief
+  const when = (iso: string) => {
+    const [date, now] = [new Date(iso), new Date()];
+    return now.getTime() - date.getTime() < 60_000
+      ? t('start.editedJustNow')
+      : t('start.edited', { time: relativeTime(date, now, i18n.language) });
+  };
   // Bei wenigen Combos endet die Seite nicht leer: was als Nächstes ansteht (UI-Sweep-Plan 5)
   const nextUp =
     combos.length >= FEW_COMBOS
@@ -108,16 +113,15 @@ export function StartView({
                     {latest.deckName ?? t('start.noDeck')} · {when(latest.updatedAt)}
                   </p>
                   <p className="mt-1 font-mono text-xs text-text-subtle">
-                    {t('start.progress', {
-                      steps: latest.stats.steps,
-                      endboard: latest.stats.endboard ?? '–',
-                    })}
+                    {t('start.steps', { count: latest.stats.steps })}
+                    {latest.stats.endboard !== null &&
+                      ` · ${t('start.interruptions', { count: latest.stats.endboard })}`}
                   </p>
                 </div>
               </div>
               <div>
                 <Button asChild>
-                  <Link href={`/combos/${latest.id}`}>{t('start.open')}</Link>
+                  <Link href={`/combos/${latest.id}`}>{t('start.continue')}</Link>
                 </Button>
               </div>
             </div>
