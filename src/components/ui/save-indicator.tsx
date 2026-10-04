@@ -51,7 +51,7 @@ export function SaveIndicator({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, x: [0, -5, 5, -3, 3, 0] }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: 'linear' }}
+            transition={{ duration: 0.25, ease: 'linear' }}
             className="flex items-center gap-1.5 text-opponent hover:underline"
           >
             <CloudOff className="size-3" />

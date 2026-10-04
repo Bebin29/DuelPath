@@ -152,7 +152,7 @@ export function TreeCanvas({
           stroke: opponent ? 'var(--opponent)' : main ? 'var(--text-muted)' : 'var(--line-strong)',
           strokeWidth: main ? 2 : 1.5,
           opacity: onPath(n.id) ? 1 : 0.75,
-          animationDelay: `${80 + depthOf(n.id) * 45}ms`,
+          animationDelay: `${80 + stagger(depthOf(n.id)) * 45}ms`,
         },
       };
     });
@@ -200,6 +200,12 @@ export function TreeCanvas({
 const EMPTY = new Map<string, DOMRect>();
 
 /**
+ * Knoten und Kanten erscheinen nach Tiefe gestaffelt, aber nur über die ersten Ebenen: Bei einem
+ * tiefen Baum wartete man sonst über eine halbe Sekunde auf die untersten (Motion-Prinzip 5).
+ */
+const stagger = (depth: number) => Math.min(depth, 6);
+
+/**
  * Szene „Moduswechsel“: Ein Knoten, dessen Schritt eben noch in der Line-Liste stand, fliegt von
  * dort an seinen Platz im Baum. So sieht man, dass es dieselben Schritte sind. Gemessen wird erst,
  * wenn React Flow die Knoten vermessen und eingepasst hat; vorher stimmt ihre Lage nicht.
@@ -241,8 +247,8 @@ function TreeNodeView({ id, data }: NodeProps<TreeNode>) {
       transition={{
         type: 'spring',
         bounce: 0.18,
-        visualDuration: 0.4,
-        delay: 0.05 + data.depth * 0.03,
+        visualDuration: 0.25,
+        delay: 0.05 + stagger(data.depth) * 0.03,
       }}
       style={{ width: TREE_NODE_WIDTH, x, y }}
       className={cn(
