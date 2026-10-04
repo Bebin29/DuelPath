@@ -265,13 +265,14 @@ export function Workbench({
   // Automatisch speichern, kurz nach der letzten Änderung (kein Speichern-Knopf, UX-Plan 10).
   // Eine Übungshand gehört niemandem: sie wird gespielt, ausgewertet und weggeworfen.
   const isPractice = Boolean(practice);
-  const firstRender = useRef(true);
+  // Verglichen wird mit dem zuletzt gespeicherten Stand, nicht „erster Durchlauf überspringen“: Im
+  // Strict Mode laufen Effekte beim Einhängen zweimal, und schon das Öffnen speicherte und hob die
+  // Revision. saveAttempt gehört dazu, damit „Erneut versuchen“ auch ohne Änderung speichert.
+  const saved = useRef([title, deckId, tags, comboStatus, startState, nodes, saveAttempt]);
   useEffect(() => {
     if (isPractice) return;
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
+    const current = [title, deckId, tags, comboStatus, startState, nodes, saveAttempt];
+    if (current.every((value, i) => Object.is(value, saved.current[i]))) return;
     const timer = setTimeout(async () => {
       setStatus('saving');
       // Mit Revision: hat jemand anderes (etwa die API) gespeichert, wird nichts still überschrieben
@@ -287,7 +288,10 @@ export function Workbench({
         },
         revision.current
       );
-      if (result.data) revision.current = result.data.revision;
+      if (result.data) {
+        revision.current = result.data.revision;
+        saved.current = current;
+      }
       setStatus(result.data ? 'saved' : result.error === 'CONFLICT' ? 'conflict' : 'error');
     }, 800);
     return () => clearTimeout(timer);

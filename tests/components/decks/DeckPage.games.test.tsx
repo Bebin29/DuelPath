@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -56,7 +57,7 @@ const game: DeckGame = {
   note: 'Historical result',
   playedAt: '2026-10-03T12:00:00Z',
 };
-const renderDeck = (games: DeckGame[] = [game]) =>
+const renderDeck = (games: DeckGame[] = [game], strict = false) =>
   render(
     <DeckPage
       deck={{
@@ -83,7 +84,9 @@ const renderDeck = (games: DeckGame[] = [game]) =>
       staples={[]}
       banlists={{ current: null, next: null }}
       initialTab="side"
-    />
+    />,
+    // Wie Next.js im Entwicklungsmodus: Effekte laufen beim Einhängen zweimal
+    { wrapper: strict ? StrictMode : undefined }
   );
 
 it('behält nach explizitem Löschen des Plans das Spiel sichtbar ohne Planbezug', async () => {
@@ -130,4 +133,11 @@ it('Zurückholen einer DeckVersion verändert keine Spiele', async () => {
   expect(actions.save.mock.lastCall?.[1]).not.toHaveProperty('games');
   expect(actions.add).not.toHaveBeenCalled();
   expect(actions.remove).not.toHaveBeenCalled();
+});
+
+it('speichert beim bloßen Öffnen nichts, auch im Strict Mode', async () => {
+  vi.clearAllMocks();
+  renderDeck([game], true);
+  await new Promise((resolve) => setTimeout(resolve, 900));
+  expect(actions.save).not.toHaveBeenCalled();
 });

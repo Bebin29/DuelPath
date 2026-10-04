@@ -41,28 +41,25 @@ export function BanlistSettings({
   const [doc, setDoc] = useState<NextDoc | null>(next);
   const [status, setStatus] = useState<SaveStatus>('saved');
 
-  // Autosave wie auf der Deckseite, kurz nach der letzten Änderung
-  const firstDate = useRef(true);
+  // Autosave wie auf der Deckseite, kurz nach der letzten Änderung. Verglichen wird mit dem zuletzt
+  // gespeicherten Stand statt „erster Durchlauf überspringen“: Im Strict Mode laufen Effekte beim
+  // Einhängen zweimal, der zweite Lauf speicherte sonst ein leeres Datum und meldete einen Fehler
+  const savedDate = useRef(currentDate);
   useEffect(() => {
-    if (firstDate.current) {
-      firstDate.current = false;
-      return;
-    }
+    // Ein geleertes Feld ist kein Datum; der Server lehnt es ab, gespeichert bleibt das alte
+    if (!currentDate || currentDate === savedDate.current) return;
     const timer = setTimeout(async () => {
       setStatus('saving');
       const result = await setCurrentBanlistDate(currentDate);
+      if (!result.error) savedDate.current = currentDate;
       setStatus(result.error ? 'error' : 'saved');
     }, 700);
     return () => clearTimeout(timer);
   }, [currentDate]);
 
-  const firstDoc = useRef(true);
+  const savedDoc = useRef(doc);
   useEffect(() => {
-    if (firstDoc.current) {
-      firstDoc.current = false;
-      return;
-    }
-    if (!doc) return;
+    if (!doc || doc === savedDoc.current) return;
     const timer = setTimeout(async () => {
       setStatus('saving');
       const result = await saveNextBanlist({
@@ -70,6 +67,7 @@ export function BanlistSettings({
         effectiveOn: doc.effectiveOn,
         changes: doc.cards.map((c) => ({ cardId: c.cardId, status: c.status })),
       });
+      if (!result.error) savedDoc.current = doc;
       setStatus(result.error ? 'error' : 'saved');
     }, 700);
     return () => clearTimeout(timer);
