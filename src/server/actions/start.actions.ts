@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/prisma/client';
 import { lineThrough } from '@/lib/combo/lines';
 import { parseStatus, type ComboStatus } from '@/lib/combo/library';
-import { stopsLine, stressWords, type StressWord } from '@/lib/combo/start-words';
+import { headlineWords, type StressWord } from '@/lib/combo/start-words';
 import { record, type Tally } from '@/lib/deck/games';
 import { comboContext, stressView } from '@/server/api/combo-api';
 
@@ -15,11 +15,7 @@ async function currentUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
-/**
- * Stresstest der Hauptline für die Startseite: wo welcher Staple die Line stoppt. Leer, wenn es
- * nichts Belastbares zu sagen gibt: ohne Schritte, oder wenn die Hauptline schon eine
- * Unterbrechung enthält (dann prüft der Stresstest nicht weiter, alles wäre fälschlich „gar nicht“).
- */
+/** Stresstest der Hauptline für die Startseite: wo welcher Staple die Line stoppt (headlineWords) */
 export async function startStress(comboId: string): Promise<StressWord[]> {
   const userId = await currentUserId();
   if (!userId) return [];
@@ -27,16 +23,10 @@ export async function startStress(comboId: string): Promise<StressWord[]> {
   // und zeigt die allgemeinen Wörter; der Fehler landet im Log statt auf einer Fehlerseite
   try {
     const ctx = await comboContext(userId, comboId);
-    const line = lineThrough(ctx.combo.nodes, null);
-    if (!line.length || line.some((n) => n.kind === 'ACTIVATE' && n.player === 'opponent')) {
-      return [];
-    }
-    const stoppers = ctx.staples.filter((s) => stopsLine(s.staple)).map((s) => s.staple.short);
-    return stressWords(
-      stoppers,
+    return headlineWords(
+      lineThrough(ctx.combo.nodes, null),
+      ctx.staples.map((s) => s.staple),
       stressView(ctx, null, false)
-        .filter((h) => h.short && stoppers.includes(h.short) && stopsLine({ hits: [h.pattern] }))
-        .map((h) => ({ word: h.short ?? h.staple, step: h.step }))
     );
   } catch (error) {
     console.error('startStress', comboId, error);

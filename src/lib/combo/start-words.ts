@@ -1,4 +1,5 @@
 import type { HitPattern, Staple } from '@/lib/combo/reactions';
+import type { ComboNodeData } from '@/lib/combo/state';
 
 /**
  * Wechselwörter der Startseite aus dem Stresstest der letzten Line (Szene „Start“):
@@ -41,4 +42,28 @@ const pressureOnly = (p: HitPattern) => p.startsWith('TURN_START');
  */
 export function stopsLine(staple: Pick<Staple, 'hits'>): boolean {
   return staple.hits?.some((p) => !pressureOnly(p)) ?? false;
+}
+
+/**
+ * Was die Headline aus dem Stresstest der Hauptline sagen darf. Leer, wenn es nichts Belastbares
+ * gibt: ohne Schritte, oder wenn die Hauptline schon eine Unterbrechung enthält (dann prüft der
+ * Stresstest nicht weiter, alles wäre fälschlich „gar nicht“).
+ */
+export function headlineWords(
+  line: Pick<ComboNodeData, 'kind' | 'player'>[],
+  staples: Pick<Staple, 'short' | 'hits'>[],
+  hits: { short?: string; pattern: HitPattern; step?: number }[]
+): StressWord[] {
+  if (!line.length || line.some((n) => n.kind === 'ACTIVATE' && n.player === 'opponent')) {
+    return [];
+  }
+  const stoppers = staples.filter(stopsLine).map((s) => s.short);
+  return stressWords(
+    stoppers,
+    hits.flatMap((h) =>
+      h.short && stoppers.includes(h.short) && stopsLine({ hits: [h.pattern] })
+        ? [{ word: h.short, step: h.step }]
+        : []
+    )
+  );
 }

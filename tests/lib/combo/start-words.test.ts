@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { stopsLine, stressWords } from '@/lib/combo/start-words';
+import { headlineWords, stopsLine, stressWords } from '@/lib/combo/start-words';
 import { STAPLES as ALL } from '@/lib/combo/reactions';
 
 const STAPLES = ['Ash', 'Imperm', 'Nibiru', 'Veiler', 'Droll', 'Crow'];
@@ -47,5 +47,30 @@ describe('stopsLine', () => {
     expect(stopsLine(short('Fuwalos'))).toBe(false);
     expect(stopsLine(short('Purulia'))).toBe(false);
     expect(stopsLine(short('Shifter'))).toBe(false);
+  });
+});
+
+describe('headlineWords', () => {
+  const staple = (name: string) => ALL.find((s) => s.short === name)!;
+  const step = { kind: 'ACTION' as const, player: 'self' as const };
+  const staples = ['Ash', 'Nibiru', 'Fuwalos'].map(staple);
+
+  it('sagt nichts ohne Schritte oder bei einer Unterbrechung in der Hauptline', () => {
+    const hits = [{ short: 'Ash', pattern: 'FROM_DECK' as const, step: 1 }];
+    expect(headlineWords([], staples, hits)).toEqual([]);
+    expect(headlineWords([step, { kind: 'ACTIVATE', player: 'opponent' }], staples, hits)).toEqual(
+      []
+    );
+  });
+
+  it('lässt Mulcharmy draußen, als Treffer wie als Lücke', () => {
+    const words = headlineWords([step], staples, [
+      { short: 'Fuwalos', pattern: 'TURN_START_DECK_SUMMONS', step: 1 },
+      { short: 'Ash', pattern: 'FROM_DECK', step: 2 },
+    ]);
+    expect(words).toEqual([
+      { word: 'Ash', step: 2 },
+      { word: 'Nibiru', step: null },
+    ]);
   });
 });
