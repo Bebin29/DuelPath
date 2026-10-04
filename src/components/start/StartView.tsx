@@ -66,7 +66,7 @@ export function StartView({
         ];
 
   return (
-    <div className="grid items-center gap-16 lg:grid-cols-[1.1fr_1fr]">
+    <div className="grid items-center gap-10 sm:gap-16 lg:grid-cols-[1.1fr_1fr]">
       <section
         className="flex flex-col items-center"
         onMouseMove={(e) => {
@@ -80,11 +80,12 @@ export function StartView({
           py.set(0);
         }}
       >
-        <motion.div style={{ x: px, y: py }} className="w-full max-w-[408px]">
+        {/* Auf dem Handy kleiner, damit „Weiterbauen“ im ersten Bildschirm liegt */}
+        <motion.div style={{ x: px, y: py }} className="w-full max-w-[220px] sm:max-w-[408px]">
           <AmSpieltisch title={t('start.illustration')} animated className="h-auto w-full" />
         </motion.div>
         <p className="mt-4 text-text-muted">{t('start.pre')}</p>
-        <h1 className="mt-1 text-balance text-center font-display text-[52px] leading-[1.05]">
+        <h1 className="mt-1 text-balance text-center font-display text-[40px] leading-[1.05] sm:text-[52px]">
           {/* Screenreader hören einen festen Satz statt alle 2,6 s einer neuen Überschrift */}
           <span className="sr-only">{t('start.headline', { word: words[0] })}</span>
           <span aria-hidden>
