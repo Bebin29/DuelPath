@@ -15,7 +15,7 @@ import {
   type LoadedCombo,
 } from '@/server/services/combo-store.service';
 import { comboFromPortable, portableCombo } from '@/server/services/combo-portable.service';
-import type { CardRef, PortableCombo, PortableError } from '@/lib/combo/portable';
+import type { CardRef, PortableCombo, PortableError, PortableWarning } from '@/lib/combo/portable';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
 import type { DeckEntry } from '@/lib/combo/deck';
 import type { SaveComboInput } from '@/lib/validations/combo.schema';
@@ -78,7 +78,15 @@ export async function duplicateCombo(
       deckId: combo.deckId,
       tags: combo.tags,
       status: 'DRAFT',
+      ...(combo.importChecks && {
+        importChecks: Object.fromEntries(
+          Object.entries(combo.importChecks as Record<string, Prisma.InputJsonValue>).map(
+            ([id, check]) => [remap(id), check]
+          )
+        ),
+      }),
       startState: combo.startState as Prisma.InputJsonValue,
+      ...(combo.importedCards && { importedCards: combo.importedCards as Prisma.InputJsonValue }),
     },
     select: { id: true },
   });
@@ -173,7 +181,7 @@ export type ImportError = PortableError | { code: 'denied' };
 export async function importCombo(
   json: unknown
 ): Promise<
-  | { data: { id: string; missing: CardRef[] }; error?: undefined }
+  | { data: { id: string; missing: CardRef[]; warnings: PortableWarning[] }; error?: undefined }
   | { data?: undefined; error: ImportError }
 > {
   const userId = await currentUserId();
@@ -195,6 +203,7 @@ export async function getStaples(): Promise<StapleCard[]> {
     },
     select: {
       id: true,
+      passcode: true,
       name: true,
       nameDe: true,
       type: true,

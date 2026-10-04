@@ -38,6 +38,7 @@ import type { ComboStatus } from '@/lib/combo/library';
 import { getDeckCounts } from '@/server/actions/deck-view.actions';
 import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/combo.actions';
 import { NodeEditor, type MoveTarget } from '@/components/combo/NodeEditor';
+import { toPortable } from '@/lib/combo/portable';
 import { useComboFile } from '@/components/combo/use-combo-file';
 import { StartStatePanel } from './StartStatePanel';
 import { SuggestionPanel } from '@/components/combo/SuggestionPanel';
@@ -1038,7 +1039,26 @@ export function Workbench({
           onComboStatus={(value) => setDoc((d) => ({ ...d, status: value }))}
           tags={tags}
           onTags={(value) => setDoc((d) => ({ ...d, tags: value }))}
-          onExport={() => void file.exportCombo(initial.id, title)}
+          onExport={() =>
+            void file.exportCombo(
+              initial.id,
+              title,
+              toPortable(
+                {
+                  title,
+                  tags,
+                  status: comboStatus,
+                  startState,
+                  deckName: decks.find((d) => d.id === deckId)?.name,
+                },
+                nodes,
+                (id) => {
+                  const c = cards.get(id);
+                  return c ? { ...c, passcode: c.passcode ?? null } : undefined;
+                }
+              )
+            )
+          }
           onImport={file.pick}
         />
       )}
@@ -1321,7 +1341,14 @@ export function Workbench({
                 state={after}
                 cards={cards}
                 onRun={(action) => menu && flow.run(action, menu.instanceId)}
-                onOpenCard={(cardId) => cardSheet.open(cardId, updateCardEffects)}
+                onOpenCard={(cardId) => {
+                  const card = cards.get(cardId);
+                  cardSheet.open(
+                    card?.catalogueId ?? cardId,
+                    (_id, effects) => updateCardEffects(cardId, effects),
+                    card?.importedStub ? { name: card.name } : undefined
+                  );
+                }}
                 onClose={() => setMenu(null)}
               />
             </div>
@@ -1335,7 +1362,14 @@ export function Workbench({
                 cards={cards}
                 inspected={inspected}
                 highlight={chokeHover?.phrase}
-                onOpenCard={(cardId) => cardSheet.open(cardId, updateCardEffects)}
+                onOpenCard={(cardId) => {
+                  const card = cards.get(cardId);
+                  cardSheet.open(
+                    card?.catalogueId ?? cardId,
+                    (_id, effects) => updateCardEffects(cardId, effects),
+                    card?.importedStub ? { name: card.name } : undefined
+                  );
+                }}
               >
                 {stepPanel}
               </Inspector>

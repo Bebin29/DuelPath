@@ -278,11 +278,11 @@ describe('portable', () => {
     expect(second.data!.nodes.map((n) => n.id)).not.toEqual(ids);
   });
 
-  it('übernimmt Titel, Tags und Status', () => {
+  it('übernimmt Titel und Tags, setzt den Status aber auf DRAFT', () => {
     const read = fromPortable(onDisk(exported), resolver(B));
     expect(read.data!.title).toBe('Snake-Eye 1-Card');
     expect(read.data!.tags).toEqual(['1-Card', 'Going Second']);
-    expect(read.data!.status).toBe('TESTED');
+    expect(read.data!.status).toBe('DRAFT');
   });
 
   it('merkt sich den Decknamen, hängt aber kein Deck an', () => {
@@ -324,18 +324,22 @@ describe('portable', () => {
     const read = fromPortable(onDisk(exported), resolver(withoutBlossom));
 
     expect(read.missing).toEqual([{ passcode: '14558127', name: 'Ash Blossom & Joyous Spring' }]);
-    // Der Baum bleibt vollständig, nur die Kartenverweise fallen weg
+    // Der Baum und alle Kartenverweise bleiben vollständig
     expect(read.data!.nodes).toHaveLength(7);
     const blossom = read.data!.nodes.find((n) => n.player === 'opponent' && n.kind === 'ACTIVATE')!;
-    expect(blossom.cardId).toBeNull();
-    expect(read.data!.nodes.find((n) => n.cardId === 'b-called')!.negates).toBeNull();
-    // Die Karte lag beim Gegner auf der Hand: der Startzustand verliert sie, der Rest steht
+    expect(blossom.cardId).toBe('missing:14558127');
+    expect(read.data!.nodes.find((n) => n.cardId === 'b-called')!.negates).toEqual({
+      type: 'NAME',
+      cardId: 'missing:14558127',
+    });
+    // Auch die unbekannte Karte auf der Gegnerhand bleibt erhalten
     expect(read.data!.startState.cards.map((c) => c.instanceId)).toEqual([
       'i-ash',
       'i-called',
       'i-droll',
       'i-oak',
       'i-apollousa',
+      'i-oppblossom',
     ]);
   });
 
@@ -345,6 +349,6 @@ describe('portable', () => {
     expect(read.missing).toEqual([{ passcode: '45663742', name: 'Snake-Eye Oak' }]);
     const moves = read.data!.nodes.flatMap((n) => n.resolveMoves ?? []);
     expect(moves).toHaveLength(3);
-    expect(moves.every((m) => m.cardId === undefined)).toBe(true);
+    expect(moves.every((m) => m.cardId === 'missing:45663742')).toBe(true);
   });
 });

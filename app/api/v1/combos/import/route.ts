@@ -1,3 +1,4 @@
+import { PORTABLE_MAX_BYTES } from '@/lib/combo/portable';
 import { ApiError, body, ok, route } from '@/server/api/http';
 import { comboFromPortable } from '@/server/services/combo-portable.service';
 
@@ -13,7 +14,7 @@ const MESSAGE = {
  * der Rest wird importiert.
  */
 export const POST = route(async ({ request, userId }) => {
-  const result = await comboFromPortable(userId, await body(request));
+  const result = await comboFromPortable(userId, await body(request, PORTABLE_MAX_BYTES));
   if (result.error) {
     const { code } = result.error;
     const detail =

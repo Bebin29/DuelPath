@@ -3,6 +3,8 @@ import type { CardData, ComboNodeData } from '@/lib/combo/state';
 
 /** Kartendaten im Combo-Editor: Regeldaten für stateAt plus Anzeige */
 export interface ComboCard extends CardData {
+  catalogueId?: string;
+  passcode?: string | null;
   nameDe: string | null;
   imageSmall: string | null;
 }
@@ -10,6 +12,7 @@ export interface ComboCard extends CardData {
 /** Karte aus /api/cards (effects als ParsedEffects-JSON) */
 export function toComboCard(row: {
   id: string;
+  passcode?: string | null;
   name: string;
   nameDe?: string | null;
   type: string;
@@ -21,6 +24,7 @@ export function toComboCard(row: {
 }): ComboCard {
   return {
     id: row.id,
+    ...(row.passcode !== undefined && { passcode: row.passcode }),
     name: row.name,
     nameDe: row.nameDe ?? null,
     type: row.type,

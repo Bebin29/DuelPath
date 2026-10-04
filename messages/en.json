@@ -374,15 +374,20 @@
       "menu": "File actions",
       "export": "Export as JSON",
       "import": "Import JSON",
-      "imported": "Combo imported",
+      "imported": "Imported as a draft.",
       "missing_one": "{{count}} card is not in your card pool: {{names}}",
       "missing_other": "{{count}} cards are not in your card pool: {{names}}",
       "error": {
         "format": "This is not a DuelPath combo file.",
         "version": "The file is written in version {{version}}, this DuelPath build only reads version 1.",
         "invalid": "The file is damaged: {{detail}}",
-        "denied": "Combo not found, or not yours."
-      }
+        "denied": "Combo not found, or not yours.",
+        "size": "File too large (max. 900 KB).",
+        "request": "Request failed. Please try again."
+      },
+      "noPasscode": "Exported without passcodes; matched by name: {{names}}",
+      "effectDiff": "Step {{step}} · {{name}}: effect data differs; check the effect index.",
+      "stubDetail": "This card is missing from the local catalogue. The combo uses limited import data for card type and OPT. Card text, effect suggestions and text-based rules are unavailable."
     },
     "conflict": "Changed elsewhere · Reload"
   },

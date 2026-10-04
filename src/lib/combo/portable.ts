@@ -1,9 +1,11 @@
 import { z } from 'zod';
+import { effectFingerprint } from '@/lib/cards/effect-check';
+export { effectFingerprint } from '@/lib/cards/effect-check';
 import { idSchema, playerSchema, positionSchema, zoneSchema } from '@/lib/validations/combo.schema';
 import { COMBO_STATUSES, type ComboStatus } from '@/lib/combo/library';
 import { sortByDepth } from '@/lib/combo/cards';
 import { newId } from '@/lib/combo/tree';
-import type { CardMove, ComboNodeData, Negation, StartState } from '@/lib/combo/state';
+import type { CardData, CardMove, ComboNodeData, Negation, StartState } from '@/lib/combo/state';
 
 /**
  * Portables Combo-Format: eine Combo als JSON-Datei zum Sichern und Weitergeben (UX-Plan 7.2).
@@ -19,12 +21,41 @@ import type { CardMove, ComboNodeData, Negation, StartState } from '@/lib/combo/
 export const PORTABLE_FORMAT = 'duelpath.combo';
 export const PORTABLE_VERSION = 1;
 
-const cardRefSchema = z.object({
-  /** YGOPRODeck-Passcode; null, wenn die Karte lokal keinen hatte */
+export const PORTABLE_MAX_BYTES = 900_000;
+
+const optSchema = z.object({
+  kind: z.enum(['SOFT', 'HARD']),
+  wording: z.enum(['use', 'activate', 'activateCard', 'apply', 'shared']),
+  per: z.enum(['turn', 'duel']),
+  limit: z.number().int().min(1).max(100),
+  group: z.string().max(200).optional(),
+});
+
+// No text or patterns: imported data can count OPTs and classify a card, not infer its effect.
+export const cardRefSchema = z.object({
   passcode: z.string().min(1).max(20).nullable(),
   name: z.string().min(1).max(200),
+  type: z.string().min(1).max(100).optional(),
+  race: z.string().max(100).nullable().optional(),
+  effects: z
+    .array(
+      z.object({
+        index: z.number().int().min(0).max(20),
+        activated: z.boolean(),
+        opt: optSchema.optional(),
+      })
+    )
+    .max(21)
+    .refine((es) => es.every((e, i) => e.index === i), 'Effekt-Indizes müssen fortlaufend sein')
+    .optional(),
 });
 export type CardRef = z.infer<typeof cardRefSchema>;
+export type PortableCard = Pick<CardData, 'name'> & Partial<CardData> & { passcode: string | null };
+export const importedCardsSchema = z.record(z.string().max(256), cardRefSchema);
+export type ImportedCards = z.infer<typeof importedCardsSchema>;
+
+export const missingCardId = (ref: CardRef): string =>
+  ref.passcode ? `missing:${ref.passcode}` : `missing:name:${ref.name}`;
 
 const moveSchema = z.object({
   instanceId: idSchema,
@@ -60,6 +91,12 @@ const nodeSchema = z.object({
   card: cardRefSchema.nullish(),
   instanceId: idSchema.nullish(),
   effectIndex: z.number().int().min(0).max(20).nullish(),
+  effectCheck: z
+    .object({
+      count: z.number().int().min(0).max(21),
+      fingerprint: z.string().regex(/^[0-9a-f]{8}$/),
+    })
+    .nullish(),
   action: z.enum(['NORMAL_SUMMON', 'SPECIAL_SUMMON', 'SET', 'OTHER']).nullish(),
   costMoves: z.array(moveSchema).max(40).default([]),
   resolveMoves: z.array(moveSchema).max(40).default([]),
@@ -84,6 +121,9 @@ const startStateSchema = z.object({
         zone: zoneSchema,
         slot: z.number().int().min(0).max(6).optional(),
         position: positionSchema.optional(),
+        attachedTo: idSchema.optional(),
+        equippedTo: idSchema.optional(),
+        token: z.boolean().optional(),
       })
     )
     .max(200),
@@ -117,7 +157,7 @@ export interface PortableSource {
 export function toPortable(
   combo: PortableSource,
   nodes: ComboNodeData[],
-  cardById: (cardId: string) => { name: string; passcode: string | null } | undefined
+  cardById: (cardId: string) => PortableCard | undefined
 ): PortableCombo {
   const ordered = sortByDepth(nodes);
   const numbers = new Map(ordered.map((n, i) => [n.id, `n${i + 1}`]));
@@ -125,7 +165,22 @@ export function toPortable(
   // Karte lokal unbekannt: wenigstens die ID als Name mitgeben, der Import meldet sie als fehlend
   const ref = (cardId: string): CardRef => {
     const card = cardById(cardId);
-    return { passcode: card?.passcode ?? null, name: card?.name ?? cardId };
+    return {
+      passcode:
+        card?.passcode ??
+        (cardId.startsWith('missing:') && !cardId.startsWith('missing:name:')
+          ? cardId.slice(8)
+          : null),
+      name: card?.name ?? (cardId.startsWith('missing:name:') ? cardId.slice(13) : cardId),
+      ...(card?.type && { type: card.type, race: card.race ?? null }),
+      ...(card?.effects && {
+        effects: card.effects.map(({ index, activated, opt }) => ({
+          index,
+          activated,
+          ...(opt && { opt }),
+        })),
+      }),
+    };
   };
   const move = ({ cardId, ...rest }: CardMove): PortableMove => ({
     ...rest,
@@ -154,6 +209,9 @@ export function toPortable(
         zone: c.zone,
         ...(c.slot !== undefined && { slot: c.slot }),
         ...(c.position && { position: c.position }),
+        ...(c.attachedTo && { attachedTo: c.attachedTo }),
+        ...(c.equippedTo && { equippedTo: c.equippedTo }),
+        ...(c.token !== undefined && { token: c.token }),
       })),
     },
     nodes: ordered.map((n) => ({
@@ -165,6 +223,27 @@ export function toPortable(
       card: n.cardId ? ref(n.cardId) : null,
       instanceId: n.instanceId ?? null,
       effectIndex: n.effectIndex ?? null,
+      ...(n.cardId &&
+        n.effectIndex != null &&
+        (() => {
+          const card = cardById(n.cardId);
+          const effect = card?.effects?.[n.effectIndex!];
+          return card?.effects && !card.importedStub
+            ? {
+                effectCheck: {
+                  count: card.effects!.length,
+                  fingerprint: effectFingerprint(effect?.text ?? ''),
+                },
+              }
+            : n.importCheck?.cardId === n.cardId && n.importCheck.effectIndex === n.effectIndex
+              ? {
+                  effectCheck: {
+                    count: n.importCheck.count,
+                    fingerprint: n.importCheck.fingerprint,
+                  },
+                }
+              : {};
+        })()),
       action: n.action ?? null,
       costMoves: (n.costMoves ?? []).map(move),
       resolveMoves: (n.resolveMoves ?? []).map(move),
@@ -183,29 +262,45 @@ export function toPortable(
 export type PortableError =
   { code: 'format' } | { code: 'version'; version: number } | { code: 'invalid'; detail: string };
 
+export interface PortableWarning {
+  nodeId: string;
+  step: number;
+  code: 'effects' | 'missing';
+  card: CardRef;
+}
+
 export interface PortableImport {
   title: string;
   tags: string[];
   status: ComboStatus;
   startState: StartState;
   nodes: ComboNodeData[];
+  importedCards: ImportedCards;
+  importChecks: Record<string, NonNullable<ComboNodeData['importCheck']>>;
 }
 
 export type FromPortable =
-  | { data: PortableImport; missing: CardRef[]; error?: undefined }
-  | { data?: undefined; missing?: undefined; error: PortableError };
+  | { data: PortableImport; missing: CardRef[]; warnings: PortableWarning[]; error?: undefined }
+  | { data?: undefined; missing?: undefined; warnings?: undefined; error: PortableError };
 
 /**
  * Liest eine Datei in Combo-Daten. Eine fremde Version wird abgelehnt statt geraten.
- * Karten, die der lokale Bestand nicht kennt, fallen heraus und stehen in `missing`;
- * der Rest der Combo wird importiert, so wie es der YDK-Import beim Deck auch macht.
+ * Unbekannte Karten behalten stabile Platzhalter und ihren isolierten Stub.
  *
  * `resolve` sucht die lokale Card.id zu einer Referenz, erst über den Passcode, dann über den Namen.
  */
 export function fromPortable(
   json: unknown,
-  resolve: (ref: CardRef) => string | null | undefined
+  resolve: (ref: CardRef) => string | null | undefined,
+  localCard?: (id: string) => CardData | undefined
 ): FromPortable {
+  try {
+    if (new TextEncoder().encode(JSON.stringify(json)).length > PORTABLE_MAX_BYTES) {
+      return { error: { code: 'invalid', detail: 'Datei zu groß (max. 900 KB)' } };
+    }
+  } catch {
+    return { error: { code: 'invalid', detail: 'Nicht serialisierbare Datei' } };
+  }
   const envelope = envelopeSchema.safeParse(json);
   if (!envelope.success || envelope.data.format !== PORTABLE_FORMAT) {
     return { error: { code: 'format' } };
@@ -224,42 +319,57 @@ export function fromPortable(
   const invalid = treeProblem(file.nodes);
   if (invalid) return { error: { code: 'invalid', detail: invalid } };
 
+  const references = cardRefsOf(file);
+  const definitions = new Map<string, string>();
+  for (const ref of references) {
+    const key = missingCardId(ref);
+    const definition = JSON.stringify(ref);
+    if (definitions.has(key) && definitions.get(key) !== definition)
+      return { error: { code: 'invalid', detail: `Widersprüchliche Kartendaten: ${ref.name}` } };
+    definitions.set(key, definition);
+  }
+  const instanceError = instanceProblem(file);
+  if (instanceError) return { error: { code: 'invalid', detail: instanceError } };
+
   const missing = new Map<string, CardRef>();
-  const cardId = (ref: CardRef): string | null => {
+  const importedCards: ImportedCards = {};
+  const warnings: PortableWarning[] = [];
+  const cardId = (ref: CardRef): string => {
     const id = resolve(ref);
     if (id) return id;
-    missing.set(`${ref.passcode ?? ''}|${ref.name}`, ref);
-    return null;
+    const placeholder = missingCardId(ref);
+    missing.set(placeholder, ref);
+    importedCards[placeholder] = ref;
+    return placeholder;
   };
   const fresh = new Map(file.nodes.map((n) => [n.id, newId()]));
   const move = ({ card, ...rest }: PortableMove): CardMove => {
     const id = card ? cardId(card) : null;
     return { ...rest, ...(id && { cardId: id }) };
   };
-  const negation = (n: PortableNegation): Negation | null => {
+  const negation = (n: PortableNegation): Negation => {
     if (n.type === 'NAME') {
-      const id = cardId(n.card);
-      return id ? { type: 'NAME', cardId: id } : null;
+      return { type: 'NAME', cardId: cardId(n.card) };
     }
     if (n.type === 'CARD') return n;
     return { type: n.type, nodeId: fresh.get(n.nodeId)! };
   };
 
   const startState: StartState = {
-    cards: file.startState.cards.flatMap((c) => {
+    cards: file.startState.cards.map((c) => {
       const id = cardId(c.card);
-      if (!id) return [];
-      return [
-        {
-          instanceId: c.instanceId,
-          cardId: id,
-          owner: c.owner,
-          ...(c.controller && { controller: c.controller }),
-          zone: c.zone,
-          ...(c.slot !== undefined && { slot: c.slot }),
-          ...(c.position && { position: c.position }),
-        },
-      ];
+      return {
+        instanceId: c.instanceId,
+        cardId: id,
+        owner: c.owner,
+        ...(c.controller && { controller: c.controller }),
+        zone: c.zone,
+        ...(c.slot !== undefined && { slot: c.slot }),
+        ...(c.position && { position: c.position }),
+        ...(c.attachedTo && { attachedTo: c.attachedTo }),
+        ...(c.equippedTo && { equippedTo: c.equippedTo }),
+        ...(c.token !== undefined && { token: c.token }),
+      };
     }),
   };
   const nodes: ComboNodeData[] = file.nodes.map((n) => ({
@@ -271,6 +381,11 @@ export function fromPortable(
     cardId: n.card ? cardId(n.card) : null,
     instanceId: n.instanceId ?? null,
     effectIndex: n.effectIndex ?? null,
+    ...(n.card &&
+      n.effectIndex != null &&
+      n.effectCheck && {
+        importCheck: { ...n.effectCheck, cardId: cardId(n.card), effectIndex: n.effectIndex },
+      }),
     action: n.action ?? null,
     costMoves: n.costMoves.map(move),
     resolveMoves: n.resolveMoves.map(move),
@@ -283,8 +398,45 @@ export function fromPortable(
     interruptions: n.interruptions ?? null,
   }));
 
+  file.nodes.forEach((node, i) => {
+    const refs = [
+      node.card,
+      ...node.costMoves.map((m) => m.card),
+      ...node.resolveMoves.map((m) => m.card),
+      ...(node.negates?.type === 'NAME' ? [node.negates.card] : []),
+    ].filter((r): r is CardRef => !!r);
+    for (const ref of new Map(refs.map((r) => [missingCardId(r), r])).values()) {
+      if (!resolve(ref))
+        warnings.push({ nodeId: nodes[i].id, step: i + 1, code: 'missing', card: ref });
+    }
+    if (node.card && node.effectIndex != null && node.effectCheck) {
+      const id = resolve(node.card);
+      const card = id ? localCard?.(id) : undefined;
+      if (
+        card &&
+        (!card.effects[node.effectIndex] ||
+          card.effects.length !== node.effectCheck.count ||
+          effectFingerprint(card.effects[node.effectIndex]?.text ?? '') !==
+            node.effectCheck.fingerprint)
+      ) {
+        warnings.push({ nodeId: nodes[i].id, step: i + 1, code: 'effects', card: node.card });
+      }
+    }
+  });
+
   return {
-    data: { title: file.title, tags: file.tags, status: file.status, startState, nodes },
+    data: {
+      title: file.title,
+      tags: file.tags,
+      status: 'DRAFT',
+      startState,
+      nodes,
+      importedCards,
+      importChecks: Object.fromEntries(
+        nodes.filter((n) => n.importCheck).map((n) => [n.id, n.importCheck!])
+      ),
+    },
+    warnings,
     missing: [...missing.values()],
   };
 }
@@ -327,6 +479,84 @@ function treeProblem(nodes: PortableNode[]): string | null {
     ) {
       if (seen.has(n.id)) return 'Zyklus im Combo-Baum';
       seen.add(n.id);
+    }
+  }
+  return null;
+}
+
+/** References must be available on this ancestor path, never in a sibling or a later step. */
+function instanceProblem(file: PortableCombo): string | null {
+  const initial = new Map(file.startState.cards.map((c) => [c.instanceId, missingCardId(c.card)]));
+  if (initial.size !== file.startState.cards.length)
+    return 'Doppelte Karteninstanzen im Startzustand';
+  for (const c of file.startState.cards) {
+    for (const id of [c.attachedTo, c.equippedTo])
+      if (id && !initial.has(id)) return `Unbekanntes Material-/Ausrüstungsziel: ${id}`;
+  }
+  const byId = new Map(file.nodes.map((n) => [n.id, n]));
+  for (const leaf of file.nodes) {
+    const path: PortableNode[] = [];
+    for (
+      let n: PortableNode | undefined = leaf;
+      n;
+      n = n.parentId ? byId.get(n.parentId) : undefined
+    )
+      path.unshift(n);
+    const instances = new Map(initial);
+    const moves = (items: PortableMove[]): string | null => {
+      for (const move of items) {
+        const existing = instances.get(move.instanceId);
+        if (!existing) {
+          if (!move.card) return `Unbekannte Karteninstanz: ${move.instanceId}`;
+          instances.set(move.instanceId, missingCardId(move.card));
+        } else if (move.card && existing !== missingCardId(move.card)) {
+          return `Widersprüchliche Karteninstanz: ${move.instanceId}`;
+        }
+        if (move.attachTo && !instances.has(move.attachTo))
+          return `Unbekanntes Material-/Ausrüstungsziel: ${move.attachTo}`;
+      }
+      return null;
+    };
+    const pending: PortableNode[] = [];
+    for (const node of path) {
+      const error = moves(node.costMoves);
+      if (error) return error;
+      // ACTION can introduce a searched card/extra-deck monster before identifying the actor.
+      if (node.kind === 'ACTION') {
+        const error = moves(node.resolveMoves);
+        if (error) return error;
+      }
+      const refs = [
+        node.instanceId,
+        ...(node.targets ?? []),
+        ...(node.negates?.type === 'CARD' ? [node.negates.instanceId] : []),
+        ...Object.keys(node.interruptions ?? {}),
+      ];
+      for (const id of refs) if (id && !instances.has(id)) return `Unbekannte Karteninstanz: ${id}`;
+      if (
+        node.instanceId &&
+        node.card &&
+        instances.get(node.instanceId) !== missingCardId(node.card)
+      )
+        return `Widersprüchliche Karteninstanz: ${node.instanceId}`;
+      if (node.kind === 'ACTIVATE') pending.push(node);
+      if (node.kind === 'RESOLVE') {
+        for (const link of pending.reverse()) {
+          const error = moves(link.resolveMoves);
+          if (error) return error;
+        }
+        pending.length = 0;
+      }
+      // Validate even dormant move fields: no dangling references hidden in a no-op node.
+      if (node.kind !== 'ACTION' && node.kind !== 'ACTIVATE') {
+        const error = moves(node.resolveMoves);
+        if (error) return error;
+      }
+    }
+    // Open chains may end before resolution; validate their planned moves in resolution order.
+    for (const link of pending.reverse()) {
+      const error = moves(link.resolveMoves);
+      if (error) return error;
     }
   }
   return null;

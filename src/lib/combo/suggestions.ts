@@ -54,7 +54,7 @@ export function candidateEffects(
   for (const zone of ACTIVATION_ZONES) {
     for (const placed of cardsIn(state, player, zone)) {
       const card = cards.get(placed.cardId);
-      if (!card) continue;
+      if (!card || card.importedStub) continue;
       if (state.negatedCards[placed.instanceId] === placed.epoch) continue;
       if (state.negatedNames.includes(card.id)) continue;
 

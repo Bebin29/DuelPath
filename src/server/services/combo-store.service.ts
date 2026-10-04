@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
 import type { CardMove, ComboNodeData, StartState } from '@/lib/combo/state';
@@ -14,17 +15,8 @@ import { parseStatus, type ComboStatus } from '@/lib/combo/library';
  * überschreibt.
  */
 
-export const CARD_SELECT = {
-  id: true,
-  name: true,
-  nameDe: true,
-  type: true,
-  race: true,
-  imageSmall: true,
-  effects: true,
-  effectsOverride: true,
-  linkMarkers: true,
-} as const;
+import { CARD_SELECT, loadCards } from './combo-cards.service';
+export { CARD_SELECT, loadCards } from './combo-cards.service';
 
 export interface LoadedCombo {
   id: string;
@@ -65,6 +57,25 @@ export function nodeFromRow(n: NodeRow): ComboNodeData {
   };
 }
 
+/** Server-owned provenance remains outside the writable node schema. */
+export function nodesWithImportChecks(rows: NodeRow[], importChecks: unknown): ComboNodeData[] {
+  const checks = z
+    .record(
+      z.string(),
+      z.object({
+        cardId: z.string(),
+        effectIndex: z.number().int().min(0).max(20),
+        count: z.number().int().min(0).max(21),
+        fingerprint: z.string().regex(/^[0-9a-f]{8}$/),
+      })
+    )
+    .safeParse(importChecks);
+  return rows.map((row) => ({
+    ...nodeFromRow(row),
+    ...(checks.success && checks.data[row.id] && { importCheck: checks.data[row.id] }),
+  }));
+}
+
 /** Alle Karten, die im Startzustand oder in einem Knoten vorkommen */
 export function cardIdsOf(startState: StartState, nodes: ComboNodeData[]): Set<string> {
   const ids = new Set<string>(startState.cards.map((c) => c.cardId));
@@ -78,11 +89,6 @@ export function cardIdsOf(startState: StartState, nodes: ComboNodeData[]): Set<s
   return ids;
 }
 
-export async function loadCards(ids: Iterable<string>): Promise<ComboCard[]> {
-  const rows = await prisma.card.findMany({ where: { id: { in: [...ids] } }, select: CARD_SELECT });
-  return rows.map(toComboCard);
-}
-
 /** Combo samt Knoten und Kartendaten, nur für den Besitzer */
 export async function loadCombo(userId: string, comboId: string): Promise<LoadedCombo | null> {
   const combo = await prisma.combo.findUnique({ where: { id: comboId } });
@@ -91,7 +97,7 @@ export async function loadCombo(userId: string, comboId: string): Promise<Loaded
     where: { comboId },
     orderBy: [{ rank: 'asc' }, { createdAt: 'asc' }],
   });
-  const nodes = rows.map(nodeFromRow);
+  const nodes = nodesWithImportChecks(rows, combo.importChecks);
   const startState = combo.startState as unknown as StartState;
   return {
     id: combo.id,
@@ -102,7 +108,7 @@ export async function loadCombo(userId: string, comboId: string): Promise<Loaded
     revision: combo.revision,
     startState,
     nodes,
-    cards: await loadCards(cardIdsOf(startState, nodes)),
+    cards: await loadCards(cardIdsOf(startState, nodes), combo.importedCards),
   };
 }
 

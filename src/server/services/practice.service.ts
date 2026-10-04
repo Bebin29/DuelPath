@@ -1,8 +1,9 @@
+import { cardsForCombo, loadCardRows } from './combo-cards.service';
 import { prisma } from '@/lib/prisma/client';
 import type { CardData, StartState } from '@/lib/combo/state';
 import { expandDeck } from '@/lib/deck/hand-tester';
 import { practiceTargets, type PracticeSetup } from '@/lib/deck/practice';
-import { cardIdsOf, loadCards, loadDeckEntries, nodeFromRow } from './combo-store.service';
+import { cardIdsOf, loadDeckEntries, nodesWithImportChecks } from './combo-store.service';
 
 /**
  * Übungsmodus (Lücke L2): Deck und gespeicherte Lines eines Decks so geladen, dass der Browser
@@ -28,9 +29,10 @@ export async function loadPracticeSetup(
   });
   const combos = rows.map((c) => ({
     id: c.id,
+    importedCards: c.importedCards,
     title: c.title,
     startState: c.startState as unknown as StartState,
-    nodes: c.nodes.map(nodeFromRow),
+    nodes: nodesWithImportChecks(c.nodes, c.importChecks),
   }));
 
   // Karten der Combos, die nicht im Deck stecken (Spielmarken, inzwischen entfernte Karten)
@@ -38,10 +40,26 @@ export async function loadPracticeSetup(
   const extra = new Set<string>();
   for (const combo of combos)
     for (const id of cardIdsOf(combo.startState, combo.nodes)) if (!known.has(id)) extra.add(id);
-  const cards = [...loaded.cards, ...(extra.size ? await loadCards(extra) : [])];
-  const byId = new Map<string, CardData>(cards.map((c) => [c.id, c]));
-
-  const targets = combos.flatMap((combo) => practiceTargets(combo, byId, loaded.entries));
+  const cardRows = extra.size
+    ? await loadCardRows(
+        extra,
+        combos.map((c) => c.importedCards)
+      )
+    : [];
+  const comboCards = combos.map((c) => [
+    ...loaded.cards,
+    ...cardsForCombo(extra, c.importedCards, cardRows),
+  ]);
+  const cards = [
+    ...new Map([...loaded.cards, ...comboCards.flat()].map((c) => [c.id, c])).values(),
+  ];
+  const targets = combos.flatMap((combo, i) =>
+    practiceTargets(
+      combo,
+      new Map<string, CardData>(comboCards[i].map((c) => [c.id, c])),
+      loaded.entries
+    )
+  );
 
   return {
     deckId,

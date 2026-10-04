@@ -121,6 +121,28 @@ export const OPENAPI = {
         properties: {
           passcode: { type: ['string', 'null'], description: 'YGOPRODeck passcode' },
           name: { type: 'string' },
+          type: { type: 'string' },
+          race: { type: ['string', 'null'] },
+          effects: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                index: { type: 'integer' },
+                activated: { type: 'boolean' },
+                opt: {
+                  type: 'object',
+                  properties: {
+                    kind: { enum: ['SOFT', 'HARD'] },
+                    wording: { enum: ['use', 'activate', 'activateCard', 'apply', 'shared'] },
+                    per: { enum: ['turn', 'duel'] },
+                    limit: { type: 'integer' },
+                    group: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
         },
       },
       ComboFile: {
@@ -152,6 +174,9 @@ export const OPENAPI = {
                   type: 'object',
                   properties: {
                     instanceId: { type: 'string' },
+                    attachedTo: { type: 'string' },
+                    equippedTo: { type: 'string' },
+                    token: { type: 'boolean' },
                     card: ref('CardRef'),
                     owner: { enum: ['self', 'opponent'] },
                     controller: { enum: ['self', 'opponent'] },
@@ -176,6 +201,10 @@ export const OPENAPI = {
                 card: { oneOf: [ref('CardRef'), { type: 'null' }] },
                 instanceId: { type: ['string', 'null'] },
                 effectIndex: { type: ['integer', 'null'] },
+                effectCheck: {
+                  type: ['object', 'null'],
+                  properties: { count: { type: 'integer' }, fingerprint: { type: 'string' } },
+                },
                 action: { type: ['string', 'null'] },
                 costMoves: { type: 'array', items: ref('FileMove') },
                 resolveMoves: { type: 'array', items: ref('FileMove') },
@@ -519,8 +548,9 @@ export const OPENAPI = {
         description: [
           'Body is a file from GET /combos/{id}/export. Always creates a NEW combo, never writes',
           'into an existing one, and never attaches a deck (deck ids are local).',
-          'Cards your card pool does not know are reported in "missing" and left out, the rest of',
-          'the combo is imported. An unknown "version" is rejected instead of being guessed.',
+          'Missing cards retain stable placeholders and isolated metadata; local card data wins.',
+          'Imports are DRAFT, max 900 KB. Effect mismatches are reported per step in warnings.',
+          'An unknown version or dangling internal reference is rejected.',
         ].join(' '),
         requestBody: json(ref('ComboFile')),
         responses: {
@@ -529,6 +559,18 @@ export const OPENAPI = {
             properties: {
               id: { type: 'string' },
               missing: { type: 'array', items: ref('CardRef') },
+              warnings: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    nodeId: { type: 'string' },
+                    step: { type: 'integer' },
+                    code: { enum: ['missing', 'effects'] },
+                    card: ref('CardRef'),
+                  },
+                },
+              },
             },
           }),
           ...errors,

@@ -126,7 +126,13 @@ Beim Import gilt:
 
 - Es entsteht **immer eine neue Combo**. In eine bestehende wird nie geschrieben.
 - Ein Deck wird nicht zugeordnet. Der Deckname in der Datei ist nur Information.
-- Karten, die der lokale Bestand nicht kennt, stehen in `missing`. Der Rest wird importiert, so wie beim YDK-Import eines Decks.
+- Der Status ist beim Import immer `DRAFT`; der exportierte Status ist nur Information.
+- Unbekannte Karten stehen in `missing` und bleiben als `missing:<passcode>` bzw. `missing:name:<name>` erhalten, auch in Bewegungen und Namensnegierungen.
+- Jede Kartenreferenz enthält einen Stub (`type`, `race`, `effects[].index`, `activated`, `opt`), ohne Kartentext oder Muster. Er bleibt privat an der Combo; es entstehen keine `Card`-Zeilen. Die Engine kann damit OPT und Chain-Aufräumen berechnen, aber keine Textregeln oder Effektvorschläge.
+- Lokale Kartendaten und Errata gewinnen, auch wenn die Karte erst nach dem Import installiert wird.
+- Knoten mit `effectIndex` tragen `effectCheck: {count, fingerprint}`. Bei abweichenden effektiven lokalen Effekten liefert `warnings` betroffene Schritt-IDs, Schrittnummern und den Code `effects`. Der Hinweis bleibt beim Laden am Schritt sichtbar.
+- Instanz-IDs bleiben erhalten; Eltern- und Negierungsverweise bekommen die neuen Knoten-IDs. Fehlende interne Referenzen, widersprüchliche Instanzen und Zyklen werden vor dem Schreiben abgelehnt.
+- Die Importgröße ist auf 900 KB begrenzt. Importdateien alter Version 1 ohne Stub sind lesbar, erlauben aber keine verlässliche Regelauswertung unbekannter Karten.
 - Eine unbekannte `version` wird mit 400 `INVALID` abgelehnt und nicht geraten.
 
 ## Server Actions
