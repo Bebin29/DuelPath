@@ -84,7 +84,7 @@ export function StartView({
         ];
 
   return (
-    <div className="grid items-center gap-10 sm:gap-16 lg:grid-cols-[1.1fr_1fr]">
+    <div className="grid grid-cols-1 items-center gap-10 sm:gap-16 lg:grid-cols-[1.1fr_1fr]">
       <section
         className="flex flex-col items-center"
         onMouseMove={(e) => {
