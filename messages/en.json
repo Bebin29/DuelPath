@@ -996,7 +996,8 @@
       "matched_one": "{{count}} name matched approximately",
       "matched_other": "{{count}} names matched approximately",
       "newTitle": "Imported deck"
-    }
+    },
+    "suggestHandtraps": "Handtraps, they go into almost every deck"
   },
   "practice": {
     "title": "Practice",

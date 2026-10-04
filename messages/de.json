@@ -996,7 +996,8 @@
       "matched_one": "{{count}} Name ungefähr erkannt",
       "matched_other": "{{count}} Namen ungefähr erkannt",
       "newTitle": "Importiertes Deck"
-    }
+    },
+    "suggestHandtraps": "Handtraps, kommen in fast jedes Deck"
   },
   "practice": {
     "title": "Übungsmodus",

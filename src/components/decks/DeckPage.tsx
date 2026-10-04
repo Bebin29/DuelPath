@@ -503,6 +503,7 @@ export function DeckPage({
             onChange={change}
             onMove={move}
             onOpenCard={openCard}
+            handtraps={handtraps}
           />
         )}
         {tab === 'ratios' && (
