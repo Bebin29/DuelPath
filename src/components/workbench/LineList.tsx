@@ -295,6 +295,8 @@ export function LineList({
                       ? 'bg-surface-3 text-ink shadow-[inset_2px_0_0_var(--ink)]'
                       : 'text-text-muted hover:bg-surface-3/60',
                     opponent && !selected && 'shadow-[inset_2px_0_0_var(--opponent)]',
+                    // Überfahrene oder gezogene Handtrap: Diese Schritte träfe sie (Szene „Handtrap“)
+                    marked?.has(step.node.id) && 'bg-opponent/8',
                     dropOn === step.node.id && 'bg-opponent-tint'
                   )}
                 >
