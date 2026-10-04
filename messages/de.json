@@ -370,6 +370,25 @@
       "load": "Deck in den Startzustand laden",
       "draw": "Auf die Starthand ziehen:"
     },
+    "file": {
+      "menu": "Datei-Aktionen",
+      "export": "Als JSON exportieren",
+      "import": "JSON importieren",
+      "imported": "Als Entwurf importiert.",
+      "missing_one": "{{count}} Karte fehlt im Kartenbestand: {{names}}",
+      "missing_other": "{{count}} Karten fehlen im Kartenbestand: {{names}}",
+      "error": {
+        "format": "Das ist keine DuelPath-Combo-Datei.",
+        "version": "Die Datei ist in Version {{version}} geschrieben, diese DuelPath-Fassung liest nur Version 1.",
+        "invalid": "Die Datei ist beschädigt: {{detail}}",
+        "denied": "Combo nicht gefunden oder nicht deine.",
+        "size": "Datei zu groß (max. 900 KB).",
+        "request": "Anfrage fehlgeschlagen. Bitte erneut versuchen."
+      },
+      "noPasscode": "Ohne Passcode exportiert; Zuordnung über Namen: {{names}}",
+      "effectDiff": "Schritt {{step}} · {{name}}: Effektdaten abweichend, Zuordnung prüfen.",
+      "stubDetail": "Diese Karte fehlt im lokalen Bestand. Die Combo verwendet begrenzte Importdaten für Kartentyp und OPT. Kartentext, Effektvorschläge und Textregeln sind nicht verfügbar."
+    },
     "conflict": "Anderswo geändert · Neu laden"
   },
   "shell": {

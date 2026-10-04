@@ -93,7 +93,9 @@ Jede Antwort auf einen Schritt enthält das Board danach, offene Fragen, ausgel�
 | `GET PUT /decks/{id}/roles`                | Rollen der Karten im Deck         |
 | `GET /decks/{id}/odds`                     | Quoten für die Starthand          |
 | `GET POST /combos`                         | Combos auflisten, Combo anlegen   |
+| `POST /combos/import`                      | Combo aus einer Datei anlegen     |
 | `GET PATCH DELETE /combos/{id}`            | Eine Combo lesen, ändern, löschen |
+| `GET /combos/{id}/export`                  | Die ganze Combo als Datei         |
 | `GET /combos/{id}/state`                   | Zustand an einem Schritt          |
 | `GET /combos/{id}/line`                    | Eine Line als Folge von Schritten |
 | `GET /combos/{id}/stress`                  | Stresstest einer Line             |
@@ -106,6 +108,35 @@ Der Abfrageparameter `step` wählt den Schritt. `start` meint die Starthand. Ohn
 
 `GET /decks/{id}` gibt zu jedem Side-Plan ein `record` mit Siegen, Niederlagen und Unentschieden aus dem Spielprotokoll aus. Das sind rohe Zahlen, keine Quote. Gezählt werden ausschließlich explizite Bezüge auf bestehende Pläne; Spiele ohne oder mit verwaistem Bezug zählen in keine Planbilanz. Eintragen und Löschen gehen nur in der Oberfläche über eigene Server-Actions.
 
+### Combos als Datei
+
+`GET /combos/{id}` ist eine **Leseansicht**: Starthand, Hauptline, Line-Enden. Zum Sichern taugt sie nicht, sie lässt die Kartenbewegungen weg und kennt Karten nur als Namen.
+
+`GET /combos/{id}/export` liefert dagegen alles, was gespeichert ist: den ganzen Baum mit `costMoves`, `resolveMoves`, `negates`, `targets`, `optOverride`, `ignoredHits` und `interruptions`, dazu den rohen Startzustand samt Gegnerboard.
+
+```bash
+curl -H "Authorization: Bearer dp_..." \
+  http://localhost:3000/api/v1/combos/abc/export > combo.json
+
+curl -X POST -H "Authorization: Bearer dp_..." -H "Content-Type: application/json" \
+  --data-binary @combo.json http://localhost:3000/api/v1/combos/import
+```
+
+Karten stehen als **Passcode** mit dem Namen als Rückfallebene, weil `Card.id` ein lokaler `cuid()` ist und auf einer anderen Installation nichts bedeutet. Genau wie bei YDK.
+
+Beim Import gilt:
+
+- Es entsteht **immer eine neue Combo**. In eine bestehende wird nie geschrieben.
+- Ein Deck wird nicht zugeordnet. Der Deckname in der Datei ist nur Information.
+- Der Status ist beim Import immer `DRAFT`; der exportierte Status ist nur Information.
+- Unbekannte Karten stehen in `missing` und bleiben als `missing:<passcode>` bzw. `missing:name:<name>` erhalten, auch in Bewegungen und Namensnegierungen.
+- Jede Kartenreferenz enthält einen Stub (`type`, `race`, `effects[].index`, `activated`, `opt`), ohne Kartentext oder Muster. Er bleibt privat an der Combo; es entstehen keine `Card`-Zeilen. Die Engine kann damit OPT und Chain-Aufräumen berechnen, aber keine Textregeln oder Effektvorschläge.
+- Lokale Kartendaten und Errata gewinnen, auch wenn die Karte erst nach dem Import installiert wird.
+- Knoten mit `effectIndex` tragen `effectCheck: {count, fingerprint}`. Bei abweichenden effektiven lokalen Effekten liefert `warnings` betroffene Schritt-IDs, Schrittnummern und den Code `effects`. Der Hinweis bleibt beim Laden am Schritt sichtbar.
+- Instanz-IDs bleiben erhalten; Eltern- und Negierungsverweise bekommen die neuen Knoten-IDs. Fehlende interne Referenzen, widersprüchliche Instanzen und Zyklen werden vor dem Schreiben abgelehnt.
+- Die Importgröße ist auf 900 KB begrenzt. Importdateien alter Version 1 ohne Stub sind lesbar, erlauben aber keine verlässliche Regelauswertung unbekannter Karten.
+- Eine unbekannte `version` wird mit 400 `INVALID` abgelehnt und nicht geraten.
+
 ## Server Actions
 
 Der übliche Weg aus der Oberfläche. Sie liegen in `src/server/actions/` und geben wie die API `{ data }` oder `{ error }` zurück, nie eine geworfene Ausnahme.
@@ -116,7 +147,7 @@ Der übliche Weg aus der Oberfläche. Sie liegen in `src/server/actions/` und ge
 | `deck.actions.ts`       | Decks, Versionen, Side-Pläne, YDK   |
 | `deck-view.actions.ts`  | Deckinhalt für die Anzeige          |
 | `deck-game.actions.ts`  | Spiele eintragen und löschen        |
-| `combo.actions.ts`      | Combos, Knoten, Bibliothek          |
+| `combo.actions.ts`      | Combos, Knoten, Bibliothek, JSON    |
 | `card.actions.ts`       | Karten holen und suchen             |
 | `suggestion.actions.ts` | Effektvorschläge über Jev           |
 | `settings.actions.ts`   | Nutzereinstellungen                 |

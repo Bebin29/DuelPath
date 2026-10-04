@@ -5,9 +5,15 @@ import { z } from 'zod';
  * Die Formen entsprechen den Typen in src/lib/combo/state.ts.
  */
 
-const id = z.string().min(1).max(64);
-const player = z.enum(['self', 'opponent']);
-const zone = z.enum([
+// Bausteine, die auch das portable Combo-Format nutzt (src/lib/combo/portable.ts)
+export const idSchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .refine((id) => !['__proto__', 'prototype', 'constructor'].includes(id), 'Ungültige ID');
+export const cardIdSchema = z.union([idSchema, z.string().startsWith('missing:').max(256)]);
+export const playerSchema = z.enum(['self', 'opponent']);
+export const zoneSchema = z.enum([
   'HAND',
   'DECK',
   'EXTRA',
@@ -18,11 +24,16 @@ const zone = z.enum([
   'BANISHED',
   'MATERIAL',
 ]);
-const position = z.enum(['ATK', 'DEF', 'SET']);
+export const positionSchema = z.enum(['ATK', 'DEF', 'SET']);
+
+const id = idSchema;
+const player = playerSchema;
+const zone = zoneSchema;
+const position = positionSchema;
 
 export const cardMoveSchema = z.object({
   instanceId: id,
-  cardId: id.optional(),
+  cardId: cardIdSchema.optional(),
   owner: player.optional(),
   from: zone,
   to: zone,
@@ -38,7 +49,7 @@ const negationSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('EFFECT'), nodeId: id }),
   z.object({ type: z.literal('SUMMON'), nodeId: id }),
   z.object({ type: z.literal('CARD'), instanceId: id }),
-  z.object({ type: z.literal('NAME'), cardId: id }),
+  z.object({ type: z.literal('NAME'), cardId: cardIdSchema }),
 ]);
 
 export const comboNodeSchema = z.object({
@@ -49,7 +60,7 @@ export const comboNodeSchema = z.object({
   player,
   edgeLabel: z.string().max(100).nullish(),
   instanceId: id.nullish(),
-  cardId: id.nullish(),
+  cardId: cardIdSchema.nullish(),
   effectIndex: z.number().int().min(0).max(20).nullish(),
   action: z.enum(['NORMAL_SUMMON', 'SPECIAL_SUMMON', 'SET', 'OTHER']).nullish(),
   costMoves: z.array(cardMoveSchema).max(40).default([]),
@@ -67,12 +78,15 @@ export const startStateSchema = z.object({
     .array(
       z.object({
         instanceId: id,
-        cardId: id,
+        cardId: cardIdSchema,
         owner: player,
         controller: player.optional(),
         zone,
         slot: z.number().int().min(0).max(6).optional(),
         position: position.optional(),
+        attachedTo: id.optional(),
+        equippedTo: id.optional(),
+        token: z.boolean().optional(),
       })
     )
     .max(200),
@@ -91,11 +105,13 @@ export const saveComboSchema = z.object({
 export type SaveComboInput = z.input<typeof saveComboSchema>;
 
 export const suggestionInputSchema = z.object({
-  board: z.array(z.object({ cardId: id, player, zone, position: position.optional() })).max(150),
+  board: z
+    .array(z.object({ cardId: cardIdSchema, player, zone, position: position.optional() }))
+    .max(150),
   chain: z
     .array(
       z.object({
-        cardId: id.optional(),
+        cardId: cardIdSchema.optional(),
         player,
         effectIndex: z.number().int().min(0).max(20).optional(),
         negated: z.boolean().optional(),
@@ -104,6 +120,8 @@ export const suggestionInputSchema = z.object({
     .max(20),
   normalSummonUsed: z.boolean(),
   candidates: z
-    .array(z.object({ cardId: id, effectIndex: z.number().int().min(0).max(20), player, zone }))
+    .array(
+      z.object({ cardId: cardIdSchema, effectIndex: z.number().int().min(0).max(20), player, zone })
+    )
     .max(30),
 });

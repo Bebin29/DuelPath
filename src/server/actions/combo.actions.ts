@@ -14,6 +14,8 @@ import {
   storeCombo,
   type LoadedCombo,
 } from '@/server/services/combo-store.service';
+import { comboFromPortable, portableCombo } from '@/server/services/combo-portable.service';
+import type { CardRef, PortableCombo, PortableError, PortableWarning } from '@/lib/combo/portable';
 import { STAPLES, type Staple } from '@/lib/combo/reactions';
 import type { DeckEntry } from '@/lib/combo/deck';
 import type { SaveComboInput } from '@/lib/validations/combo.schema';
@@ -76,7 +78,15 @@ export async function duplicateCombo(
       deckId: combo.deckId,
       tags: combo.tags,
       status: 'DRAFT',
+      ...(combo.importChecks && {
+        importChecks: Object.fromEntries(
+          Object.entries(combo.importChecks as Record<string, Prisma.InputJsonValue>).map(
+            ([id, check]) => [remap(id), check]
+          )
+        ),
+      }),
       startState: combo.startState as Prisma.InputJsonValue,
+      ...(combo.importedCards && { importedCards: combo.importedCards as Prisma.InputJsonValue }),
     },
     select: { id: true },
   });
@@ -153,6 +163,32 @@ export async function saveCombo(
   };
 }
 
+/** Combo als JSON-Datei; Karten stehen als Passcode, damit die Datei woanders ebenso gilt */
+export async function exportCombo(comboId: string): Promise<Result<PortableCombo>> {
+  const userId = await currentUserId();
+  if (!userId) return { error: 'Unauthorized' };
+  const file = await portableCombo(userId, comboId);
+  return file ? { data: file } : { error: 'Not found' };
+}
+
+/** Grund, warum eine Datei nicht eingelesen wurde; die Oberfläche übersetzt den Code */
+export type ImportError = PortableError | { code: 'denied' };
+
+/**
+ * Liest eine JSON-Datei und legt daraus eine **neue** Combo an, nie in eine bestehende hinein.
+ * Fehlende Karten stehen in `missing`, der Rest wird importiert.
+ */
+export async function importCombo(
+  json: unknown
+): Promise<
+  | { data: { id: string; missing: CardRef[]; warnings: PortableWarning[] }; error?: undefined }
+  | { data?: undefined; error: ImportError }
+> {
+  const userId = await currentUserId();
+  if (!userId) return { error: { code: 'denied' } };
+  return comboFromPortable(userId, json);
+}
+
 export interface StapleCard {
   card: ComboCard;
   staple: Staple;
@@ -167,6 +203,7 @@ export async function getStaples(): Promise<StapleCard[]> {
     },
     select: {
       id: true,
+      passcode: true,
       name: true,
       nameDe: true,
       type: true,

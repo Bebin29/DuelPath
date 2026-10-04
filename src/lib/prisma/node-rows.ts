@@ -6,14 +6,18 @@ const json = (value: unknown) => (value ?? undefined) as Prisma.InputJsonValue |
 
 /** Knoten als Datenbankzeilen, Eltern vor Kindern; JSON-Felder ohne Wert bleiben leer */
 export function nodeRows(comboId: string, nodes: ComboNodeData[]) {
-  return sortByDepth(nodes).map((n) => ({
-    ...n,
-    comboId,
-    costMoves: (n.costMoves ?? []) as unknown as Prisma.InputJsonValue,
-    resolveMoves: (n.resolveMoves ?? []) as unknown as Prisma.InputJsonValue,
-    negates: json(n.negates),
-    targets: json(n.targets),
-    ignoredHits: json(n.ignoredHits),
-    interruptions: json(n.interruptions),
-  }));
+  return sortByDepth(nodes).map((node) => {
+    const { importCheck, ...n } = node;
+    void importCheck;
+    return {
+      ...n,
+      comboId,
+      costMoves: (n.costMoves ?? []) as unknown as Prisma.InputJsonValue,
+      resolveMoves: (n.resolveMoves ?? []) as unknown as Prisma.InputJsonValue,
+      negates: json(n.negates),
+      targets: json(n.targets),
+      ignoredHits: json(n.ignoredHits),
+      interruptions: json(n.interruptions),
+    };
+  });
 }

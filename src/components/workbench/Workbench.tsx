@@ -38,6 +38,8 @@ import type { ComboStatus } from '@/lib/combo/library';
 import { getDeckCounts } from '@/server/actions/deck-view.actions';
 import { saveCombo, type LoadedCombo, type StapleCard } from '@/server/actions/combo.actions';
 import { NodeEditor, type MoveTarget } from '@/components/combo/NodeEditor';
+import { toPortable } from '@/lib/combo/portable';
+import { useComboFile } from '@/components/combo/use-combo-file';
 import { StartStatePanel } from './StartStatePanel';
 import { SuggestionPanel } from '@/components/combo/SuggestionPanel';
 import { ListTree } from 'lucide-react';
@@ -158,6 +160,8 @@ export function Workbench({
   const [status, setStatus] = useState<SaveStatus>('saved');
   const revision = useRef(initial.revision);
   const [saveAttempt, setSaveAttempt] = useState(0);
+  // Sichern und Einlesen als JSON; der Import wird eine neue Combo, diese hier bleibt unberührt
+  const file = useComboFile();
 
   const states = useMemo(() => statesForTree(nodes, startState, cards), [nodes, startState, cards]);
   const start = useMemo(() => initialState(startState), [startState]);
@@ -1035,8 +1039,31 @@ export function Workbench({
           onComboStatus={(value) => setDoc((d) => ({ ...d, status: value }))}
           tags={tags}
           onTags={(value) => setDoc((d) => ({ ...d, tags: value }))}
+          onExport={() =>
+            void file.exportCombo(
+              initial.id,
+              title,
+              toPortable(
+                {
+                  title,
+                  tags,
+                  status: comboStatus,
+                  startState,
+                  deckName: decks.find((d) => d.id === deckId)?.name,
+                },
+                nodes,
+                (id) => {
+                  const c = cards.get(id);
+                  return c ? { ...c, passcode: c.passcode ?? null } : undefined;
+                }
+              )
+            )
+          }
+          onImport={file.pick}
         />
       )}
+      {file.input}
+      {file.noticeNode}
 
       {/* Moduswechsel (Szene „Moduswechsel“): das Board tritt mit Unschärfe zurück, der Baum wächst */}
       <AnimatePresence mode="popLayout" initial={false}>
@@ -1314,7 +1341,14 @@ export function Workbench({
                 state={after}
                 cards={cards}
                 onRun={(action) => menu && flow.run(action, menu.instanceId)}
-                onOpenCard={(cardId) => cardSheet.open(cardId, updateCardEffects)}
+                onOpenCard={(cardId) => {
+                  const card = cards.get(cardId);
+                  cardSheet.open(
+                    card?.catalogueId ?? cardId,
+                    (_id, effects) => updateCardEffects(cardId, effects),
+                    card?.importedStub ? { name: card.name } : undefined
+                  );
+                }}
                 onClose={() => setMenu(null)}
               />
             </div>
@@ -1328,7 +1362,14 @@ export function Workbench({
                 cards={cards}
                 inspected={inspected}
                 highlight={chokeHover?.phrase}
-                onOpenCard={(cardId) => cardSheet.open(cardId, updateCardEffects)}
+                onOpenCard={(cardId) => {
+                  const card = cards.get(cardId);
+                  cardSheet.open(
+                    card?.catalogueId ?? cardId,
+                    (_id, effects) => updateCardEffects(cardId, effects),
+                    card?.importedStub ? { name: card.name } : undefined
+                  );
+                }}
               >
                 {stepPanel}
               </Inspector>

@@ -1,10 +1,10 @@
 import { prisma } from '@/lib/prisma/client';
 import type { StartState } from '@/lib/combo/state';
-import { toComboCard } from '@/lib/combo/cards';
+import { cardsForCombo, loadCardRows } from './combo-cards.service';
 import { comboStats } from '@/lib/combo/summary';
 import { deckCounts, missingFromDeck } from '@/lib/deck/deck-check';
 import { parseStatus, type LibraryCard, type LibraryEntry } from '@/lib/combo/library';
-import { cardIdsOf, nodeFromRow } from './combo-store.service';
+import { cardIdsOf, nodesWithImportChecks } from './combo-store.service';
 
 /**
  * Bibliothek (UX-Plan 7.2): alle Combos eines Nutzers mit Kennzahlen, für die Seite und die API.
@@ -31,33 +31,32 @@ export async function loadLibrary(
   const parsed = combos.map((c) => ({
     combo: c,
     startState: c.startState as unknown as StartState,
-    nodes: c.nodes.map(nodeFromRow),
+    nodes: nodesWithImportChecks(c.nodes, c.importChecks),
   }));
-  const ids = new Set<string>();
-  for (const p of parsed) for (const id of cardIdsOf(p.startState, p.nodes)) ids.add(id);
-  const rows = await prisma.card.findMany({
-    where: { id: { in: [...ids] } },
-    select: {
-      id: true,
-      name: true,
-      nameDe: true,
-      type: true,
-      race: true,
-      imageSmall: true,
-      effects: true,
-      effectsOverride: true,
-      linkMarkers: true,
-    },
-  });
-  const full = new Map(rows.map((r) => [r.id, toComboCard(r)]));
-  const cards = Object.fromEntries(
-    rows.map((r) => [r.id, { name: r.name, nameDe: r.nameDe, imageSmall: r.imageSmall }])
+  // Separate maps preserve different combo-local stubs for the same missing passcode.
+  const allIds = new Set(parsed.flatMap((p) => [...cardIdsOf(p.startState, p.nodes)]));
+  const rows = await loadCardRows(
+    allIds,
+    parsed.map((p) => p.combo.importedCards)
   );
+  const maps = parsed.map(
+    (p) =>
+      new Map(
+        cardsForCombo(cardIdsOf(p.startState, p.nodes), p.combo.importedCards, rows).map((c) => [
+          c.id,
+          c,
+        ])
+      )
+  );
+  const cards: Record<string, LibraryCard> = {};
+  for (const map of maps)
+    for (const [id, c] of map)
+      cards[id] = { name: c.name, nameDe: c.nameDe, imageSmall: c.imageSmall };
 
   return {
     cards,
-    entries: parsed.map(({ combo, startState, nodes }) => {
-      const stats = comboStats(startState, nodes, full);
+    entries: parsed.map(({ combo, startState, nodes }, index) => {
+      const stats = comboStats(startState, nodes, maps[index]);
       return {
         id: combo.id,
         title: combo.title,

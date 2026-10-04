@@ -25,7 +25,9 @@ import { getCardDetail, saveEffectOverride, type CardDetail } from '@/server/act
 
 type OnSaved = (cardId: string, effects: CardEffect[]) => void;
 
-const CardSheetContext = createContext<{ open: (cardId: string, onSaved?: OnSaved) => void }>({
+const CardSheetContext = createContext<{
+  open: (cardId: string, onSaved?: OnSaved, stub?: { name: string }) => void;
+}>({
   open: () => {},
 });
 
@@ -39,14 +41,22 @@ export const useCardSheet = () => useContext(CardSheetContext);
 export function CardSheetProvider({ children }: { children: React.ReactNode }) {
   const [card, setCard] = useState<CardDetail | null>(null);
   const [open, setOpen] = useState(false);
+  const [stub, setStub] = useState<{ name: string } | null>(null);
+  const { t } = useTranslation();
   const onSaved = useRef<OnSaved | undefined>(undefined);
 
-  const openCard = useCallback(async (cardId: string, saved?: OnSaved) => {
-    onSaved.current = saved;
-    setOpen(true);
-    const result = await getCardDetail(cardId);
-    setCard(result.data ?? null);
-  }, []);
+  const openCard = useCallback(
+    async (cardId: string, saved?: OnSaved, imported?: { name: string }) => {
+      onSaved.current = saved;
+      setOpen(true);
+      setCard(null);
+      setStub(imported ?? null);
+      if (imported) return;
+      const result = await getCardDetail(cardId);
+      setCard(result.data ?? null);
+    },
+    []
+  );
 
   return (
     <CardSheetContext.Provider value={{ open: openCard }}>
@@ -57,7 +67,15 @@ export function CardSheetProvider({ children }: { children: React.ReactNode }) {
           closeLabel={false}
           className="h-[92dvh] sm:h-auto"
         >
-          {card ? (
+          {stub ? (
+            <div className="p-6">
+              <Dialog.Title className="font-display text-2xl">{stub.name}</Dialog.Title>
+              <p className="my-4 text-sm text-text-subtle">{t('combo.file.stubDetail')}</p>
+              <Dialog.Close asChild>
+                <Button variant="text">{t('workbench.close')}</Button>
+              </Dialog.Close>
+            </div>
+          ) : card ? (
             <CardSheetBody
               key={card.id}
               card={card}

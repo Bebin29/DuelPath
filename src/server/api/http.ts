@@ -96,8 +96,33 @@ export function route<P extends Params = Params>(handler: Handler<P>) {
 }
 
 /** JSON-Body lesen; ein leerer Body ist ein leeres Objekt */
-export async function body(request: NextRequest): Promise<unknown> {
-  const text = await request.text();
+export async function body(request: NextRequest, maxBytes?: number): Promise<unknown> {
+  let text: string;
+  if (maxBytes !== undefined) {
+    if (Number(request.headers.get('content-length')) > maxBytes)
+      throw new ApiError('INVALID', 'Body zu groß');
+    const reader = request.body?.getReader();
+    const decoder = new TextDecoder();
+    let size = 0;
+    text = '';
+    if (reader) {
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          size += value.byteLength;
+          if (size > maxBytes) {
+            await reader.cancel();
+            throw new ApiError('INVALID', 'Body zu groß');
+          }
+          text += decoder.decode(value, { stream: true });
+        }
+        text += decoder.decode();
+      } finally {
+        reader.releaseLock();
+      }
+    }
+  } else text = await request.text();
   if (!text.trim()) return {};
   try {
     return JSON.parse(text);

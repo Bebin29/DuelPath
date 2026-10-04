@@ -1,3 +1,4 @@
+import { effectFingerprint } from '@/lib/cards/effect-check';
 import type { CardEffect, EffectOpt } from '@/lib/cards/effects';
 import { targetEffects, targetMove } from '@/lib/combo/targets';
 
@@ -28,6 +29,8 @@ export interface CardData {
   type: string;
   race?: string | null;
   effects: CardEffect[];
+  /** Isolated import metadata; no effect text available. */
+  importedStub?: boolean;
   /** Link-Pfeile, etwa ["Top", "Bottom-Left"] */
   linkMarkers?: string[] | null;
 }
@@ -81,6 +84,8 @@ export type Negation =
   | { type: 'NAME'; cardId: string };
 
 export interface ComboNodeData {
+  /** Server-owned provenance, excluded from client writes and the stored 18 node fields. */
+  importCheck?: { cardId: string; effectIndex: number; count: number; fingerprint: string };
   id: string;
   parentId: string | null;
   /** Reihenfolge unter Geschwistern; das Kind mit dem kleinsten Rang setzt die Hauptline fort */
@@ -240,6 +245,36 @@ export function applyNode(
   const state = structuredClone(prev);
   const warn = (message: string) => state.warnings.push({ nodeId: node.id, message });
 
+  // Warn on every relevant step, including searched moves and NAME negations.
+  const referenced = new Set([
+    node.cardId,
+    ...(node.costMoves ?? []).map((m) => m.cardId ?? state.cards[m.instanceId]?.cardId),
+    ...(node.resolveMoves ?? []).map((m) => m.cardId ?? state.cards[m.instanceId]?.cardId),
+    ...(node.negates?.type === 'NAME' ? [node.negates.cardId] : []),
+  ]);
+  for (const id of referenced) {
+    if (!id) continue;
+    const card = cards.get(id);
+    if (card?.importedStub)
+      warn(`Kartendaten für ${card.name} fehlen; Berechnung mit begrenzten Importdaten`);
+    else if (!card) warn(`Kartendaten für ${id} fehlen`);
+  }
+  const check = node.importCheck;
+  const checkedCard = node.cardId ? cards.get(node.cardId) : undefined;
+  if (
+    check &&
+    check.cardId === node.cardId &&
+    check.effectIndex === node.effectIndex &&
+    checkedCard &&
+    !checkedCard.importedStub &&
+    (!checkedCard.effects[check.effectIndex] ||
+      checkedCard.effects.length !== check.count ||
+      effectFingerprint(checkedCard.effects[check.effectIndex]?.text ?? '') !== check.fingerprint)
+  ) {
+    warn(
+      `${checkedCard.name}: Effektdaten unterscheiden sich von der Importdatei; Effektzuordnung prüfen`
+    );
+  }
   switch (node.kind) {
     case 'ACTION': {
       if (node.action === 'NORMAL_SUMMON') {
@@ -441,7 +476,6 @@ function activate(
   const card = node.cardId ? cards.get(node.cardId) : undefined;
   const effect = card && node.effectIndex != null ? card.effects[node.effectIndex] : undefined;
   const instance = node.instanceId ? state.cards[node.instanceId] : undefined;
-  if (node.cardId && !card) warn(`Kartendaten für ${node.cardId} fehlen`);
 
   // Effekt-Negierung vor der Aktivierung (Imperm, Veiler, Called by the Grave)
   if (instance && state.negatedCards[instance.instanceId] === instance.epoch) {
@@ -619,6 +653,9 @@ function resolveChain(
   for (const link of state.chain) {
     const instance = link.instanceId ? state.cards[link.instanceId] : undefined;
     const card = link.cardId ? cards.get(link.cardId) : undefined;
+    if (instance && card?.importedStub && (!card.type || !card.race) && onField(instance.zone)) {
+      warn(`${card.name}: Chain-Aufräumen ohne Kartentyp nicht berechenbar`);
+    }
     if (!instance || !card || !link.cardActivation || !onField(instance.zone)) continue;
     if (link.negated === 'ACTIVATION' || CLEANUP_RACES.has(card.race ?? '')) {
       applyMoves(state, [{ instanceId: instance.instanceId, from: instance.zone, to: 'GY' }], warn);

@@ -230,6 +230,8 @@ model Combo {
   title      String
   userId     String
   deckId     String?
+  importChecks Json? // Server-owned effect-index provenance for imported nodes
+  importedCards Json? // Isolated portable card stubs; never shared Card rows
   startState Json // StartState: Starthand, optional Gegnerboard
   tags       String[] @default([]) // freie Schlagworte wie "1-Card", "Going Second" (UX-Plan 7.2)
   status     String   @default("DRAFT") // DRAFT | TESTED | TOURNAMENT

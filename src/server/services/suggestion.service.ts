@@ -26,7 +26,16 @@ export async function rateCandidates(
   });
   const cards = new Map<string, CardData>(rows.map((r) => [r.id, { ...r, effects: effectsOf(r) }]));
 
-  const request = jevRequest(input, cards);
+  const validIndices = input.candidates.flatMap((c, i) => {
+    const effect = cards.get(c.cardId)?.effects[c.effectIndex];
+    return effect?.activated && effect.text.trim() ? [i] : [];
+  });
+  if (!validIndices.length)
+    return { probabilities: input.candidates.map(() => 0), cached: true, cost: 0 };
+  const request = jevRequest(
+    { ...input, candidates: validIndices.map((i) => input.candidates[i]) },
+    cards
+  );
   const key = createHash('sha256')
     .update(JSON.stringify({ model: jevModel(), ...request }))
     .digest('hex');
@@ -46,7 +55,10 @@ export async function rateCandidates(
   }
 
   return {
-    probabilities: input.candidates.map((_, i) => answers[`c${i}`]?.noul ?? 0),
+    probabilities: input.candidates.map((_, i) => {
+      const index = validIndices.indexOf(i);
+      return index < 0 ? 0 : (answers[`c${index}`]?.noul ?? 0);
+    }),
     cached: !!hit,
     cost,
   };
