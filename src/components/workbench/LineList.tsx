@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { EASE, SPRING, prefersReducedMotion } from '@/lib/motion';
+import { DUR, EASE, SPRING, prefersReducedMotion } from '@/lib/motion';
 import {
   ArrowUpToLine,
   Columns3,
@@ -70,6 +70,26 @@ interface LineListProps {
  * Line-Liste (UI-Plan 7.2.1): die Line so, wie Spieler sie aufschreiben.
  * Chains eingerückt mit violetter Linie, gegnerische Schritte mit roter Kante, Branches unter ihrem Schritt.
  */
+/**
+ * Zeile der Line-Liste (Motion-Szene „Mikro“, Rückgängig): Ein Schritt verschwindet nicht einfach,
+ * der Rotstift streicht ihn erst durch. Striche dürfen länger als 250 ms (UI-Plan 4.7, DUR.draw);
+ * hier bleiben Strich und Zuklappen zusammen bei 300 ms, damit Strg+Z flott bleibt.
+ */
+const ROW = {
+  enter: { opacity: 0, y: -6 },
+  shown: { opacity: 1, y: 0, transition: SPRING.soft },
+  gone: {
+    opacity: 0,
+    height: 0,
+    transition: { delay: DUR.base, duration: DUR.base, ease: EASE.smooth },
+  },
+};
+const STRIKE = {
+  enter: { scaleX: 0 },
+  shown: { scaleX: 0 },
+  gone: { scaleX: 1, transition: { duration: DUR.base, ease: EASE.ink } },
+};
+
 export function LineList({
   title,
   steps,
@@ -243,10 +263,10 @@ export function LineList({
                 key={step.node.id}
                 role="none"
                 layout="position"
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, height: 0, x: -10 }}
-                transition={SPRING.soft}
+                variants={ROW}
+                initial="enter"
+                animate="shown"
+                exit="gone"
                 className="overflow-hidden"
               >
                 <div
@@ -275,6 +295,12 @@ export function LineList({
                     dropOn === step.node.id && 'bg-opponent-tint'
                   )}
                 >
+                  {/* Rückgängig oder Löschen: der Rotstift streicht den Schritt, dann klappt er zu */}
+                  <motion.span
+                    aria-hidden
+                    variants={STRIKE}
+                    className="pointer-events-none absolute left-2 right-3 top-1/2 h-[1.5px] origin-left rounded-full bg-opponent"
+                  />
                   {chokes && scanning && scan.at === index && (
                     <motion.span
                       aria-hidden
