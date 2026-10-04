@@ -34,6 +34,7 @@ export function StartView({
   const [latest, ...recent] = combos;
   // Das Wechselwort steht im Englischen mitten im Satz: Vorlage am Platzhalter teilen
   const [before, after] = t('start.headline', { word: WORD_SLOT }).split(WORD_SLOT);
+  const words = t('start.words').split('|');
   const px = useSpring(0, { stiffness: 60, damping: 18 });
   const py = useSpring(0, { stiffness: 60, damping: 18 });
   const when = (iso: string) =>
@@ -79,9 +80,13 @@ export function StartView({
         </motion.div>
         <p className="mt-4 text-text-muted">{t('start.pre')}</p>
         <h1 className="mt-1 text-balance text-center font-display text-[52px] leading-[1.05]">
-          {before}
-          <WechselWort words={t('start.words').split('|')} />
-          {after}
+          {/* Screenreader hören einen festen Satz statt alle 2,6 s einer neuen Überschrift */}
+          <span className="sr-only">{t('start.headline', { word: words[0] })}</span>
+          <span aria-hidden>
+            {before}
+            <WechselWort words={words} />
+            {after}
+          </span>
         </h1>
       </section>
 
