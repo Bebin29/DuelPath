@@ -21,6 +21,9 @@ import type { DeckEntry } from '@/lib/combo/deck';
 import type { SaveComboInput } from '@/lib/validations/combo.schema';
 import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
 import { loadLibrary } from '@/server/services/library.service';
+import { comboContext, stressView } from '@/server/api/combo-api';
+import { lineThrough } from '@/lib/combo/lines';
+import { stopsLine, stressWords, type StressWord } from '@/lib/combo/start-words';
 
 type Result<T> = { data: T; error?: undefined } | { data?: undefined; error: string };
 
@@ -235,6 +238,28 @@ export async function getBreakerCards(names: string[]): Promise<Record<string, C
 }
 
 /** Decks des Nutzers für die Zuordnung im Editor */
+/**
+ * Stresstest der Hauptline für die Startseite: wo welcher Staple die Line stoppt. Leer, wenn es
+ * nichts Belastbares zu sagen gibt: ohne Schritte, oder wenn die Hauptline schon eine
+ * Unterbrechung enthält (dann prüft der Stresstest nicht weiter, alles wäre fälschlich „gar nicht“).
+ */
+export async function startStress(comboId: string): Promise<StressWord[]> {
+  const userId = await currentUserId();
+  if (!userId) return [];
+  const ctx = await comboContext(userId, comboId);
+  const line = lineThrough(ctx.combo.nodes, null);
+  if (!line.length || line.some((n) => n.kind === 'ACTIVATE' && n.player === 'opponent')) {
+    return [];
+  }
+  const stoppers = ctx.staples.filter((s) => stopsLine(s.staple)).map((s) => s.staple.short);
+  return stressWords(
+    stoppers,
+    stressView(ctx, null, false)
+      .filter((h) => h.short && stoppers.includes(h.short) && stopsLine({ hits: [h.pattern] }))
+      .map((h) => ({ word: h.short ?? h.staple, step: h.step }))
+  );
+}
+
 export async function listDeckOptions(): Promise<{ id: string; name: string }[]> {
   const userId = await currentUserId();
   if (!userId) return [];
