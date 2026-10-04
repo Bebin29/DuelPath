@@ -23,18 +23,25 @@ async function currentUserId(): Promise<string | null> {
 export async function startStress(comboId: string): Promise<StressWord[]> {
   const userId = await currentUserId();
   if (!userId) return [];
-  const ctx = await comboContext(userId, comboId);
-  const line = lineThrough(ctx.combo.nodes, null);
-  if (!line.length || line.some((n) => n.kind === 'ACTIVATE' && n.player === 'opponent')) {
+  // Die Antwort ist Schmuck der Headline: scheitert die Simulation, bleibt die Startseite stehen
+  // und zeigt die allgemeinen Wörter; der Fehler landet im Log statt auf einer Fehlerseite
+  try {
+    const ctx = await comboContext(userId, comboId);
+    const line = lineThrough(ctx.combo.nodes, null);
+    if (!line.length || line.some((n) => n.kind === 'ACTIVATE' && n.player === 'opponent')) {
+      return [];
+    }
+    const stoppers = ctx.staples.filter((s) => stopsLine(s.staple)).map((s) => s.staple.short);
+    return stressWords(
+      stoppers,
+      stressView(ctx, null, false)
+        .filter((h) => h.short && stoppers.includes(h.short) && stopsLine({ hits: [h.pattern] }))
+        .map((h) => ({ word: h.short ?? h.staple, step: h.step }))
+    );
+  } catch (error) {
+    console.error('startStress', comboId, error);
     return [];
   }
-  const stoppers = ctx.staples.filter((s) => stopsLine(s.staple)).map((s) => s.staple.short);
-  return stressWords(
-    stoppers,
-    stressView(ctx, null, false)
-      .filter((h) => h.short && stoppers.includes(h.short) && stopsLine({ hits: [h.pattern] }))
-      .map((h) => ({ word: h.short ?? h.staple, step: h.step }))
-  );
 }
 
 /** Ein Deck am Tisch: seine Combos auf dem Weg zum Turnier und die Bilanz aus dem Spielprotokoll */
