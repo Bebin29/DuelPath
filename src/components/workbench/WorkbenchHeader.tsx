@@ -311,7 +311,8 @@ function WarningCount({ count, onClick }: { count: number; onClick: () => void }
   const prev = useRef(count);
   useEffect(() => {
     if (count > prev.current && scope.current) {
-      animate(scope.current, { rotate: [0, -4, 4, -2, 2, 0] }, { duration: 0.4, ease: 'linear' });
+      // Wackeln ist Bewegung (höchstens 250 ms); das Aufleuchten darunter ist keine und bleibt
+      animate(scope.current, { rotate: [0, -4, 4, -2, 2, 0] }, { duration: 0.25, ease: 'linear' });
       animate(
         scope.current,
         { backgroundColor: ['rgb(0 0 0 / 0)', 'var(--warning-tint)', 'rgb(0 0 0 / 0)'] },

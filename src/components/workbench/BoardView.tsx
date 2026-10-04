@@ -903,6 +903,7 @@ function flyGhost(image: string | null, from: DOMRect, to: DOMRect) {
   void animate(
     ghost,
     { x: [0, dx], y: [0, dy - 10, dy], scale: [1, 0.55], rotate: [0, -6, 0], opacity: [1, 1, 0] },
-    { duration: 0.42, ease: EASE.ink }
+    // Werkzeug ruhig: höchstens 250 ms (Motion-Prinzip 5)
+    { duration: 0.25, ease: EASE.ink }
   ).then(() => ghost.remove());
 }
