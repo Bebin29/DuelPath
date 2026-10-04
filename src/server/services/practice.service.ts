@@ -72,5 +72,6 @@ export async function loadPracticeSetup(
     entries: loaded.entries,
     cards,
     targets,
+    comboCount: combos.length,
   };
 }
