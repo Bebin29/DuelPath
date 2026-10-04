@@ -42,14 +42,19 @@ export interface TableRow {
   record: Tally;
 }
 
-/** Die zuletzt bearbeiteten Decks für „Dein Tisch“ */
-export async function startTable(take = 4): Promise<TableRow[]> {
+const TABLE_DECKS = 4;
+
+/**
+ * Die zuletzt bearbeiteten Decks für „Dein Tisch“. Ohne Parameter: eine Server-Action ist ein
+ * öffentlicher Endpunkt, eine Anzahl käme dort ungeprüft vom Client.
+ */
+export async function startTable(): Promise<TableRow[]> {
   const userId = await currentUserId();
   if (!userId) return [];
   const decks = await prisma.deck.findMany({
     where: { userId },
     orderBy: { updatedAt: 'desc' },
-    take,
+    take: TABLE_DECKS,
     select: {
       id: true,
       name: true,
