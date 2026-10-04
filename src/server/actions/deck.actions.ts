@@ -1,7 +1,9 @@
 'use server';
 
 import { auth } from '@/lib/auth/auth';
-import { idsForPasscodes, writeDeckCards } from '@/server/services/deck-store.service';
+import { writeDeckCards } from '@/server/services/deck-store.service';
+import { resolveImport, type ImportProblem } from '@/server/services/deck-import.service';
+import type { ImportFormat } from '@/lib/deck/import-text';
 import { prisma } from '@/lib/prisma/client';
 import type { Prisma } from '@/generated/prisma/client';
 import {
@@ -11,7 +13,6 @@ import {
   updateCardQuantitySchema,
   removeCardFromDeckSchema,
   batchOperationsSchema,
-  ydkImportSchema,
   type CreateDeckInput,
   type UpdateDeckInput,
   type AddCardToDeckInput,
@@ -20,7 +21,6 @@ import {
   type BatchOperationsInput,
   type BatchOperation,
   type DeckSection,
-  type YdkImportInput,
 } from '@/lib/validations/deck.schema';
 import type { Card } from '@/generated/prisma/client';
 
@@ -1172,32 +1172,51 @@ export async function batchDeckOperations(deckId: string, data: BatchOperationsI
 }
 
 /**
- * Server Action: Importiert eine YDK-Datei und ersetzt den Inhalt des Decks
- *
- * Passcodes ohne passende TCG-Karte werden zurückgemeldet; mehr als 3 Kopien werden auf 3 begrenzt.
+ * Deck aus eingefügtem Text ersetzen: ydke-Link, YGOPRODeck-URL, YDK-Inhalt oder Kartenliste.
+ * Gefundene Karten werden übernommen, fehlende stehen in der Antwort (wie beim YDK-Import).
  */
-export async function importYdkToDeck(
+export async function importDeckText(
   deckId: string,
-  input: YdkImportInput
-): Promise<{ data?: { imported: number; missing: string[] }; error?: string }> {
+  text: string
+): Promise<{
+  data?: {
+    imported: number;
+    missing: string[];
+    matched: { ref: string; name: string }[];
+    format: ImportFormat;
+  };
+  error?: ImportProblem | 'Unauthorized' | 'Deck not found' | 'tooLong';
+}> {
   const session = await auth();
   if (!session?.user?.id) return { error: 'Unauthorized' };
-
   const deck = await prisma.deck.findUnique({ where: { id: deckId }, select: { userId: true } });
   if (!deck || deck.userId !== session.user.id) return { error: 'Deck not found' };
+  if (typeof text !== 'string' || text.length > 50_000) return { error: 'tooLong' };
 
-  const parsed = ydkImportSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Ungültige YDK-Datei' };
+  const result = await resolveImport(session.user.id, text);
+  if ('problem' in result) return { error: result.problem };
+  const { sections, missing, matched, format } = result.data;
+  const { imported } = await writeDeckCards(deckId, sections);
+  return { data: { imported, missing, matched, format } };
+}
 
-  const { map, missing } = await idsForPasscodes([
-    ...parsed.data.main,
-    ...parsed.data.extra,
-    ...parsed.data.side,
-  ]);
-  const { imported } = await writeDeckCards(deckId, {
-    MAIN: map(parsed.data.main),
-    EXTRA: map(parsed.data.extra),
-    SIDE: map(parsed.data.side),
+/** Neues Deck aus eingefügtem Text; erst auflösen, dann anlegen, damit kein leeres Deck bleibt */
+export async function createDeckFromText(
+  name: string,
+  text: string
+): Promise<{
+  data?: { id: string; missing: string[] };
+  error?: ImportProblem | 'Unauthorized' | 'tooLong';
+}> {
+  const session = await auth();
+  if (!session?.user?.id) return { error: 'Unauthorized' };
+  if (typeof text !== 'string' || text.length > 50_000) return { error: 'tooLong' };
+  const result = await resolveImport(session.user.id, text);
+  if ('problem' in result) return { error: result.problem };
+  const deck = await prisma.deck.create({
+    data: { name: name.trim().slice(0, 100) || 'Deck', format: 'TCG', userId: session.user.id },
+    select: { id: true },
   });
-  return { data: { imported, missing } };
+  await writeDeckCards(deck.id, result.data.sections);
+  return { data: { id: deck.id, missing: result.data.missing } };
 }

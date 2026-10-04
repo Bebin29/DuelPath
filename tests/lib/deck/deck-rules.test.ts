@@ -23,6 +23,42 @@ describe('deckIssues', () => {
     ]);
   });
 
+  it('weist auf OCG-Karten und Vorab-Releases hin, je Karte einmal', () => {
+    const release = new Map([
+      ['O', { name: 'Doll Hammer', type: 'Spell Card', banTcg: null, tcgDate: null }],
+      [
+        'P',
+        {
+          name: 'Great Gallant Bandit',
+          type: 'Effect Monster',
+          banTcg: null,
+          tcgDate: '2026-10-08T00:00:00.000Z',
+        },
+      ],
+      [
+        'T',
+        { name: 'Ash', type: 'Effect Monster', banTcg: null, tcgDate: '2017-05-04T00:00:00.000Z' },
+      ],
+    ]);
+    const entries: RuleEntry[] = [
+      { cardId: 'O', quantity: 2, section: 'MAIN' },
+      { cardId: 'O', quantity: 1, section: 'SIDE' },
+      { cardId: 'P', quantity: 3, section: 'SIDE' },
+      { cardId: 'T', quantity: 3, section: 'MAIN' },
+    ];
+    const issues = deckIssues(entries, release, new Date('2026-10-02')).filter(
+      (i) => i.kind === 'ocgOnly' || i.kind === 'preRelease'
+    );
+    expect(issues).toEqual([
+      { kind: 'ocgOnly', name: 'Doll Hammer' },
+      { kind: 'preRelease', name: 'Great Gallant Bandit', date: '2026-10-08' },
+    ]);
+    // Nach dem Release kein Hinweis mehr
+    expect(
+      deckIssues(entries, release, new Date('2026-10-09')).some((i) => i.kind === 'preRelease')
+    ).toBe(false);
+  });
+
   it('ordnet Extra-Deck-Monster dem Extra Deck zu', () => {
     expect(sectionFor('Link Monster')).toBe('EXTRA');
     expect(sectionFor('Spell Card')).toBe('MAIN');

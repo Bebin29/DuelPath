@@ -410,6 +410,11 @@ export const OPENAPI = {
             name: { type: 'string' },
             description: { type: 'string' },
             ydk: { type: 'string', description: 'Content of a .ydk file; or use main/extra/side' },
+            text: {
+              type: 'string',
+              description:
+                'Auto-detected: ydke:// link, YGOPRODeck deck URL, .ydk content or a pasted list ("3 Crystal Bond", "Extra Deck" headers)',
+            },
             main: {
               type: 'array',
               description:

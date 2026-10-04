@@ -4,10 +4,12 @@ import { parseEffects } from '@/lib/cards/effects';
 import type { Prisma } from '@/generated/prisma/client';
 
 /**
- * Import der TCG-Kartendatenbank von YGOPRODeck
+ * Import der Kartendatenbank von YGOPRODeck
  *
  * Zwei Abrufe (englisch mit misc_info, deutsch), dann Upsert in Transaktionen.
- * OCG-only-Karten (ohne tcg_date) werden übersprungen.
+ * OCG-Karten ohne TCG-Release kommen mit `tcgDate = null` hinein, damit Listen aus Master Duel
+ * oder EDOPro vollständig importierbar sind; die Deckprüfung weist auf sie hin.
+ * Übersprungen werden nur Karten ohne TCG- und OCG-Release (Tokens, Duel-Links-Karten).
  */
 
 const API_URL = 'https://db.ygoprodeck.com/api/v7/cardinfo.php';
@@ -28,13 +30,15 @@ export interface YGOPRODeckCard {
   desc?: string;
   archetype?: string;
   banlist_info?: { ban_tcg?: string; ban_ocg?: string };
-  misc_info?: Array<{ tcg_date?: string }>;
+  misc_info?: Array<{ tcg_date?: string; ocg_date?: string }>;
 }
 
 export interface ImportStats {
   fetched: number;
   imported: number;
-  skippedNonTcg: number;
+  /** davon ohne TCG-Release */
+  ocgOnly: number;
+  skipped: number;
   needsReview: number;
   /** Zeitpunkt des erfolgreichen Imports, kein Gültigkeitsdatum der Banlist */
   importedAt: Date;
@@ -48,13 +52,13 @@ async function fetchCards(query: string): Promise<YGOPRODeckCard[]> {
   return json.data;
 }
 
-/** Wandelt eine YGOPRODeck-Karte in Card-Daten um; null für Karten ohne TCG-Release und Skill Cards */
+/** Wandelt eine YGOPRODeck-Karte in Card-Daten um; null ohne TCG- und OCG-Release und für Skill Cards */
 export function mapCard(
   card: YGOPRODeckCard,
   german?: Pick<YGOPRODeckCard, 'name' | 'desc'>
 ): Prisma.CardCreateInput | null {
   const tcgDate = card.misc_info?.[0]?.tcg_date;
-  if (!tcgDate) return null;
+  if (!tcgDate && !card.misc_info?.[0]?.ocg_date) return null;
   // Skill Cards gibt es nur im Speed Duel, nicht in TCG-Decks
   if (card.type === 'Skill Card') return null;
 
@@ -79,7 +83,7 @@ export function mapCard(
     descDe: german?.desc ?? null,
     archetype: card.archetype ?? null,
     banTcg: card.banlist_info?.ban_tcg ?? null,
-    tcgDate: new Date(tcgDate),
+    tcgDate: tcgDate ? new Date(tcgDate) : null,
     effects: parsed as unknown as Prisma.InputJsonValue,
     effectsReview: parsed.needsReview,
     imageUrl: `/api/card-images/${passcode}.jpg`,
@@ -87,7 +91,7 @@ export function mapCard(
   };
 }
 
-export async function importTcgCards(
+export async function importCards(
   onProgress?: (done: number, total: number) => void
 ): Promise<ImportStats> {
   const [english, german] = await Promise.all([fetchCards('misc=yes'), fetchCards('language=de')]);
@@ -131,7 +135,8 @@ export async function importTcgCards(
   return {
     fetched: english.length,
     imported: cards.length,
-    skippedNonTcg: english.length - cards.length,
+    ocgOnly: cards.filter((c) => !c.tcgDate).length,
+    skipped: english.length - cards.length,
     needsReview: cards.filter((c) => c.effectsReview).length,
     importedAt,
   };

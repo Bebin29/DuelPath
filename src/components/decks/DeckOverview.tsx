@@ -1,13 +1,12 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MoreHorizontal, Plus, Upload } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { relativeTime } from '@/lib/utils/relative-time';
 import { usePendingDelete } from '@/lib/hooks/use-pending-delete';
-import { parseYDKFile } from '@/lib/utils/deck.utils';
 import { Button } from '@/components/ui/button';
 import { TimedNotice } from '@/components/ui/timed-notice';
 import {
@@ -18,19 +17,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { CardView } from '@/components/cards/CardView';
-import { createDeck, deleteDeck, importYdkToDeck } from '@/server/actions/deck.actions';
+import { createDeck, createDeckFromText, deleteDeck } from '@/server/actions/deck.actions';
+import { ImportDeckDialog } from './ImportDeckDialog';
 import type { DeckSummary } from '@/server/actions/deck-view.actions';
 import { PageHeader } from '@/components/ui/page-header';
 
 /**
- * Decks (UX-Plan 11, UI-Plan 7.5.4): YDK-Import ist der Hauptknopf, weil fast jeder seine Liste
- * schon in EDOPro oder YGOPRODeck hat. Löschen lässt sich einige Sekunden zurücknehmen.
+ * Decks (UX-Plan 11, UI-Plan 7.5.4): Import ist der Hauptknopf, weil fast jeder seine Liste
+ * schon in EDOPro, YGOPRODeck oder als ydke-Link hat. Löschen lässt sich einige Sekunden zurücknehmen.
  */
 export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [pending, setPending] = useState<DeckSummary | null>(null);
 
   usePendingDelete('deck', pending?.id ?? null, (id) => void deleteDeck(id));
@@ -39,13 +39,17 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
     const result = await createDeck({ name, format: 'TCG' });
     return result.deck?.id ?? null;
   };
-  const importFile = async (file: File) => {
-    setBusy(true);
-    const id = await create(file.name.replace(/\.ydk$/i, '') || t('decks.untitled'));
-    if (id) {
-      await importYdkToDeck(id, parseYDKFile(await file.text()));
-      router.push(`/decks/${id}`);
-    } else setBusy(false);
+  const importText = async (text: string): Promise<string | null> => {
+    const result = await createDeckFromText(t('decks.import.newTitle'), text);
+    if (!result.data)
+      return result.error && result.error !== 'Unauthorized' ? result.error : 'failed';
+    // Was fehlte, zeigt die neue Deckseite; sonst ginge eine Karte wortlos verloren
+    const { missing } = result.data;
+    const query = missing.length
+      ? `?${new URLSearchParams({ missing: missing.slice(0, 3).join('\n'), missingCount: String(missing.length) })}`
+      : '';
+    router.push(`/decks/${result.data.id}${query}`);
+    return null;
   };
   const createEmpty = async () => {
     setBusy(true);
@@ -61,25 +65,15 @@ export function DeckOverview({ decks }: { decks: DeckSummary[] }) {
 
   const visible = decks.filter((d) => d.id !== pending?.id);
   const importButton = (
-    <Button onClick={() => fileRef.current?.click()} disabled={busy}>
+    <Button onClick={() => setImportOpen(true)} disabled={busy}>
       <Upload />
-      {t('decks.importYdk')}
+      {t('decks.import.button')}
     </Button>
   );
 
   return (
     <div className="flex flex-col gap-6">
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".ydk,text/plain"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) void importFile(file);
-          e.target.value = '';
-        }}
-      />
+      <ImportDeckDialog open={importOpen} onOpenChange={setImportOpen} onImport={importText} />
       <PageHeader
         title={t('decks.title')}
         meta={t('decks.count', { count: decks.length })}

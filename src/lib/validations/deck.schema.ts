@@ -266,15 +266,3 @@ export function validateCardInDeck(
 
   return { isValid: true };
 }
-
-/**
- * Schema für den YDK-Import (Passcodes je Sektion)
- */
-const passcode = z.string().regex(/^\d{1,10}$/, 'Ungültiger Passcode');
-export const ydkImportSchema = z.object({
-  main: z.array(passcode).max(100),
-  extra: z.array(passcode).max(30),
-  side: z.array(passcode).max(30),
-});
-
-export type YdkImportInput = z.infer<typeof ydkImportSchema>;
