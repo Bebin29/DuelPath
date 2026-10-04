@@ -76,9 +76,13 @@ export function practiceTargets(
   entries: DeckEntry[]
 ): PracticeTarget[] {
   const { startState, nodes } = combo;
-  // A fresh practice hand cannot recreate field/GY setups or an opponent's board.
+  // A fresh practice hand cannot recreate field/GY setups or an opponent's board. Cards in the
+  // opponent's hand are fine: they only matter once activated, and lines with opponent steps
+  // are skipped below anyway.
   if (
-    startState.cards.some((c) => c.owner !== 'self' || !['HAND', 'DECK', 'EXTRA'].includes(c.zone))
+    startState.cards.some((c) =>
+      c.owner === 'self' ? !['HAND', 'DECK', 'EXTRA'].includes(c.zone) : c.zone !== 'HAND'
+    )
   )
     return [];
   const deck = new Map(entries.map((e) => [e.cardId, e.quantity]));

@@ -265,6 +265,22 @@ describe('vergleichbare Übungsvorbilder', () => {
     ).toEqual([]);
   });
 
+  it('übt Lines mit Handtraps in der Gegnerhand, aber nicht gegen ein Gegnerboard', () => {
+    const withOpponent = (zone: 'HAND' | 'SPELL_TRAP') => ({
+      ...combo,
+      startState: {
+        cards: [
+          ...combo.startState.cards,
+          { instanceId: 'o', cardId: 'ASH', owner: 'opponent' as const, zone },
+        ],
+      },
+    });
+    // Eine Handtrap des Gegners zählt erst, wenn er sie aktiviert: das wäre ein Gegnerschritt
+    expect(practiceTargets(withOpponent('HAND'), cards, entries)).toHaveLength(1);
+    // Was beim Gegner liegt, verändert die Line (Floodgates, Dauerfallen)
+    expect(practiceTargets(withOpponent('SPELL_TRAP'), cards, entries)).toEqual([]);
+  });
+
   it('berechnet Starthand und Ergebnis für jeden Branch separat', () => {
     const branching = {
       ...combo,
