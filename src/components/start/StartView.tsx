@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion, useSpring } from 'motion/react';
@@ -188,6 +188,8 @@ export function StartView({
 /**
  * Wechselwort der Headline (Szene „Start“): Ash, Imperm, Nibiru, Droll. Das Wort schreibt sich
  * von links auf, der Rotstift zieht den Unterstrich neu. Bei reduzierter Bewegung bleibt das erste.
+ * Die Wörter sind verschieden breit: der Platz gleitet auf das neue Wort, statt den zentrierten
+ * Satz springen zu lassen.
  */
 function WechselWort({ words }: { words: string[] }) {
   const reduced = useReducedMotion();
@@ -198,8 +200,19 @@ function WechselWort({ words }: { words: string[] }) {
     return () => clearInterval(timer);
   }, [reduced, words.length]);
   const word = words[index] ?? '';
+  const measure = useRef<HTMLSpanElement>(null);
+  const [width, setWidth] = useState<number>();
+  useLayoutEffect(() => setWidth(measure.current?.offsetWidth), [word]);
   return (
-    <span className="relative inline-grid italic text-opponent">
+    <motion.span
+      className="relative inline-grid italic text-opponent"
+      animate={width === undefined ? undefined : { width }}
+      // erst nach dem Ausblenden des alten Worts, sonst ragt es über den Satz
+      transition={{ duration: 0.4, delay: 0.45, ease: EASE.ink }}
+    >
+      <span ref={measure} className="invisible absolute whitespace-nowrap">
+        {word}
+      </span>
       <AnimatePresence mode="wait" initial={false}>
         <motion.span
           key={word}
@@ -231,6 +244,6 @@ function WechselWort({ words }: { words: string[] }) {
           transition={{ duration: 0.5, delay: 0.35, ease: EASE.ink }}
         />
       </svg>
-    </span>
+    </motion.span>
   );
 }
