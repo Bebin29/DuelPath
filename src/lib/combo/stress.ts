@@ -283,6 +283,10 @@ export function stressTest(
         const b = before(i);
         if (!available(entry, b, cards)) continue;
         const act = activationOf(node, b, cards);
+        // Die Zustandsmaschine unterscheidet Kartenaktivierung und Effekte offener/GY-Karten.
+        // Der Kartentyp allein reicht für Naturia Beast oder Solemn Judgment nicht aus.
+        const cardActivation =
+          after(i).chain.find((link) => link.nodeId === node.id)?.cardActivation === true;
         const base = { staple: staple.name, pattern, stepId: node.id, anchorId: node.id };
         const phrase = (text: string | null) =>
           act && text ? { cardId: act.cardId, effectIndex: act.effectIndex, text } : undefined;
@@ -323,13 +327,14 @@ export function stressTest(
             if (act && isMonster(act.card)) add({ ...base, target: act.instanceId });
             break;
           case 'SPELL_ACTIVATION':
-            if (act && isSpell(act.card)) add({ ...base, target: act.instanceId });
+            if (act && cardActivation && isSpell(act.card))
+              add({ ...base, target: act.instanceId });
             break;
           case 'TRAP_ACTIVATION':
-            if (act && isTrap(act.card)) add({ ...base, target: act.instanceId });
+            if (act && cardActivation && isTrap(act.card)) add({ ...base, target: act.instanceId });
             break;
           case 'SPELL_TRAP_ACTIVATION':
-            if (act && (isSpell(act.card) || isTrap(act.card)))
+            if (act && cardActivation && (isSpell(act.card) || isTrap(act.card)))
               add({ ...base, target: act.instanceId });
             break;
           case 'SUMMON':
