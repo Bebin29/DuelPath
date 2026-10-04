@@ -1,5 +1,6 @@
 import { StartView } from '@/components/start/StartView';
-import { listDeckOptions, listLibrary, startStress } from '@/server/actions/combo.actions';
+import { listDeckOptions, listLibrary } from '@/server/actions/combo.actions';
+import { startStress } from '@/server/actions/start.actions';
 
 /** Startseite für angemeldete Nutzer (UX-Plan 5, UI-Plan 7.5.1): keine Marketing-Seite */
 export default async function StartPage() {
