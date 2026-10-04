@@ -429,6 +429,10 @@
       "title": "Als Nächstes",
       "test": "„{{title}}“ testen und den Status setzen",
       "firstCombo": "Erste Combo für {{deck}} anlegen"
+    },
+    "answer": {
+      "step": "In Schritt {{step}}.",
+      "none": "Gar nicht."
     }
   },
   "settings": {

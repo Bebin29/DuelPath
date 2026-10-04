@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion, useSpring } from 'motion/react';
 import { EASE } from '@/lib/motion';
+import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { Button } from '@/components/ui/button';
 import { AmSpieltisch } from '@/components/illustrations/AmSpieltisch';
 import { relativeTime } from '@/lib/utils/relative-time';
 import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
+import type { StressWord } from '@/lib/combo/start-words';
 import { NewComboButton } from '@/components/library/NewComboButton';
 import { StartHandStrip } from '@/components/library/StartHandStrip';
 import { ComboListItem } from '@/components/library/ComboListItem';
@@ -20,13 +22,16 @@ const WORD_SLOT = '\u0001';
 /**
  * Start (UI-Plan 7.5.1): links Illustration und Headline als seltene Fläche,
  * rechts weiter bearbeiten und zuletzt bearbeitet. Ohne Combos die ersten Schritte (UX-Plan 11).
+ * Mit `stress` beantwortet der Rotstift die Frage der Headline aus dem Stresstest der letzten Line.
  */
 export function StartView({
   combos,
+  stress = [],
   cards,
   decks,
 }: {
   combos: LibraryEntry[];
+  stress?: StressWord[];
   cards: Record<string, LibraryCard>;
   decks: { id: string; name: string }[];
 }) {
@@ -34,7 +39,20 @@ export function StartView({
   const [latest, ...recent] = combos;
   // Das Wechselwort steht im Englischen mitten im Satz: Vorlage am Platzhalter teilen
   const [before, after] = t('start.headline', { word: WORD_SLOT }).split(WORD_SLOT);
-  const words = t('start.words').split('|');
+  // Ohne Stresstest die allgemeinen Wörter, dann ohne Antwort
+  const items: { word: string; step?: number | null }[] = stress.length
+    ? stress
+    : t('start.words')
+        .split('|')
+        .map((word) => ({ word }));
+  const index = useCycle(items.length, stress.length ? 3400 : 2600);
+  const item = items[index] ?? items[0];
+  const answer = (step: number | null | undefined) =>
+    step === undefined
+      ? null
+      : step === null
+        ? t('start.answer.none')
+        : t('start.answer.step', { step });
   const px = useSpring(0, { stiffness: 60, damping: 18 });
   const py = useSpring(0, { stiffness: 60, damping: 18 });
   // Unter einer Minute sagt Intl nur „jetzt“, und „jetzt bearbeitet“ liest sich schief
@@ -86,14 +104,35 @@ export function StartView({
         </motion.div>
         <p className="mt-4 text-text-muted">{t('start.pre')}</p>
         <h1 className="mt-1 text-balance text-center font-display text-[40px] leading-[1.05] sm:text-[52px]">
-          {/* Screenreader hören einen festen Satz statt alle 2,6 s einer neuen Überschrift */}
-          <span className="sr-only">{t('start.headline', { word: words[0] })}</span>
+          {/* Screenreader hören einen festen Satz statt alle paar Sekunden einer neuen Überschrift */}
+          <span className="sr-only">{t('start.headline', { word: items[0].word })}</span>
           <span aria-hidden>
             {before}
-            <WechselWort words={words} />
+            <WechselWort word={item.word} struck={item.step === null} />
             {after}
           </span>
         </h1>
+        {answer(item.step) !== null && (
+          <>
+            <p className="sr-only">{answer(items[0].step)}</p>
+            {/* Die Antwort am Rand, in der Hand des Rotstifts */}
+            <p aria-hidden className="mt-3 grid h-8 -rotate-2 font-hand text-2xl text-opponent">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={index}
+                  className="col-start-1 row-start-1"
+                  initial={{ opacity: 0, clipPath: 'inset(-20% 100% -20% 0)' }}
+                  animate={{ opacity: 1, clipPath: 'inset(-20% 0% -20% 0)' }}
+                  // Raus sofort, sonst steht die alte Antwort noch unter dem neuen Wort
+                  exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                  transition={{ duration: 0.5, delay: 0.8, ease: EASE.ink }}
+                >
+                  {answer(item.step)}
+                </motion.span>
+              </AnimatePresence>
+            </p>
+          </>
+        )}
       </section>
 
       <motion.section
@@ -198,27 +237,34 @@ export function StartView({
   );
 }
 
-/**
- * Wechselwort der Headline (Szene „Start“): Ash, Imperm, Nibiru, Droll. Das Wort schreibt sich
- * von links auf, der Rotstift zieht den Unterstrich neu. Bei reduzierter Bewegung bleibt das erste.
- * Die Wörter sind verschieden breit: der Platz gleitet auf das neue Wort, statt den zentrierten
- * Satz springen zu lassen.
- */
-function WechselWort({ words }: { words: string[] }) {
+/** Index, der alle `ms` weiterzählt; bei reduzierter Bewegung bleibt der erste */
+function useCycle(length: number, ms: number) {
   const reduced = useReducedMotion();
   const [index, setIndex] = useState(0);
   useEffect(() => {
-    if (reduced || words.length < 2) return;
-    const timer = setInterval(() => setIndex((i) => (i + 1) % words.length), 2600);
+    if (reduced || length < 2) return;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % length), ms);
     return () => clearInterval(timer);
-  }, [reduced, words.length]);
-  const word = words[index] ?? '';
+  }, [reduced, length, ms]);
+  return index;
+}
+
+/**
+ * Wechselwort der Headline (Szene „Start“): Das Wort schreibt sich von links auf, der Rotstift
+ * zieht den Unterstrich neu, oder streicht es durch, wenn der Staple die Line nicht trifft.
+ * Die Wörter sind verschieden breit: der Platz gleitet auf das neue Wort, statt den zentrierten
+ * Satz springen zu lassen.
+ */
+function WechselWort({ word, struck }: { word: string; struck: boolean }) {
   const measure = useRef<HTMLSpanElement>(null);
   const [width, setWidth] = useState<number>();
   useLayoutEffect(() => setWidth(measure.current?.offsetWidth), [word]);
   return (
     <motion.span
-      className="relative inline-grid italic text-opponent"
+      className={cn(
+        'relative inline-grid italic transition-colors duration-(--motion-slow)',
+        struck ? 'text-text-muted' : 'text-opponent'
+      )}
       animate={width === undefined ? undefined : { width }}
       // erst nach dem Ausblenden des alten Worts, sonst ragt es über den Satz
       transition={{ duration: 0.4, delay: 0.45, ease: EASE.ink }}
@@ -242,12 +288,19 @@ function WechselWort({ words }: { words: string[] }) {
         aria-hidden
         viewBox="0 0 140 14"
         fill="none"
-        className="absolute -bottom-2 left-0 h-3 w-full overflow-visible"
+        className={cn(
+          'absolute left-0 h-3 w-full overflow-visible',
+          struck ? 'top-1/2 -translate-y-1/3' : '-bottom-2'
+        )}
         preserveAspectRatio="none"
       >
         <motion.path
           key={word}
-          d="M 3 8 C 34 3 80 2 137 5 M 14 12 C 50 9 92 9 128 10"
+          d={
+            struck
+              ? 'M -4 9 C 30 6 90 8 144 4'
+              : 'M 3 8 C 34 3 80 2 137 5 M 14 12 C 50 9 92 9 128 10'
+          }
           stroke="var(--opponent)"
           strokeWidth={2.2}
           strokeLinecap="round"

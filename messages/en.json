@@ -429,6 +429,10 @@
       "title": "Up next",
       "test": "Test “{{title}}” and set its status",
       "firstCombo": "Create the first combo for {{deck}}"
+    },
+    "answer": {
+      "step": "At step {{step}}.",
+      "none": "It doesn’t."
     }
   },
   "settings": {

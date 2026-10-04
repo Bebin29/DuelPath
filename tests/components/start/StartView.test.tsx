@@ -36,4 +36,27 @@ describe('StartView Headline', () => {
     expect(heading).toHaveTextContent('Imperm');
     expect(heading).toHaveAccessibleName('Wo stoppt dich Ash?');
   });
+
+  it('beantwortet die Frage mit dem Stresstest der letzten Line', () => {
+    const stress = [
+      { word: 'Ash', step: 2 },
+      { word: 'Nibiru', step: null },
+    ];
+    render(<StartView combos={[]} stress={stress} cards={{}} decks={[]} />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveAccessibleName('Wo stoppt dich Ash?');
+    expect(screen.getByText('In Schritt 2.', { selector: '.sr-only' })).toBeInTheDocument();
+  });
+
+  it('streicht einen Staple durch, der die Line nicht trifft', () => {
+    vi.useFakeTimers();
+    const stress = [
+      { word: 'Ash', step: 2 },
+      { word: 'Nibiru', step: null },
+    ];
+    render(<StartView combos={[]} stress={stress} cards={{}} decks={[]} />);
+    act(() => vi.advanceTimersByTime(3400));
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('Nibiru');
+    expect(screen.getByText('Gar nicht.', { selector: '[aria-hidden] span' })).toBeInTheDocument();
+  });
 });
