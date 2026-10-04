@@ -187,6 +187,8 @@ export interface PracticeSetup {
   cards: ComboCard[];
   /** Gespeicherte Lines mit ihrem besten bekannten Ende */
   targets: PracticeTarget[];
+  /** Combos am Deck, auch die, aus denen keine übbare Line wurde */
+  comboCount: number;
 }
 
 /** Eine Übungshand und die Lines, die darauf passen. Im Lauf bleiben die Lines verborgen. */

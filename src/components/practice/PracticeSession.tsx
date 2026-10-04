@@ -112,7 +112,11 @@ export function PracticeSession({
         <p className="text-text-muted">{t('practice.intro', { count: PRACTICE_HANDS })}</p>
         {impossible || empty ? (
           <p className="rounded-md border border-warning/40 bg-warning-tint p-3 text-sm text-warning">
-            {t(impossible ? 'practice.noTargets' : 'practice.noHands')}
+            {!impossible
+              ? t('practice.noHands')
+              : setup.comboCount
+                ? t('practice.noPracticable', { count: setup.comboCount })
+                : t('practice.noTargets')}
           </p>
         ) : (
           <p className="text-xs text-text-subtle">
@@ -125,7 +129,12 @@ export function PracticeSession({
             {t('practice.start')}
           </Button>
           <Button asChild variant="line">
-            <Link href={`/decks/${setup.deckId}?tab=hand`}>{t('practice.backToDeck')}</Link>
+            {/* Ohne übbare Line führt der Weg zu den Combos, dort lässt sie sich anpassen */}
+            {impossible && setup.comboCount ? (
+              <Link href={`/decks/${setup.deckId}?tab=combos`}>{t('practice.toCombos')}</Link>
+            ) : (
+              <Link href={`/decks/${setup.deckId}?tab=hand`}>{t('practice.backToDeck')}</Link>
+            )}
           </Button>
         </div>
       </section>
