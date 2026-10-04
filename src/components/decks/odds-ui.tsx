@@ -105,6 +105,29 @@ export function OddsSummary({
   const { t } = useTranslation();
   const { pct, delta } = useOddsFormat();
   const hasCombos = now.coverage.card.size > 0;
+  // Ohne eine einzige Starter-Kopie ist jede Hand ein Brick. Das ist keine Aussage über das Deck,
+  // nur über fehlende Rollen: statt „100 % Brick“ in Rot steht dann, was fehlt
+  const noStarters = (now.roles.metrics.find((m) => m.key === 'starter')?.value ?? 0) === 0;
+  const coverage = hasCombos && (
+    <div className="contents">
+      <dt>{t('decks.coverage')}</dt>
+      <dd className="font-mono tabular-nums">{pct(now.coverage.base)}</dd>
+      <dd className="w-10 text-right">{delta(now.coverage.base - before.coverage.base)}</dd>
+    </div>
+  );
+  if (noStarters)
+    return (
+      <>
+        <p className="rounded-md border border-dashed border-line-strong p-3 text-sm text-text-muted">
+          {t('decks.ratios.noStarters')}
+        </p>
+        {coverage && (
+          <dl className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-3 text-sm">
+            {coverage}
+          </dl>
+        )}
+      </>
+    );
   return (
     <>
       <div className="flex flex-col gap-2">
@@ -152,13 +175,7 @@ export function OddsSummary({
             </dd>
           </div>
         ))}
-        {hasCombos && (
-          <div className="contents">
-            <dt>{t('decks.coverage')}</dt>
-            <dd className="font-mono tabular-nums">{pct(now.coverage.base)}</dd>
-            <dd className="w-10 text-right">{delta(now.coverage.base - before.coverage.base)}</dd>
-          </div>
-        )}
+        {coverage}
       </dl>
     </>
   );

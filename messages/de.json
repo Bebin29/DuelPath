@@ -846,6 +846,7 @@
       "suggested_other": "{{count}} Rollen vorgeschlagen, aus deinen Combos und den Staples",
       "accept": "Vorschläge übernehmen",
       "tiers": "Starthände",
+      "noStarters": "Noch keine Karte ist als Starter markiert. Ohne Starter zählt jede Hand als Brick, die Stufen sagen dann nichts über das Deck. Setz Rollen in der Liste oder übernimm die Vorschläge.",
       "tier": {
         "brick": "Brick",
         "playable": "Spielbar",

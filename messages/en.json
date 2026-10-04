@@ -846,6 +846,7 @@
       "suggested_other": "{{count}} roles suggested from your combos and the staples",
       "accept": "Accept suggestions",
       "tiers": "Opening hands",
+      "noStarters": "No card is marked as a starter yet. Without starters every hand counts as a brick, so the tiers say nothing about the deck. Set roles in the list or accept the suggestions.",
       "tier": {
         "brick": "Brick",
         "playable": "Playable",
