@@ -104,7 +104,8 @@ export function StartView({
       >
         {latest ? (
           <>
-            <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface-1 p-6">
+            {/* Die ganze Karte führt in die Workbench: der Link spannt sich über sie */}
+            <div className="relative flex flex-col gap-4 rounded-lg border border-line bg-surface-1 p-6 transition-colors duration-(--motion-fast) hover:border-line-strong">
               <span className="font-mono text-2xs text-text-subtle">{t('start.resume')}</span>
               <div className="flex flex-col items-start gap-4 sm:flex-row">
                 <StartHandStrip cardIds={latest.stats.startHand} cards={cards} size="sm" max={3} />
@@ -120,26 +121,33 @@ export function StartView({
                   </p>
                 </div>
               </div>
-              <div>
+              <div className="flex flex-wrap gap-2">
                 <Button asChild>
-                  <Link href={`/combos/${latest.id}`}>{t('start.continue')}</Link>
+                  {/* scale-none: jedes scale, auch 100 %, macht den Link zum Bezugsrahmen des
+                      ::after; die Fläche schrumpft beim Drücken und der Klick geht daneben */}
+                  <Link
+                    href={`/combos/${latest.id}`}
+                    className="after:absolute after:inset-0 active:scale-none"
+                  >
+                    {t('start.continue')}
+                  </Link>
                 </Button>
+                <div className="relative">
+                  <NewComboButton decks={decks} variant="line" />
+                </div>
               </div>
             </div>
 
-            <div>
-              <div className="flex items-end gap-3 pb-2">
-                <h2 className="flex-1 font-display text-2xl">
-                  {recent.length > 0 && t('start.recent')}
-                </h2>
-                <NewComboButton decks={decks} variant="line" />
+            {recent.length > 0 && (
+              <div>
+                <h2 className="pb-2 font-display text-2xl">{t('start.recent')}</h2>
+                <ul className="border-t border-line">
+                  {recent.map((c) => (
+                    <ComboListItem key={c.id} combo={c} cards={cards} />
+                  ))}
+                </ul>
               </div>
-              <ul className="border-t border-line">
-                {recent.map((c) => (
-                  <ComboListItem key={c.id} combo={c} cards={cards} />
-                ))}
-              </ul>
-            </div>
+            )}
 
             {nextUp.length > 0 && (
               <section aria-label={t('start.next.title')}>
