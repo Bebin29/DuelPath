@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Play } from 'lucide-react';
+import { ArrowLeft, Play } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/hooks';
 import { Button } from '@/components/ui/button';
 import { Workbench } from '@/components/workbench/Workbench';
@@ -106,38 +106,48 @@ export function PracticeSession({
   if (phase.kind === 'intro') {
     const impossible = setup.targets.length === 0;
     return (
-      <section className="mx-auto flex h-dvh w-full max-w-2xl flex-col justify-center gap-5 p-8">
-        <h1 className="font-display text-4xl">{t('practice.title')}</h1>
-        <p className="font-mono text-xs text-text-muted">{setup.deckName}</p>
-        <p className="text-text-muted">{t('practice.intro', { count: PRACTICE_HANDS })}</p>
-        {impossible || empty ? (
-          <p className="rounded-md border border-warning/40 bg-warning-tint p-3 text-sm text-warning">
-            {!impossible
-              ? t('practice.noHands')
-              : setup.comboCount
-                ? t('practice.noPracticable', { count: setup.comboCount })
-                : t('practice.noTargets')}
-          </p>
-        ) : (
-          <p className="text-xs text-text-subtle">
-            {t('practice.targetCount', { count: setup.targets.length })}
-          </p>
-        )}
-        <div className="flex items-center gap-3">
-          <Button onClick={begin} disabled={impossible}>
-            <Play />
-            {t('practice.start')}
+      <div className="flex h-dvh flex-col">
+        {/* Kopf wie in der Workbench: ohne ihn schwebte die Seite ohne Rückweg im Leeren */}
+        <header className="flex h-12 shrink-0 items-center gap-3 border-b border-line bg-surface-1 px-4">
+          <Button asChild variant="ghost" size="icon-sm" aria-label={t('practice.backToDeck')}>
+            <Link href={`/decks/${setup.deckId}?tab=hand`}>
+              <ArrowLeft />
+            </Link>
           </Button>
-          <Button asChild variant="line">
-            {/* Ohne übbare Line führt der Weg zu den Combos, dort lässt sie sich anpassen */}
-            {impossible && setup.comboCount ? (
-              <Link href={`/decks/${setup.deckId}?tab=combos`}>{t('practice.toCombos')}</Link>
-            ) : (
-              <Link href={`/decks/${setup.deckId}?tab=hand`}>{t('practice.backToDeck')}</Link>
-            )}
-          </Button>
-        </div>
-      </section>
+          <span className="truncate font-display text-xl leading-none">{setup.deckName}</span>
+        </header>
+        <section className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-5 p-8">
+          <h1 className="font-display text-4xl">{t('practice.title')}</h1>
+          <p className="text-text-muted">{t('practice.intro', { count: PRACTICE_HANDS })}</p>
+          {impossible || empty ? (
+            <p className="rounded-md border border-warning/40 bg-warning-tint p-3 text-sm text-warning">
+              {!impossible
+                ? t('practice.noHands')
+                : setup.comboCount
+                  ? t('practice.noPracticable', { count: setup.comboCount })
+                  : t('practice.noTargets')}
+            </p>
+          ) : (
+            <p className="text-xs text-text-subtle">
+              {t('practice.targetCount', { count: setup.targets.length })}
+            </p>
+          )}
+          <div className="flex items-center gap-3">
+            <Button onClick={begin} disabled={impossible}>
+              <Play />
+              {t('practice.start')}
+            </Button>
+            <Button asChild variant="line">
+              {/* Ohne übbare Line führt der Weg zu den Combos, dort lässt sie sich anpassen */}
+              {impossible && setup.comboCount ? (
+                <Link href={`/decks/${setup.deckId}?tab=combos`}>{t('practice.toCombos')}</Link>
+              ) : (
+                <Link href={`/decks/${setup.deckId}?tab=hand`}>{t('practice.backToDeck')}</Link>
+              )}
+            </Button>
+          </div>
+        </section>
+      </div>
     );
   }
 
