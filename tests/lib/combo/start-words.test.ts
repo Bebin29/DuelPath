@@ -73,4 +73,9 @@ describe('headlineWords', () => {
       { word: 'Nibiru', step: null },
     ]);
   });
+
+  it('nennt eine Karte nur einmal, auch wenn sie doppelt auf dem Gegnerboard liegt', () => {
+    const words = headlineWords([step], [staple('Ash'), staple('Nibiru'), staple('Nibiru')], []);
+    expect(words.map((w) => w.word)).toEqual(['Ash', 'Nibiru']);
+  });
 });

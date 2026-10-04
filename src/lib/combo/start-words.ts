@@ -57,7 +57,8 @@ export function headlineWords(
   if (!line.length || line.some((n) => n.kind === 'ACTIVATE' && n.player === 'opponent')) {
     return [];
   }
-  const stoppers = staples.filter(stopsLine).map((s) => s.short);
+  // Zwei gleiche Karten auf dem Gegnerboard sind zwei Störquellen, aber ein Wort
+  const stoppers = [...new Set(staples.filter(stopsLine).map((s) => s.short))];
   return stressWords(
     stoppers,
     hits.flatMap((h) =>
