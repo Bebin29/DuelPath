@@ -10,9 +10,21 @@ export default async function DeckRoute({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; missing?: string; missingCount?: string }>;
 }) {
-  const [{ id }, { tab }] = await Promise.all([params, searchParams]);
+  const [{ id }, { tab, missing, missingCount }] = await Promise.all([params, searchParams]);
+  // Aus der Deckübersicht importiert: was fehlte, kommt über die Adresse (Werte vom Client, gekappt)
+  const count = Math.min(Math.max(0, Number(missingCount) || 0), 200);
+  const imported = count
+    ? {
+        missing: (missing ?? '')
+          .split('\n')
+          .slice(0, 3)
+          .map((n) => n.slice(0, 80)),
+        missingCount: count,
+        matched: 0,
+      }
+    : undefined;
   const [deck, library, staples, banlists] = await Promise.all([
     getDeckView(id),
     listLibrary(id),
@@ -29,6 +41,7 @@ export default async function DeckRoute({
       staples={staples.map((s) => s.card.id)}
       banlists={banlists}
       initialTab={parseTab(tab)}
+      imported={imported}
     />
   );
 }

@@ -754,7 +754,6 @@
     "count_other": "{{count}} Decks",
     "new": "Neues Deck",
     "untitled": "Neues Deck",
-    "importYdk": "YDK importieren",
     "exportYdk": "YDK exportieren",
     "emptyText": "Noch keine Decks. Importiere deine Liste als YDK-Datei aus EDOPro oder YGOPRODeck, oder leg ein leeres Deck an.",
     "section": {
@@ -774,9 +773,7 @@
     "tabs": "Bereiche des Decks",
     "back": "Zurück zu den Decks",
     "name": "Name des Decks",
-    "imported": "Deck aus YDK ersetzt",
-    "unknownCodes_one": "{{count}} Passcode unbekannt",
-    "unknownCodes_other": "{{count}} Passcodes unbekannt",
+    "imported": "Deck importiert",
     "less": "Eine Kopie weniger",
     "more": "Eine Kopie mehr",
     "moreIssues": "{{count}} weitere Hinweise",
@@ -940,7 +937,38 @@
       "current": "Aktuell",
       "clean": "keine Hinweise"
     },
-    "ocg": "nur OCG"
+    "ocg": "nur OCG",
+    "import": {
+      "button": "Importieren",
+      "copy": "ydke kopieren",
+      "copied": "ydke-Link in die Zwischenablage kopiert",
+      "title": "Deck importieren",
+      "text": "Füge einen ydke-Link, eine YGOPRODeck-Deck-URL, eine YDK-Datei oder eine Kartenliste ein.",
+      "replaces": "Das ersetzt die jetzige Liste; Strg+Z nimmt es zurück.",
+      "field": "Deckliste, Link oder URL",
+      "file": "YDK-Datei wählen",
+      "submit": "Importieren",
+      "format": {
+        "ydke": "Erkannt: ydke-Link",
+        "url": "Erkannt: YGOPRODeck-Deck",
+        "ydk": "Erkannt: YDK",
+        "list": "Erkannt: Kartenliste, eine Karte pro Zeile"
+      },
+      "error": {
+        "invalidYdke": "Der ydke-Link ist unvollständig oder beschädigt.",
+        "fetchFailed": "YGOPRODeck ist gerade nicht erreichbar. Später noch einmal versuchen oder die YDK-Datei von dort laden.",
+        "noDeckOnPage": "Auf der YGOPRODeck-Seite wurde keine Deckliste gefunden.",
+        "empty": "Im Text wurden keine Karten erkannt.",
+        "tooLong": "Der Text ist zu lang für eine Deckliste.",
+        "failed": "Import fehlgeschlagen. Erneut versuchen.",
+        "tooMany": "Das sind mehr Karten, als in ein Deck passen."
+      },
+      "missing_one": "{{count}} Karte nicht gefunden: {{names}}",
+      "missing_other": "{{count}} Karten nicht gefunden: {{names}}",
+      "matched_one": "{{count}} Name ungefähr erkannt",
+      "matched_other": "{{count}} Namen ungefähr erkannt",
+      "newTitle": "Importiertes Deck"
+    }
   },
   "practice": {
     "title": "Übungsmodus",

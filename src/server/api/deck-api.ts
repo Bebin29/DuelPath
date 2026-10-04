@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma/client';
 import { parseYDKFile } from '@/lib/utils/deck.utils';
-import { deckIssues, sectionFor, type RuleCard, type Section } from '@/lib/deck/deck-rules';
+import { deckIssues, type RuleCard, type Section } from '@/lib/deck/deck-rules';
 import { toIsoDate } from '@/lib/deck/banlist';
 import { idsForPasscodes, writeDeckCards } from '@/server/services/deck-store.service';
 import { effectsOf } from '@/lib/cards/effect-override';
@@ -19,6 +19,11 @@ import { applySidePlan, parseSidePlans } from '@/lib/deck/side-plan';
 import { parseGame, tally } from '@/lib/deck/games';
 import { STAPLES } from '@/lib/combo/reactions';
 import { findCard, userBreakers, userNicknames } from './combo-api';
+import {
+  resolveImport,
+  resolveLists,
+  type ImportProblem,
+} from '@/server/services/deck-import.service';
 import { ApiError } from './http';
 
 /**
@@ -40,45 +45,37 @@ export const createDeckSchema = z
     description: z.string().max(1000).optional(),
     /** Inhalt einer YDK-Datei (EDOPro, YGOPRODeck) */
     ydk: z.string().max(20000).optional(),
+    /** ydke-Link, YGOPRODeck-Deck-URL, YDK-Inhalt oder eine Kartenliste wie „3 Crystal Bond“ */
+    text: z.string().trim().min(1).max(50000).optional(),
     main: z.array(cardRef).max(60).optional(),
     extra: z.array(cardRef).max(15).optional(),
     side: z.array(cardRef).max(15).optional(),
   })
-  .refine((b) => !(b.ydk && (b.main || b.extra || b.side)), {
-    message: 'Entweder ydk oder main/extra/side angeben',
+  .refine((b) => [b.ydk, b.text, b.main || b.extra || b.side].filter(Boolean).length <= 1, {
+    message: 'Entweder ydk, text oder main/extra/side angeben',
   });
 
-type Ref = z.infer<typeof cardRef>;
-
-/** Kartenlisten auflösen; Extra-Deck-Karten im Main Deck wandern ins Extra Deck */
-async function resolveLists(userId: string, lists: Partial<Record<Section, Ref[]>>) {
-  const nicknames = await userNicknames(userId);
-  const cache = new Map<string, Awaited<ReturnType<typeof findCard>>>();
-  const sections: Record<Section, string[]> = { MAIN: [], EXTRA: [], SIDE: [] };
-  const missing: string[] = [];
-  const matched: { ref: string; name: string }[] = [];
-  for (const [section, refs] of Object.entries(lists) as [Section, Ref[] | undefined][]) {
-    for (const ref of refs ?? []) {
-      const { card: query, quantity } = typeof ref === 'string' ? { card: ref, quantity: 1 } : ref;
-      if (!cache.has(query)) cache.set(query, await findCard(query, nicknames));
-      const card = cache.get(query);
-      if (!card) {
-        missing.push(query);
-        continue;
-      }
-      if (card.name.toLowerCase() !== query.toLowerCase() && card.id !== query)
-        matched.push({ ref: query, name: card.name });
-      const target = section === 'SIDE' ? 'SIDE' : sectionFor(card.type);
-      for (let i = 0; i < quantity; i++) sections[target].push(card.id);
-    }
-  }
-  return { sections, missing: [...new Set(missing)], matched };
-}
+const PROBLEM: Record<ImportProblem, string> = {
+  invalidYdke: 'Ungültiger ydke-Link',
+  fetchFailed: 'YGOPRODeck-Seite nicht erreichbar',
+  noDeckOnPage: 'Keine Deckliste auf der YGOPRODeck-Seite gefunden',
+  empty: 'Keine Karten im Text erkannt',
+  tooMany: 'Mehr Karten als in ein Deck passen',
+};
 
 export async function createDeckFromRequest(userId: string, req: z.infer<typeof createDeckSchema>) {
   let sections: Record<Section, string[]>;
   let matched: { ref: string; name: string }[] = [];
-  if (req.ydk) {
+  if (req.text) {
+    const result = await resolveImport(userId, req.text);
+    if ('problem' in result) throw new ApiError('INVALID', PROBLEM[result.problem]);
+    if (result.data.missing.length)
+      throw new ApiError('NOT_POSSIBLE', 'Karten nicht gefunden', {
+        missing: result.data.missing,
+      });
+    sections = result.data.sections;
+    matched = result.data.matched;
+  } else if (req.ydk) {
     const parsed = parseYDKFile(req.ydk);
     const { map, missing } = await idsForPasscodes([
       ...parsed.main,
@@ -164,10 +161,10 @@ export async function deckView(userId: string, deckId: string) {
               id: true,
               passcode: true,
               name: true,
-              tcgDate: true,
               nameDe: true,
               type: true,
               banTcg: true,
+              tcgDate: true,
             },
           },
         },
@@ -180,10 +177,10 @@ export async function deckView(userId: string, deckId: string) {
     deck.deckCards
       .filter((c) => c.deckSection === s)
       .map(({ card: { banTcg, tcgDate, ...card }, quantity }) => ({
-        ...(!tcgDate && { ocgOnly: true }),
         ...card,
         quantity,
         ...(banTcg && { banTcg }),
+        ...(!tcgDate && { ocgOnly: true }),
         ...(roles[card.id] && { role: roles[card.id] }),
       }));
   const entries = deck.deckCards.map((c) => ({

@@ -754,7 +754,6 @@
     "count_other": "{{count}} decks",
     "new": "New deck",
     "untitled": "New deck",
-    "importYdk": "Import YDK",
     "exportYdk": "Export YDK",
     "emptyText": "No decks yet. Import your list as a YDK file from EDOPro or YGOPRODeck, or start an empty deck.",
     "section": {
@@ -774,9 +773,7 @@
     "tabs": "Deck sections",
     "back": "Back to decks",
     "name": "Deck name",
-    "imported": "Deck replaced from YDK",
-    "unknownCodes_one": "{{count}} unknown passcode",
-    "unknownCodes_other": "{{count}} unknown passcodes",
+    "imported": "Deck imported",
     "less": "One copy less",
     "more": "One copy more",
     "moreIssues": "{{count}} more notes",
@@ -940,7 +937,38 @@
       "current": "Current",
       "clean": "no notes"
     },
-    "ocg": "OCG only"
+    "ocg": "OCG only",
+    "import": {
+      "button": "Import",
+      "copy": "Copy ydke",
+      "copied": "ydke link copied to the clipboard",
+      "title": "Import deck",
+      "text": "Paste a ydke link, a YGOPRODeck deck URL, a YDK file or a card list.",
+      "replaces": "This replaces the current list; Ctrl+Z undoes it.",
+      "field": "Deck list, link or URL",
+      "file": "Choose YDK file",
+      "submit": "Import",
+      "format": {
+        "ydke": "Detected: ydke link",
+        "url": "Detected: YGOPRODeck deck",
+        "ydk": "Detected: YDK",
+        "list": "Detected: card list, one card per line"
+      },
+      "error": {
+        "invalidYdke": "The ydke link is incomplete or broken.",
+        "fetchFailed": "YGOPRODeck cannot be reached right now. Try again later or download the YDK file there.",
+        "noDeckOnPage": "No deck list found on the YGOPRODeck page.",
+        "empty": "No cards recognised in the text.",
+        "tooLong": "The text is too long for a deck list.",
+        "failed": "Import failed. Try again.",
+        "tooMany": "That is more cards than fit in a deck."
+      },
+      "missing_one": "{{count}} card not found: {{names}}",
+      "missing_other": "{{count}} cards not found: {{names}}",
+      "matched_one": "{{count}} name matched approximately",
+      "matched_other": "{{count}} names matched approximately",
+      "newTitle": "Imported deck"
+    }
   },
   "practice": {
     "title": "Practice",

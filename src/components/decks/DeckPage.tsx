@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Download,
+  Link2,
   MoreHorizontal,
   Redo2,
   TriangleAlert,
@@ -36,9 +37,10 @@ import {
 import { applyBanlist, type BanlistKey, type Banlists, type BanlistView } from '@/lib/deck/banlist';
 import { expandDeck } from '@/lib/deck/hand-tester';
 import { toYdk } from '@/lib/deck/ydk';
-import { parseYDKFile } from '@/lib/utils/deck.utils';
 import type { LibraryCard, LibraryEntry } from '@/lib/combo/library';
-import { importYdkToDeck } from '@/server/actions/deck.actions';
+import { importDeckText } from '@/server/actions/deck.actions';
+import { toYdke } from '@/lib/deck/import-text';
+import { ImportDeckDialog } from './ImportDeckDialog';
 import {
   createDeckVersion,
   deleteDeckVersion,
@@ -87,6 +89,23 @@ function adjust(
   );
 }
 
+/** Fehler, für die der Import-Dialog einen eigenen Text hat; alles andere heißt „failed“ */
+const IMPORT_ERRORS = new Set([
+  'invalidYdke',
+  'fetchFailed',
+  'noDeckOnPage',
+  'empty',
+  'tooMany',
+  'tooLong',
+]);
+
+/** Was ein Import nicht oder nur ungefähr fand; `missing` höchstens die ersten Namen */
+export interface ImportSummary {
+  missing: string[];
+  missingCount: number;
+  matched: number;
+}
+
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
@@ -103,6 +122,7 @@ export function DeckPage({
   staples,
   banlists,
   initialTab,
+  imported,
 }: {
   deck: {
     id: string;
@@ -122,10 +142,24 @@ export function DeckPage({
   /** aktuelle und, falls gepflegt, nächste Banlist für den Deck-Check */
   banlists: Banlists;
   initialTab: DeckTab;
+  /** Gerade aus der Deckübersicht importiert: was dabei fehlte, kommt über die Adresse mit */
+  imported?: ImportSummary;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
+  const importNotice = ({ missing, missingCount, matched }: ImportSummary) =>
+    [
+      t('decks.imported'),
+      missingCount > 0 &&
+        t('decks.import.missing', {
+          count: missingCount,
+          names: missing.slice(0, 3).join(', ') + (missingCount > 3 ? ', …' : ''),
+        }),
+      matched > 0 && t('decks.import.matched', { count: matched }),
+    ]
+      .filter(Boolean)
+      .join(' · ');
   const cardSheet = useCardSheet();
   const { settings } = useSettings();
   const history = useHistory<Doc>({
@@ -148,10 +182,23 @@ export function DeckPage({
   const [cards, setCards] = useState(() => new Map(deck.cards.map((c) => [c.id, c])));
   const [tab, setTab] = useState(initialTab);
   const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved');
-  const [notice, setNotice] = useState<{ id: number; missing: number } | null>(null);
+  const [notice, setNotice] = useState<{
+    id: number;
+    text: string;
+    /** Rückgängig nimmt den Import zurück; beim Kopieren gibt es nichts zurückzunehmen */
+    undo: boolean;
+  } | null>(() =>
+    imported && (imported.missingCount > 0 || imported.matched > 0)
+      ? { id: 0, undo: false, text: importNotice(imported) }
+      : null
+  );
+  // Der Hinweis kam über die Adresse; ein Neuladen soll ihn nicht wiederholen
+  useEffect(() => {
+    if (imported) router.replace(pathname, { scroll: false });
+  }, [imported, router, pathname]);
+  const [importOpen, setImportOpen] = useState(false);
   // Gegen welche Liste geprüft wird; die nächste Liste nur, wenn es sie gibt
   const [banlistKey, setBanlistKey] = useState<BanlistKey>('current');
-  const fileRef = useRef<HTMLInputElement>(null);
 
   // Autosave wie in der Workbench, kurz nach der letzten Änderung
   const firstRender = useRef(true);
@@ -200,16 +247,32 @@ export function DeckPage({
   const move = (cardId: string, from: Section, to: Section) =>
     setEntries((prev) => adjust(adjust(prev, cardId, from, -1), cardId, to, 1));
 
-  // YDK ersetzt das Deck; der Hinweis bietet Rückgängig, Strg+Z geht ebenso
-  const importYdk = async (file: File) => {
-    const parsed = parseYDKFile(await file.text());
-    const result = await importYdkToDeck(deck.id, parsed);
-    if (!result.data) return;
+  // Import ersetzt das Deck; der Hinweis bietet Rückgängig, Strg+Z geht ebenso
+  const importText = async (text: string): Promise<string | null> => {
+    const result = await importDeckText(deck.id, text);
+    if (!result.data) return IMPORT_ERRORS.has(result.error ?? '') ? result.error! : 'failed';
     const view = await getDeckView(deck.id);
-    if (!view.data) return;
+    if (!view.data) return 'failed';
     setCards(new Map(view.data.cards.map((c) => [c.id, c])));
     setDoc((d) => ({ ...d, entries: view.data!.entries }));
-    setNotice({ id: Date.now(), missing: result.data.missing.length });
+    const { missing, matched } = result.data;
+    setNotice({
+      id: Date.now(),
+      undo: true,
+      text: importNotice({ missing, missingCount: missing.length, matched: matched.length }),
+    });
+    return null;
+  };
+  const copyYdke = async () => {
+    const passcodes = (section: Section) =>
+      entries
+        .filter((e) => e.section === section)
+        .flatMap((e) => Array<string>(e.quantity).fill(cards.get(e.cardId)?.passcode ?? ''))
+        .filter(Boolean);
+    await navigator.clipboard.writeText(
+      toYdke({ main: passcodes('MAIN'), extra: passcodes('EXTRA'), side: passcodes('SIDE') })
+    );
+    setNotice({ id: Date.now(), undo: false, text: t('decks.import.copied') });
   };
   const exportYdk = () => {
     const blob = new Blob([toYdk(entries, (id) => cards.get(id)?.passcode)], {
@@ -349,25 +412,24 @@ export function DeckPage({
               <Redo2 />
             </Button>
             <SaveIndicator status={status} className="mr-2 w-24" />
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".ydk,text/plain"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void importYdk(file);
-                e.target.value = '';
-              }}
-            />
             <Button
               variant="line"
               size="sm"
               className="hidden sm:inline-flex"
-              onClick={() => fileRef.current?.click()}
+              onClick={() => setImportOpen(true)}
             >
               <Upload />
-              {t('decks.importYdk')}
+              {t('decks.import.button')}
+            </Button>
+            <Button
+              variant="line"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={() => void copyYdke()}
+              disabled={entries.length === 0}
+            >
+              <Link2 />
+              {t('decks.import.copy')}
             </Button>
             <Button
               variant="line"
@@ -392,9 +454,13 @@ export function DeckPage({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => fileRef.current?.click()}>
+                <DropdownMenuItem onSelect={() => setImportOpen(true)}>
                   <Upload />
-                  {t('decks.importYdk')}
+                  {t('decks.import.button')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => void copyYdke()} disabled={entries.length === 0}>
+                  <Link2 />
+                  {t('decks.import.copy')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={exportYdk} disabled={entries.length === 0}>
                   <Download />
@@ -509,22 +575,27 @@ export function DeckPage({
           onExpire={() => setNotice(null)}
           className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 shadow-[0_18px_40px_rgb(0_0_0/0.45)]"
         >
-          <span className="mr-2 text-sm">
-            {t('decks.imported')}
-            {notice.missing > 0 && ` · ${t('decks.unknownCodes', { count: notice.missing })}`}
-          </span>
-          <Button
-            variant="text"
-            size="sm"
-            onClick={() => {
-              history.undo();
-              setNotice(null);
-            }}
-          >
-            {t('workbench.undo')}
-          </Button>
+          <span className="mr-2 text-sm">{notice.text}</span>
+          {notice.undo && (
+            <Button
+              variant="text"
+              size="sm"
+              onClick={() => {
+                history.undo();
+                setNotice(null);
+              }}
+            >
+              {t('workbench.undo')}
+            </Button>
+          )}
         </TimedNotice>
       )}
+      <ImportDeckDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={importText}
+        replaces={entries.length > 0}
+      />
       {removed && (
         <TimedNotice
           key={removed.id}
